@@ -56,7 +56,11 @@ export default class Index extends React.PureComponent{
         </Sider>
         <Layout className="right">
           <Header style={{ background: '#fff', padding: 0 }}><span className="system-title">哆啦A梦</span></Header>
-          <Content className="main-content">{this.props.children}</Content>
+          <Content className="main-content-wrapper">
+            <div className="main-content">
+              {this.props.children}
+            </div>
+          </Content>
           <Footer style={{ textAlign: 'center' }}>
             Doraemon ©2018 Created by 袋鼠云数据应用前端
           </Footer>

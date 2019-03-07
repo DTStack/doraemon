@@ -1,11 +1,10 @@
-import React, { Component } from 'react'
+import React from 'react'
 import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
-import {match, RouterContext} from 'react-router'
 import { BrowserRouter, StaticRouter } from 'react-router-dom';
 import { matchRoutes } from 'react-router-config';
 import { AppContainer } from 'react-hot-loader';
-import Layout from './component/layout';
+import Layout from '@/view/layout';
 import App from '@/app';
 import { create } from './store/index';
 import routes from './router';
@@ -45,7 +44,7 @@ const serverRender = (context, options)=> {
     context.state = Object.assign({}, context.state, initState);
     const store = create(initState);
     return () =>(
-      <Layout style={{height:'100%'}}>
+      <Layout>
         <div style={{height:'100%'}}>
           <Provider store={store}>
             <StaticRouter location={url} context={{}}>

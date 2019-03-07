@@ -5,9 +5,12 @@ module.exports = app => {
     id: { type: INTEGER, primaryKey: true, autoIncrement: true },
     pid: INTEGER,
     name: INTEGER,
-    target:STRING(60),
+    target: STRING(60),
+    proxy_server_address: STRING(100),
+    status: INTEGER,
+    is_delete: INTEGER,
     created_at: DATE,
-    updated_at: DATE,
+    updated_at: DATE
   },{
     freezeTableName: true
   });

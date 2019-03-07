@@ -6,7 +6,11 @@ module.exports = app => {
   exports.siteFile = {
     '/favicon.ico': fs.readFileSync(path.join(app.baseDir, 'app/web/asset/images/favicon.ico'))
   };
-
+  exports.security = {
+    csrf: {
+      ignore: '/proxy'
+    },
+  };
   exports.logger = {
     consoleLevel: 'DEBUG',
     dir: path.join(app.baseDir, 'logs')

@@ -1,5 +1,7 @@
+import MainLayout from '@/layouts/mainLayout';
 import Home from '@/pages/home';
 import ProxyServer from '@/pages/proxyServer';
+const urlPrefix = '/page'
 const NotFound = () => {
   return (
     <Route render={({ staticContext }) => {
@@ -17,14 +19,17 @@ const NotFound = () => {
 const routes = [
   {
     path: '/',
+    redirect:`${urlPrefix}/home`,
     component: Home
   },
   {
-    path: '/page/home',
+    path: `${urlPrefix}/home`,
+    layout: MainLayout,
     component: Home
   },
   {
-    path: '/page/proxy-server',
+    path: `${urlPrefix}/proxy-server`,
+    layout: MainLayout,
     component: ProxyServer
   },
   {

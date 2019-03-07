@@ -10,12 +10,5 @@ module.exports = app => {
       const { ctx } = this;
       await ctx.renderClient('app.js', Model.getPage(1, 10));
     }
-
-    async pager() {
-      const { ctx } = this;
-      const pageIndex = ctx.query.pageIndex;
-      const pageSize = ctx.query.pageSize;
-      ctx.body = Model.getPage(pageIndex, pageSize);
-    }
   };
 };

@@ -1,0 +1,22 @@
+export default {
+  //获取代理服务列表
+  getProxyServerList:{
+    method:'post',
+    url:'/api/proxy-server/list'
+  },
+  //添加代理服务
+  addProxyServer:{
+    method:'post',
+    url:'/api/proxy-server/add'
+  },
+  //更新服务
+  updateProxyServer:{
+    method:'post',
+    url:'/api/proxy-server/update'
+  },
+  //更改服务状态
+  changeProxyServerStatus:{
+    method:'get',
+    url:'/api/proxy-server/change-status'
+  }
+}

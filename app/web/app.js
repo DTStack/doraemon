@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 import { Route,Redirect,Switch } from 'react-router-dom';
-import MainLayout from '@/layouts/mainLayout';
-import Home from '@/pages/home';
-import ProxyServer from '@/pages/proxyServer';
-
-const urlPrefix = '/page'
+import {LocaleProvider} from 'antd';
+import zhCN from 'antd/lib/locale-provider/zh_CN';
+import routes from '@/router';
 
 class App extends Component {
   constructor(props) {
@@ -21,11 +19,22 @@ class App extends Component {
 
   render() {
     return <div style={{height:'100%'}}>
-      <Switch>
-        <Redirect exact path='/' to={{pathname:`${urlPrefix}/home`}}/>
-        <Route exact path={`${urlPrefix}/home`} render={(props)=>(<MainLayout {...props}><Home/></MainLayout>)}/>
-        <Route exact path={`${urlPrefix}/proxy-server`} render={(props)=>(<MainLayout {...props}><ProxyServer/></MainLayout>)}/>
-      </Switch>
+      <LocaleProvider locale={zhCN}>
+        <Switch>
+          {
+            routes.map((route)=>{
+              const {redirect,path} = route;
+              if(redirect){
+                return  <Redirect key={path} exact path={path} to={redirect}/>
+              }else{
+                const Layout = route.layout;
+                const Component = route.component
+                return <Route exact key={path} path={path} render={(props)=>(<Layout {...props}><Component/></Layout>)}/>
+              }
+            })
+          }
+        </Switch>
+      </LocaleProvider>
     </div>;
   }
 }

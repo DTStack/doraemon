@@ -14,8 +14,14 @@
       font-size: 21px;
       font-weight: 700;
     }
-    .main-content{
-      overflow: auto;
+    .main-content-wrapper{
+      padding: 10px;
+      .main-content{
+        overflow: auto;
+        background: #fff;
+        padding: 10px;
+      }
     }
+    
   }
 }
