@@ -1,0 +1,17 @@
+.layout-main{
+  height: 100%;
+  .left{
+    background: #fff;
+  }
+  .right{
+    .right-content-wrapper{
+      height: 100%;
+      padding: 10px;
+      .right-content{
+        overflow: auto;
+        background: #fff;
+        height: 100%;
+      }
+    }
+  }
+}

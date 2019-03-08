@@ -1,39 +1,28 @@
-import MainLayout from '@/layouts/mainLayout';
+import SiderLayout from '@/layouts/siderLayout';
+import BasicLayout from '@/layouts/basicLayout';
+
 import Home from '@/pages/home';
 import ProxyServer from '@/pages/proxyServer';
+import NotFound from '@/pages/exception/404';
 const urlPrefix = '/page'
-const NotFound = () => {
-  return (
-    <Route render={({ staticContext }) => {
-      if (staticContext) {
-        staticContext.status = 404;
-      }
-      return (
-        <div>
-          <h1>404 : Not Found</h1>
-        </div>
-      );
-    }}/>
-  );
-};
 const routes = [
   {
     path: '/',
-    redirect:`${urlPrefix}/home`,
-    component: Home
+    redirect:`${urlPrefix}/home`
   },
   {
     path: `${urlPrefix}/home`,
-    layout: MainLayout,
+    layout: SiderLayout,
     component: Home
   },
   {
     path: `${urlPrefix}/proxy-server`,
-    layout: MainLayout,
+    layout: SiderLayout,
     component: ProxyServer
   },
   {
     path: '*',
+    layout: BasicLayout,
     component: NotFound
   }
 ];

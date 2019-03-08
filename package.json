@@ -41,7 +41,8 @@
     "react-router-config": "^1.0.0-beta.4",
     "react-router-dom": "^4.2.2",
     "react-router-redux": "^4.0.8",
-    "redux": "^3.7.2"
+    "redux": "^3.7.2",
+    "redux-thunk": "^2.3.0"
   },
   "devDependencies": {
     "babel-preset-stage-2": "^6.24.1",
@@ -58,6 +59,7 @@
     "less": "^2.7.2",
     "less-loader": "^4.0.0",
     "node-sass": "^4.11.0",
+    "redux-devtools-extension": "^2.13.8",
     "sass-loader": "^7.1.0",
     "sequelize-cli": "^5.4.0"
   },

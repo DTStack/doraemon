@@ -2,7 +2,7 @@ import React from 'react';
 import {Modal,Form,Input} from 'antd';
 import PropsTypes from 'prop-types'; 
 
-class ProxyServerModal extends React.PureComponent{
+class ProxyRuleModal extends React.PureComponent{
   static defaultProps = {
     visible:false,
     onOk:()=>{},
@@ -36,7 +36,7 @@ class ProxyServerModal extends React.PureComponent{
   render(){
     const {visible,editable,form,proxyServer,confirmLoading} = this.props;
     const {getFieldDecorator} = form;
-    const {name,target} = proxyServer;
+    const {ip,target} = proxyServer;
     const formItemLayout = {
       labelCol: {
         span: 6
@@ -46,21 +46,21 @@ class ProxyServerModal extends React.PureComponent{
       },
     };
     return (<Modal
-      title={`${editable?'编辑':'新增'}代理服务`}
+      title={`${editable?'编辑':'新增'}代理规则`}
       visible={visible}
       confirmLoading={confirmLoading}
       onOk={this.handleModalOk}
       onCancel={this.handleModalCancel}>
       <Form {...formItemLayout} >
         <Form.Item
-          label="代理服务名称">
+          label="IP">
           {
-            getFieldDecorator('name',{
+            getFieldDecorator('ip',{
               rules:[{
-                required: true, message: '请输入代理服务名称',
+                required: true, message: '请输入IP',
               }],
-              initialValue:name
-            })(<Input placeholder="请输入代理服务名称"/>)
+              initialValue:ip
+            })(<Input placeholder="请输入ip"/>)
           }
         </Form.Item>
         <Form.Item
@@ -78,4 +78,4 @@ class ProxyServerModal extends React.PureComponent{
     </Modal>)
   }
 } 
-export default Form.create()(ProxyServerModal)
+export default Form.create()(ProxyRuleModal)

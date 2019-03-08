@@ -28,8 +28,8 @@ class App extends Component {
                 return  <Redirect key={path} exact path={path} to={redirect}/>
               }else{
                 const Layout = route.layout;
-                const Component = route.component
-                return <Route exact key={path} path={path} render={(props)=>(<Layout {...props}><Component/></Layout>)}/>
+                const Component = route.component;
+                return <Route exact={path!=='*'} key={path} path={path} render={(props)=>(<Layout {...props}><Component/></Layout>)}/>
               }
             })
           }

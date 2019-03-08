@@ -33,7 +33,7 @@ const serverRender = (context, options)=> {
   const url = context.state.url;
   const branch = matchRoutes(routes, url);
   const promises = branch.map(({route}) => {
-    const fetch = route.component.fetch;
+    const fetch = route.component&&route.component.fetch;
     return fetch instanceof Function ? fetch() : Promise.resolve(null)
   });
   return Promise.all(promises).then(data => {

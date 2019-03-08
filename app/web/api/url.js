@@ -2,21 +2,46 @@ export default {
   //获取代理服务列表
   getProxyServerList:{
     method:'post',
-    url:'/api/proxy-server/list'
+    url:'/api/proxy-server/server-list'
   },
   //添加代理服务
   addProxyServer:{
     method:'post',
-    url:'/api/proxy-server/add'
+    url:'/api/proxy-server/add-server'
   },
-  //更新服务
+  //更新代理服务
   updateProxyServer:{
     method:'post',
-    url:'/api/proxy-server/update'
+    url:'/api/proxy-server/update-server'
   },
-  //更改服务状态
+  //删除代理服务
+  deleteProxyServer:{
+    method:'delete',
+    url:'/api/proxy-server/delete-server'
+  },
+  //更改代理服务状态
   changeProxyServerStatus:{
     method:'get',
     url:'/api/proxy-server/change-status'
+  },
+  //获取代理规则列表
+  getProxyRuleList:{
+    method:'get',
+    url:'/api/proxy-server/rule-list'
+  },
+  //新增代理规则
+  addProxyRule:{
+    method:'post',
+    url:'/api/proxy-server/add-rule'
+  },
+  //更新代理规则
+  updateProxyRule:{
+    method:'post',
+    url:'/api/proxy-server/update-rule'
+  },
+  //删除代理规则
+  deleteProxyRule:{
+    method:'delete',
+    url:'/api/proxy-server/delete-rule'
   }
 }

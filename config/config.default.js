@@ -27,6 +27,17 @@ module.exports = app => {
     'access'
   ];
 
+  exports.onerror={
+    all(err, ctx) {
+      // 在此处定义针对所有响应类型的错误处理方法
+      // 注意，定义了 config.all 之后，其他错误处理方法不会再生效
+      ctx.body = {
+        message:err.message
+      }
+      ctx.status = 500;
+    }
+  }
+
   exports.reactssr = {
     layout: path.join(app.baseDir, 'app/web/view/layout.html')
   };
