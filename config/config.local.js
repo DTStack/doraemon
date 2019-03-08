@@ -43,7 +43,6 @@ module.exports = () => {
         password:'admin123'
       }
     ]
-   
   };
 
   exports.security = { domainWhiteList };
