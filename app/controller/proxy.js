@@ -62,7 +62,7 @@ class ProxyServerController extends Controller{
       this.ctx.body = this.app.utils.response(false,null,'该代理服务已关闭');
     }else{
       let target = '';
-      const ipToTargetMap = await this.app.model.IpMapToTarget.findOne({
+      const proxyRule = await this.app.model.ProxyRule.findOne({
         attributes:['target'],
         where:{
           is_delete:0,
@@ -70,8 +70,8 @@ class ProxyServerController extends Controller{
           proxy_server_id:strArray[1]
         }
       });
-      if(ipToTargetMap){
-        target=ipToTargetMap.target;
+      if(proxyRule){
+        target=proxyRule.target;
       }else{
         target=proxyServer.target;
       }
