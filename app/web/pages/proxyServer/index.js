@@ -108,6 +108,7 @@ export default class ProxyServer extends React.PureComponent{
     })
   }
   handleProxyServerModalOk=(proxyServer)=>{
+    const {currentProxyServer} = this.state;
     this.setState({
       proxyServerModalConfirmLoading:true
     });
