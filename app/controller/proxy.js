@@ -52,7 +52,7 @@ class ProxyServerController extends Controller{
     req.url = `/${strArray[2]}`;
     const realIp = this.ctx.header['x-real-ip'];
     const proxyServer = await this.app.model.ProxyServer.findOne({
-      attributes:['target'],
+      attributes:['target','status'],
       where:{
         is_delete:0,
         id:strArray[1]

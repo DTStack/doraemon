@@ -5,7 +5,20 @@ const child_process = require('child_process');
 class ProxyServerService extends Service {
   //创建
   async create(proxyServer) {
-    return await this.ctx.model.ProxyServer.create(createResult.proxyServer);;
+    console.log(proxyServer);
+    const {host,protocol} = this.ctx;
+    proxyServer.proxy_server_address=`${protocol}://${host}/proxy`;
+    proxyServer.status = 1;
+    const insertResult = await this.ctx.model.ProxyServer.create(proxyServer);
+    const {id,proxy_server_address} = insertResult;
+    const updateResult = await this.ctx.model.ProxyServer.update({
+      proxy_server_address:`${proxy_server_address}/${id}`
+    },{
+      where:{
+        id
+      }
+    });
+    return updateResult;
   }
   //关闭
   async close(id){

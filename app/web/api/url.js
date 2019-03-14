@@ -22,7 +22,7 @@ export default {
   //更改代理服务状态
   changeProxyServerStatus:{
     method:'get',
-    url:'/api/proxy-server/change-status'
+    url:'/api/proxy-server/change-server-status'
   },
   //获取代理规则列表
   getProxyRuleList:{
