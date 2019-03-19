@@ -37,6 +37,7 @@ export default class SiderLayout extends React.PureComponent{
             className="left" 
             collapsible
             collapsed={collapsed}
+            style={{height:'100%'}}
             onCollapse={this.handleCollapseChange}>
             <Menu 
               mode="inline"
