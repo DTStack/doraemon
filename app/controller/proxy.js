@@ -1,7 +1,4 @@
 const Controller = require('egg').Controller;
-const httpProxy = require('http-proxy');
-const pathToRegexp = require('path-to-regexp');
-const proxy = httpProxy.createProxyServer({});
 class ProxyServerController extends Controller{
   //获取服务列表
   async list(){
@@ -43,53 +40,6 @@ class ProxyServerController extends Controller{
       }
     });
     this.ctx.body = this.app.utils.response(true,result);
-  }
-  //api代理
-  async proxyApi(){
-    const {req,res} = this.ctx;
-    const regexp = pathToRegexp('/proxy/:id/(.*)');
-    const strArray = regexp.exec(req.url);
-    req.url = `/${strArray[2]}`;
-    const realIp = this.ctx.header['x-real-ip'];
-    const proxyServer = await this.app.model.ProxyServer.findOne({
-      attributes:['target','status'],
-      where:{
-        is_delete:0,
-        id:strArray[1]
-      }
-    });
-    if(proxyServer.status===0){
-      this.ctx.body = this.app.utils.response(false,null,'该代理服务已关闭');
-    }else{
-      let target = '';
-      const proxyRule = await this.app.model.ProxyRule.findOne({
-        attributes:['target'],
-        where:{
-          is_delete:0,
-          ip:realIp,
-          proxy_server_id:strArray[1]
-        }
-      });
-      if(proxyRule){
-        target=proxyRule.target;
-      }else{
-        target=proxyServer.target;
-      }
-      return new Promise((resolve, reject)=>{
-        if(target){
-          proxy.web(req, res, { 
-            target,
-            changeOrigin: true
-          },(e)=>{
-            const status = {
-              ECONNREFUSED: 503,
-              ETIMEOUT: 504,
-            }[e.code]
-            if (status) ctx.status = status
-          });
-        }
-      })
-    }
   }
   //改变状态
   async changeStatus(){

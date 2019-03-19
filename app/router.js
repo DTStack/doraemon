@@ -21,5 +21,5 @@ module.exports = app => {
   /**
    * 服务代理
    */
-  app.all('/proxy/:id/*', app.controller.proxy.proxyApi);
+  app.all('/proxy/:id/*', app.middleware.proxy);
 };

@@ -1,32 +1,44 @@
-const httpProxy = require('http-proxy')
+const c2k = require('koa-connect');
+const proxy = require('http-proxy-middleware');
 const pathToRegexp = require('path-to-regexp');
-const proxy = httpProxy.createProxyServer({});
 module.exports = async function httpproxy(ctx, next) {
-  return new Promise(async (resolve, reject) => {
-    await next();
-    const url = ctx.req.url;
-    console.log(url);
-    const regexp = pathToRegexp('/proxy/:id/(.*)');
-    const strArray = regexp.exec(url)
-    const proxyServer = await ctx.model.ProxyServer.findOne({
+  await next();
+  const {req,app} = ctx;
+  const regexp = pathToRegexp('/proxy/:id/(.*)');
+  const strArray = regexp.exec(req.url);
+  const realIp = ctx.header['x-real-ip'];
+  const proxyServer = await app.model.ProxyServer.findOne({
+    attributes:['target','status'],
+    where:{
+      is_delete:0,
+      id:strArray[1]
+    }
+  });
+  if(proxyServer.status===0){
+    ctx.body = app.utils.response(false,null,'该代理服务已关闭');
+  }else{
+    let target = '';
+    const proxyRule = await app.model.ProxyRule.findOne({
+      attributes:['target'],
       where:{
         is_delete:0,
-        id:strArray[1]
+        ip:realIp,
+        proxy_server_id:strArray[1]
       }
     });
-   
-    ctx.req.url = `/${strArray[2]}`;
-    console.log(ctx.req.url);
-    console.log(proxyServer.target);
-    proxy.web(ctx.req, ctx.res,{
-      target:proxyServer.target
-    }, (e) => {
-      const status = {
-        ECONNREFUSED: 503,
-        ETIMEOUT: 504,
-      }[e.code]
-      if (status) ctx.status = status
-      resolve();
-    })
-  })
+    if(proxyRule){
+      target=proxyRule.target;
+    }else{
+      target=proxyServer.target;
+    }
+    if(target){
+      await c2k(proxy({ 
+        target: target, 
+        pathRewrite:{
+          [`^/proxy/${strArray[1]}`]:''
+        },
+        changeOrigin: true 
+      }))(ctx,next)
+    }
+  }
 };

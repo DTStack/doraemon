@@ -8,9 +8,12 @@ module.exports = app => {
   };
   exports.security = {
     csrf: {
-      ignore: '/proxy'
+      ignore: /^\/proxy/
     },
   };
+  exports.bodyParser = {
+    ignore:[/^\/proxy/]
+  }
   exports.logger = {
     consoleLevel: 'DEBUG',
     dir: path.join(app.baseDir, 'logs')
