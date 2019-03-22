@@ -68,7 +68,7 @@ class ProxyRuleModal extends React.PureComponent{
           {
             getFieldDecorator('target',{
               rules:[{
-                required: true, message: '请输入目标服务地址',
+                type:'url',required: true, message: '请输入正确格式的目标服务地址',
               }],
               initialValue:target
             })(<Input placeholder="请输入目标服务地址"/>)
