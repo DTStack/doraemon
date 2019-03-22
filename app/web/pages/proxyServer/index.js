@@ -1,7 +1,7 @@
 import React from 'react';
 import {Row,Col,Button,Table,message as Message, Divider, Modal,Badge,Popconfirm} from 'antd';
 import {API} from '@/api';
-import ProxyServerModal from './components/proxyTerverModal';
+import ProxyServerModal from './components/proxyModal';
 import ProxyRuleModal from './components/proxyRuleModal';
 import './style.scss';
 
