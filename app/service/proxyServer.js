@@ -1,11 +1,8 @@
 const Service = require('egg').Service;
-const getPort = require('get-port');
-const child_process = require('child_process');
 
 class ProxyServerService extends Service {
   //创建
   async create(proxyServer) {
-    console.log(proxyServer);
     const {host,protocol} = this.ctx;
     proxyServer.proxy_server_address=`${protocol}://${host}/proxy`;
     proxyServer.status = 1;
