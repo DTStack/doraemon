@@ -22,4 +22,8 @@ module.exports = app => {
    * 服务代理
    */
   app.all('/proxy/:id/*', app.middleware.proxy);
+  /**
+   * github
+   */
+  app.post('/api/github/get-config-json',app.controller.github.getConfigJson);
 };

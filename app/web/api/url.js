@@ -43,5 +43,10 @@ export default {
   deleteProxyRule:{
     method:'delete',
     url:'/api/proxy-server/delete-rule'
+  },
+  //获取github配置仓库中的json
+  getConfigJsonInGithub:{
+    method:'post',
+    url:'/api/github/get-config-json'
   }
 }

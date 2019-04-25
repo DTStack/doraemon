@@ -4,10 +4,18 @@ import {Link} from 'react-router-dom';
 import BasicLayout from '@/layouts/basicLayout';
 import './style.scss';
 
-const {Header, Sider, Content,Footer} = Layout;
+const {Sider, Content,Footer} = Layout;
 const SubMenu = Menu.SubMenu;
 
 const navMenuList = [{
+  name:'公司内部网址导航',
+  path:'/page/internal-url-navigation',
+  icon:'bars'
+},{
+  name:'工具箱',
+  path:'/page/toolbox',
+  icon:'appstore'
+},{
   name:'代理服务',
   path:'/page/proxy-server',
   icon:'cloud'

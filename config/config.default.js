@@ -25,6 +25,11 @@ module.exports = app => {
   };
 
   exports.keys = '123456';
+  
+  exports.github = {
+    owner:'dtux-kangaroo',
+    configRepositoryName:'ko-config'
+  }
 
   exports.middleware = [
     'access'
