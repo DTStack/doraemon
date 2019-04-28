@@ -8,6 +8,10 @@ const {Sider, Content,Footer} = Layout;
 const SubMenu = Menu.SubMenu;
 
 const navMenuList = [{
+  name:'邮件签名制作',
+  path:'/page/mail-sign',
+  icon:'solution'
+},{
   name:'公司内部网址导航',
   path:'/page/internal-url-navigation',
   icon:'bars'
@@ -19,7 +23,7 @@ const navMenuList = [{
   name:'代理服务',
   path:'/page/proxy-server',
   icon:'cloud'
-}]
+},]
 export default class SiderLayout extends React.PureComponent{
   state={
     collapsed:true,

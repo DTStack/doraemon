@@ -8,6 +8,8 @@ import ProxyServer from '@/pages/proxyServer';
 import InnerUrlNavigation from '@/pages/innerUrlNavigation';
 //工具箱
 import Toolbox from '@/pages/toolbox';
+//邮件签名生成
+import MailSign from '@/pages/mailSign';
 
 import NotFound from '@/pages/exception/404';
 const urlPrefix = '/page'
@@ -35,6 +37,11 @@ const routes = [
     path: `${urlPrefix}/proxy-server`,
     layout: SiderLayout,
     component: ProxyServer
+  },
+  {
+    path: `${urlPrefix}/mail-sign`,
+    layout: SiderLayout,
+    component: MailSign
   },
   {
     path: '*',
