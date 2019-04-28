@@ -1,21 +1,28 @@
 {
-  "app.css": "/public/css/app.css",
-  "app.js": "/public/js/chunk/app.js",
-  "runtime.js": "/public/js/runtime.js",
+  "app.css": "/public/css/app.c4c0b81d.css",
+  "app.js": "/public/js/chunk/app.ed37862c.js",
+  "common.css": "/public/css/common.35a620a4.css",
+  "common.js": "/public/js/chunk/common.6d1c9363.js",
+  "runtime.js": "/public/js/runtime.e60e8e00.js",
+  "img/style.scss": "/public/img/bg.0d9e392f.png",
+  "vendor.js": "/public/js/vendor.637cf43c.js",
   "deps": {
     "app.js": {
       "js": [
-        "/public/js/runtime.js",
-        "/public/js/chunk/app.js"
+        "/public/js/vendor.637cf43c.js",
+        "/public/js/runtime.e60e8e00.js",
+        "/public/js/chunk/common.6d1c9363.js",
+        "/public/js/chunk/app.ed37862c.js"
       ],
       "css": [
-        "/public/css/app.css"
+        "/public/css/common.35a620a4.css",
+        "/public/css/app.c4c0b81d.css"
       ]
     }
   },
   "info": {
     "publicPath": "/public/",
-    "buildPath": "\\public",
+    "buildPath": "public",
     "mapped": true
   }
 }
