@@ -252,7 +252,13 @@ export default class ProxyServer extends React.PureComponent{
     },{
       title:'目标代理服务地址',
       key:'target',
-      dataIndex:'target'
+      dataIndex:'target',
+      width:'30%'
+    },{
+      title:'备注',
+      key:'remark',
+      width:'30%',
+      dataIndex:'remark'
     },{
       title:'操作',
       key:'action',
@@ -268,13 +274,13 @@ export default class ProxyServer extends React.PureComponent{
     }]
     return <div style={{padding:'0 10px'}}>
       <div className="text-right"><Button icon="plus-circle" onClick={()=>{this.setState({proxyRuleModalVisible:true})}}>添加代理规则</Button></div>
-      <Table 
+      <Table
         size="small"
-        rowKey={(row)=>row.id}  
-        style={{marginTop:10}} 
-        loading={subTableLoading}  
-        columns={columns} 
-        dataSource={subTableData} 
+        rowKey={(row)=>row.id}
+        style={{marginTop:10}}
+        loading={subTableLoading}
+        columns={columns}
+        dataSource={subTableData}
         pagination={false}/>
     </div>
   }
@@ -339,12 +345,12 @@ export default class ProxyServer extends React.PureComponent{
           <Button type="primary" onClick={()=>{this.setState({proxyServerModalVisible:true})}}>添加代理服务</Button>
         </Col>
       </Row>
-      <Table 
+      <Table
         rowKey={(row)=>row.id}
-        style={{marginTop:10}} 
-        size="small" 
-        loading={mainTableLoading} 
-        columns={columns} 
+        style={{marginTop:10}}
+        size="small"
+        loading={mainTableLoading}
+        columns={columns}
         dataSource={maintTableList}
         expandedRowKeys={expandedRowKeys}
         expandedRowRender={this.tableExpandedRowRender}
@@ -356,9 +362,9 @@ export default class ProxyServer extends React.PureComponent{
           size:mainTableParams.pageSize
         }}/>
 
-      <ProxyServerModal 
+      <ProxyServerModal
         ref={(modal)=>this.ProxyServerModal=modal}
-        editable={JSON.stringify(currentProxyServer)!=='{}'} 
+        editable={JSON.stringify(currentProxyServer)!=='{}'}
         proxyServer={currentProxyServer}
         confirmLoading={proxyServerModalConfirmLoading}
         visible={proxyServerModalVisible}
@@ -366,12 +372,12 @@ export default class ProxyServer extends React.PureComponent{
         onCancel={this.handleProxyServerModalCancel}/>
       <ProxyRuleModal
         ref={(modal)=>this.ProxyRuleModal=modal}
-        editable={JSON.stringify(currentProxyRule)!=='{}'} 
+        editable={JSON.stringify(currentProxyRule)!=='{}'}
         proxyServer={currentProxyRule}
         confirmLoading={proxyRuleModalConfirmLoading}
         visible={proxyRuleModalVisible}
         onOk={this.handleProxyRuleModalOk}
         onCancel={this.handleProxyRuleModalCancel}/>
     </div>)
-  } 
+  }
 }

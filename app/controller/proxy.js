@@ -57,7 +57,7 @@ class ProxyServerController extends Controller{
   async ruleList(){
     const {proxy_server_id} = this.ctx.request.query;
     const result = await this.app.model.ProxyRule.findAndCountAll({
-      attributes:['id','proxy_server_id','ip','target'],
+      attributes:['id','proxy_server_id','ip','target','remark'],
       where:{
         is_delete:0,
         proxy_server_id
@@ -70,20 +70,22 @@ class ProxyServerController extends Controller{
   }
   //新增代理规则
   async addRule(){
-    const {proxy_server_id,target,ip} = this.ctx.request.body;
+    const {proxy_server_id,target,ip,remark} = this.ctx.request.body;
     const result = await this.app.model.ProxyRule.create({
       proxy_server_id,
       target,
-      ip
+      ip,
+      remark
     });
     this.ctx.body = this.app.utils.response(result,null);
   }
   //更新代理规则
   async updateRule(){
-    const {id,target,ip} = this.ctx.request.body;
+    const {id,target,ip,remark} = this.ctx.request.body;
     const result = await this.app.model.ProxyRule.update({
       target,
-      ip
+      ip,
+      remark
     },{
       where:{
         id

@@ -1,10 +1,10 @@
 module.exports = app => {
   const { STRING, INTEGER, DATE } = app.Sequelize;
- 
   const ProxyServer = app.model.define('proxy_rule', {
     id: { type: INTEGER, primaryKey: true, autoIncrement: true },
     ip: INTEGER,
     target: STRING(60),
+    remark: STRING(255),
     proxy_server_id: INTEGER,
     is_delete: INTEGER,
     created_at: DATE,
@@ -13,6 +13,5 @@ module.exports = app => {
     freezeTableName: true
   });
 
- 
   return ProxyServer;
 };

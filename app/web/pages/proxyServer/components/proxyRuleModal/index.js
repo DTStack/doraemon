@@ -1,7 +1,7 @@
 import React from 'react';
 import {Modal,Form,Input} from 'antd';
-import PropsTypes from 'prop-types'; 
-
+import PropsTypes from 'prop-types';
+const { TextArea } = Input;
 class ProxyRuleModal extends React.PureComponent{
   static defaultProps = {
     visible:false,
@@ -20,7 +20,7 @@ class ProxyRuleModal extends React.PureComponent{
   state={
     initIp:''
   }
-  getUserIP = (onNewIP) => { 
+  getUserIP = (onNewIP) => {
     //compatibility for firefox and chrome
     var myPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
     var pc = new myPeerConnection({
@@ -78,7 +78,7 @@ class ProxyRuleModal extends React.PureComponent{
   render(){
     const {visible,editable,form,proxyServer,confirmLoading} = this.props;
     const {getFieldDecorator} = form;
-    const {ip,target} = proxyServer;
+    const {ip,target,remark} = proxyServer;
     const {initIp} = this.state;
     const formItemLayout = {
       labelCol: {
@@ -117,8 +117,20 @@ class ProxyRuleModal extends React.PureComponent{
             })(<Input placeholder="请输入目标服务地址"/>)
           }
         </Form.Item>
+        <Form.Item
+          label="备注">
+          {
+            getFieldDecorator('remark',{
+              rules:[{
+                required: true, message: '请输入备注',
+              }],
+              initialValue:remark
+            })(<TextArea rows={4} placeholder="请输入备注"/>)
+          }
+        </Form.Item>
       </Form>
     </Modal>)
   }
-} 
+}
+
 export default Form.create()(ProxyRuleModal)
