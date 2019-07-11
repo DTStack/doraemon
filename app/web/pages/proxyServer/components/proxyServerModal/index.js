@@ -1,6 +1,7 @@
 import React from 'react';
 import {Modal,Form,Input} from 'antd';
-import PropsTypes from 'prop-types'; 
+import PropsTypes from 'prop-types';
+import {urlReg} from '@/utils/reg';
 
 class ProxyServerModal extends React.PureComponent{
   static defaultProps = {
@@ -57,7 +58,7 @@ class ProxyServerModal extends React.PureComponent{
           {
             getFieldDecorator('name',{
               rules:[{
-                required: true, message: '请输入代理服务名称',
+                required: true,message: '请输入代理服务名称',
               }],
               initialValue:name
             })(<Input placeholder="请输入代理服务名称"/>)
@@ -68,7 +69,7 @@ class ProxyServerModal extends React.PureComponent{
           {
             getFieldDecorator('target',{
               rules:[{
-                type:'url',required: true, message: '请输入正确格式的目标服务地址',
+                required: true,pattern:urlReg,message: '请输入正确格式的目标服务地址',
               }],
               initialValue:target
             })(<Input placeholder="请输入目标服务地址"/>)
@@ -77,5 +78,5 @@ class ProxyServerModal extends React.PureComponent{
       </Form>
     </Modal>)
   }
-} 
+}
 export default Form.create()(ProxyServerModal)

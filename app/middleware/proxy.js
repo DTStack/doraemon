@@ -4,7 +4,7 @@ module.exports = async function httpproxy(ctx, next) {
   await next();
   const {app} = ctx;
   //获取代理服务id
-  const serverId = ctx.params.id; 
+  const serverId = ctx.params.id;
   //获取真实访问者ip
   const realIp = ctx.header['x-real-ip'];
   //根据代理服务id查询代理服务
@@ -36,12 +36,12 @@ module.exports = async function httpproxy(ctx, next) {
       target=proxyServer.target;
     }
     if(target){
-      await c2k(proxy({ 
-        target: target, 
+      await c2k(proxy({
+        target,
         pathRewrite:{
           [`^/proxy/${serverId}`]:''
         },
-        changeOrigin: true 
+        changeOrigin: true
       }))(ctx,next)
     }
   }
