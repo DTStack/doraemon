@@ -6,7 +6,7 @@ module.exports = {
   entry: {
     app: resolve('../app/web/main.js')
   },
-  dll: ['react', 'react-dom','react-redux','redux','redux-thunk','react-router','react-router-config','react-router-dom','react-router-redux'],
+  dll: ['react', 'react-dom'],
   loaders: {
     babel: {
       include: [resolve('../app/web')],
@@ -27,7 +27,7 @@ module.exports = {
       '@':resolve('../app/web')
     }
   },
-  plugins:[],
+  plugins: {},
   done() {
     console.log('---webpack compile finish---');
   }
