@@ -20,7 +20,7 @@ export function getIPs(){
     // create offer and set local description
     pc.createOffer().then(function(sdp) {
       sdp.sdp.split('\n').forEach(function(line) {
-          if (line.indexOf('candidate') < 0) return;
+          if (line.indexOf('IP4') < 0) return;
           line.match(ipRegex).forEach(iterateIP);
       });
       pc.setLocalDescription(sdp, noop, noop);
