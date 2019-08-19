@@ -3,7 +3,6 @@ import {Layout,Menu,Icon} from 'antd';
 import {Link} from 'react-router-dom';
 import BasicLayout from '@/layouts/basicLayout';
 import './style.scss';
-
 const {Sider, Content,Footer} = Layout;
 const SubMenu = Menu.SubMenu;
 
@@ -23,7 +22,11 @@ const navMenuList = [{
   name:'代理服务',
   path:'/page/proxy-server',
   icon:'cloud'
-},]
+},{
+  name:'主机管理',
+  path:'/page/host-management',
+  icon:'desktop'
+}]
 export default class SiderLayout extends React.PureComponent{
   state={
     collapsed:true,
@@ -45,13 +48,13 @@ export default class SiderLayout extends React.PureComponent{
     return (
       <BasicLayout>
         <Layout className="layout-main">
-          <Sider 
-            className="left" 
+          <Sider
+            className="left"
             collapsible
             collapsed={collapsed}
             style={{height:'100%'}}
             onCollapse={this.handleCollapseChange}>
-            <Menu 
+            <Menu
               mode="inline"
               selectedKeys={selectedKeys}>
               {
@@ -64,7 +67,6 @@ export default class SiderLayout extends React.PureComponent{
                   }
                 })
               }
-              
             </Menu>
           </Sider>
           <Layout className="right">

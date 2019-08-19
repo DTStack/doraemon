@@ -10,6 +10,8 @@ import InnerUrlNavigation from '@/pages/innerUrlNavigation';
 import Toolbox from '@/pages/toolbox';
 //邮件签名生成
 import MailSign from '@/pages/mailSign';
+//主机管理
+import HostManagement from '@/pages/hostManagement';
 
 import NotFound from '@/pages/exception/404';
 const urlPrefix = '/page'
@@ -42,6 +44,11 @@ const routes = [
     path: `${urlPrefix}/mail-sign`,
     layout: SiderLayout,
     component: MailSign
+  },
+  {
+    path: `${urlPrefix}/host-management`,
+    layout: SiderLayout,
+    component: HostManagement
   },
   {
     path: '*',

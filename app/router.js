@@ -19,6 +19,14 @@ module.exports = app => {
   app.post('/api/proxy-server/update-rule', app.controller.proxy.updateRule);
   app.delete('/api/proxy-server/delete-rule', app.controller.proxy.deleteRule);
   /**
+   * 主机管理
+   */
+  app.get('/api/host-management/host-list', app.controller.hostManagement.queryHosts);
+  app.post('/api/host-management/add-host', app.controller.hostManagement.addHost);
+  app.post('/api/host-management/edit-host', app.controller.hostManagement.editHost);
+  app.delete('/api/host-management/delete-host', app.controller.hostManagement.deleteHost);
+
+  /**
    * 服务代理
    */
   app.all('/proxy/:id/*', app.middleware.proxy);

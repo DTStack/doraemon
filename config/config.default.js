@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const utils = require('../app/utils');
 module.exports = app => {
   const exports = {};
 
@@ -25,7 +26,6 @@ module.exports = app => {
   };
 
   exports.keys = '123456';
-  
   exports.github = {
     owner:'dtux-kangaroo',
     configRepositoryName:'ko-config'
@@ -39,9 +39,7 @@ module.exports = app => {
     all(err, ctx) {
       // 在此处定义针对所有响应类型的错误处理方法
       // 注意，定义了 config.all 之后，其他错误处理方法不会再生效
-      ctx.body = {
-        message:err.message
-      }
+      ctx.body = JSON.stringify(utils.response(false,null,err.message));
       ctx.status = 500;
     }
   }

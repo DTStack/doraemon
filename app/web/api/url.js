@@ -48,5 +48,28 @@ export default {
   getConfigJsonInGithub:{
     method:'post',
     url:'/api/github/get-config-json'
+  },
+  /**
+   * 主机管理
+   */
+  //获取主机列表
+  getHostList:{
+    method:'get',
+    url:'/api/host-management/host-list'
+  },
+  //新增主机
+  addHost:{
+    method:'post',
+    url:'/api/host-management/add-host'
+  },
+  //编辑主机
+  editHost:{
+    method:'post',
+    url:'/api/host-management/edit-host'
+  },
+  //删除主机
+  deleteHost:{
+    method:'delete',
+    url:'/api/host-management/delete-host'
   }
 }
