@@ -14,7 +14,7 @@ class HostManagementController extends Controller{
     if(_.isNil(hostName)) throw new Error('缺少必要参数hostName');
     if(_.isNil(username)) throw new Error('缺少必要参数username');
     if(_.isNil(password)) throw new Error('缺少必要参数password');
-    await this.ctx.service.hostManagement.addHost({
+    const result = await this.ctx.service.hostManagement.addHost({
       hostIp,hostName,username,password,remark
     });
     this.ctx.body = this.app.utils.response(true,result.get({
