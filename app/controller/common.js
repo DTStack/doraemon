@@ -4,7 +4,7 @@ class CommonController extends Controller{
   async getConfigJson(){
     const {app,ctx} = this;
     const {owner,configRepositoryName} = app.config.github;
-    const {name} = ctx.request.body;
+    const {name} = ctx.request.query;
     const result = await ctx.curl(`https://${owner}.github.io/${configRepositoryName}/${name}`,{
       dataType: 'json'
     });

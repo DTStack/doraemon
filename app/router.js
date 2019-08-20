@@ -33,7 +33,7 @@ module.exports = app => {
   /**
    * 通用接口
    */
-  app.post('/api/github/get-config-json',app.controller.common.getConfigJson);
+  app.get('/api/github/get-config-json',app.controller.common.getConfigJson);
   app.get('/api/github/get-local-ip',app.controller.common.getLocalIp);
 
 };

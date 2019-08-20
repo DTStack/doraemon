@@ -4,7 +4,7 @@ export default {
    */
   //获取github配置仓库中的json
   getConfigJsonInGithub:{
-    method:'post',
+    method:'get',
     url:'/api/github/get-config-json'
   },
   //获取本机Ip

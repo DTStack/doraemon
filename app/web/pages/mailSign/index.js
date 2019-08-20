@@ -7,20 +7,15 @@ import { saveAs } from 'file-saver';
 
 let cropper = null;
 export default class MainSign extends React.PureComponent  {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      name: '',
-      nick: '',
-      phone: '',
-      title: '',
-      mail: '',
-      addr: '杭州市西湖区紫霞街176号互联网创新创业园2号楼8F',
-      previewImgSrc: ''
-    }
+  state = {
+    name: '',
+    nick: '',
+    phone: '',
+    title: '',
+    mail: '',
+    addr: '杭州市西湖区紫霞街176号互联网创新创业园2号楼8F',
+    previewImgSrc: ''
   }
-
   crop() {
     let image = cropper.getCroppedCanvas({
       width: 140,
@@ -45,7 +40,7 @@ export default class MainSign extends React.PureComponent  {
     console.log(evt.target.files)
     var reader = new FileReader();
     reader.onload = (e) => {
-      this.setState({ 
+      this.setState({
         previewImgSrc: e.target.result,
         image: file
       }, () => {
