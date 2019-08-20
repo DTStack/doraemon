@@ -1,17 +1,15 @@
-import { LIST, ADD, DEL } from './constant';
-
-export default function update(state, action) {
-  const newState = Object.assign({}, state);
-  if (action.type === ADD) {
-    const list = Array.isArray(action.item) ? action.item : [action.item];
-    newState.list = [...newState.list, ...list];
-    console.log('-----', newState.list);
-  } else if (action.type === DEL) {
-    newState.list = newState.list.filter(item => {
-      return item.id !== action.id;
-    });
-  } else if (action.type === LIST) {
-    newState.list = action.list;
+import { CHANGE_LOCAL_IP} from './constant';
+const initialState = {
+  localIp:''
+}
+export default (state=initialState, action)=>{
+  const {type,payload} = action;
+  switch(type){
+    case CHANGE_LOCAL_IP:
+      return {
+        ...state,
+        localIp:payload
+      }
+    default: return state;
   }
-  return newState;
 }

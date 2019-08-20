@@ -1,3 +1,1 @@
-export const LIST = 'LIST';
-export const ADD = 'ADD';
-export const DEL = 'DEL';
+export const CHANGE_LOCAL_IP = 'CHANGE_LOCAL_IP';

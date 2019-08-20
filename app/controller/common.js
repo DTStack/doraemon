@@ -1,6 +1,6 @@
 const Controller = require('egg').Controller;
 
-class GithubController extends Controller{
+class CommonController extends Controller{
   async getConfigJson(){
     const {app,ctx} = this;
     const {owner,configRepositoryName} = app.config.github;
@@ -10,5 +10,10 @@ class GithubController extends Controller{
     });
     ctx.body = app.utils.response(result.status===200,result.data,result.status===200?null:'请求失败');
   }
+  async getLocalIp(){
+    const {app,ctx} = this;
+    const localIp = ctx.ip
+    ctx.body = app.utils.response(true,localIp);
+  }
 }
-module.exports = GithubController;
+module.exports = CommonController;

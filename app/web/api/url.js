@@ -1,4 +1,20 @@
 export default {
+  /**
+   * 通用接口
+   */
+  //获取github配置仓库中的json
+  getConfigJsonInGithub:{
+    method:'post',
+    url:'/api/github/get-config-json'
+  },
+  //获取本机Ip
+  getLocalIp:{
+    method:'get',
+    url:'/api/github/get-local-ip'
+  },
+  /**
+   * 代理服务
+   */
   //获取代理服务列表
   getProxyServerList:{
     method:'post',
@@ -43,11 +59,6 @@ export default {
   deleteProxyRule:{
     method:'delete',
     url:'/api/proxy-server/delete-rule'
-  },
-  //获取github配置仓库中的json
-  getConfigJsonInGithub:{
-    method:'post',
-    url:'/api/github/get-config-json'
   },
   /**
    * 主机管理

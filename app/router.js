@@ -31,7 +31,9 @@ module.exports = app => {
    */
   app.all('/proxy/:id/*', app.middleware.proxy);
   /**
-   * github
+   * 通用接口
    */
-  app.post('/api/github/get-config-json',app.controller.github.getConfigJson);
+  app.post('/api/github/get-config-json',app.controller.common.getConfigJson);
+  app.get('/api/github/get-local-ip',app.controller.common.getLocalIp);
+
 };
