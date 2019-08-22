@@ -3,7 +3,8 @@ const Service = require('egg').Service;
 
 class HostManagementService extends Service {
   queryHosts(){
-    return this.ctx.model.HostManagement.findAll({
+    const {ctx} = this;
+    return ctx.model.HostManagement.findAll({
       attributes:['id','hostIp','hostName','remark','username','password'],
       where:{
         status:1
@@ -11,9 +12,11 @@ class HostManagementService extends Service {
     })
   }
   addHost(host){
-    return this.ctx.model.HostManagement.create(host);
+    const {ctx} = this;
+    return ctx.model.HostManagement.create(host);
   }
   editHost(host){
+    const {ctx} = this;
     const {id,hostIp,hostName,remark,username,password} = host;
     const newHost = {};
 
@@ -23,14 +26,15 @@ class HostManagementService extends Service {
     if(!_.isNil(username)) newHost.username=username;
     if(!_.isNil(password)) newHost.password=password;
 
-    return this.ctx.model.HostManagement.update(newHost,{
+    return ctx.model.HostManagement.update(newHost,{
       where:{
         id
       }
     })
   }
   deleteHost(id){
-    return this.ctx.model.HostManagement.update({
+    const {ctx} = this;
+    return ctx.model.HostManagement.update({
       status:0
     },{
       where:{

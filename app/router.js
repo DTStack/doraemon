@@ -25,6 +25,13 @@ module.exports = app => {
   app.post('/api/host-management/add-host', app.controller.hostManagement.addHost);
   app.post('/api/host-management/edit-host', app.controller.hostManagement.editHost);
   app.delete('/api/host-management/delete-host', app.controller.hostManagement.deleteHost);
+  /**
+   * 配置中心
+   */
+  app.post('/api/config-center/config-list',app.controller.configCenter.getConfigList);
+  app.post('/api/config-center/add-config',app.controller.configCenter.addConfig);
+  app.post('/api/config-center/edit-config',app.controller.configCenter.editConfig);
+  app.delete('/api/config-center/delete-config',app.controller.configCenter.deleteConfig);
 
   /**
    * 服务代理

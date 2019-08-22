@@ -4,28 +4,31 @@ const _ = require('lodash');
 class HostManagementController extends Controller{
   //主机列表
   async queryHosts(){
-    const data =  await  this.ctx.service.hostManagement.queryHosts();
-    this.ctx.body = this.app.utils.response(true,data);
+    const {ctx,app} = this;
+    const data =  await  ctx.service.hostManagement.queryHosts();
+    ctx.body = app.utils.response(true,data);
   }
   //新增主机
   async addHost(){
-    const {hostIp,hostName,username,password,remark} = this.ctx.request.body;
+    const {ctx,app} = this;
+    const {hostIp,hostName,username,password,remark} = ctx.request.body;
     if(_.isNil(hostIp)) throw new Error('缺少必要参数hostIp');
     if(_.isNil(hostName)) throw new Error('缺少必要参数hostName');
     if(_.isNil(username)) throw new Error('缺少必要参数username');
     if(_.isNil(password)) throw new Error('缺少必要参数password');
-    const result = await this.ctx.service.hostManagement.addHost({
+    const result = await ctx.service.hostManagement.addHost({
       hostIp,hostName,username,password,remark
     });
-    this.ctx.body = this.app.utils.response(true,result.get({
+    ctx.body = app.utils.response(true,result.get({
       plain: true
     }));
   }
   //编辑主机
   async editHost(){
-    const {id,hostIp,hostName,username,password,remark} = this.ctx.request.body;
+    const {ctx,app} = this;
+    const {id,hostIp,hostName,username,password,remark} = ctx.request.body;
     if(_.isNil(id)) throw new Error('缺少必要参数id');
-    await this.ctx.service.hostManagement.editHost({
+    await ctx.service.hostManagement.editHost({
       id,
       hostIp,
       hostName,
@@ -33,14 +36,15 @@ class HostManagementController extends Controller{
       username,
       password
     });
-    this.ctx.body = this.app.utils.response(true);
+    ctx.body = app.utils.response(true);
   }
   //删除主机
   async deleteHost(){
-    const {id} = this.ctx.request.query;
+    const {ctx,app} = this;
+    const {id} = ctx.request.query;
     if(_.isNil(id)) throw new Error('缺少必要参数id');
-    await this.ctx.service.hostManagement.deleteHost(id);
-    this.ctx.body = this.app.utils.response(true)
+    await ctx.service.hostManagement.deleteHost(id);
+    ctx.body = app.utils.response(true)
   }
 }
 

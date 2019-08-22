@@ -7,7 +7,7 @@
     "build": "easy build prod -f ./build/webpack.server.conf.js",
     "debug": "egg-bin debug",
     "dev": "egg-bin dev",
-    "start": "/bin/sh start.sh",
+    "start": "bash start.sh",
     "server": "egg-scripts start --daemon",
     "stop": "egg-scripts stop",
     "lint": "eslint .",

@@ -82,5 +82,24 @@ export default {
   deleteHost:{
     method:'delete',
     url:'/api/host-management/delete-host'
+  },
+  /**
+   * 配置中心
+   */
+  getConfigList:{
+    method:'post',
+    url:'/api/config-center/config-list'
+  },
+  addConfig:{
+    method:'post',
+    url:'/api/config-center/add-config'
+  },
+  editConfig:{
+    method:'post',
+    url:'/api/config-center/edit-config'
+  },
+  deleteConfig:{
+    method:'delete',
+    url:'/api/config-center/delete-config'
   }
 }

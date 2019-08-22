@@ -12,6 +12,8 @@ import Toolbox from '@/pages/toolbox';
 import MailSign from '@/pages/mailSign';
 //主机管理
 import HostManagement from '@/pages/hostManagement';
+//配置中心
+import ConfigCenter from '@/pages/configCenter';
 
 import NotFound from '@/pages/exception/404';
 const urlPrefix = '/page'
@@ -49,6 +51,11 @@ const routes = [
     path: `${urlPrefix}/host-management`,
     layout: SiderLayout,
     component: HostManagement
+  },
+  {
+    path: `${urlPrefix}/config-center`,
+    layout: SiderLayout,
+    component: ConfigCenter
   },
   {
     path: '*',

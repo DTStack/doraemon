@@ -342,7 +342,7 @@ export default class ProxyServer extends React.PureComponent{
     return (<div className="page-proxy-server">
       <Row>
         <Col className="text-right" offset={16} span={8}>
-          <Button type="primary" onClick={()=>{this.setState({proxyServerModalVisible:true})}}>添加代理服务</Button>
+          <Button type="primary" icon="plus-circle" onClick={()=>{this.setState({proxyServerModalVisible:true})}}>添加代理服务</Button>
         </Col>
       </Row>
       <Table

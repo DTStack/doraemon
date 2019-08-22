@@ -11,7 +11,7 @@ export default (props)=>{
   const [hostList,setHostList] = useState([]);
   const [hostModalVisible,setHostModalVisible] = useState(false);
   const [passwordModalVisible,setPasswordModalVisible] = useState(false);
-  const [currentHostModal,setCurrentHostModal] = useState({});
+  const [currentHost,setCurrentHost] = useState({});
   const getColumns = ()=>{
     const columns = [{
       title:'主机IP',
@@ -72,13 +72,13 @@ export default (props)=>{
   }
   //新增主机
   const handleHostAdd = ()=>{
-    setCurrentHostModal({});
+    setCurrentHost({});
     setHostModalVisible(true);
     loadTableData();
   }
   //编辑主机
   const handleTableRowEdit = (row)=>{
-    setCurrentHostModal(row);
+    setCurrentHost(row);
     setHostModalVisible(true);
     loadTableData();
   }
@@ -98,7 +98,7 @@ export default (props)=>{
     });
   }
   const handlePasswordEdit = (row)=>{
-    setCurrentHostModal(row);
+    setCurrentHost(row);
     setPasswordModalVisible(true);
   }
   const handlePasswordModalAction = (type)=>{
@@ -133,12 +133,12 @@ export default (props)=>{
       pagination={false}
       expandedRowRender={expandedRowRender}/>
     <HostModal
-      value={currentHostModal}
+      value={currentHost}
       visible={hostModalVisible}
       onOk={handleHostModalAction.bind(this,'ok')}
       onCancel={handleHostModalAction.bind(this,'cancel')}/>
     <PasswordModal
-     value={currentHostModal}
+     value={currentHost}
      visible={passwordModalVisible}
      onOk={handlePasswordModalAction.bind(this,'ok')}
      onCancel={handlePasswordModalAction.bind(this,'cancel')}/>

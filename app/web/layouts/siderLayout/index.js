@@ -26,6 +26,10 @@ const navMenuList = [{
   name:'主机管理',
   path:'/page/host-management',
   icon:'desktop'
+},{
+  name:'配置中心',
+  path:'/page/config-center',
+  icon:'setting'
 }]
 const SiderLayout = (props)=>{
   const {location,children} = props;
