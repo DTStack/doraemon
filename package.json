@@ -4,7 +4,7 @@
   "description": "treasure box for programmer",
   "scripts": {
     "clean": "easy clean",
-    "build": "easy build prod -f ./build/webpack.server.conf.js",
+    "build": "easy build",
     "debug": "egg-bin debug",
     "dev": "egg-bin dev",
     "start": "bash start.sh",
@@ -81,13 +81,5 @@
   },
   "author": "hubcarl@126.com",
   "license": "MIT",
-  "homepage": "https://github.com/easy-team/egg-react-webpack-boilerplate",
-  "webpack": {
-    "loaders": {
-      "scss": true,
-      "less": true,
-      "urlimage": true,
-      "urlfont": true
-    }
-  }
+  "homepage": "https://github.com/easy-team/egg-react-webpack-boilerplate"
 }

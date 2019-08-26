@@ -5,9 +5,11 @@
   "common.js": "/public/js/chunk/common.js",
   "runtime.js": "/public/js/runtime.js",
   "img/style.scss": "/public/img/bg.png",
+  "vendor.js": "/public/js/vendor.js",
   "deps": {
     "app.js": {
       "js": [
+        "/public/js/vendor.js",
         "/public/js/runtime.js",
         "/public/js/chunk/common.js",
         "/public/js/chunk/app.js"

@@ -24,7 +24,7 @@ const App = ()=>{
             }else{
               const Layout = route.layout;
               const Component = route.component;
-              return <Route exact={path!=='*'} key={path} path={path} render={(props)=>(<Layout {...props}><Component/></Layout>)}/>
+              return <Route exact={path!=='*'} key={path} path={path} render={(props)=>(Layout?<Layout {...props}><Component {...props}/></Layout>:<Component {...props}/>)}/>
             }
           })
         }

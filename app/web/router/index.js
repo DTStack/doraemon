@@ -14,6 +14,8 @@ import MailSign from '@/pages/mailSign';
 import HostManagement from '@/pages/hostManagement';
 //配置中心
 import ConfigCenter from '@/pages/configCenter';
+//配置详情
+import ConfigDetail from '@/pages/configDetail';
 
 import NotFound from '@/pages/exception/404';
 const urlPrefix = '/page'
@@ -56,6 +58,11 @@ const routes = [
     path: `${urlPrefix}/config-center`,
     layout: SiderLayout,
     component: ConfigCenter
+  },
+  {
+    path:`${urlPrefix}/config-detail/:id`,
+    layout:BasicLayout,
+    component:ConfigDetail
   },
   {
     path: '*',
