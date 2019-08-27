@@ -1,3 +1,4 @@
+const fs = require('fs');
 const utils = require('./app/utils');
 
 module.exports = class AppBootHook {
@@ -5,6 +6,11 @@ module.exports = class AppBootHook {
     this.app = app;
   }
   async serverDidReady() {
-    this.app.utils = utils;
+    const {app} = this;
+    app.utils = utils;
+    const {cacheDirectory} = app.config;
+    if(!fs.existsSync(cacheDirectory)){
+      fs.mkdirSync(cacheDirectory);
+    }
   }
 }

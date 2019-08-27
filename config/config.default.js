@@ -12,6 +12,7 @@ module.exports = app => {
       ignore: /^\/proxy/
     },
   };
+  exports.cacheDirectory = path.join(__dirname,'../cache')
   exports.bodyParser = {
     ignore:[/^\/proxy/]
   }

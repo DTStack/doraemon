@@ -9,7 +9,7 @@ module.exports = app => {
   app.post('/api/proxy-server/server-list', app.controller.proxy.list);
   app.post('/api/proxy-server/add-server', app.controller.proxy.add);
   app.post('/api/proxy-server/update-server', app.controller.proxy.update);
-  app.delete('/api/proxy-server/delete-server',app.controller.proxy.delete)
+  app.delete('/api/proxy-server/delete-server',app.controller.proxy.delete);
   app.get('/api/proxy-server/change-server-status', app.controller.proxy.changeStatus);
   /**
    * 代理服务规则增删改查
@@ -32,7 +32,12 @@ module.exports = app => {
   app.post('/api/config-center/add-config',app.controller.configCenter.addConfig);
   app.post('/api/config-center/edit-config',app.controller.configCenter.editConfig);
   app.delete('/api/config-center/delete-config',app.controller.configCenter.deleteConfig);
-
+  /**
+   * 配置详情
+   */
+  app.get('/api/config-detail/get-basic-info',app.controller.configDetail.getBasicInfo);
+  app.get('/api/config-detail/get-remote-config',app.controller.configDetail.getRemoteConfig);
+  app.post('/api/config-detail/save',app.controller.configDetail.saveConfig)
   /**
    * 服务代理
    */

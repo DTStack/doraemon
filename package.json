@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "antd": "^3.21.4",
+    "codemirror": "^5.48.4",
     "cropperjs": "^1.5.1",
     "egg": "^2.1.0",
     "egg-cors": "^2.0.0",
@@ -36,7 +37,9 @@
     "mockjs": "^1.0.1-beta3",
     "moment": "^2.17.1",
     "mysql2": "^1.6.5",
+    "node-ssh": "^6.0.0",
     "react": "^16.9.0",
+    "react-codemirror2": "^6.0.0",
     "react-dom": "^16.9.0",
     "react-redux": "^7.1.0",
     "react-router": "^4.2.0",

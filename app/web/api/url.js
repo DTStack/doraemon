@@ -101,5 +101,20 @@ export default {
   deleteConfig:{
     method:'delete',
     url:'/api/config-center/delete-config'
+  },
+  /**
+   * 配置详情
+   */
+  getConfigDetail:{
+    method:'get',
+    url:'/api/config-detail/get-basic-info'
+  },
+  getRemoteConfig:{
+    method:'get',
+    url:'/api/config-detail/get-remote-config'
+  },
+  saveConfig:{
+    method:'post',
+    url:'/api/config-detail/save'
   }
 }

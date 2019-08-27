@@ -1,0 +1,16 @@
+.page-config-detail{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  .page-content{
+    flex: 1;
+    overflow: auto;
+    padding: 10px;
+  }
+  .info-item{
+    margin-top: 20px;
+    .label{
+      text-align: right;
+    }
+  }
+}

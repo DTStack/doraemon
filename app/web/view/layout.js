@@ -10,6 +10,10 @@ export default class Layout extends Component {
           <meta name="keywords" content={this.props.keywords}></meta>
           <meta name="description" content={this.props.description}></meta>
           <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"></link>
+          <link></link>
+          <link href="https://cdn.bootcss.com/codemirror/5.48.4/codemirror.min.css" rel="stylesheet"></link>
+          <link href="https://cdn.bootcss.com/codemirror/5.48.4/theme/dracula.min.css" rel="stylesheet"></link>
+          <script src="https://cdn.bootcss.com/codemirror/5.48.4/mode/nginx/nginx.min.js"></script>
         </head>
         <body><div id="app">{this.props.children}</div></body>
       </html>;
