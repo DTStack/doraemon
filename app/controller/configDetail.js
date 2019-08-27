@@ -67,7 +67,7 @@ class ConfigDetail extends Controller{
       await ssh.putFile(shellPath,remoteShellPath);
       const {Stderr:execShellStderr} = await ssh.execCommand(`bash ${remoteShellPath}`);
       if(_.isEmpty(execShellStderr)){
-        const {STDERR:deleteShellStderr} = await ssh.execCommand(`rm -rf ${remoteShellPath}`);
+        const {STDERR:deleteShellStderr} = await ssh.execCommand(`rm ${remoteShellPath}`);
         if(_.isEmpty(deleteShellStderr)){
           await ctx.service.configCenter.editConfig({
             id,
