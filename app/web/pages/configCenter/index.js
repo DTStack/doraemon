@@ -14,7 +14,8 @@ const ConfigCenter = ()=>{
       title:'文件名',
       key:'filename',
       dataIndex:'filename',
-      width:200
+      width:200,
+      render:(value,row)=>  <a target="_blank" href={`/page/config-detail/${row.id}`}>{value}</a>
     },{
       title:'路径',
       key:'filePath',
@@ -35,8 +36,6 @@ const ConfigCenter = ()=>{
       width:140,
       render:(value,row)=>{
         return <Fragment>
-          <a target="_blank" href={`/page/config-detail/${row.id}`}>查看</a>
-          <Divider type="vertical"/>
           <a href="javascript:void(0);" onClick={handleConfigFileEdit.bind(this,row)}>编辑</a>
           <Divider type="vertical"/>
           <Popconfirm title={`确认是否删除「${row.filename}」？`} onConfirm={handleConfigFileDelete.bind(this,row)}>

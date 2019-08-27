@@ -13,6 +13,7 @@ export default class Layout extends Component {
           <link></link>
           <link href="https://cdn.bootcss.com/codemirror/5.48.4/codemirror.min.css" rel="stylesheet"></link>
           <link href="https://cdn.bootcss.com/codemirror/5.48.4/theme/dracula.min.css" rel="stylesheet"></link>
+          <script src="https://cdn.bootcss.com/codemirror/5.48.4/codemirror.min.js"></script>
           <script src="https://cdn.bootcss.com/codemirror/5.48.4/mode/nginx/nginx.min.js"></script>
         </head>
         <body><div id="app">{this.props.children}</div></body>

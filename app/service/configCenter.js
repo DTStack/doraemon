@@ -18,6 +18,7 @@ class ConfigCenterService extends Service {
         attributes:[]
       }],
       limit:size,
+      order:[['created_at','DESC']],
       offset:size*(current-1)
     })
   }

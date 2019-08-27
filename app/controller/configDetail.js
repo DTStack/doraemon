@@ -29,18 +29,10 @@ class ConfigDetail extends Controller{
         port: 22,
         password
       });
-      await ssh.exec(`cat ${path.join(filePath,filename)}`,[],{
-        onStdout:(chunk)=>{
-          ssh.dispose();
-          app.logger.info(`服务器${hostIp}断开`);
-          ctx.body = app.utils.response(true,chunk.toString('utf8'));
-        },
-        onStderr:(chunk)=>{
-          ssh.dispose();
-          app.logger.info(`服务器${hostIp}断开`);
-          throw new Error(chunk.toString('utf8'));
-        },
-      });
+      const {stdout,stderr} = await ssh.execCommand(`cat ${path.join(filePath,filename)}`);
+      ssh.dispose();
+      app.logger.info(`服务器${hostIp}断开`);
+      ctx.body = app.utils.response(true,_.isEmpty(stderr)?stdout:'');
     }
   }
   async saveConfig(){
@@ -53,9 +45,9 @@ class ConfigDetail extends Controller{
     fs.writeFileSync(configFilePath,config);
     fs.writeFileSync(shellPath,shell);
     const remoteConfigFilePath = path.join(filePath,filename);
-    const remoteShellPath = path.join(filePath,`${filename}_shell`)
+    const remoteShellPath = path.join(filePath,`${filename}_shell`);
+    const ssh = new NodeSsh();
     try{
-      const ssh = new NodeSsh();
       app.logger.info(`开始连接服务器${hostIp}...`);
       await ssh.connect({
         host:hostIp,
@@ -65,9 +57,9 @@ class ConfigDetail extends Controller{
       });
       await ssh.putFile(configFilePath,remoteConfigFilePath);
       await ssh.putFile(shellPath,remoteShellPath);
-      const {Stderr:execShellStderr} = await ssh.execCommand(`bash ${remoteShellPath}`);
+      const {stderr:execShellStderr} = await ssh.execCommand(`bash ${remoteShellPath}`);
       if(_.isEmpty(execShellStderr)){
-        const {STDERR:deleteShellStderr} = await ssh.execCommand(`rm ${remoteShellPath}`);
+        const {stderr:deleteShellStderr} = await ssh.execCommand(`rm ${remoteShellPath}`);
         if(_.isEmpty(deleteShellStderr)){
           await ctx.service.configCenter.editConfig({
             id,
@@ -82,6 +74,7 @@ class ConfigDetail extends Controller{
           throw new Error(deleteShellStderr);
         }
       }else{
+        await ssh.execCommand(`rm ${remoteShellPath}`);
         throw new Error(execShellStderr);
       }
     }catch(err){

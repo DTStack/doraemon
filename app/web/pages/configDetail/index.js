@@ -1,6 +1,6 @@
 import React,{useState,useRef,useEffect,useCallback} from 'react';
 import {Button,Row,Col,Card,Icon,Breadcrumb,Tooltip,message as Message,Typography} from 'antd';
-import {isNull,replace} from 'lodash';
+import {isEmpty,replace} from 'lodash';
 import {Controlled as CodeMirror} from 'react-codemirror2';
 import Loading from '@/components/loading';
 import {API} from '@/api';
@@ -17,6 +17,7 @@ const ConfigDetail = (props)=>{
   const [basicInfo,setBasicInfo] = useState({});
   const [loading,setLoading] = useState(true);
   const [updating,setUpdating] = useState(false);
+  const [errorMessage,setErrorMessage] = useState('');
   const [shell,setShell] = useState('#!/bin/bash\n');
   const {filename,filePath,hostIp,hostName,username,password,remark} = basicInfo;
   const loadBasicInfoData = useCallback(()=>{
@@ -26,7 +27,7 @@ const ConfigDetail = (props)=>{
       const {success,data,message} = response;
       if(success){
         setBasicInfo(data);
-        setShell(isNull(data.updateShell)?'#!/bin/bash\n':data.updateShell);
+        setShell(isEmpty(data.updateShell)?'#!/bin/bash\n':data.updateShell);
       }else{
         Message.error(message);
       }
@@ -55,9 +56,11 @@ const ConfigDetail = (props)=>{
       const {success,data,message} = response;
       if(success){
         Message.success('配置保存成功');
+        setErrorMessage('');
         loadBasicInfoData();
         loadRemoteConfigInfo();
       }else{
+        setErrorMessage(message);
         Message.error(message);
       }
     })
@@ -147,6 +150,9 @@ const ConfigDetail = (props)=>{
                   <Col span={18}>{remark}</Col>
               </Row>
             </Card>
+            {!isEmpty(errorMessage)&&<Card title="错误信息" style={{marginTop:20}}>
+              <div style={{color:'red'}}>{errorMessage}</div>
+            </Card>}
           </Col>
         </Row>
       </div>
