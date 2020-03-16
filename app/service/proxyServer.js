@@ -33,7 +33,7 @@ class ProxyServerService extends Service {
       status:1
     },{
       where:{
-       id
+        id
       }
     });
   }
