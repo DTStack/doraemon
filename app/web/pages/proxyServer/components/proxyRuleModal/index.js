@@ -2,7 +2,9 @@ import React from 'react';
 import {Modal,Form,Input} from 'antd';
 import PropsTypes from 'prop-types';
 import {urlReg} from '@/utils/reg';
+import { API } from '@/api'
 const { TextArea } = Input;
+
 class ProxyRuleModal extends React.PureComponent{
   static defaultProps = {
     visible:false,
@@ -17,6 +19,19 @@ class ProxyRuleModal extends React.PureComponent{
     onCancel:PropsTypes.func,
     proxyServer:PropsTypes.object,
     confirmLoading:PropsTypes.bool
+  }
+  state = {
+    localIp:''
+  }
+  componentDidMount(){
+    API.getLocalIp().then((response)=>{
+      const {success,data,message} = response;
+      if(success){
+        this.setState({
+          localIp:data
+        })
+      }
+    })
   }
   handleModalOk=()=>{
     const {onOk,form,editable,proxyServer} = this.props;
@@ -38,6 +53,7 @@ class ProxyRuleModal extends React.PureComponent{
     const {visible,editable,form,proxyServer,confirmLoading} = this.props;
     const {getFieldDecorator} = form;
     const {ip,target,remark} = proxyServer;
+    const { localIp } = this.state;
     const formItemLayout = {
       labelCol: {
         span: 6
@@ -60,7 +76,7 @@ class ProxyRuleModal extends React.PureComponent{
               rules:[{
                 required: true, message: '请输入IP',
               }],
-              initialValue:ip
+              initialValue:ip||localIp
             })(<Input placeholder="请输入ip"/>)
           }
         </Form.Item>
