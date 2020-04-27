@@ -7,15 +7,7 @@ const {Sider, Content,Footer} = Layout;
 const SubMenu = Menu.SubMenu;
 
 const navMenuList = [{
-  name:'邮件签名制作',
-  path:'/page/mail-sign',
-  icon:'solution'
-},{
-  name:'公司内部网址导航',
-  path:'/page/internal-url-navigation',
-  icon:'bars'
-},{
-  name:'工具箱',
+  name:'应用中心',
   path:'/page/toolbox',
   icon:'appstore'
 },{
@@ -34,7 +26,7 @@ const navMenuList = [{
 const SiderLayout = (props)=>{
   const {location,children} = props;
   const {pathname} = location;
-  const [collapsed,setCollapsed] = useState(true);
+  const [collapsed,setCollapsed] = useState(false);
   const [selectedKeys,setSelectedKeys] = useState([pathname]);
   const handleCollapseChange = ()=>{
     setCollapsed(!collapsed)
@@ -43,13 +35,22 @@ const SiderLayout = (props)=>{
     <BasicLayout>
       <Layout className="layout-main">
         <Sider
-          className="left"
-          collapsible
+          trigger={null} 
+          collapsible 
           collapsed={collapsed}
-          style={{height:'100%'}}
-          onCollapse={handleCollapseChange}>
+          style={{height:'100%',background:'#262E36'}}
+          >
+          <div className="collapsed-wrap">
+            <Icon
+             className="trigger"
+                type={collapsed ? 'menu-unfold' : 'menu-fold'}
+                onClick={handleCollapseChange}
+            />
+        </div>
           <Menu
             mode="inline"
+            theme="dark"
+            style={{background:'#262E36'}}
             selectedKeys={selectedKeys}>
             {
               navMenuList.map((nav)=>{
@@ -69,9 +70,6 @@ const SiderLayout = (props)=>{
               {children}
             </div>
           </Content>
-          <Footer style={{ textAlign: 'center' }}>
-            Doraemon ©2018 Created by 袋鼠云数据应用前端
-          </Footer>
         </Layout>
       </Layout>
   </BasicLayout>)

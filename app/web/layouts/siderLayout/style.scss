@@ -1,8 +1,14 @@
 .layout-main{
   height: 100%;
-  .left{
-    background: #fff;
+  .collapsed-wrap{
+    text-align: center;
+    padding: 10px 20px;
+    .trigger{
+      color: #ffffff;
+      font-size: 16px;
+    }
   }
+  
   .right{
     .right-content-wrapper{
       height: 100%;

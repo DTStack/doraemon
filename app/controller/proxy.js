@@ -2,13 +2,17 @@ const Controller = require('egg').Controller;
 class ProxyServerController extends Controller{
   //获取服务列表
   async list(){
-    const {pageSize,pageNo} = this.ctx.request.body
+    const {pageSize,pageNo,search} = this.ctx.request.body
     const result = await this.app.model.ProxyServer.findAndCountAll({
-      attributes:['id','name','proxy_server_address','status','target'],
+      attributes:['id','name','proxy_server_address','status','target','created_at','updated_at'],
       where:{
-        is_delete:0
+        is_delete:0,
+        name:{
+          '$like':`%${search}%`
+        }
       },
       limit:pageSize,
+      order:[['updated_at','DESC']],
       offset:(pageNo-1)*pageSize
     });
     this.ctx.body = this.app.utils.response(true,{data:result.rows,count:result.count});

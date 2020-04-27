@@ -9,7 +9,7 @@ class ConfigCenterService extends Service {
     const {ctx,app} = this;
     ctx.model.ConfigManagement.belongsTo(ctx.model.HostManagement,{ foreignKey: 'host_id', targetKey: 'id'});
     return ctx.model.ConfigManagement.findAndCountAll({
-      attributes:['id','filename','filePath','remark','hostId',[app.Sequelize.col('host_management.host_ip'),'hostIp']],
+      attributes:['id','filename','filePath','remark','hostId',[app.Sequelize.col('host_management.host_ip'),'hostIp'],'created_at','updated_at'],
       where:{
         status:1
       },
@@ -18,7 +18,7 @@ class ConfigCenterService extends Service {
         attributes:[]
       }],
       limit:size,
-      order:[['created_at','DESC']],
+      order:[['updated_at','DESC']],
       offset:size*(current-1)
     })
   }

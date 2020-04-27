@@ -32,7 +32,6 @@ class ConfigDetail extends Controller{
       const {stdout,stderr} = await ssh.execCommand(`cat ${path.join(filePath,filename)}`);
       ssh.dispose();
       app.logger.info(`服务器${hostIp}断开`);
-      // console.log(stdout,stderr);
       ctx.body = app.utils.response(true,stdout);
       // ctx.body = app.utils.response(true,_.isEmpty(stderr)?stdout:'');
     }
@@ -61,13 +60,13 @@ class ConfigDetail extends Controller{
       await ssh.putFile(shellPath,remoteShellPath);
       const {stderr:execShellStderr} = await ssh.execCommand(`bash ${remoteShellPath}`);
       const {stderr:deleteShellStderr} = await ssh.execCommand(`rm ${remoteShellPath}`);
-      // if(deleteShellStderr){
-      //   throw new Error(deleteShellStderr);
-      // }
-      // if(execShellStderr){
-      //   await ssh.execCommand(`rm ${remoteShellPath}`);
-      //   throw new Error(execShellStderr);
-      // }
+      if(deleteShellStderr){
+        throw new Error(deleteShellStderr);
+      }
+      if(execShellStderr){
+        await ssh.execCommand(`rm ${remoteShellPath}`);
+        throw new Error(execShellStderr);
+      }
       await ctx.service.configCenter.editConfig({
         id,
         updateShell:shell

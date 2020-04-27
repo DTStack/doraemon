@@ -11,17 +11,17 @@ const BasicLayout = (props)=>{
   const {localIp} = useSelector((state)=>state.global);
   return (
     <Layout className="layout-basic">
-      <Header style={{ padding: '0 10px' }}>
+      <Header style={{ padding: '0 10px',background:'#2E3943' }}>
         <Row>
           <Col span={12}>
             <Link to='/page/home'>
               <span className="system-title">哆啦A梦</span>
             </Link>
           </Col>
-          <Col span={12} style={{textAlign:'right'}}><span className="local-ip">{localIp}</span></Col>
+          <Col span={12} style={{textAlign:'right'}}><span className="local-ip">{`localIp: ${localIp}`}</span></Col>
         </Row>
       </Header>
-      <Content className={classnames("main-content",className)}>
+      <Content className={classnames('main-content',className)}>
         {children}
       </Content>
     </Layout>)
