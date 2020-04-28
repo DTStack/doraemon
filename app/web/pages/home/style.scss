@@ -1,7 +1,13 @@
 .page-home{
+  text-align: center;
+  .doraemon{
+    width: 140px;
+    height: 200px;
+  }
   .welcome{
     font-size: 30px;
+    color: #333333;
     text-align: center;
-    margin-top: 20%;
+    margin-top: 15%;
   }
 }

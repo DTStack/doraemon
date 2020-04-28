@@ -5,6 +5,8 @@
   "common.js": "/public/js/chunk/common.js",
   "runtime.js": "/public/js/runtime.js",
   "img/style.scss": "/public/img/bg.png",
+  "img/duraemon.svg": "/public/img/duraemon.svg",
+  "img/logo.png": "/public/img/logo.png",
   "vendor.js": "/public/js/vendor.js",
   "deps": {
     "app.js": {

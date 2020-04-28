@@ -39,7 +39,7 @@ export default class ProxyServer extends React.PureComponent {
       mainTableLoading: true
     });
     API.getProxyServerList(mainTableParams).then((response) => {
-      const { success, data, message } = response;
+      const { success, data } = response;
       if (success) {
         this.setState({
           maintTableList: data.data,
@@ -47,7 +47,6 @@ export default class ProxyServer extends React.PureComponent {
           mainTableLoading: false
         });
       } else {
-        Message.error(message);
         this.setState({
           mainTableLoading: false
         });
@@ -63,14 +62,13 @@ export default class ProxyServer extends React.PureComponent {
     API.getProxyRuleList({
       proxy_server_id: id
     }).then((response) => {
-      const { success, data, message } = response;
+      const { success, data } = response;
       if (success) {
         this.setState({
           subTableData: data.data,
           subTableLoading: false
         });
       } else {
-        Message.error(message);
         this.setState({
           subTableLoading: false
         });
@@ -99,12 +97,10 @@ export default class ProxyServer extends React.PureComponent {
           status: status === 1 ? 0 : 1,
           id
         }).then((response) => {
-          const { success, message } = response;
+          const { success } = response;
           if (success) {
             Message.success(`代理服务${statusStr}成功`);
             this.loadMainData();
-          } else {
-            Message.error(message);
           }
         });
       }
@@ -122,7 +118,6 @@ export default class ProxyServer extends React.PureComponent {
         this.handleProxyServerModalCancel();
         this.loadMainData();
       } else {
-        Message.error(message);
         this.setState({
           proxyServerModalConfirmLoading: false
         });
@@ -146,12 +141,10 @@ export default class ProxyServer extends React.PureComponent {
         API.deleteProxyServer({
           id
         }).then((response) => {
-          const { success, message } = response;
+          const { success } = response;
           if (success) {
             Message.success(`代理服务删除成功`);
             this.loadMainData();
-          } else {
-            Message.error(message);
           }
         });
       }
@@ -176,8 +169,6 @@ export default class ProxyServer extends React.PureComponent {
       if (success) {
         Message.success(`代理服务「${name}」下的代理规则「${ip}」删除成功`);
         this.loadSubTableData(mainTableRow);
-      } else {
-        Message.error(message);
       }
     });
   }
@@ -197,13 +188,12 @@ export default class ProxyServer extends React.PureComponent {
       actionType = '新增';
     }
     API[apiFunName](proxyRule).then((response) => {
-      const { success, message } = response;
+      const { success } = response;
       if (success) {
         Message.success(`${actionType}代理规则成功`);
         this.loadSubTableData(currentProxyServer);
         this.handleProxyRuleModalCancel();
       } else {
-        Message.error(message);
         this.setState({
           proxyRuleModalConfirmLoading: false
         });

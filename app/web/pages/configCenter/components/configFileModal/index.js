@@ -15,11 +15,9 @@ const ConfigForm = Form.create()(
     const {filename,hostId,filePath,remark} = value;
     const loadHostsData = ()=>{
       API.getHostList().then((response)=>{
-        const {success,data,message} = response;
+        const {success,data} = response;
         if(success){
           setHostList(data);
-        }else{
-          Message.error(message);
         }
       })
     }
@@ -94,8 +92,6 @@ const ConfigModal = (props)=>{
             if(success){
               Message.success(isAdd?'配置新增成功':`配置「${filename}」编辑成功`);
               isFunction(onOk)&&onOk(values);
-            }else{
-              Message.error(message);
             }
           })
         }

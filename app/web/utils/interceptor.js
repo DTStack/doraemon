@@ -1,3 +1,26 @@
+import {notification } from 'antd'
+let operator = 1; let preTitle; let preMessage; let preType;
+const singletonNotification = (title, message, type) => {
+  if ((preTitle != title) || (preMessage != message) || (preType != type) || (operator === 1)) {
+    preTitle = title;
+    preMessage = message;
+    preType = type;
+    let notifyMsgs = document.querySelectorAll('.ant-notification-notice-description');
+    if (notifyMsgs.length) {
+      let closeBtn = document.querySelector('.dt-notification__close-btn');
+      closeBtn.style.display = 'block';
+    }
+    notification[type]({
+      message: title,
+      description: message
+    });
+    let timer = setTimeout(function () {
+      operator = 1;
+      clearTimeout(timer)
+    }, 5000);
+    operator = 0;
+  }
+}
 export const reqHeader = {
   'Accept': '*/*',
   mode: 'cors',
@@ -20,10 +43,8 @@ export function authBeforeRes(response) {
     case 200:
       return response;
     case 302:
-      message.info('登录超时, 请重新登录！');
       return response;
     case 401:
-      window.location.href='/auth/login';
       return response;
     default:
       if (process.env.NODE_ENV !== 'production') {
@@ -35,5 +56,12 @@ export function authBeforeRes(response) {
 }
 
 export function authAfterRes(response) {
+  if (!response.success) {
+    singletonNotification(
+              '异常',
+              response.message,
+              'error'
+          );
+  }
   return response;
 }

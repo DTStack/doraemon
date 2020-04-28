@@ -1,8 +1,9 @@
 import React,{Fragment,useState,useEffect} from 'react';
 import {Button,Divider,Table,message as Message,Popconfirm} from 'antd';
 import {isEmpty} from 'lodash';
-import {API} from '@/api';
+import { Link } from 'react-router-dom';
 import ConfigFileModal from './components/configFileModal';
+import {API} from '@/api';
 import moment from 'moment';
 import './style.scss';
 const ConfigCenter = ()=>{
@@ -16,7 +17,7 @@ const ConfigCenter = ()=>{
       key:'filename',
       dataIndex:'filename',
       width:200,
-      render:(value,row)=>  <a target="_blank" href={`/page/config-detail/${row.id}`}>{value}</a>
+      render:(value,row)=>  <Link to={`/page/config-detail/${row.id}`}>{value}</Link>
     },{
       title:'路径',
       key:'filePath',
@@ -61,12 +62,10 @@ const ConfigCenter = ()=>{
     API.deleteConfig({
       id
     }).then((response)=>{
-      const {success,message} = response;
+      const {success} = response;
       if(success){
         Message.success(`文件「${filename}」删除成功`);
         loadMainData();
-      }else{
-        Message.error(message);
       }
     });
   }
@@ -87,15 +86,13 @@ const ConfigCenter = ()=>{
       current,
       size:pageSize
     }).then((response)=>{
-      const {success,data,message} = response;
+      const {success,data} = response;
       if(success){
         setConfigList(data.data);
         setTablePagination({
           ...tablePagination,
           total:data.total
         })
-      }else{
-        Message.error(message);
       }
     });
   }

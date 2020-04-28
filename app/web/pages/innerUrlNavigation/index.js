@@ -1,5 +1,5 @@
 import React,{useState,useEffect} from 'react';
-import {Tabs,message as Message,Row,Col, Icon,Tooltip} from 'antd';
+import {Tabs,Row,Col, Icon,Tooltip} from 'antd';
 import Loading from '@/components/loading';
 import {API} from '@/api';
 import {colorList} from '@/constant';
@@ -15,11 +15,9 @@ const InnerUrlNavigation = ()=>{
     API.getConfigJsonInGithub({
       name:'internal-url-navigation.json'
     }).then((response)=>{
-      const {success,data,message}  = response;
+      const {success,data}  = response;
       if(success){
         setNavigationData(data)
-      }else{
-        Message.error(message);
       }
       setLoading(false);
     });

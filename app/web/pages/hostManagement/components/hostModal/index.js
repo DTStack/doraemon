@@ -79,12 +79,10 @@ const HostModal = (props)=>{
             ...values
           }).then((response)=>{
             setConfirmLoading(false);
-            const {success,message} = response;
+            const {success} = response;
             if(success){
               Message.success(isAdd?'主机新增成功':`主机「${hostName}」编辑成功`);
               isFunction(onOk)&&onOk(values);
-            }else{
-              Message.error(message);
             }
           })
         }

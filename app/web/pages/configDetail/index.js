@@ -5,6 +5,7 @@ import {Controlled as CodeMirror} from 'react-codemirror2';
 import Loading from '@/components/loading';
 import {API} from '@/api';
 import './style.scss';
+import { Link } from 'react-router-dom';
 const { Title,Paragraph } = Typography;
 
 const ConfigDetail = (props)=>{
@@ -28,8 +29,6 @@ const ConfigDetail = (props)=>{
       if(success){
         setBasicInfo(data);
         setShell(isEmpty(data.updateShell)?'#!/bin/bash\n':data.updateShell);
-      }else{
-        Message.error(message);
       }
     })
   },[id]);
@@ -37,11 +36,9 @@ const ConfigDetail = (props)=>{
     return API.getRemoteConfig({
       id
     }).then((response)=>{
-      const {success,data,message} = response;
+      const {success,data} = response;
       if(success){
         setConfig(data);
-      }else{
-        Message.error(message);
       }
     })
   },[id]);
@@ -61,7 +58,6 @@ const ConfigDetail = (props)=>{
         loadRemoteConfigInfo();
       }else{
         setErrorMessage(message);
-        Message.error(message);
       }
     })
   }
@@ -77,7 +73,7 @@ const ConfigDetail = (props)=>{
         <Row>
           <Col span={18}>
             <Breadcrumb style={{height:'47px',lineHeight:'47px'}}>
-              <Breadcrumb.Item><a href="/page/config-center">配置中心</a></Breadcrumb.Item>
+              <Breadcrumb.Item><Link to="/page/config-center">配置中心</Link></Breadcrumb.Item>
               <Breadcrumb.Item>配置详情</Breadcrumb.Item>
             </Breadcrumb>
           </Col>

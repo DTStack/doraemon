@@ -37,6 +37,7 @@ const SiderLayout = (props)=>{
         <Sider
           trigger={null} 
           collapsible 
+          className="left-container"
           collapsed={collapsed}
           style={{height:'100%',background:'#262E36'}}
         >
@@ -64,7 +65,7 @@ const SiderLayout = (props)=>{
             }
           </Menu>
         </Sider>
-        <Layout className="right">
+        <Layout className="right-container">
           <Content className="right-content-wrapper">
             <div className="right-content">
               {children}
