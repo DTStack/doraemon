@@ -39,14 +39,14 @@ const SiderLayout = (props)=>{
           collapsible 
           collapsed={collapsed}
           style={{height:'100%',background:'#262E36'}}
-          >
+        >
           <div className="collapsed-wrap">
             <Icon
-             className="trigger"
-                type={collapsed ? 'menu-unfold' : 'menu-fold'}
-                onClick={handleCollapseChange}
+              className="trigger"
+              type={collapsed ? 'menu-unfold' : 'menu-fold'}
+              onClick={handleCollapseChange}
             />
-        </div>
+          </div>
           <Menu
             mode="inline"
             theme="dark"
@@ -72,6 +72,6 @@ const SiderLayout = (props)=>{
           </Content>
         </Layout>
       </Layout>
-  </BasicLayout>)
+    </BasicLayout>)
 }
 export default SiderLayout;

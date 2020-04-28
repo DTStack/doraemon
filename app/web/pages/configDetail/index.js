@@ -74,17 +74,17 @@ const ConfigDetail = (props)=>{
     <Loading loading={loading}>
       <Card
         bodyStyle={{padding:'0 0 0 10px'}}>
-          <Row>
-            <Col span={18}>
-              <Breadcrumb style={{height:'47px',lineHeight:'47px'}}>
-                <Breadcrumb.Item><a href="/page/config-center">配置中心</a></Breadcrumb.Item>
-                <Breadcrumb.Item>配置详情</Breadcrumb.Item>
-              </Breadcrumb>
-            </Col>
-            <Col span={6} style={{textAlign:'right'}}>
-              <Button type="primary" loading={updating} icon="check" onClick={handleConfigSave}>保存</Button>
-            </Col>
-          </Row>
+        <Row>
+          <Col span={18}>
+            <Breadcrumb style={{height:'47px',lineHeight:'47px'}}>
+              <Breadcrumb.Item><a href="/page/config-center">配置中心</a></Breadcrumb.Item>
+              <Breadcrumb.Item>配置详情</Breadcrumb.Item>
+            </Breadcrumb>
+          </Col>
+          <Col span={6} style={{textAlign:'right'}}>
+            <Button type="primary" loading={updating} icon="check" onClick={handleConfigSave}>保存</Button>
+          </Col>
+        </Row>
       </Card>
       <div className="page-content">
         <Row  gutter={16}>
@@ -122,32 +122,32 @@ const ConfigDetail = (props)=>{
           <Col span={8}>
             <Card title="信息简介">
               <Row gutter={8}  className="info-item">
-                  <Col span={6} className="label">文件名：</Col>
-                  <Col span={18}>{filename}</Col>
+                <Col span={6} className="label">文件名：</Col>
+                <Col span={18}>{filename}</Col>
               </Row>
               <Row gutter={8} className="info-item">
-                  <Col span={6} className="label">文件路径：</Col>
-                  <Col span={18}>{filePath}</Col>
+                <Col span={6} className="label">文件路径：</Col>
+                <Col span={18}>{filePath}</Col>
               </Row>
               <Row gutter={8} className="info-item">
-                  <Col span={6} className="label">主机IP：</Col>
-                  <Col span={18}>{hostIp}</Col>
+                <Col span={6} className="label">主机IP：</Col>
+                <Col span={18}>{hostIp}</Col>
               </Row>
               <Row gutter={8} className="info-item">
-                  <Col span={6} className="label">主机名：</Col>
-                  <Col span={18}>{hostName}</Col>
+                <Col span={6} className="label">主机名：</Col>
+                <Col span={18}>{hostName}</Col>
               </Row>
               <Row gutter={8} className="info-item">
-                  <Col span={6} className="label">SSH连接：</Col>
-                  <Col span={18}><Paragraph style={{marginBottom:0}} copyable>{`ssh ${username}@${hostIp}`}</Paragraph></Col>
+                <Col span={6} className="label">SSH连接：</Col>
+                <Col span={18}><Paragraph style={{marginBottom:0}} copyable>{`ssh ${username}@${hostIp}`}</Paragraph></Col>
               </Row>
               <Row gutter={8} className="info-item">
-                  <Col span={6} className="label">密码：</Col>
-                  <Col span={18}><Paragraph style={{marginBottom:0}} copyable={{text:password}}>{replace(password,/./g,'*')}</Paragraph></Col>
+                <Col span={6} className="label">密码：</Col>
+                <Col span={18}><Paragraph style={{marginBottom:0}} copyable={{text:password}}>{replace(password,/./g,'*')}</Paragraph></Col>
               </Row>
               <Row gutter={8} className="info-item">
-                  <Col span={6} className="label">备注：</Col>
-                  <Col span={18}>{remark}</Col>
+                <Col span={6} className="label">备注：</Col>
+                <Col span={18}>{remark}</Col>
               </Row>
             </Card>
             {!isEmpty(errorMessage)&&<Card title="错误信息" style={{marginTop:20}}>

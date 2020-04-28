@@ -10,7 +10,7 @@ module.exports = app => {
   exports.security = {
     csrf: {
       ignore: /^\/proxy/
-    },
+    }
   };
   exports.cacheDirectory = path.join(__dirname,'../cache')
   exports.bodyParser = {

@@ -138,9 +138,9 @@ export default (props)=>{
       onOk={handleHostModalAction.bind(this,'ok')}
       onCancel={handleHostModalAction.bind(this,'cancel')}/>
     <PasswordModal
-     value={currentHost}
-     visible={passwordModalVisible}
-     onOk={handlePasswordModalAction.bind(this,'ok')}
-     onCancel={handlePasswordModalAction.bind(this,'cancel')}/>
+      value={currentHost}
+      visible={passwordModalVisible}
+      onOk={handlePasswordModalAction.bind(this,'ok')}
+      onCancel={handlePasswordModalAction.bind(this,'cancel')}/>
   </div>
 }

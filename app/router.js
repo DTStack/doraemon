@@ -3,7 +3,7 @@ module.exports = app => {
   app.get('/', app.controller.home.index);
   app.get('/page/*', app.controller.home.index);
   app.get('/c', app.controller.home.client);
-   /**
+  /**
    * 代理服务增删改查以及状态修改
    */
   app.post('/api/proxy-server/server-list', app.controller.proxy.list);
