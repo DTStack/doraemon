@@ -1,0 +1,112 @@
+  <svg width="300" height="400" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @keyframes eyeballAni {
+      from {
+        transform: translateY(-10px);
+      }
+      to {
+        transform: translateY(5px);
+      }
+    }
+    .eyeball {
+      animation: eyeballAni ease 2s infinite;
+    }
+  </style>
+  <!-- 头 -->
+  <g id="head">
+    <circle cx="150" cy="115" r="105" style="fill: #06B6E1; stroke: #333333; stroke-width: 2px;"/>
+    <circle cx="150" cy="130" r="80" style="fill: white; stroke: #333333; stroke-width: 2px;"/>
+    <!-- 眼睛 -->
+    <g id="eye">
+      <ellipse cx="120" cy="70" rx="30" ry="35" style="fill: white; stroke: #333333; stroke-width: 2px;"/>
+      <circle class="eyeball" cx="135" cy="85" r="5" />
+      <ellipse cx="180" cy="70" rx="30" ry="35" style="fill: white; stroke: #333333; stroke-width: 2px;"/>
+      <circle class="eyeball" cx="165" cy="85" r="5" />
+    </g>
+    <!-- 鼻子 -->
+    <circle id="nose" cx="150" cy="110" r="15" style="fill: #C93E01; stroke: #333333; stroke-width: 2px;"/>
+    <!-- 嘴巴 -->
+    <g id="mouth">
+      <line x1="150" y1="125" x2="150" y2="180" style="fill: #333333; stroke: #333333; stroke-width: 2px;" />
+      <path d="
+        M 100 157,
+        A 80 100 0 0 0 200 157
+      " style="fill: none; stroke: #333333; stroke-width: 2px;" />
+    </g>
+    <!-- 胡须 -->
+    <g id="moustache">
+      <g>
+        <line x1="90" y1="110" x2="130" y2="125" style="fill: none; stroke: #333333; stroke-width: 2px;" />
+        <line x1="90" y1="130" x2="130" y2="130" style="fill: none; stroke: #333333; stroke-width: 2px;" />
+        <line x1="90" y1="150" x2="130" y2="135" style="fill: none; stroke: #333333; stroke-width: 2px;" />
+      </g>
+      <g>
+        <line x1="170" y1="125" x2="210" y2="110" style="fill: none; stroke: #333333; stroke-width: 2px;" />
+        <line x1="170" y1="130" x2="210" y2="130" style="fill: none; stroke: #333333; stroke-width: 2px;" />
+        <line x1="170" y1="135" x2="210" y2="150" style="fill: none; stroke: #333333; stroke-width: 2px;" />
+      </g>
+    </g>
+  </g>
+  <!-- 身体 -->
+  <g id="body">
+    <!-- 身体轮廓 -->
+    <path d="
+      M 80 215,
+      L 30 245,
+      L 45 285,
+      L 85 265,
+      L 85 340,
+      L 140 340,
+      A 15 50 0 0 1 160 340,
+      L 215, 340,
+      L 215 265,
+      L 255 285,
+      L 270 245,
+      L 220 215,
+      Z
+    " style="fill: #06B6E1; stroke: #333333; stroke-width: 2px;" />
+    <!-- 手 -->
+    <g id="hand">
+      <circle cx="40" cy="265" r="25" style="fill: white; stroke: #333333; stroke-width: 2px" />
+      <circle cx="260" cy="265" r="25" style="fill: white; stroke: #333333; stroke-width: 2px" />
+    </g>
+    <!-- 脚 -->
+    <g id="foot">
+      <path d="
+        M 85 340,
+        A 2 2 0 0 0 80 360,
+        L 140 360,
+        A 1.5 2 0 0 0 140 340,
+        Z
+      " style="fill: white; stroke: #333333; stroke-width: 2px;" />
+      <path d="
+        M 215 340,
+        A 2 2 0 0 1 220 360,
+        L 160 360,
+        A 1.5 2 0 0 1 160 340,
+        Z
+      " style="fill: white; stroke: #333333; stroke-width: 2px;" />
+    </g>
+    <!-- 肚子 -->
+    <g id="tummy">
+      <circle cx="150" cy="255" r="58" style="fill: white; stroke: #333333; stroke-width: 2px;"/>
+      <path d="
+        M 110 250,
+        A 40 50 0 0 0 190 250,
+        Z
+      " style="fill: white; stroke: #333333; stroke-width: 2px;" />
+    </g>
+  </g>
+  <!-- 脖子 -->
+  <g id="neck">
+    <rect x="75" y="195" width="150" height="20" rx="8" ry="8" style="fill: #C13901; stroke: #333333; stroke-width: 2px;"/>
+    <!-- 铃铛 -->
+    <g id="ring">
+      <circle cx="150" cy="218" r="15" style="fill: #F5ED27; stroke: #333333; stroke-width: 2px;"/>
+      <line x1="138" y1="208" x2="162" y2="208" style="fill: none; stroke: #333333; stroke-width: 2px;" />
+      <line x1="135" y1="212" x2="165" y2="212" style="fill: none; stroke: #333333; stroke-width: 2px;" />
+      <circle cx="150" cy="220" r="5" />
+      <line x1="150" y1="225" x2="150" y2="233" style="fill: none; stroke: #333333; stroke-width: 2px;" />
+    </g>
+  </g>
+</svg>
