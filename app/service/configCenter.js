@@ -43,7 +43,7 @@ class ConfigCenterService extends Service {
     })
   }
   deleteConfig(id){
-    return this.ctx.model.ConfigManagement.destroy({
+    return this.ctx.model.ConfigManagement.update({
       status:0
     },{
       where:{
