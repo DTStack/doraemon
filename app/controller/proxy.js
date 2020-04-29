@@ -6,7 +6,6 @@ class ProxyServerController extends Controller{
     const result = await this.app.model.ProxyServer.findAndCountAll({
       attributes:['id','name','proxy_server_address','status','target','created_at','updated_at'],
       where:{
-        is_delete:0,
         name:{
           '$like':`%${search}%`
         }
@@ -36,9 +35,7 @@ class ProxyServerController extends Controller{
   //删除服务
   async delete(){
     const {id} = this.ctx.request.query;
-    const result = await this.app.model.ProxyServer.update({
-      is_delete:1
-    },{
+    const result = await this.app.model.ProxyServer.destroy({
       where:{
         id
       }
