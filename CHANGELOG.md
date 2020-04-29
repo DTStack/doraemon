@@ -1,5 +1,11 @@
 # 1.0.0 (2020-04-29)
 
+### 🌟 新功能
+范围|描述|commitId
+--|--|--
+ commit | 优化代码提交控制流程 | [954a7c3](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/954a7c3)
+
+
 范围|描述|commitId
 --|--|--
  - | 优化列表删除 | [b6e2e59](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b6e2e59)

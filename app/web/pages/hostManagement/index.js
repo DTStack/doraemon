@@ -28,6 +28,7 @@ export default (props)=>{
     },{
       title:'操作',
       key:'operation',
+      width:120,
       render:(value,row)=>{
         return <span>
           <a href="javascript:void(0);" onClick={handleTableRowEdit.bind(this,row)}>编辑</a>
