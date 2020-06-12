@@ -17,7 +17,7 @@ module.exports = () => {
         host: '127.0.0.1',//172.16.8.163
         port: 3306,
         username:'root',
-        password:'admin'
+        password:'Admin123!@#'
       }
     ]
   };
