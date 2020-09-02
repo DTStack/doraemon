@@ -36,10 +36,10 @@ module.exports = () => {
         baseDir: 'model',
         database: 'doraemon',
         dialect: 'mysql',
-        host: '172.16.8.163',
+        host: '127.0.0.1',//172.16.8.163
         port: 3306,
         username:'root',
-        password:'admin'
+        password:'abc123'
       }
     ]
   };

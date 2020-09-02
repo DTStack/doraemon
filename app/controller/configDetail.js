@@ -32,7 +32,8 @@ class ConfigDetail extends Controller{
       const {stdout,stderr} = await ssh.execCommand(`cat ${path.join(filePath,filename)}`);
       ssh.dispose();
       app.logger.info(`服务器${hostIp}断开`);
-      ctx.body = app.utils.response(true,_.isEmpty(stderr)?stdout:'');
+      ctx.body = app.utils.response(true,stdout);
+      // ctx.body = app.utils.response(true,_.isEmpty(stderr)?stdout:'');
     }
   }
   async saveConfig(){
@@ -58,25 +59,23 @@ class ConfigDetail extends Controller{
       await ssh.putFile(configFilePath,remoteConfigFilePath);
       await ssh.putFile(shellPath,remoteShellPath);
       const {stderr:execShellStderr} = await ssh.execCommand(`bash ${remoteShellPath}`);
-      if(_.isEmpty(execShellStderr)){
-        const {stderr:deleteShellStderr} = await ssh.execCommand(`rm ${remoteShellPath}`);
-        if(_.isEmpty(deleteShellStderr)){
-          await ctx.service.configCenter.editConfig({
-            id,
-            updateShell:shell
-          });
-          fs.unlinkSync(configFilePath);
-          fs.unlinkSync(shellPath);
-          ssh.dispose();
-          app.logger.info(`服务器${hostIp}断开`);
-          ctx.body = app.utils.response(true);
-        }else{
-          throw new Error(deleteShellStderr);
-        }
-      }else{
+      const {stderr:deleteShellStderr} = await ssh.execCommand(`rm ${remoteShellPath}`);
+      if(deleteShellStderr){
+        throw new Error(deleteShellStderr);
+      }
+      if(execShellStderr){
         await ssh.execCommand(`rm ${remoteShellPath}`);
         throw new Error(execShellStderr);
       }
+      await ctx.service.configCenter.editConfig({
+        id,
+        updateShell:shell
+      });
+      ssh.dispose();
+      app.logger.info(`服务器${hostIp}断开`);
+      fs.unlinkSync(configFilePath);
+      fs.unlinkSync(shellPath);
+      ctx.body = app.utils.response(true);
     }catch(err){
       ssh.dispose();
       app.logger.info(`服务器${hostIp}断开`);

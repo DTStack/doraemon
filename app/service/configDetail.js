@@ -13,7 +13,7 @@ class ConfigDetailService extends Service {
       include: [{
         model: ctx.model.HostManagement,
         attributes:[]
-      }],
+      }]
     })
   }
   async getConfigSpecificInfo(id,attributes=[]){
@@ -27,7 +27,7 @@ class ConfigDetailService extends Service {
       include: [{
         model: ctx.model.HostManagement,
         attributes:[]
-      }],
+      }]
     })
   }
 }

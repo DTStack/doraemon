@@ -1,9 +1,21 @@
 .layout-main{
   height: 100%;
-  .left{
-    background: #fff;
+  display: flex;
+  .collapsed-wrap{
+    text-align: center;
+    padding: 10px 20px;
+    .trigger{
+      color: #ffffff;
+      font-size: 16px;
+    }
   }
-  .right{
+  .left-container{
+    height:100%;
+    width: 100%;
+    background:'#262E36'
+  }
+  .right-container{
+    flex: 1;
     .right-content-wrapper{
       height: 100%;
       padding: 10px;

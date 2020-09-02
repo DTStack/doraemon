@@ -1,5 +1,5 @@
 import React,{useState,useEffect,useRef} from 'react';
-import {isEmpty,isFunction,isNull} from 'lodash';
+import {isFunction,isNull} from 'lodash';
 import {Modal,Form,Input,Spin,message as Message} from 'antd';
 import {API} from '@/api';
 const FormItem = Form.Item;
@@ -55,12 +55,10 @@ const PasswordModal = (props)=>{
             ...values
           }).then((response)=>{
             setConfirmLoading(false);
-            const {success,message} = response;
+            const {success} = response;
             if(success){
               Message.success(`主机「${hostName}」密码修改成功`);
               isFunction(onOk)&&onOk(values);
-            }else{
-              Message.error(message);
             }
           })
         }

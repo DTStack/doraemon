@@ -1,3 +1,12 @@
 .page-proxy-server{
   padding: 10px;
+  .title_wrap{
+    display: flex;
+    justify-content: space-between;
+    align-self: center;
+    .search{
+      width: 200px;
+      height: 32px;
+    }
+  }
 }

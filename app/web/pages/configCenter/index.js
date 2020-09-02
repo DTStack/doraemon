@@ -1,21 +1,23 @@
 import React,{Fragment,useState,useEffect} from 'react';
 import {Button,Divider,Table,message as Message,Popconfirm} from 'antd';
 import {isEmpty} from 'lodash';
-import {API} from '@/api';
+import { Link } from 'react-router-dom';
 import ConfigFileModal from './components/configFileModal';
+import {API} from '@/api';
+import moment from 'moment';
 import './style.scss';
 const ConfigCenter = ()=>{
   const [configList,setConfigList] = useState([]);
   const [currentConfigFile,setCurrentConfigFile] = useState({});
   const [configFileModalVisible,setConfigFileModalVisible] = useState(false);
-  const [tablePagination,setTablePagination] = useState({current:1,size:20,total:0});
+  const [tablePagination,setTablePagination] = useState({current:1,pageSize:20,total:0,hideOnSinglePage:true});
   const getTableColumns = ()=>{
     return [{
       title:'文件名',
       key:'filename',
       dataIndex:'filename',
       width:200,
-      render:(value,row)=>  <a target="_blank" href={`/page/config-detail/${row.id}`}>{value}</a>
+      render:(value,row)=>  <Link to={`/page/config-detail/${row.id}`}>{value}</Link>
     },{
       title:'路径',
       key:'filePath',
@@ -30,6 +32,12 @@ const ConfigCenter = ()=>{
       title:'备注',
       key:'remark',
       dataIndex:'remark'
+    },{
+      title:'更新时间',
+      key:'updated_at',
+      dataIndex:'updated_at',
+      render:(date)=>date ? moment(date).format('YYYY-MM-DD HH:mm:ss'):'',
+      width:180
     },{
       title:'操作',
       key:'operation',
@@ -54,12 +62,10 @@ const ConfigCenter = ()=>{
     API.deleteConfig({
       id
     }).then((response)=>{
-      const {success,message} = response;
+      const {success} = response;
       if(success){
         Message.success(`文件「${filename}」删除成功`);
         loadMainData();
-      }else{
-        Message.error(message);
       }
     });
   }
@@ -75,20 +81,18 @@ const ConfigCenter = ()=>{
     });
   }
   const loadMainData=()=>{
-    const {current,size} = tablePagination;
+    const {current,pageSize} = tablePagination;
     API.getConfigList({
       current,
-      size
+      size:pageSize
     }).then((response)=>{
-      const {success,data,message} = response;
+      const {success,data} = response;
       if(success){
         setConfigList(data.data);
         setTablePagination({
           ...tablePagination,
           total:data.total
         })
-      }else{
-        Message.error(message);
       }
     });
   }
@@ -113,8 +117,11 @@ const ConfigCenter = ()=>{
     loadMainData();
   },[tablePagination.current])
   return <div className="page-config-center">
-    <div style={{textAlign:'right'}}><Button icon="plus-circle" type="primary" onClick={handleConfigFileAdd}>新增配置</Button></div>
-    <div style={{marginTop:20}}>
+    <dev className="header_title">
+          <span className="title"></span>
+          <Button icon="plus-circle" type="primary" onClick={handleConfigFileAdd}>新增配置</Button>
+    </dev>
+    <div>
       <Table
         size="small"
         rowKey="id"

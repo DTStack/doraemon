@@ -28,6 +28,7 @@ export default (props)=>{
     },{
       title:'操作',
       key:'operation',
+      width:120,
       render:(value,row)=>{
         return <span>
           <a href="javascript:void(0);" onClick={handleTableRowEdit.bind(this,row)}>编辑</a>
@@ -55,12 +56,10 @@ export default (props)=>{
       id,
       [fieldName]:value
     }).then((response)=>{
-      const {success,message} = response;
+      const {success} = response;
       if(success){
         Message.success(`主机「${hostName}」用户名修改成功`);
         loadTableData();
-      }else{
-        Message.error(message);
       }
     })
   }
@@ -88,12 +87,10 @@ export default (props)=>{
     API.deleteHost({
       id
     }).then((response)=>{
-      const {success,message} = response;
+      const {success} = response;
       if(success){
         Message.success('主机删除成功');
         loadTableData();
-      }else{
-        Message.error(message);
       }
     });
   }
@@ -110,11 +107,9 @@ export default (props)=>{
   const loadTableData = ()=>{
     setTableLoading(true);
     API.getHostList().then((response)=>{
-      const {success,data,message} = response;
+      const {success,data} = response;
       if(success){
         setHostList(data);
-      }else{
-        Message.error(message);
       }
       setTableLoading(false);
     });
@@ -138,9 +133,9 @@ export default (props)=>{
       onOk={handleHostModalAction.bind(this,'ok')}
       onCancel={handleHostModalAction.bind(this,'cancel')}/>
     <PasswordModal
-     value={currentHost}
-     visible={passwordModalVisible}
-     onOk={handlePasswordModalAction.bind(this,'ok')}
-     onCancel={handlePasswordModalAction.bind(this,'cancel')}/>
+      value={currentHost}
+      visible={passwordModalVisible}
+      onOk={handlePasswordModalAction.bind(this,'ok')}
+      onCancel={handlePasswordModalAction.bind(this,'cancel')}/>
   </div>
 }

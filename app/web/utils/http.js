@@ -10,7 +10,7 @@ class Http {
   }
 
   post(url, data) { 
-    let options = { method: 'POST', headers: { "content-type": "application/json;charset=UTF-8" } }
+    let options = { method: 'POST', headers: { 'content-type': 'application/json;charset=UTF-8' } }
     if (data) options.body = JSON.stringify(data)
     return this.request(url, options)
   }
@@ -72,7 +72,7 @@ class Http {
       })
       .then(authAfterRes)
       .catch(err => {
-        console.error("错误信息：",JSON.stringify(err));
+        console.error('错误信息：',JSON.stringify(err));
         this.handleExcept(err);//开发环境可讲此方法注视
       });
   }

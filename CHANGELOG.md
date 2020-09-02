@@ -1,20 +1,67 @@
-<a name="4.0.2"></a>
-## [4.0.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/3.6.0...4.0.2) (2018-06-29)
+# 1.0.0 (2020-04-29)
+
+### 🌟 新功能
+范围|描述|commitId
+--|--|--
+ commit | 优化代码提交控制流程 | [954a7c3](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/954a7c3)
 
 
-### Bug Fixes
-
-* autoprefixer ([14122ea](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/14122ea))
-* https://github.com/easy-team/egg-react-webpack-boilerplate/issues/12 ([48354ae](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/48354ae))
-* production mode, target  node not import react-hot-loader ([ed33d57](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/ed33d57))
-* remove webpack compatible code ([e681675](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e681675))
-* spa hot update ([e210b75](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e210b75))
-
-
-### Features
-
-* use easywebpack 4 ([6db185e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6db185e))
-* webpack4 ([8cddf51](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/8cddf51))
-
-
+范围|描述|commitId
+--|--|--
+ - | 优化列表删除 | [b6e2e59](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b6e2e59)
+ - | 修改package.json | [cb4111b](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/cb4111b)
+ - | 版本控制 | [ab9a10d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/ab9a10d)
+ - | 锁定安装包 | [08a8cfa](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/08a8cfa)
+ - | 优化欢迎页 | [a2d6f7c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a2d6f7c)
+ - | 优化界面 | [e158523](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e158523)
+ - | feat:优化eslint | [8bf8274](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/8bf8274)
+ - | 修改主题布局及全局列表默认排序方式 | [e5d3a73](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e5d3a73)
+ - | 去掉服务端文件操作命令错误提示 | [333317c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/333317c)
+ - | 添加默认ip | [76722a2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/76722a2)
+ - | 优化远程nginx配置创建 | [102ae4f](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/102ae4f)
+ - | 配置详情修复配置问题修复 | [a36d2d0](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a36d2d0)
+ - | 优化远程操作指令rm | [def58fd](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/def58fd)
+ - | 支持配置文件的远程更新 | [4f367cf](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/4f367cf)
+ - | webpack配置调整 | [5ac8169](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/5ac8169)
+ - | 新增配置中心 | [6df7e76](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6df7e76)
+ - | 部分react组件该用hook的方式去写 | [30d109b](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/30d109b)
+ - | shell脚本调整 | [0f621e3](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0f621e3)
+ - | 获取本机IP的方式改变 | [78d7d9c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/78d7d9c)
+ - | start.sh脚本更新 | [d009ec6](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d009ec6)
+ - | 新增主机失败问题修复 | [9db1c89](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/9db1c89)
+ - | 加入主机管理功能 | [a30a559](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a30a559)
+ - | Revert "Revert "加入本机ip的获取"" | [6f8146b](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6f8146b)
+ - | Revert "加入本机ip的获取" | [e2bd908](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e2bd908)
+ - | 获取本机ip函数调整 | [92cda1e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/92cda1e)
+ - | 加入本机ip的获取 | [02422de](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/02422de)
+ - | 代理服务正则表达式校验改成宽松校验 | [11779b1](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/11779b1)
+ - | 代理规则加入备注这一字段 | [59d5256](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/59d5256)
+ - | 打包问题修复 | [77673c5](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/77673c5)
+ - | 添加邮件签名制作 | [15d3d1c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/15d3d1c)
+ - | 样式调整 | [d8ffd00](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d8ffd00)
+ - | 加入工具箱和内部网址导航 | [05fa606](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/05fa606)
+ - | 新增默认需求本机Ip | [8536a9a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/8536a9a)
+ - | serverId获取方式调整 | [e0833cd](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e0833cd)
+ - | 修改.gitignore | [053c71c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/053c71c)
+ - | 忽略config/manifest.json | [96347b4](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/96347b4)
+ - | 标题链接首页 | [6b9c4e7](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6b9c4e7)
+ - | 把名字改回去 | [2cdf326](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2cdf326)
+ - | 再次改 | [b2cf9d7](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b2cf9d7)
+ - | 改到你成 | [554d1fc](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/554d1fc)
+ - | 名字再次调整 | [2ee8b85](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2ee8b85)
+ - | 名字调整测试 | [a0a7541](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a0a7541)
+ - | 重定向问题修复以及加入目标服务地址的格式校验 | [def1895](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/def1895)
+ - | 塌陷问题修复 | [aad39b0](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/aad39b0)
+ - | 启动命令调整 | [efcb39c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/efcb39c)
+ - | 生产环境数据库地址调整 | [66b0ea1](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/66b0ea1)
+ - | 修复代理不支持post类型 | [2ac75ad](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2ac75ad)
+ - | bug fix | [a5de1cd](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a5de1cd)
+ - | 查询model改变 | [34de349](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/34de349)
+ - | 编辑问题修复 | [a71f297](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a71f297)
+ - | 更换数据库地址 | [c376c70](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c376c70)
+ - | 生产环境加入数据配置 | [1ef4d15](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/1ef4d15)
+ - | 删除test.js | [a6ac981](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a6ac981)
+ - | 代理功能完成 | [1d52b7e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/1d52b7e)
+ - | 代理服务操作 | [c984fbf](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c984fbf)
+ - | 项目初始化 | [f116e4c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/f116e4c)
 
