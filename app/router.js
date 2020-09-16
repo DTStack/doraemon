@@ -17,6 +17,7 @@ module.exports = app => {
   app.get('/api/proxy-server/rule-list', app.controller.proxy.ruleList);
   app.post('/api/proxy-server/add-rule', app.controller.proxy.addRule);
   app.post('/api/proxy-server/update-rule', app.controller.proxy.updateRule);
+  app.post('/api/proxy-server/update-rule-status', app.controller.proxy.updateRuleStatus);
   app.delete('/api/proxy-server/delete-rule', app.controller.proxy.deleteRule);
   /**
    * 主机管理

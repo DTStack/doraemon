@@ -44,10 +44,10 @@ const ConfigCenter = ()=>{
       width:140,
       render:(value,row)=>{
         return <Fragment>
-          <a href="javascript:void(0);" onClick={handleConfigFileEdit.bind(this,row)}>编辑</a>
+          <a onClick={handleConfigFileEdit.bind(this,row)}>编辑</a>
           <Divider type="vertical"/>
           <Popconfirm title={`确认是否删除「${row.filename}」？`} onConfirm={handleConfigFileDelete.bind(this,row)}>
-            <a href="javascript:void(0);" >删除</a>
+            <a >删除</a>
           </Popconfirm>
         </Fragment>
       }
@@ -117,10 +117,10 @@ const ConfigCenter = ()=>{
     loadMainData();
   },[tablePagination.current])
   return <div className="page-config-center">
-    <dev className="header_title">
+    <div className="header_title">
           <span className="title"></span>
           <Button icon="plus-circle" type="primary" onClick={handleConfigFileAdd}>新增配置</Button>
-    </dev>
+    </div>
     <div>
       <Table
         size="small"

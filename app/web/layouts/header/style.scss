@@ -1,0 +1,11 @@
+.header_component{
+    padding: 0 10px;
+    .menu_content{
+        flex: 1;
+        padding: 0 50px;
+        .ant-menu{
+            height: 64px;
+            line-height: 64px;
+        }
+    }
+}

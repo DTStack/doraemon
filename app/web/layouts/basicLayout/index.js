@@ -1,30 +1,18 @@
-import React,{useEffect} from 'react';
-import {Layout,Row,Col} from 'antd';
-import {Link} from 'react-router-dom';
-import {useSelector} from 'react-redux';
+import React from 'react';
+import {Layout } from 'antd';
 import classnames from 'classnames';
-import logo from '../../asset/images/logo.png';
+import { renderRoutes } from 'react-router-config'
 import './style.scss';
+import Header from '../header/header';
+const { Content} = Layout;
 
-const {Header, Content} = Layout;
 const BasicLayout = (props)=>{
-  const {className,children} = props;
-  const {localIp} = useSelector((state)=>state.global);
+  const {className,route,location} = props;
   return (
     <Layout className="layout-basic">
-      <Header style={{ padding: '0 10px',background:'#2E3943' }}>
-        <Row>
-          <Col span={12}>
-            <Link to='/page/home'>
-              <img className="logo" src={logo}/>
-              <span className="system-title">哆啦A梦</span>
-            </Link>
-          </Col>
-          <Col span={12} style={{textAlign:'right'}}><span className="local-ip">{`本机IP: ${localIp}`}</span></Col>
-        </Row>
-      </Header>
+      <Header location={location}/>
       <Content className={classnames('main-content',className)}>
-        {children}
+        {renderRoutes(route.routes)}
       </Content>
     </Layout>)
 }

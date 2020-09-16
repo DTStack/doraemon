@@ -31,10 +31,10 @@ export default (props)=>{
       width:120,
       render:(value,row)=>{
         return <span>
-          <a href="javascript:void(0);" onClick={handleTableRowEdit.bind(this,row)}>编辑</a>
+          <a onClick={handleTableRowEdit.bind(this,row)}>编辑</a>
           <Divider type="vertical"/>
           <Popconfirm title={`确认是否删除该主机「${row.hostName}」?`} onConfirm={handleTableRowDelete.bind(this,row)}>
-            <a href="javascript:void(0);">删除</a>
+            <a>删除</a>
           </Popconfirm>
         </span>
       }

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Modal,Form,Input} from 'antd';
+import {Modal,Form,Input,Tooltip, Button} from 'antd';
 import PropsTypes from 'prop-types';
 import {urlReg} from '@/utils/reg';
 import { API } from '@/api'
@@ -49,6 +49,14 @@ class ProxyRuleModal extends React.PureComponent{
     const {onCancel} = this.props;
     onCancel();
   }
+  onClickQuickInput = () => {
+    const {form,proxyServer} = this.props;
+    const {ip} = proxyServer;
+    const { localIp } = this.state;
+    form.setFieldsValue({
+      target:`http://${ip||localIp}:8080`
+    })
+  }
   render(){
     const {visible,editable,form,proxyServer,confirmLoading} = this.props;
     const {getFieldDecorator} = form;
@@ -88,15 +96,18 @@ class ProxyRuleModal extends React.PureComponent{
                 required: true,pattern:urlReg,message: '请输入正确格式的目标服务地址',
               }],
               initialValue:target
-            })(<Input placeholder="请输入目标服务地址"/>)
+            })(<Input style={{width:'88%'}} placeholder="请输入目标服务地址"/>)
           }
+          <Tooltip placement="topLeft" title={`快速填写默认目标地址默认为：http://${ip||localIp}:8080`}>
+            <Button shape="circle" size="small" style={{marginLeft:11}} onClick={this.onClickQuickInput} icon="retweet"/>
+          </Tooltip>
         </Form.Item>
         <Form.Item
           label="备注">
           {
             getFieldDecorator('remark',{
               rules:[{
-                required: true, message: '请输入备注',
+                required: false, message: '请输入备注',
               }],
               initialValue:remark
             })(<TextArea rows={4} placeholder="请输入备注"/>)

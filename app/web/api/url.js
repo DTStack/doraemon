@@ -55,6 +55,11 @@ export default {
     method:'post',
     url:'/api/proxy-server/update-rule'
   },
+    //更新代理规则状态
+    updateProxyRuleStatus:{
+      method:'post',
+      url:'/api/proxy-server/update-rule-status'
+    },
   //删除代理规则
   deleteProxyRule:{
     method:'delete',

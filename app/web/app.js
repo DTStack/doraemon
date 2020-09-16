@@ -5,6 +5,7 @@ import {useDispatch} from 'react-redux';
 import {LocaleProvider} from 'antd';
 import zhCN from 'antd/lib/locale-provider/zh_CN';
 import routes from '@/router';
+import { renderRoutes } from 'react-router-config'
 import * as actions from '@/store/actions';
 
 
@@ -17,16 +18,7 @@ const App = ()=>{
     <LocaleProvider locale={zhCN}>
       <Switch>
         {
-          routes.map((route)=>{
-            const {redirect,path} = route;
-            if(redirect){
-              return  <Redirect key={path} exact path={path} to={redirect}/>
-            }else{
-              const Layout = route.layout;
-              const Component = route.component;
-              return <Route exact={path!=='*'} key={path} path={path} render={(props)=>(Layout?<Layout {...props}><Component {...props}/></Layout>:<Component {...props}/>)}/>
-            }
-          })
+          renderRoutes(routes)
         }
       </Switch>
     </LocaleProvider>

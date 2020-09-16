@@ -1,9 +1,8 @@
 import React,{useState} from 'react';
 import {Layout,Menu,Icon} from 'antd';
 import {Link} from 'react-router-dom';
-import BasicLayout from '@/layouts/basicLayout';
 import './style.scss';
-const {Sider, Content,Footer} = Layout;
+const {Sider } = Layout;
 const SubMenu = Menu.SubMenu;
 
 const navMenuList = [{
@@ -23,8 +22,8 @@ const navMenuList = [{
   path:'/page/config-center',
   icon:'setting'
 }]
-const SiderLayout = (props)=>{
-  const {location,children} = props;
+const SiderComponent = (props)=>{
+  const {location} = props;
   const {pathname} = location;
   const [collapsed,setCollapsed] = useState(false);
   const [selectedKeys,setSelectedKeys] = useState([pathname]);
@@ -32,8 +31,6 @@ const SiderLayout = (props)=>{
     setCollapsed(!collapsed)
   }
   return (
-    <BasicLayout>
-      <Layout className="layout-main">
         <Sider
           trigger={null} 
           collapsible 
@@ -64,15 +61,6 @@ const SiderLayout = (props)=>{
               })
             }
           </Menu>
-        </Sider>
-        <Layout className="right-container">
-          <Content className="right-content-wrapper">
-            <div className="right-content">
-              {children}
-            </div>
-          </Content>
-        </Layout>
-      </Layout>
-    </BasicLayout>)
+        </Sider>)
 }
-export default SiderLayout;
+export default SiderComponent;

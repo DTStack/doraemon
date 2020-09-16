@@ -1,6 +1,4 @@
-import SiderLayout from '@/layouts/siderLayout';
 import BasicLayout from '@/layouts/basicLayout';
-
 import Home from '@/pages/home';
 //代理服务
 import ProxyServer from '@/pages/proxyServer';
@@ -22,53 +20,48 @@ const urlPrefix = '/page'
 const routes = [
   {
     path: '/',
-    redirect:`${urlPrefix}/home`
+    component: BasicLayout,
+    routes:[
+      {
+        path: `${urlPrefix}/home`,
+        component: Home
+      },
+      {
+        path:`${urlPrefix}/internal-url-navigation`,
+        component: InnerUrlNavigation
+      },
+      {
+        path:`${urlPrefix}/toolbox`,
+        component: Toolbox
+      },
+      {
+        path: `${urlPrefix}/proxy-server`,
+        component: ProxyServer
+      },
+      {
+        path: `${urlPrefix}/mail-sign`,
+        component: MailSign
+      },
+      {
+        path: `${urlPrefix}/host-management`,
+        component: HostManagement
+      },
+      {
+        path: `${urlPrefix}/config-center`,
+        component: ConfigCenter
+      },
+      {
+        path:`${urlPrefix}/config-detail/:id`,
+        layout:BasicLayout,
+        component:ConfigDetail
+      },
+      {
+        path: '*',
+        component: NotFound
+      }
+    ]
   },
-  {
-    path: `${urlPrefix}/home`,
-    layout: SiderLayout,
-    component: Home
-  },
-  {
-    path:`${urlPrefix}/internal-url-navigation`,
-    layout: SiderLayout,
-    component: InnerUrlNavigation
-  },
-  {
-    path:`${urlPrefix}/toolbox`,
-    layout: SiderLayout,
-    component: Toolbox
-  },
-  {
-    path: `${urlPrefix}/proxy-server`,
-    layout: SiderLayout,
-    component: ProxyServer
-  },
-  {
-    path: `${urlPrefix}/mail-sign`,
-    layout: SiderLayout,
-    component: MailSign
-  },
-  {
-    path: `${urlPrefix}/host-management`,
-    layout: SiderLayout,
-    component: HostManagement
-  },
-  {
-    path: `${urlPrefix}/config-center`,
-    layout: SiderLayout,
-    component: ConfigCenter
-  },
-  {
-    path:`${urlPrefix}/config-detail/:id`,
-    layout:BasicLayout,
-    component:ConfigDetail
-  },
-  {
-    path: '*',
-    layout: BasicLayout,
-    component: NotFound
-  }
+ 
 ];
 
 export default routes;
