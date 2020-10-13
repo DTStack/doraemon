@@ -3,9 +3,9 @@ export default {
    * 通用接口
    */
   //获取github配置仓库中的json
-  getConfigJsonInGithub:{
+  getAppCentersList:{
     method:'get',
-    url:'/api/github/get-config-json'
+    url:'/api/appCenters/get-app-list'
   },
   //获取本机Ip
   getLocalIp:{

@@ -125,6 +125,7 @@ const ConfigCenter = ()=>{
       <Table
         size="small"
         rowKey="id"
+        scroll={{y: 'calc(100vh - 200px)'}}
         columns={getTableColumns()}
         dataSource={configList}
         pagination={{

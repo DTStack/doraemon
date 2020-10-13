@@ -1,16 +1,17 @@
 import React from 'react';
-import { Input, Button, Table, message as Message, Divider, Modal, Badge, Popconfirm, Switch, Tooltip } from 'antd';
+import { Input, Button,Typography, Table, message as Message, Divider, Modal, Badge, Popconfirm, Switch, Tooltip } from 'antd';
 import { API } from '@/api';
 import ProxyServerModal from './components/proxyServerModal';
 import ProxyRuleModal from './components/proxyRuleModal';
 import { connect } from 'react-redux'
+const { Paragraph } = Typography;
 import './style.scss';
 
 const confirm = Modal.confirm;
 const { Search } = Input;
 
 class ProxyServer extends React.PureComponent {
-  state = {
+ state = {
     //代理服务
     currentProxyServer: {},
     proxyServerModalVisible: false,
@@ -303,16 +304,17 @@ class ProxyServer extends React.PureComponent {
     }, {
       title: 'IP',
       key: 'ip',
-      dataIndex: 'ip'
+      dataIndex: 'ip',
+      width: 200
     }, {
       title: '目标代理服务地址',
       key: 'target',
       dataIndex: 'target',
-      width: '30%'
+      width: '20%'
     }, {
       title: '备注',
       key: 'remark',
-      width: '30%',
+      width: '20%',
       dataIndex: 'remark'
     }, {
       title: '状态',
@@ -320,12 +322,12 @@ class ProxyServer extends React.PureComponent {
       width: 160,
       dataIndex: 'status',
       render: (text, record) => {
-        return <Switch defaultChecked={!!text} onChange={(e) => this.handleChangeStatus(e, record)} />
+        return <Switch defaultChecked={!!text} checkedChildren="开" unCheckedChildren="关" onChange={(e) => this.handleChangeStatus(e, record)} />
       }
     }, {
       title: '操作',
       key: 'action',
-      width: 200,
+      width: 160,
       render: (value, row, index) => {
         return (<React.Fragment>
           <Tooltip placement="topLeft" title={
@@ -390,6 +392,7 @@ class ProxyServer extends React.PureComponent {
       title: '代理服务地址',
       key: 'proxy_server_address',
       dataIndex: 'proxy_server_address',
+    render:(value)=> <Paragraph copyable>{value}</Paragraph>
     }, {
       title: '默认代理目标',
       key: 'target',

@@ -52,7 +52,6 @@ const routes = [
       },
       {
         path:`${urlPrefix}/config-detail/:id`,
-        layout:BasicLayout,
         component:ConfigDetail
       },
       {
@@ -60,7 +59,7 @@ const routes = [
         component: NotFound
       }
     ]
-  },
+  }
  
 ];
 

@@ -123,6 +123,7 @@ export default (props)=>{
       size="small"
       rowKey="id"
       columns={getColumns()}
+      scroll={{y: 'calc(100vh - 200px)'}}
       loading={tableLoading}
       dataSource={hostList}
       pagination={false}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Row, Col, Icon, Tooltip } from 'antd';
+import { Row, Col } from 'antd';
 import Loading from '@/components/loading';
 import { API } from '@/api';
 import { colorList } from '@/constant';
@@ -7,18 +7,27 @@ import { urlReg } from '@/utils/reg';
 import { Link } from 'react-router-dom';
 import './style.scss';
 const Toolbox = () => {
-  const initApp = [{ name: '签名制作', desc: '袋鼠云邮箱签名制作', url: '/page/mail-sign' }];
+  const initApp = [  
+    {
+      appName: 'Switch Hosts',
+      appDesc: '袋鼠云内部团队host集中管理系统', 
+      appUrl: '/page/mail-sign' 
+    },
+    {
+      appName: '签名制作',
+      appDesc: '袋鼠云邮箱签名制作', 
+      appUrl: '/page/mail-sign' 
+    }
+  ];
   const [toolList, setToolList] = useState([]);
   const [loading, setLoading] = useState(true);
   const loadMainData = () => {
     setLoading(true);
-    API.getConfigJsonInGithub({
-      name: 'tool-box-list.json'
-    }).then((response) => {
+    API.getAppCentersList({}).then((response) => {
       setLoading(false);
       const { success, data } = response;
       if (success) {
-        setToolList(data);
+        setToolList(data.data);
       }
     });
   }
@@ -26,23 +35,20 @@ const Toolbox = () => {
     loadMainData();
   }, []);
   const renderCard = (list) => list.map((tool, index) => {
-    const { name, url, desc, remark } = tool;
+    const { id,appName, appUrl, appDesc } = tool;
     const componentContent = <Fragment>
-      {remark && <Tooltip title={remark}>
-        <Icon className="icon" type="question-circle" />
-      </Tooltip>}
-      <div className="title">{name}</div>
-      <div className="desc">{desc}</div>
+      <div className="title">{appName}</div>
+      <div className="desc">{appDesc}</div>
     </Fragment>
-    return (<Col className="navigation-item-wrapper" key={name} span={6}>
+    return (<Col className="navigation-item-wrapper" key={id||appName} span={6}>
       {
-        urlReg.test(url) ? (
-          <a href={url} target='_blank' className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
+        urlReg.test(appUrl) ? (
+          <a href={appUrl} target='_blank' className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
             {
               componentContent
             }
           </a>
-        ) : (<Link to={url} className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
+        ) : (<Link to={appUrl} className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
           {
             componentContent
           }
