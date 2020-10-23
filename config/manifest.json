@@ -2,6 +2,7 @@
   "app.css": "/public/css/app.css",
   "app.js": "/public/js/chunk/app.js",
   "runtime.js": "/public/js/runtime.js",
+  "img/style.scss": "/public/img/bg.png",
   "img/duraemon.svg": "/public/img/duraemon.svg",
   "img/logo.png": "/public/img/logo.png",
   "img/pic_404.png": "/public/img/pic_404.png",

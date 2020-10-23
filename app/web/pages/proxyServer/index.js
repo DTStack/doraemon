@@ -251,6 +251,7 @@ class ProxyServer extends React.PureComponent {
     const { mainTableParams } = this.state;
     this.setState({
       mainTableParams: Object.assign({}, mainTableParams, {
+        pageNo:1,
         search: value
       })
     }, () => {
