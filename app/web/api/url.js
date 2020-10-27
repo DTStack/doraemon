@@ -121,5 +121,12 @@ export default {
   saveConfig:{
     method:'post',
     url:'/api/config-detail/save'
+  },
+  /**
+   * switch hosts 管理列表
+   */
+  getHostsList: {
+    method: 'post',
+    url: '/api/switch-hosts/get-hosts-list'
   }
 }

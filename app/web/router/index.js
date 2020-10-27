@@ -14,6 +14,9 @@ import HostManagement from '@/pages/hostManagement';
 import ConfigCenter from '@/pages/configCenter';
 //配置详情
 import ConfigDetail from '@/pages/configDetail';
+// hosts列表
+import SwitchHostsList from '@/pages/switchHosts';
+
 
 import NotFound from '@/pages/exception/404';
 const urlPrefix = '/page'
@@ -53,6 +56,10 @@ const routes = [
       {
         path:`${urlPrefix}/config-detail/:id`,
         component:ConfigDetail
+      },
+      {
+        path: `${urlPrefix}/switch-hosts-list`,
+        component: SwitchHostsList
       },
       {
         path: '*',
