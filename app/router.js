@@ -48,5 +48,8 @@ module.exports = app => {
    */
   app.get('/api/appCenters/get-app-list',app.controller.appCenters.getAppCenterList);
   app.get('/api/github/get-local-ip',app.controller.common.getLocalIp);
-
+  /**
+   * switch hosts 管理列表
+   */
+  app.post('/api/switch-hosts/get-hosts-list', app.controller.switchHosts.getHostsList);
 };
