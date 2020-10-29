@@ -116,7 +116,7 @@ const ConfigDetail = (props)=>{
               onChange={(editor, data, value) => {}}/>
           </Col>
           <Col span={8}>
-            <Card title="信息简介">
+            <Card title="信息简介" className="card-form">
               <Row gutter={8}  className="info-item">
                 <Col span={6} className="label">文件名：</Col>
                 <Col span={18}>{filename}</Col>

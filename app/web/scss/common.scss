@@ -1,6 +1,15 @@
-.text-center{
+.text-center {
   text-align: center;
 }
-.text-right{
+.text-right {
   text-align: right;
+}
+// 卡片下表单
+.card-form {
+  .info-item {
+    margin-top: 20px;
+    .label {
+      text-align: right;
+    }
+  }
 }
