@@ -125,8 +125,24 @@ export default {
   /**
    * switch hosts 管理列表
    */
+  // 获取列表
   getHostsList: {
     method: 'post',
     url: '/api/switch-hosts/get-hosts-list'
+  },
+  // 创建
+  createHosts: {
+    method: 'post',
+    url: '/api/switch-hosts/create-hosts'
+  },
+  // 获取详情数据
+  getHostsInfo: {
+    method: 'get',
+    url: '/api/switch-hosts/get-hosts-info'
+  },
+  // 更新
+  updateHosts: {
+    method: 'post',
+    url: '/api/switch-hosts/update-hosts'
   }
 }

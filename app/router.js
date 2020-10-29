@@ -52,4 +52,7 @@ module.exports = app => {
    * switch hosts 管理列表
    */
   app.post('/api/switch-hosts/get-hosts-list', app.controller.switchHosts.getHostsList);
+  app.post('/api/switch-hosts/create-hosts', app.controller.switchHosts.createHosts);
+  app.get('/api/switch-hosts/get-hosts-info', app.controller.switchHosts.getHostsInfo);
+  app.post('/api/switch-hosts/update-hosts', app.controller.switchHosts.updateHosts)
 };
