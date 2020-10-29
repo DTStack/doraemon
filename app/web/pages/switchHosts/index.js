@@ -1,8 +1,9 @@
 import React, { Fragment, useEffect, useState } from 'react';
-import { Divider, Table } from 'antd';
+import moment from 'moment';
+import { Divider, Table, Button } from 'antd';
 import { API } from '@/api';
- 
-const SwitchHostsList = () => {
+
+const SwitchHostsList = (props) => {
     const [hostsList, setHostsList] = useState({
         data: [],
         totalElement: 0
@@ -14,6 +15,7 @@ const SwitchHostsList = () => {
         total: 0,
         hideOnSinglePage: true
     })
+    const [tableLoading, setTableLoading] = useState(false);
 
     useEffect(() => {
         getHostsList();
@@ -21,7 +23,12 @@ const SwitchHostsList = () => {
 
     // 获取列表数据
     const getHostsList = () => {
-        API.getHostsList().then((res) => {
+        const { current, pageSize } = pagination;
+        setTableLoading(true);
+        API.getHostsList({
+            current,
+            size: pageSize
+        }).then((res) => {
             const { success, data, msg } = res;
             if (success) {
                 setHostsList(data);
@@ -32,6 +39,7 @@ const SwitchHostsList = () => {
             } else {
                 message.error(msg);
             }
+            setTableLoading(false);
         })
     }
 
@@ -52,17 +60,23 @@ const SwitchHostsList = () => {
                 key: 'groupApi'
             }, {
                 title: '描述',
-                dataIndex: 'desc',
-                key: 'desc',
+                dataIndex: 'groupDesc',
+                key: 'groupDesc',
                 render: text => text || '--'
             }, {
                 title: '创建时间',
                 dataIndex: 'created_at',
-                key: 'created_at'
+                key: 'created_at',
+                render: (value, record) => {
+                    return moment(value).format('YYYY-MM-DD HH:mm:ss')
+                }
             }, {
                 title: '更新时间',
                 dataIndex: 'updated_at',
-                key: 'updated_at'
+                key: 'updated_at',
+                render: (value, record) => {
+                    return moment(value).format('YYYY-MM-DD HH:mm:ss')
+                }
             }, {
                 title: '操作',
                 dataIndex: 'actions',
@@ -85,16 +99,26 @@ const SwitchHostsList = () => {
 
     // 编辑
     const handleEditHosts = (record) => {
+        props.history.push(`/page/switch-hosts-edit/${record.id}/edit`);
     }
 
     // 推送
     const handlePushHosts = (record) => {
     }
 
+    // 添加群组
+    const handleAddHosts = () => {
+        props.history.push('/page/switch-hosts-edit/0/add');
+    }
+
     return (
         <div>
+            <div style={{ textAlign: 'right' }}>
+                <Button type="primary" icon="plus-circle" onClick={handleAddHosts}>新增群组</Button>
+            </div>
             <Table
                 rowKey="id"
+                loading={tableLoading}
                 dataSource={hostsList.data}
                 columns={initColumns()}
                 pagination={pagination}
