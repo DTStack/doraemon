@@ -3,7 +3,7 @@ import {Modal,Form,Input} from 'antd';
 import PropsTypes from 'prop-types';
 import {urlReg} from '@/utils/reg';
 
-class CreateApp extends React.PureComponent{
+class CreateApp extends React.PureComponent {
   static defaultProps = {
     visible:false,
     onOk:()=>{},
@@ -19,14 +19,10 @@ class CreateApp extends React.PureComponent{
     confirmLoading:PropsTypes.bool
   }
   handleModalOk=()=>{
-    const {onOk,form,editable,proxyServer} = this.props;
+    const { onOk, form, appInfo } = this.props;
     form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        if(editable){
-          onOk(Object.assign({},proxyServer,values));
-        }else{
-          onOk(values);
-        }
+        onOk({ ...values, id: appInfo.id || '' });
       }
     });
   }
@@ -35,44 +31,65 @@ class CreateApp extends React.PureComponent{
     onCancel();
   }
   render(){
-    const {visible,editable,form,proxyServer,confirmLoading} = this.props;
-    const {getFieldDecorator} = form;
-    const {name,target} = proxyServer;
+    const { visible, appInfo, confirmLoading } = this.props;
+    const { getFieldDecorator } = this.props.form;
+    const { appName, appUrl, appDesc } = appInfo;
     const formItemLayout = {
       labelCol: {
         span: 6
       },
       wrapperCol: {
-        span: 17
+        span: 15
       },
     };
+    console.log(this.props)
     return (<Modal
-      title={`${editable?'编辑':'新增'}代理服务`}
+      title={appInfo ? `添加应用` : '编辑应用'}
       visible={visible}
       confirmLoading={confirmLoading}
       onOk={this.handleModalOk}
       onCancel={this.handleModalCancel}>
       <Form {...formItemLayout} >
         <Form.Item
-          label="代理服务名称">
+          label="应用名称"
+          hasFeedback
+        >
           {
-            getFieldDecorator('name',{
+            getFieldDecorator('appName',{
               rules:[{
-                required: true,message: '请输入代理服务名称',
+                required: true, message: '请输入应用名称',
               }],
-              initialValue:name
-            })(<Input placeholder="请输入代理服务名称"/>)
+              initialValue: appName || ''
+            })(<Input placeholder="请输入请输入应用名称"/>)
           }
         </Form.Item>
         <Form.Item
-          label="目标服务地址">
+          label="应用URL"
+          hasFeedback
+        >
           {
-            getFieldDecorator('target',{
+            getFieldDecorator('appUrl',{
               rules:[{
-                required: true,pattern:urlReg,message: '请输入正确格式的目标服务地址',
+                required: true,
+                message: '请输入应用URL'
               }],
-              initialValue:target
-            })(<Input placeholder="请输入目标服务地址"/>)
+              initialValue: appUrl || ''
+            })(<Input placeholder="请输入应用URL"/>)
+          }
+        </Form.Item>
+        <Form.Item
+          label="应用描述"
+          hasFeedback
+        >
+          {
+            getFieldDecorator('appDesc',{
+              rules:[{
+                required: true,
+                max: 120,
+                message: '请输入应用描述'
+              }],
+              initialValue: appDesc || ''
+            })(<Input.TextArea placeholder="请输入应用描述"/>)
           }
         </Form.Item>
       </Form>
