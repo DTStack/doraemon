@@ -5,6 +5,7 @@ import { API } from '@/api';
 import { colorList } from '@/constant';
 import { urlReg } from '@/utils/reg';
 import { Link } from 'react-router-dom';
+import CreateApp from './components/CreateApp'
 import './style.scss';
 const Toolbox = () => {
   const initApp = [
@@ -20,8 +21,10 @@ const Toolbox = () => {
     }
   ];
   const [toolList, setToolList] = useState([]);
+  const [appInfo, setAppInfo] = useState({});
   const [loading, setLoading] = useState(true);
-  const [visbile, setVisbile] = useState(false);
+  const [visible, setVisbile] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const loadMainData = () => {
     setLoading(true);
     API.getAppCentersList({}).then((response) => {
@@ -32,26 +35,61 @@ const Toolbox = () => {
       }
     });
   }
+  const addApplication = (params) => {
+    const { appName, appUrl, appDesc, id } = params
+    setConfirmLoading(true)
+    API.addApplication({
+      appName,
+      appUrl,
+      appDesc,
+      id
+    }).then((response) => {
+      const { success } = response
+      if (success) {
+        setConfirmLoading(false)
+        onHandleAddApp()
+        setAppInfo({})
+        loadMainData()
+      }
+    });
+  }
   useEffect(() => {
     loadMainData();
   }, []);
   const onHandleAddApp = () => {
-    setVisbile(true)
+    setVisbile(!visible)
+    setAppInfo({})
   }
-  const renderCard = (list) => list.map((tool, index) => {
+  const onHandleEditApp = (id) => {
+    setVisbile(!visible)
+    API.getApplicationById({ id }).then((response) => {
+      const { success, data } = response
+      if (success) {
+        setAppInfo(data)
+      }
+    });
+  }
+  const renderCard = (list, edit) => list.map((tool, index) => {
     const { id, appName, appUrl, appDesc } = tool;
     const componentContent = <Fragment>
-      <div className="title">{appName}</div>
+      <div className="title">
+        <a href={appUrl} target='_blank' >{appName}</a>
+        {edit && <Icon
+          type="form"
+          onClick={() => { onHandleAddApp(); onHandleEditApp(id); }}
+          style={{ marginLeft: 10 }}
+        />}
+      </div>
       <div className="desc">{appDesc}</div>
     </Fragment>
     return (<Col className="navigation-item-wrapper" key={id || appName} span={6}>
       {
         urlReg.test(appUrl) ? (
-          <a href={appUrl} target='_blank' className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
+          <div className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
             {
               componentContent
             }
-          </a>
+          </div>
         ) : (<Link to={appUrl} className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
           {
             componentContent
@@ -68,12 +106,19 @@ const Toolbox = () => {
       </div>
       <Row className="tool-list" gutter={10}>
         {
-          renderCard(initApp)
+          renderCard(initApp, false)
         }
         {
-          renderCard(toolList)
+          renderCard(toolList, true)
         }
       </Row>
+      <CreateApp
+        key={visible}
+        visible={visible}
+        appInfo={appInfo}
+        confirmLoading={confirmLoading}
+        onOk={addApplication}
+        onCancel={onHandleAddApp} />
     </div>
   </Loading>)
 }

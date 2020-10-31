@@ -7,6 +7,16 @@ export default {
     method:'get',
     url:'/api/appCenters/get-app-list'
   },
+  // 添加应用中心
+  addApplication: {
+    method: 'post',
+    url:'/api/appCenters/add-applications'
+  },
+   // 获取应用中心信息
+  getApplicationById: {
+    method: 'get',
+    url:'/api/appCenters/get-app-by-id'
+  },
   //获取本机Ip
   getLocalIp:{
     method:'get',
