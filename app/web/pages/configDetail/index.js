@@ -61,6 +61,23 @@ const ConfigDetail = (props)=>{
       }
     })
   }
+  const  onGutterClick = (cm, n, gutter, event) => {
+    let info = cm.lineInfo(n)
+    let ln = info.text
+    if (/^\s*$/.test(ln)) return
+
+    let new_ln
+    if (/^#/.test(ln)) {
+      new_ln = ln.replace(/^#\s*/, '')
+    } else {
+      new_ln = '# ' + ln
+    }
+    codeEditorRef.current.editor.getDoc()
+      .replaceRange(new_ln, {line: info.line, ch: 0}, {
+        line: info.line,
+        ch: ln.length
+      })
+  }
   useEffect(()=>{
     Promise.all([loadBasicInfoData(),loadRemoteConfigInfo()]).then(()=>{
       setLoading(false);
@@ -94,6 +111,7 @@ const ConfigDetail = (props)=>{
                 theme: 'dracula',
                 lineNumbers: true
               }}
+              onGutterClick = {onGutterClick}
               onBeforeChange={(editor, data, value) => {
                 setConfig(value)
               }}
@@ -107,7 +125,7 @@ const ConfigDetail = (props)=>{
                 tabSize:2,
                 theme: 'dracula',
                 lineNumbers: true,
-                height:500
+                height:300
               }}
               onBeforeChange={(editor, data, value) => {
                 console.log(value);
