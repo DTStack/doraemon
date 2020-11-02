@@ -6,6 +6,9 @@ class SwitchHostsService extends Service {
     getHostsList(reqParams) {
         const { size, current } = reqParams;
         return this.ctx.model.SwitchHosts.findAndCountAll({
+            where: {
+                is_delete: 0
+            },
             limit: size,
             order: [['updated_at', 'DESC']],
             offset: size * (current - 1)

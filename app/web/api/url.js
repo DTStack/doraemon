@@ -144,5 +144,15 @@ export default {
   updateHosts: {
     method: 'post',
     url: '/api/switch-hosts/update-hosts'
+  },
+  // 推送
+  pushHosts: {
+    method: 'post',
+    url: '/api/switch-hosts/push-hosts'
+  },
+  // 删除
+  deleteHosts: {
+    method: 'post',
+    url: '/api/switch-hosts/delete-hosts'
   }
 }

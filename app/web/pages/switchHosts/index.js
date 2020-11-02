@@ -7,35 +7,34 @@ const SwitchHostsList = (props) => {
     const [hostsList, setHostsList] = useState({
         data: [],
         totalElement: 0
-    })
-    const [pagination, setPagination] = useState({
-        size: 'small',
+    });
+    const [reqParams, setReqParams] = useState({
         current: 1,
-        pageSize: 20,
-        total: 0,
-        hideOnSinglePage: true
+        size: 20
     })
+    const pagination = {
+        size: 'small',
+        current: reqParams.current,
+        pageSize: reqParams.size,
+        total: hostsList.totalElement,
+        hideOnSinglePage: true
+    }
     const [tableLoading, setTableLoading] = useState(false);
 
     useEffect(() => {
         getHostsList();
-    }, []);
+    }, [reqParams]);
 
     // 获取列表数据
     const getHostsList = () => {
-        const { current, pageSize } = pagination;
         setTableLoading(true);
-        API.getHostsList({
-            current,
-            size: pageSize
-        }).then((res) => {
+        API.getHostsList(reqParams).then((res) => {
             const { success, data, msg } = res;
             if (success) {
-                setHostsList(data);
-                setPagination({
-                    ...pagination,
-                    total: data.totalElement
-                })
+                setHostsList({
+                    data: data.data || [],
+                    totalElement: data.count || 0
+                });
             } else {
                 message.error(msg);
             }
@@ -53,7 +52,8 @@ const SwitchHostsList = (props) => {
             }, {
                 title: '群组ID',
                 dataIndex: 'groupId',
-                key: 'groupId'
+                key: 'groupId',
+                render: text => text || '--'
             }, {
                 title: '群组API',
                 dataIndex: 'groupApi',
@@ -90,6 +90,10 @@ const SwitchHostsList = (props) => {
                                 <a onClick={() => handlePushHosts(record)}>推送</a>
                             </Fragment>
                         }
+                        <Fragment>
+                            <Divider type="vertical" />
+                            <a onClick={() => handleDeleteHosts(record)}>删除</a>
+                        </Fragment>
                     </Fragment>
                 }
             }
@@ -104,11 +108,39 @@ const SwitchHostsList = (props) => {
 
     // 推送
     const handlePushHosts = (record) => {
+        API.pushHosts({
+            id: record.id
+        }).then(res => {
+            const { success } = res;
+            if (success) {
+                getHostsList();
+            }
+        })
+    }
+
+    // 删除
+    const handleDeleteHosts = (record) => {
+        API.deleteHosts({
+            id: record.id
+        }).then(res => {
+            const { success } = res;
+            if (success) {
+                getHostsList();
+            }
+        })
     }
 
     // 添加群组
     const handleAddHosts = () => {
         props.history.push('/page/switch-hosts-edit/0/add');
+    }
+
+    // 表格分页
+    const handleTableChange = (pagination, filters, sorter) => {
+        setReqParams({
+            ...reqParams,
+            current: pagination.current
+        })
     }
 
     return (
@@ -122,6 +154,7 @@ const SwitchHostsList = (props) => {
                 dataSource={hostsList.data}
                 columns={initColumns()}
                 pagination={pagination}
+                onChange={handleTableChange}
             />
         </div>
     )

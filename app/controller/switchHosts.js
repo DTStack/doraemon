@@ -30,14 +30,15 @@ class SwitchHostsController extends Controller {
     // 创建hosts群组
     async createHosts() {
         const { app, ctx } = this;
-        const { groupName, groupDesc, hosts = '' } = ctx.request.body;
+        const { groupName, groupDesc, is_push, hosts = '' } = ctx.request.body;
         if (_.isNil(groupName)) throw new Error('缺少必要参数groupName');
         // 数据库插入数据
         const data = await ctx.service.switchHosts.createHosts({
             groupName,
-            groupDesc
+            groupDesc,
+            is_push
         });
-        if (_.isNil) throw new Error('创建失败');
+        if (_.isNil(data)) throw new Error('创建失败');
         // 创建对应hosts文件
         const hostsPath = 'hosts_' + data.id;
         const groupAddr = path.join(DEFAULT_PATH, hostsPath);
@@ -60,17 +61,19 @@ class SwitchHostsController extends Controller {
     // 更新hosts群组
     async updateHosts() {
         const { ctx, app } = this;
-        const { hosts, id, groupName, groupDesc } = ctx.request.body;
+        const { hosts, id, groupName, groupDesc, is_push } = ctx.request.body;
         if (_.isNil(id)) throw new Error('缺少必要参数id');
         if (_.isNil(groupName)) throw new Error('缺少必要参数groupName');
         // 更新hosts
         const groupAddr = await ctx.service.switchHosts.getGroupAddr(id);
         const groupAddrCache = path.join(__dirname, '../../cache/' + 'hosts_' + id);
+        console.log(' ------------- ', groupAddrCache, path.join(__dirname))
         await this.editHostsConfig(groupAddr, groupAddrCache, hosts);
         // 更新参数
         const result = await ctx.service.switchHosts.updateHosts(id, {
             groupName,
             groupDesc,
+            is_push,
             updated_at: new Date()
         })
         ctx.body = app.utils.response(result);
@@ -94,6 +97,30 @@ class SwitchHostsController extends Controller {
             fs.unlinkSync(groupAddrCache);
             throw err;
         }
+    }
+
+    // 推送
+    async pushHosts() {
+        const { ctx, app } = this;
+        const { id } = ctx.request.body;
+        if (_.isNil(id)) throw new Error('缺少必要参数id');
+        const result = await ctx.service.switchHosts.updateHosts(id, {
+            is_push: 1,
+            updated_at: new Date()
+        });
+        ctx.body = app.utils.response(result);
+    }
+
+    // 删除
+    async deleteHosts() {
+        const { ctx, app } = this;
+        const { id } = ctx.request.body;
+        if (_.isNil(id)) throw new Error('缺少必要参数id');
+        const result = await ctx.service.switchHosts.updateHosts(id, {
+            is_delete: 1,
+            updated_at: new Date()
+        });
+        ctx.body = app.utils.response(result);
     }
 
     // 获取hosts群组信息

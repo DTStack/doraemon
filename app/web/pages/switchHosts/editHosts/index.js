@@ -7,15 +7,17 @@ import HostsInfo from './hostsInfo';
 
 const EditHosts = (props) => {
     const [saveLoading, setSaveLoading] = useState(false);
+    const [pushSaveLoading, setPushSaveLoading] = useState(false);
     const [hosts, setHosts] = useState();
     const [hostsInfo, setHostsInfo] = useState({});
     const infoRef = useRef(null);
 
     const { match } = props;
     const { id, type } = match.params;
+    const isCreate = type === 'add';
 
     useEffect(() => {
-        type !== 'add' && getHostsInfo();
+        !isCreate && getHostsInfo();
     }, [id]);
 
     // 编辑条件下，获取hosts信息
@@ -30,26 +32,28 @@ const EditHosts = (props) => {
     }
 
     // 保存
-    const handleHostsSave = () => {
+    const handleHostsSave = ({ is_push }) => {
         infoRef.current.validateFields((err, values) => {
             if (!err) {
                 const params = {
                     ...values,
-                    hosts
+                    hosts,
+                    is_push: isCreate ? is_push : (hostsInfo.is_push || is_push)
                 }
-                type === 'add'
-                    ? createHosts(params)
-                    : updateHosts(Object.assign(params, { id }))
+                const setLoadingAction = is_push ? setPushSaveLoading : setSaveLoading;
+                isCreate
+                    ? createHosts(params, setLoadingAction)
+                    : updateHosts(Object.assign(params, { id }), setLoadingAction)
             }
         })
     }
 
     // 创建群组
-    const createHosts = (params) => {
-        setSaveLoading(true);
+    const createHosts = (params, setLoadingAction) => {
+        setLoadingAction(true);
         API.createHosts(params)
             .then((res) => {
-                setSaveLoading(false);
+                setLoadingAction(false);
                 const { success } = res;
                 if (success) {
                     message.success('保存成功')
@@ -58,21 +62,16 @@ const EditHosts = (props) => {
     }
 
     // 更新群组
-    const updateHosts = (params) => {
-        setSaveLoading(true);
+    const updateHosts = (params, setLoadingAction) => {
+        setLoadingAction(true);
         API.updateHosts(params)
             .then(res => {
-                setSaveLoading(false);
+                setLoadingAction(false);
                 const { success } = res;
                 if (success) {
                     message.success('更新成功')
                 }
             })
-    }
-
-    // 推送
-    const handleHostsPush = () => {
-
     }
 
     return (
@@ -83,12 +82,24 @@ const EditHosts = (props) => {
                     <Col span={18}>
                         <Breadcrumb style={{ height: '47px', lineHeight: '47px' }}>
                             <Breadcrumb.Item><Link to="/page/switch-hosts-list">hosts管理</Link></Breadcrumb.Item>
-                            <Breadcrumb.Item>{type === 'add' ? '创建' : '编辑'}hosts</Breadcrumb.Item>
+                            <Breadcrumb.Item>{isCreate ? '创建' : '编辑'}hosts</Breadcrumb.Item>
                         </Breadcrumb>
                     </Col>
                     <Col span={6} style={{ textAlign: 'right' }}>
-                        {/* <Button type="primary" icon="check" onClick={handleHostsPush}>保存并推送</Button> */}
-                        <Button type="primary" loading={saveLoading} icon="check" onClick={handleHostsSave}>保存</Button>
+                        {!(!isCreate && hostsInfo.is_push) && (
+                            <Button
+                                type="primary"
+                                icon="check"
+                                loading={pushSaveLoading}
+                                onClick={() => handleHostsSave({ is_push: 1 })}
+                            >保存并推送</Button>
+                        )}
+                        <Button
+                            type="primary"
+                            loading={saveLoading}
+                            icon="check"
+                            onClick={() => handleHostsSave({ is_push: 0 })}
+                        >保存</Button>
                     </Col>
                 </Row>
             </Card>
