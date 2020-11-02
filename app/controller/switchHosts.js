@@ -142,7 +142,7 @@ class SwitchHostsController extends Controller {
     if (_.isNil(id)) throw new Error('缺少必要参数id')
     const groupAddr = await this.ctx.service.switchHosts.getGroupAddr(id);
     await this.readHostsConfig(id, groupAddr, (hosts) => {
-      ctx.body = app.utils.response(true, hosts);
+      ctx.body = hosts;
     });
   }
 
