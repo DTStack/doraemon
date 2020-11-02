@@ -251,6 +251,7 @@ class ProxyServer extends React.PureComponent {
     const { mainTableParams } = this.state;
     this.setState({
       mainTableParams: Object.assign({}, mainTableParams, {
+        pageNo:1,
         search: value
       })
     }, () => {
@@ -350,7 +351,7 @@ class ProxyServer extends React.PureComponent {
       }
     }]
     return <div style={{ padding: '0 10px' }}>
-      <div className="text-right"><Button icon="plus-circle" onClick={() => { this.setState({ proxyRuleModalVisible: true }) }}>添加代理规则</Button></div>
+      <div className="text-right"><Button icon="plus-circle" onClick={() => { this.setState({ proxyRuleModalVisible: true }) }}>添加规则</Button></div>
       <Table
         size="small"
         rowKey={(row) => row.id}
@@ -429,7 +430,7 @@ class ProxyServer extends React.PureComponent {
           onChange={this.onChangeSearch}
           onSearch={this.onSearchProject}
           className="search" />
-        <Button type="primary" icon="plus-circle" onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加代理服务</Button>
+        <Button type="primary" icon="plus-circle" onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
       </div>
       <Table
         rowKey={(row) => row.id}

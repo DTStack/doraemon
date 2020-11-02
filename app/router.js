@@ -48,6 +48,8 @@ module.exports = app => {
    */
   app.get('/api/appCenters/get-app-list',app.controller.appCenters.getAppCenterList);
   app.get('/api/github/get-local-ip',app.controller.common.getLocalIp);
+  app.post('/api/appCenters/add-applications',app.controller.appCenters.addApplications);
+  app.get('/api/appCenters/get-app-by-id',app.controller.appCenters.getApplicationById);
   /**
    * switch hosts 管理列表
    */
