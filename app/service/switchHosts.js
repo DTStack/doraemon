@@ -1,14 +1,11 @@
 const Service = require('egg').Service;
+const _ = require('lodash');
 
 class SwitchHostsService extends Service {
     // 获取列表数据
-    getHostsList({
-        size,
-        current
-    }) {
-        const { ctx } = this;
-        return ctx.model.SwitchHosts.findAndCountAll({
-            // attributes: ['id', 'groupId'],
+    getHostsList(reqParams) {
+        const { size, current } = reqParams;
+        return this.ctx.model.SwitchHosts.findAndCountAll({
             limit: size,
             order: [['updated_at', 'DESC']],
             offset: size * (current - 1)
@@ -16,30 +13,44 @@ class SwitchHostsService extends Service {
     }
 
     // 创建
-    createHosts(hostsParams) {
-        const { ctx } = this;
-        return ctx.model.SwitchHosts.create(hostsParams);
+    createHosts(params) {
+        const { groupName, groupDesc } = params;
+        const hostsParams = {
+            groupName,
+            groupDesc: groupDesc || '',
+            groupApi: '',
+            groupId: '',
+            groupAddr: '',
+            created_at: new Date(),
+            updated_at: new Date()
+        }
+        return this.ctx.model.SwitchHosts.create(hostsParams);
     }
 
     // 更新
-    updateHosts(updateParams) {
+    updateHosts(id, updateParams) {
         const { ctx } = this;
-        const { groupName, groupDesc, id } = updateParams;
-        return ctx.model.SwitchHosts.update({
-            groupName,
-            groupDesc,
-            updated_at: new Date()
-        }, {
+        return ctx.model.SwitchHosts.update(updateParams, {
             where: { id }
         })
     }
 
     // 获取hosts详细信息
-    getHostsInfo({ id }) {
+    getHostsInfo(id) {
         const { ctx } = this;
         return ctx.model.SwitchHosts.findOne({
             where: { id }
         });
+    }
+
+    // 获取群组存放hosts文件的路径
+    async getGroupAddr(id) {
+        const data = await this.ctx.model.SwitchHosts.findOne({
+            attributes: ['groupAddr'],
+            where: { id }
+        });
+        if (_.isNil(data)) throw new Error('获取不到该群组下存储的hosts文件');
+        return data.groupAddr;
     }
 }
 
