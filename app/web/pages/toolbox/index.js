@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Row, Col, Icon, Button } from 'antd';
+import { Row, Col, Icon, Button, Popconfirm } from 'antd';
 import Loading from '@/components/loading';
 import { API } from '@/api';
 import { colorList } from '@/constant';
@@ -12,12 +12,14 @@ const Toolbox = () => {
     {
       appName: 'Switch Hosts',
       appDesc: '袋鼠云内部团队host集中管理系统',
-      appUrl: '/page/mail-sign'
+      appUrl: '/page/mail-sign',
+      notEdit: true
     },
     {
       appName: '签名制作',
       appDesc: '袋鼠云邮箱签名制作',
-      appUrl: '/page/mail-sign'
+      appUrl: '/page/mail-sign',
+      notEdit: true
     }
   ];
   const [toolList, setToolList] = useState([]);
@@ -35,10 +37,15 @@ const Toolbox = () => {
       }
     });
   }
-  const addApplication = (params) => {
+
+  useEffect(() => {
+    loadMainData();
+  }, []);
+
+  const updateApplication = (params) => {
     const { appName, appUrl, appDesc, id } = params
     setConfirmLoading(true)
-    API.addApplication({
+    API.updateApplication({
       appName,
       appUrl,
       appDesc,
@@ -53,13 +60,23 @@ const Toolbox = () => {
       }
     });
   }
-  useEffect(() => {
-    loadMainData();
-  }, []);
+
+  const deleteApplication = (id) => {
+    API.deleteApplication({
+      id
+    }).then((response) => {
+      const { success } = response
+      if (success) {
+        loadMainData()
+      }
+    });
+  }
+
   const onHandleAddApp = () => {
     setVisbile(!visible)
     setAppInfo({})
   }
+
   const onHandleEditApp = (id) => {
     setVisbile(!visible)
     API.getApplicationById({ id }).then((response) => {
@@ -69,32 +86,52 @@ const Toolbox = () => {
       }
     });
   }
-  const renderCard = (list, edit) => list.map((tool, index) => {
-    const { id, appName, appUrl, appDesc } = tool;
+
+  const onHandleClickApp = (params) => {
+    API.clickApplication({ params })
+  }
+
+  const renderCard = (list) => list.map((tool, index) => {
+    const { id, appName, appUrl, appDesc, notEdit } = tool;
     const componentContent = <Fragment>
       <div className="title">
-        <a href={appUrl} target='_blank' >{appName}</a>
-        {edit && <Icon
+        <a href={appUrl} onClick={() => onHandleClickApp(tool)} target='_blank' >{appName}</a>
+        {!notEdit && <Icon
           type="form"
-          onClick={() => { onHandleAddApp(); onHandleEditApp(id); }}
+          onClick={() => { 
+            onHandleAddApp();
+            onHandleEditApp(id);
+            onHandleClickApp(tool);
+          }}
           style={{ marginLeft: 10 }}
         />}
       </div>
       <div className="desc">{appDesc}</div>
+      {!notEdit && (<Popconfirm
+        title="确认将该应用移除？"
+        okText="确定"
+        cancelText="取消"
+        onConfirm={() => { deleteApplication(id) }}
+      >
+        <Icon type="close" className="close-icon" />
+      </Popconfirm>)}
     </Fragment>
     return (<Col className="navigation-item-wrapper" key={id || appName} span={6}>
       {
         urlReg.test(appUrl) ? (
-          <div className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
+          <div
+            className="navigation-item"
+            style={{ background: colorList[index % colorList.length] }}
+          >
             {
               componentContent
             }
           </div>
-        ) : (<Link to={appUrl} className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
+        ) : (<div className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
           {
             componentContent
           }
-        </Link>)
+        </div>)
       }
     </Col>)
   })
@@ -106,10 +143,10 @@ const Toolbox = () => {
       </div>
       <Row className="tool-list" gutter={10}>
         {
-          renderCard(initApp, false)
+          renderCard(initApp)
         }
         {
-          renderCard(toolList, true)
+          renderCard(toolList)
         }
       </Row>
       <CreateApp
@@ -117,7 +154,7 @@ const Toolbox = () => {
         visible={visible}
         appInfo={appInfo}
         confirmLoading={confirmLoading}
-        onOk={addApplication}
+        onOk={updateApplication}
         onCancel={onHandleAddApp} />
     </div>
   </Loading>)

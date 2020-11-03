@@ -1,7 +1,6 @@
 import React from 'react';
 import {Modal,Form,Input} from 'antd';
 import PropsTypes from 'prop-types';
-import {urlReg} from '@/utils/reg';
 
 class CreateApp extends React.PureComponent {
   static defaultProps = {
@@ -42,7 +41,6 @@ class CreateApp extends React.PureComponent {
         span: 15
       },
     };
-    console.log(this.props)
     return (<Modal
       title={appInfo ? `添加应用` : '编辑应用'}
       visible={visible}

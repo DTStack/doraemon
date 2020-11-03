@@ -7,12 +7,21 @@ export default {
     method:'get',
     url:'/api/appCenters/get-app-list'
   },
-  // 添加应用中心
-  addApplication: {
+  // 更新应用
+  updateApplication: {
     method: 'post',
-    url:'/api/appCenters/add-applications'
+    url:'/api/appCenters/update-applications'
   },
-   // 获取应用中心信息
+  // 删除应用
+  deleteApplication: {
+    method: 'post',
+    url:'/api/appCenters/delete-applications'
+  },
+  clickApplication: {
+    method: 'post',
+    url:'/api/appCenters/click-applications'
+  },
+  // 获取应用中心信息
   getApplicationById: {
     method: 'get',
     url:'/api/appCenters/get-app-by-id'
@@ -65,11 +74,11 @@ export default {
     method:'post',
     url:'/api/proxy-server/update-rule'
   },
-    //更新代理规则状态
-    updateProxyRuleStatus:{
-      method:'post',
-      url:'/api/proxy-server/update-rule-status'
-    },
+  //更新代理规则状态
+  updateProxyRuleStatus:{
+    method:'post',
+    url:'/api/proxy-server/update-rule-status'
+  },
   //删除代理规则
   deleteProxyRule:{
     method:'delete',
