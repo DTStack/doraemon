@@ -11,9 +11,8 @@ const Toolbox = () => {
   const initApp = [
     {
       appName: 'Switch Hosts',
-      appDesc: '袋鼠云内部团队host集中管理系统',
-      appUrl: '/page/mail-sign',
-      notEdit: true
+      appDesc: '袋鼠云内部团队host集中管理系统', 
+      appUrl: '/page/switch-hosts-list' 
     },
     {
       appName: '签名制作',

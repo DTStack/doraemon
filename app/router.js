@@ -52,4 +52,17 @@ module.exports = app => {
   app.post('/api/appCenters/delete-applications',app.controller.appCenters.deleteApplications);
   app.post('/api/appCenters/click-applications',app.controller.appCenters.clickApplications);
   app.get('/api/appCenters/get-app-by-id',app.controller.appCenters.getApplicationById);
+  /**
+   * switch hosts 管理列表
+   */
+  app.post('/api/switch-hosts/get-hosts-list', app.controller.switchHosts.getHostsList);
+  app.post('/api/switch-hosts/push-hosts', app.controller.switchHosts.pushHosts);
+  /**
+   * switch hosts 配置内容 增删改查
+   */
+  app.post('/api/switch-hosts/create-hosts', app.controller.switchHosts.createHosts);
+  app.post('/api/switch-hosts/delete-hosts', app.controller.switchHosts.deleteHosts);
+  app.post('/api/switch-hosts/update-hosts', app.controller.switchHosts.updateHosts);
+  app.get('/api/switch-hosts/get-hosts-info', app.controller.switchHosts.getHostsInfo);
+  app.get('/api/switch-hosts/connect/:id', app.controller.switchHosts.getHostsConfig);
 };

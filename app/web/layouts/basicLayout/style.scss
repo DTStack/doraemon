@@ -1,5 +1,6 @@
 .layout-basic{
   height: 100vh;
+  padding-top: 64px;
   .logo{
     width: 30px;
     height: 30px;
@@ -16,7 +17,12 @@
   }
   .main-content{
     height: 100%;
-    padding: 20px;
+    display: flex;
+    flex: 1;
     background: #f2f7fa;
+  }
+  .context_container{
+    flex: 1;
+    padding: 12px;
   }
 }

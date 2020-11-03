@@ -6,19 +6,15 @@ import logo from '../../asset/images/logo.png';
 import './style.scss';
 
 const { Header } = Layout;
-const navMenuList = [{
-  name: '应用中心',
-  path: '/page/toolbox',
-  icon: 'appstore'
-}, {
+const navMenuList = [ {
   name: '代理服务',
   path: '/page/proxy-server',
   icon: 'cloud'
-}, {
-  name: '主机管理',
-  path: '/page/host-management',
-  icon: 'desktop'
-}, {
+},{
+  name: '应用中心',
+  path: '/page/toolbox',
+  icon: 'appstore'
+},{
   name: '配置中心',
   path: '/page/config-center',
   icon: 'setting'
