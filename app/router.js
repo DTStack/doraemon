@@ -48,7 +48,9 @@ module.exports = app => {
    */
   app.get('/api/appCenters/get-app-list',app.controller.appCenters.getAppCenterList);
   app.get('/api/github/get-local-ip',app.controller.common.getLocalIp);
-  app.post('/api/appCenters/add-applications',app.controller.appCenters.addApplications);
+  app.post('/api/appCenters/update-applications',app.controller.appCenters.updateApplications);
+  app.post('/api/appCenters/delete-applications',app.controller.appCenters.deleteApplications);
+  app.post('/api/appCenters/click-applications',app.controller.appCenters.clickApplications);
   app.get('/api/appCenters/get-app-by-id',app.controller.appCenters.getApplicationById);
   /**
    * switch hosts 管理列表

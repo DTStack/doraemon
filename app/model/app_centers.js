@@ -5,7 +5,8 @@ module.exports = app => {
     appName: STRING(100),
     appUrl: STRING(255),
     appDesc: STRING(255),
-    status: INTEGER,
+    status: { type: INTEGER(2), defaultValue: 1 },
+    clickCount: { type: INTEGER(2), defaultValue: 0 },
     created_at: DATE,
     updated_at: DATE
   },{
