@@ -13,3 +13,26 @@
     }
   }
 }
+
+.fl-l {
+  float: left;
+}
+
+.fl-r {
+  float: right;
+}
+
+.clearfix {
+  zoom: 1;
+  &:after {
+      content: " ";
+      visibility: hidden;
+      display: block;
+      height: 0;
+      clear: both;
+  }
+}
+
+.mt-12 {
+  margin-top: 12px;
+}

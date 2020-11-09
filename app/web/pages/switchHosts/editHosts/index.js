@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { Card, Row, Col, Breadcrumb, Button, message } from 'antd';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import { API } from '@/api';
+import Loading from '@/components/loading';
 import HostsInfo from './hostsInfo';
 
 const EditHosts = (props) => {
+  const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [pushSaveLoading, setPushSaveLoading] = useState(false);
   const [hosts, setHosts] = useState();
@@ -17,7 +19,11 @@ const EditHosts = (props) => {
   const isCreate = type === 'add';
 
   useEffect(() => {
-    !isCreate && getHostsInfo();
+    if(isCreate) {
+      setLoading(false);
+    } else {
+      getHostsInfo();
+    }
   }, [id]);
 
   // 编辑条件下，获取hosts信息
@@ -27,6 +33,7 @@ const EditHosts = (props) => {
       if (success) {
         setHostsInfo(data);
         setHosts(data.hosts || '');
+        setLoading(false)
       }
     })
   }
@@ -75,7 +82,7 @@ const EditHosts = (props) => {
   }
 
   return (
-    <div>
+    <Loading loading={loading}>
       <Card
         bodyStyle={{ padding: '0 0 0 10px' }}>
         <Row>
@@ -86,14 +93,14 @@ const EditHosts = (props) => {
             </Breadcrumb>
           </Col>
           <Col span={6} style={{ textAlign: 'right' }}>
-            {!(!isCreate && hostsInfo.is_push) && (
+            {/* {!(!isCreate && hostsInfo.is_push) && (
               <Button
                 type="primary"
                 icon="check"
                 loading={pushSaveLoading}
                 onClick={() => handleHostsSave({ is_push: 1 })}
               >保存并推送</Button>
-            )}
+            )} */}
             <Button
               type="primary"
               loading={saveLoading}
@@ -129,7 +136,7 @@ const EditHosts = (props) => {
           </Card>
         </Col>
       </Row>
-    </div>
+    </Loading>
   )
 }
 

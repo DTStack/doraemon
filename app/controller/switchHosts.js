@@ -16,10 +16,13 @@ class SwitchHostsController extends Controller {
   // 获取列表数据
   async getHostsList() {
     const { app, ctx } = this;
-    const { current, size } = ctx.request.body;
+    const { current, size, searchText } = ctx.request.body;
+    if (_.isNil(current)) throw new Error('缺少必要参current');
+    if (_.isNil(size)) throw new Error('缺少必要参数size');
     const data = await ctx.service.switchHosts.getHostsList({
       size,
-      current
+      current,
+      searchText
     });
     ctx.body = app.utils.response(true, {
       data: data.rows,
@@ -30,6 +33,7 @@ class SwitchHostsController extends Controller {
   // 创建hosts群组
   async createHosts() {
     const { app, ctx } = this;
+    const { host, protocol } = ctx;
     const { groupName, groupDesc, is_push, hosts = '' } = ctx.request.body;
     if (_.isNil(groupName)) throw new Error('缺少必要参数groupName');
     // 数据库插入数据
@@ -47,7 +51,7 @@ class SwitchHostsController extends Controller {
     // 创建websocket连接
     // createWS(8080, '/websocket_' + data.id);
     // 更新数据
-    const groupApi = `/api/switch-hosts/connect/${data.id}`;
+    const groupApi = `${protocol}://${host}/api/switch-hosts/connect/${data.id}`;
     const result = await ctx.service.switchHosts.updateHosts(data.id, {
       groupApi,
       // groupId,

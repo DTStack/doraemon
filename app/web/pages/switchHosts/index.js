@@ -1,7 +1,10 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
-import { Divider, Table, Button } from 'antd';
+import { Divider, Table, Button, Breadcrumb, Input, Typography } from 'antd';
 import { API } from '@/api';
+
+const { Paragraph } = Typography;
+const { Search } = Input;
 
 const SwitchHostsList = (props) => {
   const [hostsList, setHostsList] = useState({
@@ -10,7 +13,8 @@ const SwitchHostsList = (props) => {
   });
   const [reqParams, setReqParams] = useState({
     current: 1,
-    size: 20
+    size: 20,
+    searchText: ''
   })
   const pagination = {
     size: 'small',
@@ -49,15 +53,18 @@ const SwitchHostsList = (props) => {
         title: '群组名称',
         dataIndex: 'groupName',
         key: 'groupName'
-      }, {
-        title: '群组ID',
-        dataIndex: 'groupId',
-        key: 'groupId',
-        render: text => text || '--'
-      }, {
+      }, 
+      // {
+      //   title: '群组ID',
+      //   dataIndex: 'groupId',
+      //   key: 'groupId',
+      //   render: text => text || '--'
+      // }, 
+      {
         title: '群组API',
         dataIndex: 'groupApi',
-        key: 'groupApi'
+        key: 'groupApi',
+        render: text => <Paragraph copyable>{text}</Paragraph>
       }, {
         title: '描述',
         dataIndex: 'groupDesc',
@@ -84,12 +91,12 @@ const SwitchHostsList = (props) => {
         render: (text, record) => {
           return <Fragment>
             <a onClick={() => handleEditHosts(record)}>编辑</a>
-            {
+            {/* {
               !record.is_push && <Fragment>
                 <Divider type="vertical" />
                 <a onClick={() => handlePushHosts(record)}>推送</a>
               </Fragment>
-            }
+            } */}
             <Fragment>
               <Divider type="vertical" />
               <a onClick={() => handleDeleteHosts(record)}>删除</a>
@@ -143,10 +150,28 @@ const SwitchHostsList = (props) => {
     })
   }
 
+  // 搜索
+  const handleSearchGroup = (value) => {
+    setReqParams({
+      ...reqParams,
+      current: 1,
+      searchText: value
+    })
+  }
+
   return (
     <div>
-      <div style={{ textAlign: 'right' }}>
-        <Button type="primary" icon="plus-circle" onClick={handleAddHosts}>新增群组</Button>
+      <Breadcrumb>
+        <Breadcrumb.Item href="/page/toolbox">应用中心</Breadcrumb.Item>
+        <Breadcrumb.Item>Hosts群组管理</Breadcrumb.Item>
+      </Breadcrumb>
+      <div className="clearfix mt-12">
+        <Search
+          placeholder="请输入群组名称搜索"
+          style={{ width: 200, height: 32 }}
+          onSearch={handleSearchGroup}
+        />
+        <Button className="fl-r" type="primary" icon="plus-circle" onClick={handleAddHosts}>新增群组</Button>
       </div>
       <Table
         rowKey="id"

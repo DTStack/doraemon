@@ -4,9 +4,12 @@ const _ = require('lodash');
 class SwitchHostsService extends Service {
   // 获取列表数据
   getHostsList(reqParams) {
-    const { size, current } = reqParams;
+    const { size, current, searchText } = reqParams;
     return this.ctx.model.SwitchHosts.findAndCountAll({
       where: {
+        groupName:{
+          '$like':`%${searchText}%`
+        },
         is_delete: 0
       },
       limit: size,
