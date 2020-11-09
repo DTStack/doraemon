@@ -1,5 +1,4 @@
 const Controller = require('egg').Controller;
-const NodeSsh = require('node-ssh');
 const path = require('path');
 const fs = require('fs');
 const _ = require('lodash');
@@ -70,8 +69,7 @@ class SwitchHostsController extends Controller {
     if (_.isNil(groupName)) throw new Error('缺少必要参数groupName');
     // 更新hosts
     const groupAddr = await ctx.service.switchHosts.getGroupAddr(id);
-    const groupAddrCache = path.join(__dirname, '../../cache/' + 'hosts_' + id);
-    await this.editHostsConfig(groupAddr, groupAddrCache, hosts);
+    await this.editHostsConfig(hosts, groupAddr);
     // 更新参数
     const result = await ctx.service.switchHosts.updateHosts(id, {
       groupName,
@@ -83,23 +81,8 @@ class SwitchHostsController extends Controller {
   }
 
   // 编译hosts文件内容
-  async editHostsConfig(groupAddr, groupAddrCache, hosts) {
-    const { app } = this;
-    fs.writeFileSync(groupAddrCache, hosts);
-    const ssh = new NodeSsh();
-    try {
-      app.logger.info(`开始连接服务器${DEFAULT_HOST}...`);
-      await ssh.connect(DEFAULT_CONNECT);
-      await ssh.putFile(groupAddrCache, groupAddr);
-      ssh.dispose();
-      app.logger.info(`服务器${DEFAULT_HOST}断开`);
-      fs.unlinkSync(groupAddrCache);
-    } catch (err) {
-      ssh.dispose();
-      app.logger.info(`服务器${DEFAULT_HOST}断开`);
-      fs.unlinkSync(groupAddrCache);
-      throw err;
-    }
+  async editHostsConfig(hosts, groupAddr, groupAddrCache) {
+    fs.writeFileSync(groupAddr, hosts);
   }
 
   // 推送
@@ -151,23 +134,8 @@ class SwitchHostsController extends Controller {
   }
 
   async readHostsConfig(id, groupAddr, callback) {
-    const { app, ctx } = this;
-    const groupAddrCache = path.join(__dirname, '../../cache/' + 'hosts_' + id);
-    const ssh = new NodeSsh();
-    try {
-      app.logger.info(`开始连接服务器${DEFAULT_HOST}...`);
-      await ssh.connect(DEFAULT_CONNECT);
-      await ssh.getFile(groupAddrCache, groupAddr);
-      const hostsConfig = fs.readFileSync(groupAddrCache, { encoding: 'utf-8' });
-      ssh.dispose();
-      app.logger.info(`服务器${DEFAULT_HOST}断开`);
-      fs.unlinkSync(groupAddrCache);
-      callback && callback(hostsConfig);
-    } catch (err) {
-      ssh.dispose();
-      app.logger.info(`服务器${DEFAULT_HOST}断开`);
-      throw err;
-    }
+    const hostsConfig = fs.readFileSync(groupAddr, { encoding: 'utf-8' });
+    callback && callback(hostsConfig);
   }
 }
 
