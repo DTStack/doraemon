@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react';
-import { Form, Input } from 'antd';
+import { Form, Input, Typography } from 'antd';
+const { Paragraph } = Typography;
 const FormItem = Form.Item;
 const formItemLayout = {
   labelCol: {
@@ -33,11 +34,15 @@ const HostsInfo = (props) => {
       {
         isEdit && (
           <Fragment>
-            <FormItem label="群組ID" {...formItemLayout}>
+            {/* <FormItem label="群組ID" {...formItemLayout}>
               <span>{hostsInfo.groupId || '--'}</span>
-            </FormItem>
+            </FormItem> */}
             <FormItem label="群組API" {...formItemLayout}>
-              <span>{hostsInfo.groupApi || '--'}</span>
+              {
+                hostsInfo.groupApi
+                  ? <Paragraph style={{ marginBottom: 0 }} copyable>{hostsInfo.groupApi}</Paragraph>
+                  : '--'
+              }
             </FormItem>
           </Fragment>
         )
