@@ -6,6 +6,7 @@ import Loading from '@/components/loading';
 import {API} from '@/api';
 import './style.scss';
 import { Link } from 'react-router-dom';
+
 const { Title,Paragraph } = Typography;
 
 const ConfigDetail = (props)=>{
@@ -79,15 +80,21 @@ const ConfigDetail = (props)=>{
       })
   }
   useEffect(()=>{
+    try {
+      require('codemirror/mode/nginx/nginx');
+      require('codemirror/mode/shell/shell');
+      require('codemirror/theme/material-darker.css');
+    } catch(err){
+      console.log(err)
+    }
     Promise.all([loadBasicInfoData(),loadRemoteConfigInfo()]).then(()=>{
       setLoading(false);
     });
+
   },[])
   return <div className="page-config-detail">
-    <Loading loading={loading}>
-      <Card
-        bodyStyle={{padding:'0 0 0 10px'}}>
-        <Row>
+      <Loading loading={loading}>
+      <Row>
           <Col span={18}>
             <Breadcrumb style={{height:'47px',lineHeight:'47px'}}>
               <Breadcrumb.Item><Link to="/page/config-center">配置中心</Link></Breadcrumb.Item>
@@ -95,10 +102,9 @@ const ConfigDetail = (props)=>{
             </Breadcrumb>
           </Col>
           <Col span={6} style={{textAlign:'right'}}>
-            <Button type="primary" loading={updating} icon="check" onClick={handleConfigSave}>保存</Button>
+            <Button type="primary" loading={updating} icon="check" onClick={handleConfigSave}>应用</Button>
           </Col>
         </Row>
-      </Card>
       <div className="page-content">
         <Row  gutter={16}>
           <Col span={16}>
@@ -117,11 +123,12 @@ const ConfigDetail = (props)=>{
               }}
               editorDidMount={(editor, data, value) => {editor.setSize('auto','460px')}}
             />
-            <Title style={{marginTop:20}} level={4}>文件更新之后执行 <Tooltip title="文件更新之后执行下面脚本" placement="right"><Icon type="question-circle" /></Tooltip></Title>
+            <Title style={{marginTop:20}} level={4}>Execute shell <Tooltip title="文件更新之后执行下面脚本" placement="right"><Icon type="question-circle" /></Tooltip></Title>
             <CodeMirror
               ref={shellEditorRef}
               value={shell}
               options={{
+                mode:'shell',
                 tabSize:2,
                 theme: 'dracula',
                 lineNumbers: true,

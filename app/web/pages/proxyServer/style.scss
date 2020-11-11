@@ -3,9 +3,13 @@
     display: flex;
     justify-content: space-between;
     align-self: center;
+    margin-bottom: 20px;
     .search{
       width: 200px;
       height: 32px;
     }
+  }
+  .marginBottom12{
+    margin-bottom: 12px;
   }
 }

@@ -118,11 +118,14 @@ export default (props)=>{
     loadTableData()
   },[])
   return <div className="page-host-management">
-    <div style={{textAlign:'right'}}><Button type="primary" icon="plus-circle" onClick={handleHostAdd}>新增主机</Button></div>
+    <div className="title_wrap">
+      <div className="title">主机管理</div>
+      <Button type="primary" icon="plus-circle" onClick={handleHostAdd}>新增主机</Button>
+    </div>
     <Table
-      size="small"
       rowKey="id"
       columns={getColumns()}
+      className="dt-table-border dt-table-last-row-noborder"
       scroll={{y: 'calc(100vh - 200px)'}}
       loading={tableLoading}
       dataSource={hostList}

@@ -3,6 +3,7 @@ import {Modal,Form,Input,Tooltip, Button} from 'antd';
 import PropsTypes from 'prop-types';
 import {urlReg} from '@/utils/reg';
 import { API } from '@/api'
+import './style.scss';
 const { TextArea } = Input;
 
 class ProxyRuleModal extends React.PureComponent{
@@ -64,10 +65,10 @@ class ProxyRuleModal extends React.PureComponent{
     const { localIp } = this.state;
     const formItemLayout = {
       labelCol: {
-        span: 6
+        span: 5
       },
       wrapperCol: {
-        span: 17
+        span: 18
       },
     };
     return (<Modal
@@ -75,6 +76,7 @@ class ProxyRuleModal extends React.PureComponent{
       visible={visible}
       confirmLoading={confirmLoading}
       onOk={this.handleModalOk}
+      className="proxyRuleModal"
       onCancel={this.handleModalCancel}>
       <Form {...formItemLayout} >
         <Form.Item
@@ -96,10 +98,10 @@ class ProxyRuleModal extends React.PureComponent{
                 required: true,pattern:urlReg,message: '请输入正确格式的目标服务地址',
               }],
               initialValue:target
-            })(<Input style={{width:'88%'}} placeholder="请输入目标服务地址"/>)
+            })(<Input placeholder="请输入目标服务地址"/>)
           }
           <Tooltip placement="topLeft" title={`快速填写默认目标地址默认为：http://${ip||localIp}:8080`}>
-            <Button shape="circle" size="small" style={{marginLeft:11}} onClick={this.onClickQuickInput} icon="retweet"/>
+            <Button shape="circle" className="retweet" size="small" onClick={this.onClickQuickInput} icon="retweet"/>
           </Tooltip>
         </Form.Item>
         <Form.Item

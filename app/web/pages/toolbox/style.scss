@@ -2,6 +2,10 @@
   .toolbox-header{
     display: flex;
     justify-content: space-between;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #333333;
+    font-weight: 500;
   }
   .tool-list{
     .navigation-item-wrapper{

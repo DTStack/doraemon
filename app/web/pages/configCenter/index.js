@@ -118,13 +118,15 @@ const ConfigCenter = ()=>{
   },[tablePagination.current])
   return <div className="page-config-center">
     <div className="header_title">
-          <span className="title"></span>
+          <span className="title">
+            配置中心
+          </span>
           <Button icon="plus-circle" type="primary" onClick={handleConfigFileAdd}>新增配置</Button>
     </div>
     <div>
       <Table
-        size="small"
         rowKey="id"
+        className="dt-table-border"
         scroll={{y: 'calc(100vh - 200px)'}}
         columns={getTableColumns()}
         dataSource={configList}

@@ -12,7 +12,8 @@ const Toolbox = () => {
     {
       appName: 'Switch Hosts',
       appDesc: '袋鼠云内部团队host集中管理系统', 
-      appUrl: '/page/switch-hosts-list' 
+      appUrl: '/page/switch-hosts-list',
+      notEdit: true
     },
     {
       appName: '签名制作',
@@ -138,7 +139,7 @@ const Toolbox = () => {
     <div className="page-toolbox">
       <div className="toolbox-header">
           <div>应用中心</div>
-          <Button onClick={onHandleAddApp}>添加应用</Button>
+          <Button type="primary" onClick={onHandleAddApp}>添加应用</Button>
       </div>
       <Row className="tool-list" gutter={10}>
         {

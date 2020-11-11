@@ -1,16 +1,13 @@
 .header_component{
-    padding: 0 10px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
     .menu_content{
         flex: 1;
-        padding: 0 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
         .ant-menu{
-            height: 64px;
-            line-height: 64px;
+            overflow: hidden;
         }
     }
+   
 }

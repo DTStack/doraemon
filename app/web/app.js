@@ -7,7 +7,8 @@ import zhCN from 'antd/lib/locale-provider/zh_CN';
 import routes from '@/router';
 import { renderRoutes } from 'react-router-config'
 import * as actions from '@/store/actions';
-
+import 'ant-design-dtinsight-theme/theme/dt-theme/reset.less';
+import 'ant-design-dtinsight-theme/theme/dt-theme/index.less';
 
 const App = ()=>{
   const {changeLocalIp} = bindActionCreators(actions,useDispatch());

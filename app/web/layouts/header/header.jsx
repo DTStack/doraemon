@@ -2,18 +2,22 @@ import React, { useState } from 'react';
 import { Layout, Row, Col, Menu, Icon } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import logo from '../../asset/images/logo.png';
+import logo from '../../asset/images/logo.svg';
 import './style.scss';
 
 const { Header } = Layout;
-const navMenuList = [ {
+const navMenuList = [{
+  name: '应用中心',
+  path: '/page/toolbox',
+  icon: 'appstore'
+},{
   name: '代理服务',
   path: '/page/proxy-server',
   icon: 'cloud'
 },{
-  name: '应用中心',
-  path: '/page/toolbox',
-  icon: 'appstore'
+  name:'主机管理',
+  path:'/page/host-management',
+  icon:'desktop'
 },{
   name: '配置中心',
   path: '/page/config-center',
@@ -28,16 +32,15 @@ const HeaderComponent = (props) => {
     setSelectedKeys(e.key);
   }
   return (
-        <Header className="header_component">
-            <Row type="flex" justify="space-between">
-                <Col>
-                    <Link to='/page/home'>
-                        <img className="logo" src={logo} />
-                        <span className="system-title">哆啦A梦</span>
-                    </Link>
-                </Col>
-                <Col className="menu_content">
-                    <Menu
+        <Header className="dt-layout-header header_component">
+            <div className="dt-header-log-wrapper logo">
+                <Link to='/page/home'>
+                    <img className="logo_img" src={logo} />
+                    <span className="system-title">哆啦A梦</span>
+                </Link>
+            </div>
+            <div className="menu_content">
+                <Menu
                         mode="horizontal"
                         theme="dark"
                         onClick={handleSelectedKeys}
@@ -52,10 +55,9 @@ const HeaderComponent = (props) => {
                               }
                             })
                         }
-                    </Menu>
-                </Col>
-                <Col><span className="local-ip">{`本机IP: ${localIp}`}</span></Col>
-            </Row>
+                  </Menu>
+                <div><span className="local-ip">{`本机IP: ${localIp}`}</span></div>
+            </div>
         </Header>)
 }
 export default HeaderComponent;

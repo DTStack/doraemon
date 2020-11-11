@@ -57,7 +57,10 @@ const SwitchHostsList = (props) => {
       }, {
         title: '群组API',
         dataIndex: 'groupApi',
-        key: 'groupApi'
+        key: 'groupApi',
+        render:text=>{
+          return window.location.host+text
+        }
       }, {
         title: '描述',
         dataIndex: 'groupDesc',

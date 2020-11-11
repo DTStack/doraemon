@@ -351,14 +351,15 @@ class ProxyServer extends React.PureComponent {
       }
     }]
     return <div style={{ padding: '0 10px' }}>
-      <div className="text-right"><Button icon="plus-circle" onClick={() => { this.setState({ proxyRuleModalVisible: true }) }}>添加规则</Button></div>
-      <Table
-        size="small"
-        rowKey={(row) => row.id}
-        loading={subTableLoading}
-        columns={columns}
-        dataSource={subTableData}
-        pagination={false} />
+            <div className="text-right marginBottom12"><Button icon="plus" size="small" type="primary" onClick={() => { this.setState({ proxyRuleModalVisible: true }) }}>添加规则</Button></div>
+            <Table
+              size="small"
+              className="dt-table-last-row-noborder"
+              rowKey={(row) => row.id}
+              loading={subTableLoading}
+              columns={columns}
+              dataSource={subTableData}
+              pagination={false} />
     </div>
   }
   componentDidMount() {
@@ -429,8 +430,8 @@ class ProxyServer extends React.PureComponent {
           value={search}
           onChange={this.onChangeSearch}
           onSearch={this.onSearchProject}
-          className="search" />
-        <Button type="primary" icon="plus-circle" onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
+          className="search dt-form-shadow-bg" />
+        <Button type="primary" icon="plus" onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
       </div>
       <Table
         rowKey={(row) => row.id}
@@ -439,6 +440,7 @@ class ProxyServer extends React.PureComponent {
         columns={columns}
         scroll={{ y: 'calc(100vh - 250px)' }}
         dataSource={maintTableList}
+        className="dt-table-last-row-noborder"
         expandedRowKeys={expandedRowKeys}
         expandedRowRender={this.tableExpandedRowRender}
         onExpand={this.handleTableExpandChange}
