@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
-import { Divider, Table, Button, Breadcrumb, Input, Typography } from 'antd';
+import { Divider, Table, Button, Breadcrumb, Input, Typography, Modal, Icon } from 'antd';
 import { API } from '@/api';
 
 const { Paragraph } = Typography;
@@ -21,13 +21,25 @@ const SwitchHostsList = (props) => {
     current: reqParams.current,
     pageSize: reqParams.size,
     total: hostsList.totalElement,
-    hideOnSinglePage: true
+    showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{hostsList.totalElement}</span>条数据，每页显示{reqParams.size}条</span>
   }
   const [tableLoading, setTableLoading] = useState(false);
+  const [serverInfo, setServerInfo] = useState('');
 
   useEffect(() => {
     getHostsList();
+    getServerInfo();
   }, [reqParams]);
+
+  // 获取IP
+  const getServerInfo = () => {
+    API.getServerInfo().then((res) => {
+      const { success, data } = res;
+      if (success) {
+        setServerInfo(data)
+      }
+    })
+  }
 
   // 获取列表数据
   const getHostsList = () => {
@@ -53,7 +65,7 @@ const SwitchHostsList = (props) => {
         title: '群组名称',
         dataIndex: 'groupName',
         key: 'groupName'
-      }, 
+      },
       // {
       //   title: '群组ID',
       //   dataIndex: 'groupId',
@@ -64,7 +76,7 @@ const SwitchHostsList = (props) => {
         title: '群组API',
         dataIndex: 'groupApi',
         key: 'groupApi',
-        render: text => <Paragraph copyable>{text}</Paragraph>
+        render: text => <Paragraph copyable>{`${serverInfo.protocol}://${serverInfo.host}${text}`}</Paragraph>
       }, {
         title: '描述',
         dataIndex: 'groupDesc',
@@ -127,14 +139,23 @@ const SwitchHostsList = (props) => {
 
   // 删除
   const handleDeleteHosts = (record) => {
-    API.deleteHosts({
-      id: record.id
-    }).then(res => {
-      const { success } = res;
-      if (success) {
-        getHostsList();
+    Modal.confirm({
+      title: '删除后群组将无法使用，是否要删除该群组？',
+      okType: 'danger',
+      okText: '删除',
+      cancelText: '取消',
+      onOk: () => {
+        API.deleteHosts({
+          id: record.id
+        }).then(res => {
+          const { success } = res;
+          if (success) {
+            getHostsList();
+          }
+        })
       }
     })
+
   }
 
   // 添加群组
@@ -165,7 +186,7 @@ const SwitchHostsList = (props) => {
         <Breadcrumb.Item href="/page/toolbox">应用中心</Breadcrumb.Item>
         <Breadcrumb.Item>Hosts群组管理</Breadcrumb.Item>
       </Breadcrumb>
-      <div className="clearfix mt-12 title">
+      <div className="clearfix mt-12 mb-12 title">
         <Search
           placeholder="请输入群组名称搜索"
           style={{ width: 200, height: 32 }}
@@ -177,7 +198,9 @@ const SwitchHostsList = (props) => {
       <Table
         rowKey="id"
         loading={tableLoading}
-        className="dt-table-border dt-table-last-row-noborder"
+        className="dt-table-fixed-base"
+        scroll={{ y: true, x: 1500 }}
+        style={{ height: 'calc(100vh - 64px - 21px - 24px - 32px - 24px)' }}
         dataSource={hostsList.data}
         columns={initColumns()}
         pagination={pagination}

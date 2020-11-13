@@ -48,6 +48,7 @@ module.exports = app => {
    */
   app.get('/api/appCenters/get-app-list',app.controller.appCenters.getAppCenterList);
   app.get('/api/github/get-local-ip',app.controller.common.getLocalIp);
+  app.get('/api/common/get-server-info', app.controller.common.getServerInfo);
   app.post('/api/appCenters/update-applications',app.controller.appCenters.updateApplications);
   app.post('/api/appCenters/delete-applications',app.controller.appCenters.deleteApplications);
   app.post('/api/appCenters/click-applications',app.controller.appCenters.clickApplications);
