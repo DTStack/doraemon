@@ -15,5 +15,12 @@ class CommonController extends Controller{
     const localIp = ctx.ip
     ctx.body = app.utils.response(true,localIp);
   }
+  async getServerInfo() {
+    const { app, ctx } = this;
+    ctx.body = app.utils.response(true, {
+      host: ctx.host,
+      protocol: ctx.protocol
+    })
+  }
 }
 module.exports = CommonController;
