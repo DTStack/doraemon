@@ -199,7 +199,6 @@ const SwitchHostsList = (props) => {
         rowKey="id"
         loading={tableLoading}
         className="dt-table-fixed-base"
-        scroll={{ y: true, x: 1500 }}
         style={{ height: 'calc(100vh - 64px - 21px - 24px - 32px - 24px)' }}
         dataSource={hostsList.data}
         columns={initColumns()}

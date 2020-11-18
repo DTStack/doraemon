@@ -107,7 +107,7 @@ const ConfigDetail = (props)=>{
         </Row>
       <div className="page-content">
         <Row  gutter={16}>
-          <Col span={16}>
+          <Col span={18}>
             <CodeMirror
               ref={codeEditorRef}
               value={config}
@@ -140,7 +140,7 @@ const ConfigDetail = (props)=>{
               }}
               onChange={(editor, data, value) => {}}/>
           </Col>
-          <Col span={8}>
+          <Col span={6}>
             <Card title="信息简介" className="card-form">
               <Row gutter={8}  className="info-item">
                 <Col span={6} className="label">文件名：</Col>
