@@ -4,7 +4,7 @@ body,
     height: 100%;
 }
 
-// table 滚动状态下的样式
+// table 滚动状态下的样式, small table
 .ant-table {
     .ant-table-scroll {
         .ant-table-header {
@@ -14,11 +14,25 @@ body,
             overflow: scroll hidden;
         }
     }
+    .ant-table-small > .ant-table-content > .ant-table-body {
+        margin: 0;
+        & > table > {
+            .ant-table-thead > tr > th:first-child,
+            .ant-table-tbody > tr > td:first-child{
+                padding-left: 20px;
+            }
+            .ant-table-thead > tr > th:last-child,
+            .ant-table-tbody > tr > td:last-child {
+                padding-right: 20px;
+            }
+        }
+    }
     // 复制
     .ant-typography {
-        margin-bottom: 0;
+        margin-bottom: 0 !important;
     }
 }
+
 // 固定表格高度(自带分页）
 .dt-table-fixed-base {
     &.ant-table-wrapper,
@@ -69,4 +83,8 @@ body,
             }
         }
     }
+}
+// input
+.ant-input {
+    border-radius: 2px;
 }

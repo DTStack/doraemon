@@ -10,7 +10,12 @@ const ConfigCenter = ()=>{
   const [configList,setConfigList] = useState([]);
   const [currentConfigFile,setCurrentConfigFile] = useState({});
   const [configFileModalVisible,setConfigFileModalVisible] = useState(false);
-  const [tablePagination,setTablePagination] = useState({current:1,pageSize:20,total:0,hideOnSinglePage:true});
+  const [tablePagination,setTablePagination] = useState({
+    size: 'small',
+    current: 1,
+    pageSize: 20,
+    total: 0
+  });
   const getTableColumns = ()=>{
     return [{
       title:'文件名',
@@ -126,12 +131,14 @@ const ConfigCenter = ()=>{
     <div>
       <Table
         rowKey="id"
-        className="dt-table-border"
-        scroll={{y: 'calc(100vh - 200px)'}}
+        className="dt-table-fixed-base"
+        scroll={{ y: true }}
+        style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
         columns={getTableColumns()}
         dataSource={configList}
         pagination={{
-          ...tablePagination
+          ...tablePagination,
+          showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{tablePagination.pageSize}条</span>
         }}
         onChange={handleTableChange}/>
     </div>

@@ -76,6 +76,7 @@ const SwitchHostsList = (props) => {
         title: '群组API',
         dataIndex: 'groupApi',
         key: 'groupApi',
+        width: '25%',
         render: text => <Paragraph copyable>{`${serverInfo.protocol}://${serverInfo.host}${text}`}</Paragraph>
       }, {
         title: '描述',

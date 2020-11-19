@@ -354,7 +354,6 @@ class ProxyServer extends React.PureComponent {
             <div className="text-right marginBottom12"><Button icon="plus" size="small" type="primary" onClick={() => { this.setState({ proxyRuleModalVisible: true }) }}>添加规则</Button></div>
             <Table
               size="small"
-              className="dt-table-last-row-noborder"
               rowKey={(row) => row.id}
               loading={subTableLoading}
               columns={columns}
@@ -435,20 +434,22 @@ class ProxyServer extends React.PureComponent {
       </div>
       <Table
         rowKey={(row) => row.id}
-        size="small"
         loading={mainTableLoading}
         columns={columns}
-        scroll={{ y: 'calc(100vh - 250px)' }}
+        scroll={{ y: true }}
+        style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
         dataSource={maintTableList}
-        className="dt-table-last-row-noborder"
+        className="dt-table-fixed-base"
         expandedRowKeys={expandedRowKeys}
         expandedRowRender={this.tableExpandedRowRender}
         onExpand={this.handleTableExpandChange}
         onChange={this.handleTableChange}
         pagination={{
+          size: 'small',
           total: maintTableTotal,
           current: mainTableParams.pageNo,
-          pageSize: mainTableParams.pageSize
+          pageSize: mainTableParams.pageSize,
+          showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{mainTableParams.pageSize}条</span>
         }} />
 
       <ProxyServerModal

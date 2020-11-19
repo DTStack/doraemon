@@ -19,7 +19,7 @@ const EditHosts = (props) => {
   const isCreate = type === 'add';
 
   useEffect(() => {
-    if(isCreate) {
+    if (isCreate) {
       setLoading(false);
     } else {
       getHostsInfo();
@@ -83,17 +83,15 @@ const EditHosts = (props) => {
 
   return (
     <Loading loading={loading}>
-      <Card
-        bodyStyle={{ padding: '0 0 0 10px' }}>
-        <Row>
-          <Col span={18}>
-            <Breadcrumb style={{ height: '47px', lineHeight: '47px' }}>
-              <Breadcrumb.Item><Link to="/page/switch-hosts-list">hosts管理</Link></Breadcrumb.Item>
-              <Breadcrumb.Item>{isCreate ? '创建' : '编辑'}hosts</Breadcrumb.Item>
-            </Breadcrumb>
-          </Col>
-          <Col span={6} style={{ textAlign: 'right' }}>
-            {/* {!(!isCreate && hostsInfo.is_push) && (
+      <Row className="mb-12">
+        <Col span={18}>
+          <Breadcrumb>
+            <Breadcrumb.Item><Link to="/page/switch-hosts-list">hosts管理</Link></Breadcrumb.Item>
+            <Breadcrumb.Item>{isCreate ? '创建' : '编辑'}hosts</Breadcrumb.Item>
+          </Breadcrumb>
+        </Col>
+        <Col span={6} style={{ textAlign: 'right' }}>
+          {/* {!(!isCreate && hostsInfo.is_push) && (
               <Button
                 type="primary"
                 icon="check"
@@ -101,41 +99,42 @@ const EditHosts = (props) => {
                 onClick={() => handleHostsSave({ is_push: 1 })}
               >保存并推送</Button>
             )} */}
-            <Button
-              type="primary"
-              loading={saveLoading}
-              icon="check"
-              onClick={() => handleHostsSave({ is_push: 0 })}
-            >保存</Button>
-          </Col>
-        </Row>
-      </Card>
-      <Row gutter={16} style={{ margin: '20px 0' }}>
-        <Col span={16}>
-          <CodeMirror
-            value={hosts}
-            options={{
-              mode: 'nginx',
-              tabSize: 2,
-              theme: 'dracula',
-              lineNumbers: true
-            }}
-            onBeforeChange={(editor, data, value) => {
-              setHosts(value)
-            }}
-            editorDidMount={(editor, data, value) => { editor.setSize('auto', '460px') }}
-          />
-        </Col>
-        <Col span={8}>
-          <Card title="信息" className="card-form">
-            <HostsInfo
-              ref={infoRef}
-              isEdit={type === 'edit'}
-              hostsInfo={hostsInfo}
-            />
-          </Card>
+          <Button
+            type="primary"
+            loading={saveLoading}
+            icon="check"
+            onClick={() => handleHostsSave({ is_push: 0 })}
+          >保存</Button>
         </Col>
       </Row>
+      <div style={{ flex: 1 }}>
+        <Row gutter={16}>
+          <Col span={16}>
+            <CodeMirror
+              value={hosts}
+              options={{
+                mode: 'nginx',
+                tabSize: 2,
+                theme: 'dracula',
+                lineNumbers: true
+              }}
+              onBeforeChange={(editor, data, value) => {
+                setHosts(value)
+              }}
+              editorDidMount={(editor, data, value) => { editor.setSize('auto', '460px') }}
+            />
+          </Col>
+          <Col span={8}>
+            <Card title="信息" className="card-form">
+              <HostsInfo
+                ref={infoRef}
+                isEdit={type === 'edit'}
+                hostsInfo={hostsInfo}
+              />
+            </Card>
+          </Col>
+        </Row>
+      </div>
     </Loading>
   )
 }

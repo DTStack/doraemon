@@ -4,8 +4,8 @@
   flex-direction: column;
   .page-content{
     flex: 1;
-    overflow: auto;
-    padding: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   .CodeMirror-linenumber{
     cursor: pointer;

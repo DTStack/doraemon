@@ -94,9 +94,9 @@ const ConfigDetail = (props)=>{
   },[])
   return <div className="page-config-detail">
       <Loading loading={loading}>
-      <Row>
+      <Row className="mb-12">
           <Col span={18}>
-            <Breadcrumb style={{height:'47px',lineHeight:'47px'}}>
+            <Breadcrumb>
               <Breadcrumb.Item><Link to="/page/config-center">配置中心</Link></Breadcrumb.Item>
               <Breadcrumb.Item>配置详情</Breadcrumb.Item>
             </Breadcrumb>
@@ -106,7 +106,7 @@ const ConfigDetail = (props)=>{
           </Col>
         </Row>
       <div className="page-content">
-        <Row  gutter={16}>
+        <Row gutter={16}>
           <Col span={18}>
             <CodeMirror
               ref={codeEditorRef}

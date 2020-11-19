@@ -125,8 +125,9 @@ export default (props)=>{
     <Table
       rowKey="id"
       columns={getColumns()}
-      className="dt-table-border dt-table-last-row-noborder"
-      scroll={{y: 'calc(100vh - 200px)'}}
+      className="dt-table-fixed-base"
+      scroll={{ y: true }}
+      style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
       loading={tableLoading}
       dataSource={hostList}
       pagination={false}
