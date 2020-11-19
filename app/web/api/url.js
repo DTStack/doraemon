@@ -31,6 +31,11 @@ export default {
     method:'get',
     url:'/api/github/get-local-ip'
   },
+  // 获取服务信息
+  getServerInfo: {
+    method: 'get',
+    url: '/api/common/get-server-info'
+  },
   /**
    * 代理服务
    */
