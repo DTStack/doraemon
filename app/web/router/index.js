@@ -28,6 +28,10 @@ const routes = [
     component: BasicLayout,
     routes:[
       {
+        path:`${urlPrefix}/toolbox`,
+        component: Toolbox
+      },
+      {
         path: `${urlPrefix}/home`,
         component: Home
       },
@@ -35,10 +39,7 @@ const routes = [
         path:`${urlPrefix}/internal-url-navigation`,
         component: InnerUrlNavigation
       },
-      {
-        path:`${urlPrefix}/toolbox`,
-        component: Toolbox
-      },
+      
       {
         path: `${urlPrefix}/proxy-server`,
         component: ProxyServer

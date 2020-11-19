@@ -4,7 +4,7 @@ module.exports = app => {
     async index() {
       const { ctx } = this;
       if(ctx.url==='/'){
-        ctx.response.redirect('/page/home');
+        ctx.response.redirect('/page/toolbox');
       }else{
         await ctx.render('app.js', { url: ctx.url });
       }

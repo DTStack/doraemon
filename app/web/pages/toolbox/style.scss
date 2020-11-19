@@ -10,17 +10,27 @@
   .tool-list{
     .navigation-item-wrapper{
       margin-bottom: 10px;
+      .ant-card {
+        border-radius: 6px;
+        .ant-card-body {
+          padding: 0;
+          border-radius: 6px;
+          &:hover {
+            border-color: transparent;
+            box-shadow: 0 1px 2px -2px rgba(0,0,0,.16), 0 3px 6px 0 rgba(0,0,0,.12), 0 5px 12px 4px rgba(0,0,0,.09);
+          }
+        }
+      }
       .navigation-item{
         display: flex;
         position: relative;
         flex-direction: column;
         justify-content: center;
-        // background-color: #ffffff;
-        color: #ffffff;
+        color: #333;
         height: 140px;
         text-align: center;
-        border-radius: 6px;
         padding: 20px;
+        border-radius: 6px;
         .icon{
           position: absolute;
           top:10px;
@@ -36,15 +46,15 @@
             text-decoration: none;
           }
         }
+        .desc {
+          color: #999;
+        }
         .close-icon {
           font-size: 16px;
           position: absolute;
           right: 20px;
           top: 20px;
-        }
-        &:hover {
-          border-color: transparent;
-          box-shadow: 0 1px 2px -2px rgba(0,0,0,.16), 0 3px 6px 0 rgba(0,0,0,.12), 0 5px 12px 4px rgba(0,0,0,.09);
+          color: #999;
         }
       }
     }

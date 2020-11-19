@@ -178,5 +178,10 @@ export default {
   deleteHosts: {
     method: 'post',
     url: '/api/switch-hosts/delete-hosts'
+  },
+  //getServerInfo
+  getServerInfo:{
+    method: 'get',
+    url: '/api/common/get-server-info'
   }
 }
