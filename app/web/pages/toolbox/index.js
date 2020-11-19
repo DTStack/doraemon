@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Row, Col, Icon, Button, Popconfirm } from 'antd';
+import { Row, Col, Icon, Button, Popconfirm, Card } from 'antd';
 import Loading from '@/components/loading';
 import { API } from '@/api';
 import { colorList } from '@/constant';
@@ -12,14 +12,12 @@ const Toolbox = () => {
     {
       appName: 'Hosts Remote',
       appDesc: '袋鼠云内部团队host集中管理系统', 
-      appUrl: '/page/switch-hosts-list',
-      notEdit: true
+      appUrl: '/page/switch-hosts-list'
     },
     {
       appName: '签名制作',
       appDesc: '袋鼠云邮箱签名制作',
-      appUrl: '/page/mail-sign',
-      notEdit: true
+      appUrl: '/page/mail-sign'
     }
   ];
   const [toolList, setToolList] = useState([]);
@@ -91,23 +89,25 @@ const Toolbox = () => {
     API.clickApplication({ params })
   }
 
+  const handleEdit = (e, tool) => {
+    e.preventDefault()
+    onHandleEditApp(tool.id);
+    onHandleClickApp(tool);
+  }
+
   const renderCard = (list) => list.map((tool, index) => {
-    const { id, appName, appUrl, appDesc, notEdit } = tool;
+    const { id, appName, appUrl, appDesc } = tool;
     const componentContent = <Fragment>
       <div className="title">
-        <a href={appUrl} onClick={() => onHandleClickApp(tool)} target='_blank' >{appName}</a>
-        {!notEdit && <Icon
+        <span>{appName}</span>
+        {urlReg.test(appUrl) && <Icon
           type="form"
-          onClick={() => { 
-            onHandleAddApp();
-            onHandleEditApp(id);
-            onHandleClickApp(tool);
-          }}
-          style={{ marginLeft: 10 }}
+          onClick={(e) => handleEdit(e, tool)}
+          style={{ marginLeft: 10, color: '#3F87FF' }}
         />}
       </div>
       <div className="desc">{appDesc}</div>
-      {!notEdit && (<Popconfirm
+      {urlReg.test(appUrl) && (<Popconfirm
         title="确认将该应用移除？"
         okText="确定"
         cancelText="取消"
@@ -117,22 +117,30 @@ const Toolbox = () => {
       </Popconfirm>)}
     </Fragment>
     return (<Col className="navigation-item-wrapper" key={id || appName} span={6}>
+      <Card>
       {
         urlReg.test(appUrl) ? (
-          <div
+          <a
+            href={appUrl}
+            rel="noopener noreferrer"
+            target='_blank'
             className="navigation-item"
-            style={{ background: colorList[index % colorList.length] }}
+            onClick={() => onHandleClickApp(tool)}
           >
             {
               componentContent
             }
-          </div>
-        ) : (<div className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
+          </a>
+        ) : (<Link
+            to={appUrl}
+            className="navigation-item"
+          >
           {
             componentContent
           }
-        </div>)
+        </Link>)
       }
+      </Card>
     </Col>)
   })
   return (<Loading loading={loading}>
