@@ -52,7 +52,7 @@ const SwitchHostsList = (props) => {
   const initColumns = () => {
     const columns = [
       {
-        title: '群组名称',
+        title: '分组名称',
         dataIndex: 'groupName',
         key: 'groupName'
       },
@@ -63,10 +63,9 @@ const SwitchHostsList = (props) => {
       //   render: text => text || '--'
       // }, 
       {
-        title: '群组API',
+        title: 'API',
         dataIndex: 'groupApi',
         key: 'groupApi',
-        width: '25%',
         render: text => <Paragraph copyable>{`${serverInfo.protocol}://${serverInfo.host}${text}`}</Paragraph>
       }, {
         title: '描述',
@@ -91,6 +90,7 @@ const SwitchHostsList = (props) => {
         title: '操作',
         dataIndex: 'actions',
         key: 'actions',
+        width:160,
         render: (text, record) => {
           return <Fragment>
             <a onClick={() => handleEditHosts(record)}>编辑</a>
