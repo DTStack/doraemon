@@ -2,6 +2,7 @@ import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
 import { Divider, Table, Button, Breadcrumb, Input, Typography, Modal, Icon } from 'antd';
 import { API } from '@/api';
+import { useSelector } from 'react-redux';
 
 const { Paragraph } = Typography;
 const { Search } = Input;
@@ -24,22 +25,11 @@ const SwitchHostsList = (props) => {
     showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{hostsList.totalElement}</span>条数据，每页显示{reqParams.size}条</span>
   }
   const [tableLoading, setTableLoading] = useState(false);
-  const [serverInfo, setServerInfo] = useState('');
+  const { serverInfo } = useSelector((state) => state.global);
 
   useEffect(() => {
     getHostsList();
-    getServerInfo();
   }, [reqParams]);
-
-  // 获取IP
-  const getServerInfo = () => {
-    API.getServerInfo().then((res) => {
-      const { success, data } = res;
-      if (success) {
-        setServerInfo(data)
-      }
-    })
-  }
 
   // 获取列表数据
   const getHostsList = () => {

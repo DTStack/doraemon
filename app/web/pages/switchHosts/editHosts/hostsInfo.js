@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react';
 import { Form, Input, Typography } from 'antd';
+import { useSelector } from 'react-redux';
 const { Paragraph } = Typography;
 const FormItem = Form.Item;
 const formItemLayout = {
@@ -12,6 +13,7 @@ const formItemLayout = {
 };
 
 const HostsInfo = (props) => {
+  const { serverInfo } = useSelector((state) => state.global);
   const { isEdit, form, hostsInfo } = props;
   const { getFieldDecorator } = form;
 
@@ -37,10 +39,10 @@ const HostsInfo = (props) => {
             {/* <FormItem label="群組ID" {...formItemLayout}>
               <span>{hostsInfo.groupId || '--'}</span>
             </FormItem> */}
-            <FormItem label="群組API" {...formItemLayout}>
+            <FormItem label="群组API" {...formItemLayout}>
               {
                 hostsInfo.groupApi
-                  ? <Paragraph style={{ marginBottom: 0 }} copyable>{hostsInfo.groupApi}</Paragraph>
+                  ? <Paragraph style={{ marginBottom: 0 }} copyable>{`${serverInfo.protocol}://${serverInfo.host}${hostsInfo.groupApi}`}</Paragraph>
                   : '--'
               }
             </FormItem>

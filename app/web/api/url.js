@@ -26,16 +26,12 @@ export default {
     method: 'get',
     url:'/api/appCenters/get-app-by-id'
   },
-  //获取本机Ip
+  //获取本机Ip，端口等信息
   getLocalIp:{
     method:'get',
     url:'/api/github/get-local-ip'
   },
-  // 获取服务信息
-  getServerInfo: {
-    method: 'get',
-    url: '/api/common/get-server-info'
-  },
+
   /**
    * 代理服务
    */
@@ -178,10 +174,5 @@ export default {
   deleteHosts: {
     method: 'post',
     url: '/api/switch-hosts/delete-hosts'
-  },
-  //getServerInfo
-  getServerInfo:{
-    method: 'get',
-    url: '/api/common/get-server-info'
   }
 }
