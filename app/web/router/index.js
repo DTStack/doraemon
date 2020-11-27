@@ -17,7 +17,9 @@ import ConfigDetail from '@/pages/configDetail';
 // hosts列表
 import SwitchHostsList from '@/pages/switchHosts';
 // hosts编辑
-import SwitchHostsEdit from '@/pages/switchHosts/editHosts'
+import SwitchHostsEdit from '@/pages/switchHosts/editHosts';
+
+import WebTerminal from '@/pages/webTerminal';
 
 
 import NotFound from '@/pages/exception/404';
@@ -67,6 +69,10 @@ const routes = [
       {
         path: `${urlPrefix}/switch-hosts-edit/:id/:type`,
         component: SwitchHostsEdit
+      },
+      {
+        path: `${urlPrefix}/webTerminal`,
+        component: WebTerminal
       },
       {
         path: '*',

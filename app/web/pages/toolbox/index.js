@@ -2,7 +2,6 @@ import React, { useState, useEffect, Fragment } from 'react';
 import { Row, Col, Icon, Button, Popconfirm, Card } from 'antd';
 import Loading from '@/components/loading';
 import { API } from '@/api';
-import { colorList } from '@/constant';
 import { urlReg } from '@/utils/reg';
 import { Link } from 'react-router-dom';
 import CreateApp from './components/CreateApp'
