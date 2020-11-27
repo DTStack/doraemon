@@ -18,7 +18,7 @@ body,
         margin: 0;
         & > table > {
             .ant-table-thead > tr > th:first-child,
-            .ant-table-tbody > tr > td:first-child{
+            .ant-table-tbody > tr > td:first-child {
                 padding-left: 20px;
             }
             .ant-table-thead > tr > th:last-child,
@@ -30,6 +30,21 @@ body,
     // 复制
     .ant-typography {
         margin-bottom: 0 !important;
+    }
+}
+
+// 可展开表格的bug
+.dt-table-fixed-base {
+    .ant-table {
+        .ant-table-expanded-row {
+            .ant-table-wrapper .ant-spin-nested-loading .ant-spin-container .ant-table-content .ant-table-placeholder {
+                position: relative;
+                top: unset;
+            }
+        }
+    }
+    .ant-spin-container > .ant-table-pagination {
+        background-color: #fff;
     }
 }
 

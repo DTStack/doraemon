@@ -3,13 +3,6 @@ const path = require('path');
 const fs = require('fs');
 const _ = require('lodash');
 // const { createWS } = require('../utils/ws');
-const DEFAULT_HOST = '172.16.100.225';
-const DEFAULT_PATH = '/home/app/dt-doraemon/public/hosts/';
-const DEFAULT_CONNECT = {
-  host: DEFAULT_HOST,
-  username: 'root',
-  password: 'abc123'
-};
 
 class SwitchHostsController extends Controller {
   // 获取列表数据
@@ -32,7 +25,6 @@ class SwitchHostsController extends Controller {
   // 创建hosts群组
   async createHosts() {
     const { app, ctx } = this;
-    const { host, protocol } = ctx;
     const { groupName, groupDesc, is_push, hosts = '' } = ctx.request.body;
     if (_.isNil(groupName)) throw new Error('缺少必要参数groupName');
     // 数据库插入数据
@@ -44,13 +36,12 @@ class SwitchHostsController extends Controller {
     if (_.isNil(data)) throw new Error('创建失败');
     // 创建对应hosts文件
     const hostsPath = 'hosts_' + data.id;
-    const groupAddr = path.join(DEFAULT_PATH, hostsPath);
-    const groupAddrCache = path.join(__dirname, '../../cache/' + hostsPath);
-    await this.editHostsConfig(groupAddr, groupAddrCache, hosts);
+    const groupAddr = path.join(__dirname, '../../public/hosts/' + hostsPath);
+    await this.editHostsConfig(hosts, groupAddr);
     // 创建websocket连接
     // createWS(8080, '/websocket_' + data.id);
     // 更新数据
-    const groupApi = `${protocol}://${host}/api/switch-hosts/connect/${data.id}`;
+    const groupApi = `/api/switch-hosts/connect/${data.id}`;
     const result = await ctx.service.switchHosts.updateHosts(data.id, {
       groupApi,
       // groupId,
