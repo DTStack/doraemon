@@ -19,6 +19,10 @@ const navMenuList = [{
   path:'/page/host-management',
   icon:'desktop'
 },{
+  name:'标签管理',
+  path:'/page/tags',
+  icon:'desktop'
+},{
   name: '配置中心',
   path: '/page/config-center',
   icon: 'setting'
