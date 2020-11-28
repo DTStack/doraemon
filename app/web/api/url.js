@@ -174,5 +174,26 @@ export default {
   deleteHosts: {
     method: 'post',
     url: '/api/switch-hosts/delete-hosts'
+  },
+   // 获取标签列表
+  getTagList: {
+    method: 'post',
+    url: ' /api/tags/get-tag-list'
+  },
+   // 创建标签
+  createTag: {
+    method: 'post',
+    url: '/api/tags/create-tag'
+  },
+   // 删除标签
+  deleteTag: {
+    method: 'post',
+    url: '/api/tags/delete-tag'
+  },
+   // 更新标签
+  updateTag: {
+    method: 'post',
+    url: '/api/tags/update-tag'
   }
+ 
 }

@@ -77,7 +77,7 @@ const ConfigModal = (props)=>{
   const [confirmLoading,setConfirmLoading] = useState(false);
   const configFormRef = useRef(null);
   const isAdd = isEmpty(value);
-  const {id,filename,} = value;
+  const {id,filename} = value;
   const handleModalOk = ()=>{
     if(!isNull(configFormRef.current)){
       configFormRef.current.validateFields((err,values)=>{
