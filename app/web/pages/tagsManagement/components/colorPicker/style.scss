@@ -1,7 +1,12 @@
 .colorPicker{
-    display: flex;
-    align-items: center;
+    cursor: pointer;
+    position: relative;
+    .tip{
+        display: inline-block;
+        color: #999999;
+        font-size: 12px;
+    }
     .sketchPicker{
-        margin-left: 40px;
+        margin-left: 80px;
     }
 }
