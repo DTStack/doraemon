@@ -18,6 +18,18 @@ class TagsManagementController extends Controller{
       count: data.count
     });
   }
+   //获取标签列表
+  async getAllTagsList() {
+    const { app, ctx } = this;
+    const { searchText } = ctx.request.query;
+    const data = await ctx.service.tagManagement.getAllTagsList({
+      searchText
+    });
+    ctx.body = app.utils.response(true, {
+      data: data.rows,
+      count: data.count
+    });
+  }
   //新增标签
   async addTag(){
     const {ctx,app} = this;

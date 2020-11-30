@@ -17,6 +17,18 @@ class TagManagementService extends Service {
       offset: size * (current - 1)
     })
   }
+    // 获取列表数据
+  getAllTagsList(reqParams) {
+    const { searchText='' } = reqParams;
+    return this.ctx.model.TagManagement.findAndCountAll({
+      where: {
+        tagName:{
+          '$like':`%${searchText}%`
+        },
+        is_delete: 0
+      }
+    })
+  }
   addTag(params){
     const {ctx} = this;
     return ctx.model.TagManagement.create(params);

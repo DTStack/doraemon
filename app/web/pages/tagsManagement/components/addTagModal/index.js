@@ -75,7 +75,7 @@ const AddTagModal = Form.create()((props)=>{
       </FormItem>
       <FormItem label="标签标识">
         {getFieldDecorator('tagColor',{
-          initialValue:'#ffadd2',
+          initialValue:'',
           rules:[{
             required:true,message:'请选择标签标识'
           }]

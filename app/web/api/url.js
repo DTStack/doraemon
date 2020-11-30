@@ -175,10 +175,15 @@ export default {
     method: 'post',
     url: '/api/switch-hosts/delete-hosts'
   },
+    // 获取所有标签列表
+  getAllTagList: {
+    method: 'get',
+    url: '/api/tags/get-all-tag-list'
+  },
    // 获取标签列表
   getTagList: {
     method: 'post',
-    url: ' /api/tags/get-tag-list'
+    url: '/api/tags/get-tag-list'
   },
    // 创建标签
   createTag: {

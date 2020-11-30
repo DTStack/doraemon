@@ -7,6 +7,7 @@ module.exports = app => {
     username:STRING(60),
     password:STRING(60),
     remark: STRING(255),
+    tags:{type:STRING(60),field:'tag_ids'},
     status: {type:INTEGER(2),defaultValue:1},
     createdAt: DATE,
     updatedAt: DATE
