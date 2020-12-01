@@ -64,7 +64,7 @@ const TagsManagement = (props) => {
         }
       },
       {
-        title: '标签详情',
+        title: '标签描述',
         dataIndex: 'tagDesc',
         key: 'tagDesc'
       }, {
@@ -89,10 +89,13 @@ const TagsManagement = (props) => {
         render: (text, record) => {
           return <Fragment>
             <a onClick={() => handleEditTag(record)}>编辑</a>
-            <Fragment>
-              <Divider type="vertical" />
-              <a onClick={() => handleDeleteTag(record)}>删除</a>
-            </Fragment>
+            {
+              record.isAdmin ? null:( <Fragment>
+                <Divider type="vertical" />
+                <a onClick={() => handleDeleteTag(record)}>删除</a>
+              </Fragment>)
+            }
+           
           </Fragment>
         }
       }

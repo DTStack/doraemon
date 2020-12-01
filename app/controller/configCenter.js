@@ -5,10 +5,11 @@ const _ = require('lodash');
 class ConfigCenter extends Controller{
   async getConfigList(){
     const {ctx,app} = this;
-    const {current,size} = ctx.request.body;
+    const {current,size,tags} = ctx.request.body;
     const data =  await ctx.service.configCenter.queryConfigs({
       current,
-      size
+      size,
+      tags
     });
     ctx.body = app.utils.response(true,{
       data:data.rows,
@@ -17,12 +18,13 @@ class ConfigCenter extends Controller{
   }
   async addConfig(){
     const {ctx,app} = this;
-    const {filename,filePath,hostId,remark} = ctx.request.body;
+    const {filename,filePath,hostId,remark,tagIds} = ctx.request.body;
     if(_.isNil(filename)) throw new Error('缺少必要参数filename');
     if(_.isNil(filePath)) throw new Error('缺少必要参数filePath');
     if(_.isNil(hostId)) throw new Error('缺少必要参数hostId');
+    if(_.isNil(tagIds)) throw new Error('缺少必要参数tagIds');
     const result = await ctx.service.configCenter.addConfig({
-      filename,filePath,hostId,remark
+      filename,filePath,hostId,remark,tagIds
     });
     ctx.body = app.utils.response(true,result.get({
       plain: true
@@ -30,14 +32,15 @@ class ConfigCenter extends Controller{
   }
   async editConfig(){
     const {ctx,app} = this;
-    const {id,filename,filePath,hostId,remark} = ctx.request.body;
+    const {id,filename,filePath,hostId,remark,tagIds} = ctx.request.body;
     if(_.isNil(id)) throw new Error('缺少必要参数id');
     await ctx.service.configCenter.editConfig({
       id,
       filename,
       filePath,
       remark,
-      hostId
+      hostId,
+      tagIds
     });
     ctx.body = app.utils.response(true);
   }
