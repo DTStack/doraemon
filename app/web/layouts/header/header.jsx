@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Row, Col, Menu, Icon } from 'antd';
+import { Layout, Menu, Icon } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import logo from '../../asset/images/logo.svg';
@@ -21,7 +21,7 @@ const navMenuList = [{
 },{
   name:'标签管理',
   path:'/page/tags',
-  icon:'desktop'
+  icon:'tag'
 },{
   name: '配置中心',
   path: '/page/config-center',

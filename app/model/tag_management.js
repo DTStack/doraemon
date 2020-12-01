@@ -7,6 +7,7 @@ module.exports = app => {
     tagColor: STRING(255),
     created_at: DATE,
     updated_at: DATE,
+    isAdmin:{type:INTEGER,field:'is_admin'},
     is_delete: INTEGER,
     is_close: INTEGER
   },{
