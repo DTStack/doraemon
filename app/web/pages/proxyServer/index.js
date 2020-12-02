@@ -447,8 +447,8 @@ class ProxyServer extends React.PureComponent {
           <a onClick={this.handleProxyServerEdit.bind(this, row)}>编辑</a>
           <Divider type="vertical" />
           <a onClick={this.handleProxyServerDelete.bind(this, row)}>删除</a>
-          <Divider type="vertical" />
-          <a onClick={this.handleProxyServerStatusChange.bind(this, row)}>{Boolean(status) ? '禁用' : '重启'}</a>
+          {/* <Divider type="vertical" />
+          <a onClick={this.handleProxyServerStatusChange.bind(this, row)}>{Boolean(status) ? '禁用' : '重启'}</a> */}
           <Divider type="vertical" />
           <Tooltip placement="topLeft" title={
             <div>
