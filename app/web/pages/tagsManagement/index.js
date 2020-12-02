@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
-import { Divider, Table, Button, Breadcrumb, Input, Modal,Tag } from 'antd';
+import { Divider, Table, Button, Breadcrumb, Input, Modal,Tag,message as Message } from 'antd';
 import AddTagModal from './components/addTagModal'
 import { API } from '@/api';
 import './style.scss';
@@ -122,6 +122,7 @@ const TagsManagement = (props) => {
         }).then(res => {
           const { success } = res;
           if (success) {
+            Message.success('删除成功！');
             getTagList();
           }
         })

@@ -19,13 +19,13 @@ const navMenuList = [{
   path:'/page/host-management',
   icon:'desktop'
 },{
-  name:'标签管理',
-  path:'/page/tags',
-  icon:'tag'
-},{
   name: '配置中心',
   path: '/page/config-center',
   icon: 'setting'
+},{
+  name:'标签管理',
+  path:'/page/tags',
+  icon:'tag'
 }]
 const HeaderComponent = (props) => {
   const { location } = props;
