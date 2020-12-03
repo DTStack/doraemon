@@ -49,13 +49,13 @@ class SwitchHostsService extends Service {
     });
   }
 
-  // 获取群组存放hosts文件的路径
+  // 获取分组存放hosts文件的路径
   async getGroupAddr(id) {
     const data = await this.ctx.model.SwitchHosts.findOne({
       attributes: ['groupAddr'],
       where: { id }
     });
-    if (_.isNil(data)) throw new Error('获取不到该群组下存储的hosts文件');
+    if (_.isNil(data)) throw new Error('获取不到该分组下存储的hosts文件');
     return data.groupAddr;
   }
 }
