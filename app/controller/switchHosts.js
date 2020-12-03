@@ -22,7 +22,7 @@ class SwitchHostsController extends Controller {
     });
   }
 
-  // 创建hosts群组
+  // 创建hosts分组
   async createHosts() {
     const { app, ctx } = this;
     const { groupName, groupDesc, is_push, hosts = '' } = ctx.request.body;
@@ -36,7 +36,11 @@ class SwitchHostsController extends Controller {
     if (_.isNil(data)) throw new Error('创建失败');
     // 创建对应hosts文件
     const hostsPath = 'hosts_' + data.id;
-    const groupAddr = path.join(__dirname, '../../public/hosts/' + hostsPath);
+    const hostDir = path.join(__dirname, '../../public/hosts');
+    const groupAddr = path.join(hostDir, hostsPath);
+    if (!fs.existsSync(hostDir)) {
+      fs.mkdirSync(hostDir);
+    }
     await this.editHostsConfig(hosts, groupAddr);
     // 创建websocket连接
     // createWS(8080, '/websocket_' + data.id);
@@ -52,7 +56,7 @@ class SwitchHostsController extends Controller {
     ctx.body = app.utils.response(result, data);
   }
 
-  // 更新hosts群组
+  // 更新hosts分组
   async updateHosts() {
     const { ctx, app } = this;
     const { hosts, id, groupName, groupDesc, is_push } = ctx.request.body;
@@ -100,7 +104,7 @@ class SwitchHostsController extends Controller {
     ctx.body = app.utils.response(result);
   }
 
-  // 获取hosts群组信息
+  // 获取hosts分组信息
   async getHostsInfo() {
     const { ctx, app } = this;
     const { id } = ctx.query;

@@ -57,7 +57,7 @@ const SwitchHostsList = (props) => {
         key: 'groupName'
       },
       // {
-      //   title: '群组ID',
+      //   title: '分组ID',
       //   dataIndex: 'groupId',
       //   key: 'groupId',
       //   render: text => text || '--'
@@ -131,7 +131,7 @@ const SwitchHostsList = (props) => {
   // 删除
   const handleDeleteHosts = (record) => {
     Modal.confirm({
-      title: '删除后群组将无法使用，是否要删除该群组？',
+      title: '删除后分组将无法使用，是否要删除该分组？',
       okType: 'danger',
       okText: '删除',
       cancelText: '取消',
@@ -149,7 +149,7 @@ const SwitchHostsList = (props) => {
 
   }
 
-  // 添加群组
+  // 添加分组
   const handleAddHosts = () => {
     props.history.push('/page/switch-hosts-edit/0/add');
   }
@@ -175,16 +175,16 @@ const SwitchHostsList = (props) => {
     <div>
       <Breadcrumb>
         <Breadcrumb.Item href="/page/toolbox">应用中心</Breadcrumb.Item>
-        <Breadcrumb.Item>Hosts群组管理</Breadcrumb.Item>
+        <Breadcrumb.Item>Hosts分组管理</Breadcrumb.Item>
       </Breadcrumb>
       <div className="clearfix mt-12 mb-12 title">
         <Search
-          placeholder="请输入群组名称搜索"
+          placeholder="请输入分组名称搜索"
           style={{ width: 200, height: 32 }}
           className="dt-form-shadow-bg"
           onSearch={handleSearchGroup}
         />
-        <Button className="fl-r" type="primary" icon="plus-circle" onClick={handleAddHosts}>新增群组</Button>
+        <Button className="fl-r" type="primary" icon="plus-circle" onClick={handleAddHosts}>新增分组</Button>
       </div>
       <Table
         rowKey="id"

@@ -55,7 +55,7 @@ const EditHosts = (props) => {
     })
   }
 
-  // 创建群组
+  // 创建分组
   const createHosts = (params, setLoadingAction) => {
     setLoadingAction(true);
     API.createHosts(params)
@@ -68,7 +68,7 @@ const EditHosts = (props) => {
       })
   }
 
-  // 更新群组
+  // 更新分组
   const updateHosts = (params, setLoadingAction) => {
     setLoadingAction(true);
     API.updateHosts(params)
