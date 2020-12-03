@@ -1,4 +1,4 @@
-## 1.0.2 (2020-11-27)
+## 1.0.2 (2020-12-03)
 
 ### 🌟 新功能
 范围|描述|commitId
@@ -8,12 +8,17 @@
  app | update app center | [8a0973a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/8a0973a)
  commit | 优化代码提交控制流程 | [954a7c3](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/954a7c3)
  config | 修改mysql数据源配置 | [b938f04](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b938f04)
+ feedback | add feedback code | [d3ff4ab](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d3ff4ab)
  layout | updata layout for app | [804d59d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/804d59d)
  layout | updata layout for global styles | [a4e1c9f](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a4e1c9f)
  proxy | update proxy server and create server rules | [76fc4d6](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/76fc4d6)
+ proxy server | add proxy server collection | [5cf1bf4](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/5cf1bf4)
+ proxy server | add proxy server common link | [5912f34](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/5912f34)
  switchhosts | add switchhosts model | [2c3fdc2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2c3fdc2)
  switchhosts | hosts edit page | [a841b1e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a841b1e)
  switchhosts | push, delete actions, and bugfix | [977cfed](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/977cfed)
+ tags | add host management tags filter | [3513047](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/3513047)
+ tags | add tag management page | [a2046aa](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a2046aa)
  themes | updata themes for layout | [450514c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/450514c)
  - | add and update appcenter | [d45ca82](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d45ca82)
  - | hosts add and udpate api | [0bcb4d4](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0bcb4d4)
@@ -41,6 +46,12 @@
  - | merge serverinfo api, save into store | [d274c81](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d274c81)
  switch hsots | get server info and optimize | [240c407](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/240c407)
  switchhosts | fix hosts file save and read | [fca1261](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/fca1261)
+
+
+### 📝 文档
+范围|描述|commitId
+--|--|--
+ packagejson | update packagejson version and changelog | [03e0aa3](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/03e0aa3)
 
 
 ### 📦 持续集成

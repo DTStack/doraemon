@@ -10,7 +10,7 @@ const HostForm = Form.create()(
   (props)=>{
     const {form,value,tagList=[]} = props;
     const {getFieldDecorator} = form;
-    const {hostIp,hostName,username,password,remark,tags} = value;
+    const {hostIp,hostName,username,password,remark,tags=[]} = value;
     const tagIds = tags.map(item=>`${item.id}`);
     const isAdd = isEmpty(value);
     return <Form labelCol={{span:5}} wrapperCol={{span:17}} >
