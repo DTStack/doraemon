@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Layout, Menu, Icon } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -35,10 +35,13 @@ const HeaderComponent = (props) => {
   const handleSelectedKeys = (e) => {
     setSelectedKeys(e.key);
   }
+  useEffect(() => {
+    setSelectedKeys([pathname])
+  }, [pathname])
   return (
         <Header className="dt-layout-header header_component">
             <div className="dt-header-log-wrapper logo">
-                <Link to='/page/toolbox'>
+                <Link to='/page/home'>
                     <img className="logo_img" src={logo} />
                     <span className="system-title">哆啦A梦</span>
                 </Link>
