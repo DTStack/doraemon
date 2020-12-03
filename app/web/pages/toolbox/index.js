@@ -110,10 +110,11 @@ const Toolbox = () => {
       <div className="desc">{appDesc}</div>
       {/* 添加帮助文档提示图标 */}
       {helpUrl && (
-        <Tooltip title="帮助文档">
+        <Tooltip title="Hosts Remote帮助文档">
           <Icon className="icon-top-right" type="question-circle" onClick={(e) => {
             e.preventDefault();
-            window.open(helpUrl, '_blank');
+            var otherWindow = window.open(helpUrl, '_blank');
+            otherWindow.opener = null;
           }} />
         </Tooltip>
       )}

@@ -3,6 +3,8 @@
 ### 🌟 新功能
 范围|描述|commitId
 --|--|--
+ label management | fix the impact of tag management | [a8a729d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a8a729d)
+ - | add help link | [4db43dd](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/4db43dd)
  animate | updata doraemon animate | [4d0dbc8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/4d0dbc8)
  api | server info api | [d6810c8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d6810c8)
  app | update app center | [8a0973a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/8a0973a)
@@ -37,14 +39,15 @@
 ### 🐛 Bug 修复
 范围|描述|commitId
 --|--|--
+ switchhosts | rename and fix exist dir bug | [6dfe4e7](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6dfe4e7)
  - | add order params and fix add app | [bed8e06](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/bed8e06)
  - | api response | [65a3e8a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/65a3e8a)
  - | bugfix | [a49c8a0](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a49c8a0)
  - | bugfix and optimize | [0c1eb5c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0c1eb5c)
  - | fix create app | [ba0d02d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/ba0d02d)
- - | hosts file store locally | [2b70e29](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2b70e29)
  - | merge serverinfo api, save into store | [d274c81](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d274c81)
  switch hsots | get server info and optimize | [240c407](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/240c407)
+ - | hosts file store locally | [2b70e29](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2b70e29)
  switchhosts | fix hosts file save and read | [fca1261](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/fca1261)
 
 
