@@ -1,17 +1,20 @@
 import React from 'react';
-import { Input, Button,Typography, Table, message as Message, Divider, Modal, Badge, Popconfirm, Switch, Tooltip } from 'antd';
+import { Input, Button,Typography,Tag, Table, message as Message, Divider, Modal, Badge, Popconfirm, Switch, Tooltip } from 'antd';
 import { API } from '@/api';
 import ProxyServerModal from './components/proxyServerModal';
 import ProxyRuleModal from './components/proxyRuleModal';
+import Cookies from 'js-cookie';
 import { connect } from 'react-redux'
 const { Paragraph } = Typography;
 import './style.scss';
 
 const confirm = Modal.confirm;
 const { Search } = Input;
+const { CheckableTag } = Tag;
 
+const commonTags = JSON.parse(Cookies.get('common-tags')||'[]')||[];
 class ProxyServer extends React.PureComponent {
- state = {
+  state = {
     //代理服务
     currentProxyServer: {},
     proxyServerModalVisible: false,
@@ -34,6 +37,8 @@ class ProxyServer extends React.PureComponent {
     //子表格
     subTableData: [],
     subTableLoading: true,
+    commonTagList: commonTags,
+    selectedTag:''
   }
   //获取页面主要数据
   loadMainData() {
@@ -77,6 +82,14 @@ class ProxyServer extends React.PureComponent {
         });
       }
     });
+  }
+  handleChange(tag) {
+    const { selectedTag } = this.state; 
+    const newTag = tag === selectedTag ? '':tag
+    this.setState({ selectedTag: newTag },()=>{
+      this.onSearchProject(newTag)
+    });
+    
   }
   /**
    * 代理服务
@@ -146,7 +159,7 @@ class ProxyServer extends React.PureComponent {
         }).then((response) => {
           const { success } = response;
           if (success) {
-            Message.success(`代理服务删除成功`);
+            Message.success('代理服务删除成功');
             this.loadMainData();
           }
         });
@@ -168,7 +181,7 @@ class ProxyServer extends React.PureComponent {
     API.deleteProxyRule({
       id: row.id
     }).then((response) => {
-      const { success, message } = response;
+      const { success } = response;
       if (success) {
         Message.success(`代理服务「${name}」下的代理规则「${ip}」删除成功`);
         this.loadSubTableData(mainTableRow);
@@ -222,7 +235,7 @@ class ProxyServer extends React.PureComponent {
     }).then((response) => {
       const { success, message } = response;
       if (success) {
-        Message.success(`更新代理规则成功`);
+        Message.success('更新代理规则成功');
         this.loadSubTableData(currentProxyServer);
         this.handleProxyRuleModalCancel();
       } else {
@@ -248,12 +261,13 @@ class ProxyServer extends React.PureComponent {
     })
   }
   onSearchProject = (value) => {
-    const { mainTableParams } = this.state;
+    const { mainTableParams,selectedTag,search } = this.state;
     this.setState({
       mainTableParams: Object.assign({}, mainTableParams, {
         pageNo:1,
         search: value
-      })
+      }),
+      selectedTag: search ? [] : selectedTag
     }, () => {
       this.loadMainData();
     });
@@ -291,11 +305,25 @@ class ProxyServer extends React.PureComponent {
       status: check ? 1 : 0
     }).then(res => {
       if (res.success) {
-        Message.success(check ? `启用代理` : '禁用代理');
+        Message.success(check ? '启用代理' : '禁用代理');
         this.loadSubTableData(currentProxyServer);
       }
     })
   }
+  setCommonTag = (row,isCommon) => {
+    const { name } = row;
+    const { commonTagList } = this.state;
+    let newList = [];
+    if(isCommon){
+      newList = commonTagList.filter(item=>item!=name);
+    }else{
+      newList = Array.from(new Set([name,...commonTagList])).splice(0,4);
+    }
+    this.setState({
+      commonTagList:newList
+    });
+    Cookies.set('common-tags',JSON.stringify(newList));
+  };
   tableExpandedRowRender = (mainTableRow) => {
     const { subTableLoading, subTableData } = this.state;
     const columns = [{
@@ -377,6 +405,8 @@ class ProxyServer extends React.PureComponent {
       currentProxyRule,
       proxyRuleModalVisible,
       proxyRuleModalConfirmLoading,
+      commonTagList,
+      selectedTag,
       search
     } = this.state;
     const columns = [{
@@ -393,11 +423,11 @@ class ProxyServer extends React.PureComponent {
       title: '代理服务地址',
       key: 'proxy_server_address',
       dataIndex: 'proxy_server_address',
-    render:(value)=> <Paragraph copyable>{value}</Paragraph>
+      render:(value)=> <Paragraph copyable>{value}</Paragraph>
     }, {
       title: '默认代理目标',
       key: 'target',
-      dataIndex: 'target',
+      dataIndex: 'target'
     }, {
       title: '状态',
       key: 'status',
@@ -411,25 +441,49 @@ class ProxyServer extends React.PureComponent {
       key: 'actions',
       width: 200,
       render: (value, row) => {
-        const { status } = row;
+        const { status,name } = row;
+        const isCommon = commonTagList.includes(name);
         return (<React.Fragment>
           <a onClick={this.handleProxyServerEdit.bind(this, row)}>编辑</a>
           <Divider type="vertical" />
           <a onClick={this.handleProxyServerDelete.bind(this, row)}>删除</a>
+          {/* <Divider type="vertical" />
+          <a onClick={this.handleProxyServerStatusChange.bind(this, row)}>{Boolean(status) ? '禁用' : '重启'}</a> */}
           <Divider type="vertical" />
-          <a onClick={this.handleProxyServerStatusChange.bind(this, row)}>{Boolean(status) ? '禁用' : '重启'}</a>
+          <Tooltip placement="topLeft" title={
+            <div>
+              <div>设置为常用项目</div>
+              <div>最多可设置4个常用项目</div>
+            </div>
+            }>
+            <a onClick={() => this.setCommonTag(row,isCommon)}>{ isCommon ? '取消收藏':'收藏' }</a>
+          </Tooltip>
         </React.Fragment>)
       }
     }];
 
     return (<div className="page-proxy-server">
       <div className="title_wrap">
-        <Search
-          placeholder="请输入项目名称搜索"
-          value={search}
-          onChange={this.onChangeSearch}
-          onSearch={this.onSearchProject}
-          className="search dt-form-shadow-bg" />
+        <div>
+          <Search
+            placeholder="请输入项目名称搜索"
+            value={search}
+            onChange={this.onChangeSearch}
+            onSearch={this.onSearchProject}
+            className="search dt-form-shadow-bg" />
+              {
+                commonTagList.length ? (<span style={{ marginRight: 8,marginLeft:20 }}>常用项目:</span>):null
+              }
+              {commonTagList.map(tag => (
+                <CheckableTag
+                  key={tag}
+                  checked={tag==selectedTag}
+                  onChange={checked => this.handleChange(tag, checked)}
+                >
+                  {tag}
+                </CheckableTag>
+              ))}
+        </div>
         <Button type="primary" icon="plus" onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
       </div>
       <Table

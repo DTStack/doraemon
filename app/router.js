@@ -65,4 +65,13 @@ module.exports = app => {
   app.post('/api/switch-hosts/update-hosts', app.controller.switchHosts.updateHosts);
   app.get('/api/switch-hosts/get-hosts-info', app.controller.switchHosts.getHostsInfo);
   app.get('/api/switch-hosts/connect/:id', app.controller.switchHosts.getHostsConfig);
+
+  /**
+   * tag management 配置内容 增删改查
+   */
+  app.get('/api/tags/get-all-tag-list', app.controller.tagManagement.getAllTagsList);
+  app.post('/api/tags/get-tag-list', app.controller.tagManagement.getTagsList);
+  app.post('/api/tags/create-tag', app.controller.tagManagement.addTag);
+  app.post('/api/tags/update-tag', app.controller.tagManagement.editTag);
+  app.post('/api/tags/delete-tag', app.controller.tagManagement.deleteTag);
 };

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Row, Col, Menu, Icon } from 'antd';
+import React, { useState,useEffect } from 'react';
+import { Layout, Menu, Icon } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import logo from '../../asset/images/logo.svg';
@@ -22,6 +22,10 @@ const navMenuList = [{
   name: '配置中心',
   path: '/page/config-center',
   icon: 'setting'
+},{
+  name:'标签管理',
+  path:'/page/tags',
+  icon:'tag'
 }]
 const HeaderComponent = (props) => {
   const { location } = props;
@@ -31,10 +35,13 @@ const HeaderComponent = (props) => {
   const handleSelectedKeys = (e) => {
     setSelectedKeys(e.key);
   }
+  useEffect(() => {
+    setSelectedKeys([pathname])
+  }, [pathname])
   return (
         <Header className="dt-layout-header header_component">
             <div className="dt-header-log-wrapper logo">
-                <Link to='/page/toolbox'>
+                <Link to='/page/home'>
                     <img className="logo_img" src={logo} />
                     <span className="system-title">哆啦A梦</span>
                 </Link>

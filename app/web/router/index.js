@@ -19,6 +19,7 @@ import SwitchHostsList from '@/pages/switchHosts';
 // hosts编辑
 import SwitchHostsEdit from '@/pages/switchHosts/editHosts'
 
+import TagsManagement from '@/pages/tagsManagement'
 
 import NotFound from '@/pages/exception/404';
 const urlPrefix = '/page'
@@ -28,12 +29,12 @@ const routes = [
     component: BasicLayout,
     routes:[
       {
-        path:`${urlPrefix}/toolbox`,
-        component: Toolbox
-      },
-      {
         path: `${urlPrefix}/home`,
         component: Home
+      },
+      {
+        path:`${urlPrefix}/toolbox`,
+        component: Toolbox
       },
       {
         path:`${urlPrefix}/internal-url-navigation`,
@@ -67,6 +68,10 @@ const routes = [
       {
         path: `${urlPrefix}/switch-hosts-edit/:id/:type`,
         component: SwitchHostsEdit
+      },
+      {
+        path: `${urlPrefix}/tags`,
+        component: TagsManagement
       },
       {
         path: '*',

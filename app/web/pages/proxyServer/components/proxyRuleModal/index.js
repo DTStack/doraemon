@@ -29,7 +29,7 @@ class ProxyRuleModal extends React.PureComponent{
       const {success,data,message} = response;
       if(success){
         this.setState({
-          localIp:data
+          localIp:data.localIp
         })
       }
     })
@@ -69,7 +69,7 @@ class ProxyRuleModal extends React.PureComponent{
       },
       wrapperCol: {
         span: 18
-      },
+      }
     };
     return (<Modal
       title={`${editable?'编辑':'新增'}代理规则`}
@@ -84,7 +84,7 @@ class ProxyRuleModal extends React.PureComponent{
           {
             getFieldDecorator('ip',{
               rules:[{
-                required: true, message: '请输入IP',
+                required: true, message: '请输入IP'
               }],
               initialValue:ip||localIp
             })(<Input placeholder="请输入ip"/>)
@@ -95,7 +95,7 @@ class ProxyRuleModal extends React.PureComponent{
           {
             getFieldDecorator('target',{
               rules:[{
-                required: true,pattern:urlReg,message: '请输入正确格式的目标服务地址',
+                required: true,pattern:urlReg,message: '请输入正确格式的目标服务地址'
               }],
               initialValue:target
             })(<Input placeholder="请输入目标服务地址"/>)
@@ -109,7 +109,7 @@ class ProxyRuleModal extends React.PureComponent{
           {
             getFieldDecorator('remark',{
               rules:[{
-                required: false, message: '请输入备注',
+                required: false, message: '请输入备注'
               }],
               initialValue:remark
             })(<TextArea rows={4} placeholder="请输入备注"/>)
