@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Row, Col, Icon, Button, Popconfirm, Card } from 'antd';
+import { Row, Col, Icon, Button, Popconfirm, Card, Tooltip } from 'antd';
 import Loading from '@/components/loading';
 import { API } from '@/api';
 import { colorList } from '@/constant';
@@ -11,8 +11,9 @@ const Toolbox = () => {
   const initApp = [
     {
       appName: 'Hosts Remote',
-      appDesc: '袋鼠云内部团队host集中管理系统', 
-      appUrl: '/page/switch-hosts-list'
+      appDesc: '袋鼠云内部团队host集中管理系统',
+      appUrl: '/page/switch-hosts-list',
+      helpUrl: 'https://dtstack.yuque.com/rd-center/sm6war/chnwbl'
     },
     {
       appName: '签名制作',
@@ -96,7 +97,7 @@ const Toolbox = () => {
   }
 
   const renderCard = (list) => list.map((tool, index) => {
-    const { id, appName, appUrl, appDesc } = tool;
+    const { id, appName, appUrl, appDesc, helpUrl } = tool;
     const componentContent = <Fragment>
       <div className="title">
         <span>{appName}</span>
@@ -107,6 +108,15 @@ const Toolbox = () => {
         />}
       </div>
       <div className="desc">{appDesc}</div>
+      {/* 添加帮助文档提示图标 */}
+      {helpUrl && (
+        <Tooltip title="帮助文档">
+          <Icon className="icon-top-right" type="question-circle" onClick={(e) => {
+            e.preventDefault();
+            window.open(helpUrl, '_blank');
+          }} />
+        </Tooltip>
+      )}
       {urlReg.test(appUrl) && (<Popconfirm
         title="确认将该应用移除？"
         okText="确定"
