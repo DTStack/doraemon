@@ -175,7 +175,7 @@ const SwitchHostsList = (props) => {
     <div>
       <Breadcrumb>
         <Breadcrumb.Item href="/page/toolbox">应用中心</Breadcrumb.Item>
-        <Breadcrumb.Item>Hosts分组管理</Breadcrumb.Item>
+        <Breadcrumb.Item>Hosts管理</Breadcrumb.Item>
       </Breadcrumb>
       <div className="clearfix mt-12 mb-12 title">
         <Search

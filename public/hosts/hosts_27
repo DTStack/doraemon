@@ -1,0 +1,165 @@
+# My hosts
+##
+# Host Database
+#
+# localhost is used to configure the loopback interface
+# when the system is booting.  Do not change this entry.
+##
+127.0.0.1  localhost
+255.255.255.255  broadcasthost
+::1             localhost
+#127.0.0.1     portal.brc.com.cn
+#10.1.169.218 portal.brc.com.cn
+172.31.0.126 portal.brc.com.cn
+172.16.8.118 testlink.co
+172.16.10.81  dev.web.dtstack.net
+172.16.10.81  dev.dtstack.net
+172.16.8.138  test.web.dtstack.net
+172.16.8.138  test.dtstack.net
+127.0.0.1 web.dtstack.net
+# Block Adobe Activation
+127.0.1  activate.adobe.com
+127.0.0.1  practivate.adobe.com
+127.0.0.1  ereg.adobe.com
+127.0.0.1  activate.wip3.adobe.com
+127.0.0.1  wip3.adobe.com
+127.0.0.1  3dns-3.adobe.com
+127.0.0.1  3dns-2.adobe.com
+127.0.0.1  adobe-dns.adobe.com
+127.0.0.1  adobe-dns-2.adobe.com
+127.0.0.1  adobe-dns-3.adobe.com
+127.0.0.1  ereg.wip3.adobe.com
+127.0.0.1  activate-sea.adobe.com
+127.0.0.1  wwis-dubc1-vip60.adobe.com
+127.0.0.1  activate-sjc0.adobe.com
+127.0.0.1  hl2rcv.adobe.com
+
+# Block Adobe Activation
+127.0.0.1  activate.adobe.com
+127.0.0.1  practivate.adobe.com
+127.0.0.1  ereg.adobe.com
+127.0.0.1  activate.wip3.adobe.com
+127.0.0.1  wip3.adobe.com
+127.0.0.1  3dns-3.adobe.com
+127.0.0.1  3dns-2.adobe.com
+127.0.0.1  adobe-dns.adobe.com
+127.0.0.1  adobe-dns-2.adobe.com
+127.0.0.1  adobe-dns-3.adobe.com
+127.0.0.1  ereg.wip3.adobe.com
+127.0.0.1  activate-sea.adobe.com
+127.0.0.1  wwis-dubc1-vip60.adobe.com
+127.0.0.1  activate-sjc0.adobe.com
+127.0.0.1  hl2rcv.adobe.com
+#fix github cdn problem because of GFW
+151.101.44.133 assets-cdn.github.com
+151.101.184.133 avatars3.githubusercontent.com
+#easyv测试环境
+172.16.8.180 easyv.private.dtstack.net
+#测试环境
+172.16.10.70 easyv.test.dtstack.net
+#UIC地址
+#172.16.10.61  dtuic.dtstack.net
+
+#数栈测试用例管理
+172.16.10.92 testlink.com
+#数栈性能测试环境
+172.16.8.187 172-16-8-187
+
+172.16.8.182 172-16-8-182
+
+
+172.16.8.186 172-16-8-186
+
+172.16.8.113 172-16-8-113
+
+172.16.8.199 172-16-8-199
+
+172.16.8.187 nm2 rm2 jobhistory zkfc
+
+
+172.16.8.186 nm1 rm1 proxyserver zkfc
+
+172.16.8.182 thriftserver flink hive 
+
+
+172.16.8.113 uic ide engine schedule tengine
+
+172.16.8.199 api gateway dq mysql redis
+
+#数栈开发环境地址
+
+172.16.8.107 kudu1
+
+172.16.8.108 kudu2
+
+172.16.8.109 kudu3
+#数栈测试环境地址
+
+172.16.10.34  uic.insight.com
+
+
+172.16.10.34  172-16-10-34 node001
+
+172.16.10.45  172-16-10-45 node002
+
+172.16.10.51  172-16-10-51 node003
+
+#Deploy Server
+172.16.10.29 deploy.dtstack.com
+
+#API Document
+172.16.8.109 api.dtstack.com
+
+#EasyManager
+172.16.10.76   em.dtstack.com
+
+#DTinsght Test evn
+172.16.10.34  test.dtstack.insight.com
+172.16.10.34  uic.insight.com
+
+#DTinsght development test
+172.16.8.56 uic.insight.top
+172.16.8.56 rdos.dtstack.insight.top
+#内部测试环境
+172.16.10.168    v3.insight.dtstack.net
+172.16.100.251   v4.insight.dtstack.cn
+172.16.100.251   dev.insight.dtstack.cn
+172.16.10.168     dev.insight.dtstack.net
+0.0.0.0     dev.local.dtstack.cn
+0.0.0.0     dev.local.dtstack.net
+172.16.100.251  dtuic.dtstack.cn 
+# 0.0.0.0 dtuic.dtstack.cn 
+172.16.10.168   dtuic.dtstack.net
+172.16.10.195 rdos.dtstack.insight.cn
+172.16.10.195 uic.insight.cn
+
+
+# Testlink
+172.16.8.118  testlink.com
+
+172.16.8.170 data.lining.com
+172.16.8.170 datacenter.lining.com
+#dt-common 私服
+172.16.100.225  registry.npm.dtstack.com
+127.0.0.1 kubernetes.docker.internal
+# End of section
+# 团队首页
+172.16.100.225 dtux.dtstack.com
+# 3.1.x版本线上问题验证环境
+172.16.100.89	 dtuic.insight.v3
+172.16.100.89 	 online.insight.v3
+172.16.100.89 on1
+172.16.101.233 on2
+# 4.0.x版本线上问题验证环境
+172.16.100.38   dtuic.insight.v4
+172.16.100.38   online.insight.v4
+172.16.100.38 	on3
+172.16.100.173 	on4
+# 4.1.x版本线上问题验证环境
+172.16.100.116	 dtuic.insight.v41
+172.16.100.116 	 online.insight.v41
+172.16.100.116 on5
+172.16.100.158 on6
+
+172.16.100.187 uic.insight.net
+172.16.100.187 rdos.dtstack.insight.net
