@@ -1,5 +1,5 @@
 import React,{useState,useEffect} from 'react';
-import {Table,Popconfirm,Divider,Typography,Button,Row,Col,message as Message} from 'antd';
+import {Table,Popconfirm,Divider,Typography,Button,Row,Col,message as Message,Tag} from 'antd';
 import {replace} from 'lodash';
 import {API} from '@/api';
 import HostModal from './components/hostModal';
@@ -12,15 +12,38 @@ export default (props)=>{
   const [hostModalVisible,setHostModalVisible] = useState(false);
   const [passwordModalVisible,setPasswordModalVisible] = useState(false);
   const [currentHost,setCurrentHost] = useState({});
+  const [tagList, setTagList] = useState([])
+  useEffect(()=>{
+    API.getAllTagList().then(response=>{
+      const {success,data} = response;
+      if(success){
+        setTagList(data.data)
+      }
+    })
+  },[])
   const getColumns = ()=>{
     const columns = [{
+      title:'主机名',
+      key:'hostName',
+      dataIndex:'hostName'
+    },{
       title:'主机IP',
       key:'hostIp',
       dataIndex:'hostIp'
     },{
-      title:'主机名',
-      key:'hostName',
-      dataIndex:'hostName'
+      title:'标签',
+      key:'tags',
+      dataIndex:'tags',
+      filterMultiple:true,
+      filters:tagList.map(item=>{
+        return {
+          text:item.tagName,
+          value:item.id
+        }
+      }),
+      render:(value) =>{
+        return value.map(item=><Tag color={item.tagColor}>{item.tagName}</Tag>)
+      }
     },{
       title:'备注',
       key:'remark',
@@ -31,10 +54,10 @@ export default (props)=>{
       width:120,
       render:(value,row)=>{
         return <span>
-          <a href="javascript:void(0);" onClick={handleTableRowEdit.bind(this,row)}>编辑</a>
+          <a onClick={handleTableRowEdit.bind(this,row)}>编辑</a>
           <Divider type="vertical"/>
           <Popconfirm title={`确认是否删除该主机「${row.hostName}」?`} onConfirm={handleTableRowDelete.bind(this,row)}>
-            <a href="javascript:void(0);">删除</a>
+            <a>删除</a>
           </Popconfirm>
         </span>
       }
@@ -104,9 +127,9 @@ export default (props)=>{
     }
     setPasswordModalVisible(false);
   }
-  const loadTableData = ()=>{
+  const loadTableData = (params={})=>{
     setTableLoading(true);
-    API.getHostList().then((response)=>{
+    API.getHostList(params).then((response)=>{
       const {success,data} = response;
       if(success){
         setHostList(data);
@@ -114,20 +137,30 @@ export default (props)=>{
       setTableLoading(false);
     });
   }
+  const onTableChange = (pagination, filters, sorter) => {
+    loadTableData(filters)
+  }
   useEffect(()=>{
     loadTableData()
-  },[])
+  },[]);
   return <div className="page-host-management">
-    <div style={{textAlign:'right'}}><Button type="primary" icon="plus-circle" onClick={handleHostAdd}>新增主机</Button></div>
+    <div className="title_wrap">
+      <div className="title">主机管理</div>
+      <Button type="primary" icon="plus-circle" onClick={handleHostAdd}>新增主机</Button>
+    </div>
     <Table
-      size="small"
       rowKey="id"
       columns={getColumns()}
+      className="dt-table-fixed-base"
+      scroll={{ y: true }}
+      style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
       loading={tableLoading}
       dataSource={hostList}
       pagination={false}
+      onChange={onTableChange}
       expandedRowRender={expandedRowRender}/>
     <HostModal
+      tagList={tagList}
       value={currentHost}
       visible={hostModalVisible}
       onOk={handleHostModalAction.bind(this,'ok')}

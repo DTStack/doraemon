@@ -1,12 +1,18 @@
 .page-proxy-server{
-  padding: 10px;
   .title_wrap{
     display: flex;
     justify-content: space-between;
     align-self: center;
+    margin-bottom: 12px;
     .search{
       width: 200px;
       height: 32px;
     }
+  }
+  .ant-tag-checkable{
+    cursor: pointer;
+  }
+  .marginBottom12{
+    margin-bottom: 12px;
   }
 }

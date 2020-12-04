@@ -4,3 +4,4 @@ config/manifest.json
 run
 logs
 cache
+.history

@@ -17,6 +17,7 @@ module.exports = app => {
   app.get('/api/proxy-server/rule-list', app.controller.proxy.ruleList);
   app.post('/api/proxy-server/add-rule', app.controller.proxy.addRule);
   app.post('/api/proxy-server/update-rule', app.controller.proxy.updateRule);
+  app.post('/api/proxy-server/update-rule-status', app.controller.proxy.updateRuleStatus);
   app.delete('/api/proxy-server/delete-rule', app.controller.proxy.deleteRule);
   /**
    * 主机管理
@@ -45,7 +46,32 @@ module.exports = app => {
   /**
    * 通用接口
    */
-  app.get('/api/github/get-config-json',app.controller.common.getConfigJson);
+  app.get('/api/appCenters/get-app-list',app.controller.appCenters.getAppCenterList);
   app.get('/api/github/get-local-ip',app.controller.common.getLocalIp);
+  app.post('/api/appCenters/update-applications',app.controller.appCenters.updateApplications);
+  app.post('/api/appCenters/delete-applications',app.controller.appCenters.deleteApplications);
+  app.post('/api/appCenters/click-applications',app.controller.appCenters.clickApplications);
+  app.get('/api/appCenters/get-app-by-id',app.controller.appCenters.getApplicationById);
+  /**
+   * switch hosts 管理列表
+   */
+  app.post('/api/switch-hosts/get-hosts-list', app.controller.switchHosts.getHostsList);
+  app.post('/api/switch-hosts/push-hosts', app.controller.switchHosts.pushHosts);
+  /**
+   * switch hosts 配置内容 增删改查
+   */
+  app.post('/api/switch-hosts/create-hosts', app.controller.switchHosts.createHosts);
+  app.post('/api/switch-hosts/delete-hosts', app.controller.switchHosts.deleteHosts);
+  app.post('/api/switch-hosts/update-hosts', app.controller.switchHosts.updateHosts);
+  app.get('/api/switch-hosts/get-hosts-info', app.controller.switchHosts.getHostsInfo);
+  app.get('/api/switch-hosts/connect/:id', app.controller.switchHosts.getHostsConfig);
 
+  /**
+   * tag management 配置内容 增删改查
+   */
+  app.get('/api/tags/get-all-tag-list', app.controller.tagManagement.getAllTagsList);
+  app.post('/api/tags/get-tag-list', app.controller.tagManagement.getTagsList);
+  app.post('/api/tags/create-tag', app.controller.tagManagement.addTag);
+  app.post('/api/tags/update-tag', app.controller.tagManagement.editTag);
+  app.post('/api/tags/delete-tag', app.controller.tagManagement.deleteTag);
 };

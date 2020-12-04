@@ -3,15 +3,35 @@ export default {
    * 通用接口
    */
   //获取github配置仓库中的json
-  getConfigJsonInGithub:{
+  getAppCentersList:{
     method:'get',
-    url:'/api/github/get-config-json'
+    url:'/api/appCenters/get-app-list'
   },
-  //获取本机Ip
+  // 更新应用
+  updateApplication: {
+    method: 'post',
+    url:'/api/appCenters/update-applications'
+  },
+  // 删除应用
+  deleteApplication: {
+    method: 'post',
+    url:'/api/appCenters/delete-applications'
+  },
+  clickApplication: {
+    method: 'post',
+    url:'/api/appCenters/click-applications'
+  },
+  // 获取应用中心信息
+  getApplicationById: {
+    method: 'get',
+    url:'/api/appCenters/get-app-by-id'
+  },
+  //获取本机Ip，端口等信息
   getLocalIp:{
     method:'get',
     url:'/api/github/get-local-ip'
   },
+
   /**
    * 代理服务
    */
@@ -54,6 +74,11 @@ export default {
   updateProxyRule:{
     method:'post',
     url:'/api/proxy-server/update-rule'
+  },
+  //更新代理规则状态
+  updateProxyRuleStatus:{
+    method:'post',
+    url:'/api/proxy-server/update-rule-status'
   },
   //删除代理规则
   deleteProxyRule:{
@@ -116,5 +141,64 @@ export default {
   saveConfig:{
     method:'post',
     url:'/api/config-detail/save'
+  },
+  /**
+   * switch hosts 管理列表
+   */
+  // 获取列表
+  getHostsList: {
+    method: 'post',
+    url: '/api/switch-hosts/get-hosts-list'
+  },
+  // 创建
+  createHosts: {
+    method: 'post',
+    url: '/api/switch-hosts/create-hosts'
+  },
+  // 获取详情数据
+  getHostsInfo: {
+    method: 'get',
+    url: '/api/switch-hosts/get-hosts-info'
+  },
+  // 更新
+  updateHosts: {
+    method: 'post',
+    url: '/api/switch-hosts/update-hosts'
+  },
+  // 推送
+  pushHosts: {
+    method: 'post',
+    url: '/api/switch-hosts/push-hosts'
+  },
+  // 删除
+  deleteHosts: {
+    method: 'post',
+    url: '/api/switch-hosts/delete-hosts'
+  },
+    // 获取所有标签列表
+  getAllTagList: {
+    method: 'get',
+    url: '/api/tags/get-all-tag-list'
+  },
+   // 获取标签列表
+  getTagList: {
+    method: 'post',
+    url: '/api/tags/get-tag-list'
+  },
+   // 创建标签
+  createTag: {
+    method: 'post',
+    url: '/api/tags/create-tag'
+  },
+   // 删除标签
+  deleteTag: {
+    method: 'post',
+    url: '/api/tags/delete-tag'
+  },
+   // 更新标签
+  updateTag: {
+    method: 'post',
+    url: '/api/tags/update-tag'
   }
+ 
 }

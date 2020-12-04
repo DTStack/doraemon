@@ -1,9 +1,10 @@
 .layout-basic{
   height: 100vh;
-  .logo{
-    width: 40px;
-    height: 40px;
-    margin: 0px 12px 0 12px;
+  padding-top: 64px;
+  .logo_img{
+    width: 30px;
+    height: 30px;
+    margin: 0px 8px 8px 12px;
   }
   .system-title{
     font-size: 21px;
@@ -16,5 +17,13 @@
   }
   .main-content{
     height: 100%;
+    display: flex;
+    flex: 1;
+    background: #f2f7fa;
+  }
+  .context_container{
+    flex: 1;
+    padding: 20px;
+    width: 100%;
   }
 }

@@ -1,13 +1,19 @@
 import React from 'react';
-import { Input, Button, Table, message as Message, Divider, Modal, Badge, Popconfirm } from 'antd';
+import { Input, Button,Typography,Tag, Table, message as Message, Divider, Modal, Badge, Popconfirm, Switch, Tooltip } from 'antd';
 import { API } from '@/api';
 import ProxyServerModal from './components/proxyServerModal';
 import ProxyRuleModal from './components/proxyRuleModal';
+import Cookies from 'js-cookie';
+import { connect } from 'react-redux'
+const { Paragraph } = Typography;
 import './style.scss';
 
 const confirm = Modal.confirm;
 const { Search } = Input;
-export default class ProxyServer extends React.PureComponent {
+const { CheckableTag } = Tag;
+
+const commonTags = JSON.parse(Cookies.get('common-tags')||'[]')||[];
+class ProxyServer extends React.PureComponent {
   state = {
     //代理服务
     currentProxyServer: {},
@@ -21,9 +27,9 @@ export default class ProxyServer extends React.PureComponent {
     mainTableLoading: true,
     maintTableList: [],
     maintTableTotal: 10,
-    search:'',
+    search: '',
     mainTableParams: {
-      search:'',
+      search: '',
       pageNo: 1,
       pageSize: 20
     },
@@ -31,6 +37,8 @@ export default class ProxyServer extends React.PureComponent {
     //子表格
     subTableData: [],
     subTableLoading: true,
+    commonTagList: commonTags,
+    selectedTag:''
   }
   //获取页面主要数据
   loadMainData() {
@@ -74,6 +82,14 @@ export default class ProxyServer extends React.PureComponent {
         });
       }
     });
+  }
+  handleChange(tag) {
+    const { selectedTag } = this.state; 
+    const newTag = tag === selectedTag ? '':tag
+    this.setState({ selectedTag: newTag },()=>{
+      this.onSearchProject(newTag)
+    });
+    
   }
   /**
    * 代理服务
@@ -143,7 +159,7 @@ export default class ProxyServer extends React.PureComponent {
         }).then((response) => {
           const { success } = response;
           if (success) {
-            Message.success(`代理服务删除成功`);
+            Message.success('代理服务删除成功');
             this.loadMainData();
           }
         });
@@ -165,7 +181,7 @@ export default class ProxyServer extends React.PureComponent {
     API.deleteProxyRule({
       id: row.id
     }).then((response) => {
-      const { success, message } = response;
+      const { success } = response;
       if (success) {
         Message.success(`代理服务「${name}」下的代理规则「${ip}」删除成功`);
         this.loadSubTableData(mainTableRow);
@@ -200,6 +216,36 @@ export default class ProxyServer extends React.PureComponent {
       }
     });
   }
+  onHandleUpdateProxyRule = (record) => {
+    const { ip, target, id } = record;
+    const { localIp } = this.props;
+    const { maintTableList, expandedRowKeys } = this.state;
+    const currentProxyServer = maintTableList.find((row) => row.id === expandedRowKeys[0]);
+    const urlReg = new RegExp(/(http|ftp|https):\/\/([\w\-_]+\.[\w\-_]+[\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/, 'i');
+    let regResult = urlReg.exec(target);
+    let tagetIp = target;
+    if (regResult) {
+      let tagetArrIPs = regResult[2].split(':') || [];
+      tagetIp = tagetArrIPs[0] != ip ? target : `${regResult[1]}://${localIp}:${tagetArrIPs[1] || '8080'}`
+    }
+    API.updateProxyRule({
+      id,
+      ip: ip != localIp ? localIp : ip,
+      target: tagetIp
+    }).then((response) => {
+      const { success, message } = response;
+      if (success) {
+        Message.success('更新代理规则成功');
+        this.loadSubTableData(currentProxyServer);
+        this.handleProxyRuleModalCancel();
+      } else {
+        Message.error(message);
+        this.setState({
+          proxyRuleModalConfirmLoading: false
+        });
+      }
+    });
+  }
   handleProxyRuleModalCancel = () => {
     this.ProxyRuleModal.resetFields();
     this.setState({
@@ -215,11 +261,13 @@ export default class ProxyServer extends React.PureComponent {
     })
   }
   onSearchProject = (value) => {
-    const { mainTableParams } = this.state;
+    const { mainTableParams,selectedTag,search } = this.state;
     this.setState({
       mainTableParams: Object.assign({}, mainTableParams, {
-        search:value
-      })
+        pageNo:1,
+        search: value
+      }),
+      selectedTag: search ? [] : selectedTag
     }, () => {
       this.loadMainData();
     });
@@ -248,6 +296,34 @@ export default class ProxyServer extends React.PureComponent {
       });
     }
   }
+  handleChangeStatus = (check, record) => {
+    const { maintTableList, expandedRowKeys } = this.state;
+    const currentProxyServer = maintTableList.find((row) => row.id === expandedRowKeys[0]);
+    const { id } = record;
+    API.updateProxyRuleStatus({
+      id,
+      status: check ? 1 : 0
+    }).then(res => {
+      if (res.success) {
+        Message.success(check ? '启用代理' : '禁用代理');
+        this.loadSubTableData(currentProxyServer);
+      }
+    })
+  }
+  setCommonTag = (row,isCommon) => {
+    const { name } = row;
+    const { commonTagList } = this.state;
+    let newList = [];
+    if(isCommon){
+      newList = commonTagList.filter(item=>item!=name);
+    }else{
+      newList = Array.from(new Set([name,...commonTagList])).splice(0,4);
+    }
+    this.setState({
+      commonTagList:newList
+    });
+    Cookies.set('common-tags',JSON.stringify(newList));
+  };
   tableExpandedRowRender = (mainTableRow) => {
     const { subTableLoading, subTableData } = this.state;
     const columns = [{
@@ -257,39 +333,60 @@ export default class ProxyServer extends React.PureComponent {
     }, {
       title: 'IP',
       key: 'ip',
-      dataIndex: 'ip'
+      dataIndex: 'ip',
+      width: 200
     }, {
       title: '目标代理服务地址',
       key: 'target',
       dataIndex: 'target',
-      width: '30%'
+      width: '20%'
     }, {
       title: '备注',
       key: 'remark',
-      width: '30%',
+      width: '20%',
       dataIndex: 'remark'
+    }, {
+      title: '状态',
+      key: 'status',
+      width: 160,
+      dataIndex: 'status',
+      render: (text, record) => {
+        return <Switch defaultChecked={!!text} checkedChildren="开" unCheckedChildren="关" onChange={(e) => this.handleChangeStatus(e, record)} />
+      }
     }, {
       title: '操作',
       key: 'action',
+      width: 160,
       render: (value, row, index) => {
         return (<React.Fragment>
-          <a href="javascript:void(0);" onClick={this.handleProxyRuleEdit.bind(this, row)}>编辑</a>
+          <Tooltip placement="topLeft" title={
+            <div>
+              <div>快速更新代理规则：</div>
+              <div>1、根据IP及目标IP判断是否为同类型代理服务;</div>
+              <div>2、当ip与本地ip不一致时，更新IP为本机ip；</div>
+              <div>3、根据是否为同类型，决定是否更新目标代理服务</div>
+            </div>
+            }>
+            <a onClick={() => this.onHandleUpdateProxyRule(row)}>更新</a>
+          </Tooltip>
+          <Divider type="vertical" />
+          <a onClick={this.handleProxyRuleEdit.bind(this, row)}>编辑</a>
           <Divider type="vertical" />
           <Popconfirm placement="right" title="确认是否删除该代理规则" onConfirm={this.handleProxyRuleDelete.bind(this, row, mainTableRow)}>
-            <a href="javascript:void(0);">删除</a>
+            <a>删除</a>
           </Popconfirm>
         </React.Fragment>)
       }
     }]
     return <div style={{ padding: '0 10px' }}>
-      <div className="text-right"><Button icon="plus-circle" onClick={() => { this.setState({ proxyRuleModalVisible: true }) }}>添加代理规则</Button></div>
-      <Table
-        size="small"
-        rowKey={(row) => row.id}
-        loading={subTableLoading}
-        columns={columns}
-        dataSource={subTableData}
-        pagination={false} />
+            <div className="text-right marginBottom12"><Button icon="plus" size="small" type="primary" onClick={() => { this.setState({ proxyRuleModalVisible: true }) }}>添加规则</Button></div>
+            <Table
+              size="small"
+              rowKey={(row) => row.id}
+              loading={subTableLoading}
+              columns={columns}
+              dataSource={subTableData}
+              pagination={false} />
     </div>
   }
   componentDidMount() {
@@ -308,6 +405,8 @@ export default class ProxyServer extends React.PureComponent {
       currentProxyRule,
       proxyRuleModalVisible,
       proxyRuleModalConfirmLoading,
+      commonTagList,
+      selectedTag,
       search
     } = this.state;
     const columns = [{
@@ -324,10 +423,11 @@ export default class ProxyServer extends React.PureComponent {
       title: '代理服务地址',
       key: 'proxy_server_address',
       dataIndex: 'proxy_server_address',
+      render:(value)=> <Paragraph copyable>{value}</Paragraph>
     }, {
       title: '默认代理目标',
       key: 'target',
-      dataIndex: 'target',
+      dataIndex: 'target'
     }, {
       title: '状态',
       key: 'status',
@@ -341,42 +441,69 @@ export default class ProxyServer extends React.PureComponent {
       key: 'actions',
       width: 200,
       render: (value, row) => {
-        const { status } = row;
+        const { status,name } = row;
+        const isCommon = commonTagList.includes(name);
         return (<React.Fragment>
-          <a href="javascript:void(0);" onClick={this.handleProxyServerEdit.bind(this, row)}>编辑</a>
+          <a onClick={this.handleProxyServerEdit.bind(this, row)}>编辑</a>
           <Divider type="vertical" />
-          <a href="javascript:void(0);" onClick={this.handleProxyServerDelete.bind(this, row)}>删除</a>
+          <a onClick={this.handleProxyServerDelete.bind(this, row)}>删除</a>
+          {/* <Divider type="vertical" />
+          <a onClick={this.handleProxyServerStatusChange.bind(this, row)}>{Boolean(status) ? '禁用' : '重启'}</a> */}
           <Divider type="vertical" />
-          <a href="javascript:void(0);" onClick={this.handleProxyServerStatusChange.bind(this, row)}>{Boolean(status) ? '禁用' : '重启'}</a>
+          <Tooltip placement="topLeft" title={
+            <div>
+              <div>设置为常用项目</div>
+              <div>最多可设置4个常用项目</div>
+            </div>
+            }>
+            <a onClick={() => this.setCommonTag(row,isCommon)}>{ isCommon ? '取消收藏':'收藏' }</a>
+          </Tooltip>
         </React.Fragment>)
       }
     }];
 
     return (<div className="page-proxy-server">
       <div className="title_wrap">
-        <Search
-          placeholder="请输入项目名称搜索"
-          value={search}
-          onChange={this.onChangeSearch}
-          onSearch={this.onSearchProject}
-          className="search"/>
-        <Button type="primary" icon="plus-circle" onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加代理服务</Button>
+        <div>
+          <Search
+            placeholder="请输入项目名称搜索"
+            value={search}
+            onChange={this.onChangeSearch}
+            onSearch={this.onSearchProject}
+            className="search dt-form-shadow-bg" />
+              {
+                commonTagList.length ? (<span style={{ marginRight: 8,marginLeft:20 }}>常用项目:</span>):null
+              }
+              {commonTagList.map(tag => (
+                <CheckableTag
+                  key={tag}
+                  checked={tag==selectedTag}
+                  onChange={checked => this.handleChange(tag, checked)}
+                >
+                  {tag}
+                </CheckableTag>
+              ))}
+        </div>
+        <Button type="primary" icon="plus" onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
       </div>
       <Table
         rowKey={(row) => row.id}
-        size="small"
         loading={mainTableLoading}
         columns={columns}
-        scroll={{ y: 'calc(100vh - 250px)' }}
+        scroll={{ y: true }}
+        style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
         dataSource={maintTableList}
+        className="dt-table-fixed-base"
         expandedRowKeys={expandedRowKeys}
         expandedRowRender={this.tableExpandedRowRender}
         onExpand={this.handleTableExpandChange}
         onChange={this.handleTableChange}
         pagination={{
+          size: 'small',
           total: maintTableTotal,
           current: mainTableParams.pageNo,
-          pageSize: mainTableParams.pageSize
+          pageSize: mainTableParams.pageSize,
+          showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{mainTableParams.pageSize}条</span>
         }} />
 
       <ProxyServerModal
@@ -398,3 +525,9 @@ export default class ProxyServer extends React.PureComponent {
     </div>)
   }
 }
+function mapStateToProps(state) {
+  return {
+    localIp: state.global.localIp
+  }
+}
+export default connect(mapStateToProps)(ProxyServer)

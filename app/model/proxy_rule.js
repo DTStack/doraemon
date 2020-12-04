@@ -6,6 +6,7 @@ module.exports = app => {
     target: STRING(60),
     remark: STRING(255),
     proxy_server_id: INTEGER,
+    status: INTEGER,
     is_delete: INTEGER,
     created_at: DATE,
     updated_at: DATE

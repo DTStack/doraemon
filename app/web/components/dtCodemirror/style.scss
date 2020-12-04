@@ -1,0 +1,10 @@
+.dt-codemirror{
+    position: relative;
+    .dt-codemirror-select-themes{
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 200px;
+        z-index: 1000;
+    }
+}

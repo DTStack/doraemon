@@ -1,3 +1,10 @@
 .page-host-management{
-  padding: 10px;
+  .title_wrap{
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #333333;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+  }
 }

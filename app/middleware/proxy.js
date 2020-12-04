@@ -25,15 +25,16 @@ module.exports = async function httpproxy(ctx, next) {
       attributes:['target'],
       where:{
         is_delete:0,
+        status:1,
         ip:realIp,
         proxy_server_id:serverId
       }
     });
     //判断代理服务id和真实访问者ip是否有对应的代理规则
     if(proxyRule){
-      target=proxyRule.target;
+      target=proxyRule.target.trim();
     }else{
-      target=proxyServer.target;
+      target=proxyServer.target.trim();
     }
     if(target){
       await c2k(proxy({

@@ -1,39 +1,27 @@
 import React,{useState} from 'react';
 import {Layout,Menu,Icon} from 'antd';
 import {Link} from 'react-router-dom';
-import BasicLayout from '@/layouts/basicLayout';
 import './style.scss';
-const {Sider, Content,Footer} = Layout;
+const {Sider } = Layout;
 const SubMenu = Menu.SubMenu;
 
 const navMenuList = [{
-  name:'应用中心',
-  path:'/page/toolbox',
-  icon:'appstore'
-},{
-  name:'代理服务',
-  path:'/page/proxy-server',
-  icon:'cloud'
+  name:'配置中心',
+  path:'/page/config-center',
+  icon:'setting'
 },{
   name:'主机管理',
   path:'/page/host-management',
   icon:'desktop'
-},{
-  name:'配置中心',
-  path:'/page/config-center',
-  icon:'setting'
 }]
-const SiderLayout = (props)=>{
-  const {location,children} = props;
+const SiderComponent = (props)=>{
+  const {location} = props;
   const {pathname} = location;
   const [collapsed,setCollapsed] = useState(false);
-  const [selectedKeys,setSelectedKeys] = useState([pathname]);
   const handleCollapseChange = ()=>{
     setCollapsed(!collapsed)
   }
   return (
-    <BasicLayout>
-      <Layout className="layout-main">
         <Sider
           trigger={null} 
           collapsible 
@@ -52,7 +40,8 @@ const SiderLayout = (props)=>{
             mode="inline"
             theme="dark"
             style={{background:'#262E36'}}
-            selectedKeys={selectedKeys}>
+            selectedKeys={[pathname]}
+            >
             {
               navMenuList.map((nav)=>{
                 const {children,name,path,icon} = nav;
@@ -64,15 +53,6 @@ const SiderLayout = (props)=>{
               })
             }
           </Menu>
-        </Sider>
-        <Layout className="right-container">
-          <Content className="right-content-wrapper">
-            <div className="right-content">
-              {children}
-            </div>
-          </Content>
-        </Layout>
-      </Layout>
-    </BasicLayout>)
+        </Sider>)
 }
-export default SiderLayout;
+export default SiderComponent;

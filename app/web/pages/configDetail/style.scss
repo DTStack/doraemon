@@ -4,13 +4,10 @@
   flex-direction: column;
   .page-content{
     flex: 1;
-    overflow: auto;
-    padding: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
-  .info-item{
-    margin-top: 20px;
-    .label{
-      text-align: right;
-    }
+  .CodeMirror-linenumber{
+    cursor: pointer;
   }
 }
