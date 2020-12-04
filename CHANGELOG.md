@@ -1,4 +1,4 @@
-## [1.0.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.0.0...v1.0.2) (2020-12-04)
+# [1.1.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.0.0...v1.1.0) (2020-12-04)
 
 ### 🌟 新功能
 范围|描述|commitId
@@ -64,6 +64,7 @@
 范围|描述|commitId
 --|--|--
  docs | updata docs Introduction | [0da4158](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0da4158)
+ version | update doraemon version v1.1.0 | [4aa994b](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/4aa994b)
  - | add Introduction and RemoteHosts | [a423ba6](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a423ba6)
  - | add logo | [877a3c1](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/877a3c1)
  - | align image center | [27ec7b2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/27ec7b2)
