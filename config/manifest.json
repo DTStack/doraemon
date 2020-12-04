@@ -4,7 +4,7 @@
   "runtime.js": "/public/js/runtime.js",
   "img/style.scss": "/public/img/bg.png",
   "img/duraemon.svg": "/public/img/duraemon.svg",
-  "img/logo.svg": "/public/img/logo.svg",
+  "img/logo.png": "/public/img/logo.png",
   "img/pic_404.png": "/public/img/pic_404.png",
   "vendor.js": "/public/js/vendor.js",
   "deps": {

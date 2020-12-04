@@ -2,7 +2,7 @@ import React, { useState,useEffect } from 'react';
 import { Layout, Menu, Icon } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import logo from '../../asset/images/logo.svg';
+import logo from '../../asset/images/logo.png';
 import './style.scss';
 
 const { Header } = Layout;
@@ -43,7 +43,7 @@ const HeaderComponent = (props) => {
             <div className="dt-header-log-wrapper logo">
                 <Link to='/page/home'>
                     <img className="logo_img" src={logo} />
-                    <span className="system-title">哆啦A梦</span>
+                    <span className="system-title">Doraemon</span>
                 </Link>
             </div>
             <div className="menu_content">
