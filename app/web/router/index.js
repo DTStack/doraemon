@@ -29,12 +29,12 @@ const routes = [
     component: BasicLayout,
     routes:[
       {
-        path: `${urlPrefix}/home`,
-        component: Home
-      },
-      {
         path:`${urlPrefix}/toolbox`,
         component: Toolbox
+      },
+      {
+        path: `${urlPrefix}/home`,
+        component: Home
       },
       {
         path:`${urlPrefix}/internal-url-navigation`,

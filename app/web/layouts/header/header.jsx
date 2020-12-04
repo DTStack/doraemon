@@ -41,7 +41,7 @@ const HeaderComponent = (props) => {
   return (
         <Header className="dt-layout-header header_component">
             <div className="dt-header-log-wrapper logo">
-                <Link to='/page/home'>
+                <Link to='/page/toolbox'>
                     <img className="logo_img" src={logo} />
                     <span className="system-title">Doraemon</span>
                 </Link>

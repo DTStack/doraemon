@@ -2,7 +2,6 @@ import React, { useState, useEffect, Fragment } from 'react';
 import { Row, Col, Icon, Button, Popconfirm, Card, Tooltip } from 'antd';
 import Loading from '@/components/loading';
 import { API } from '@/api';
-import { colorList } from '@/constant';
 import { urlReg } from '@/utils/reg';
 import { Link } from 'react-router-dom';
 import CreateApp from './components/CreateApp'
@@ -10,7 +9,7 @@ import './style.scss';
 const Toolbox = () => {
   const initApp = [
     {
-      appName: 'Hosts Remote',
+      appName: 'Remote Hosts',
       appDesc: '袋鼠云内部团队host集中管理系统',
       appUrl: '/page/switch-hosts-list',
       helpUrl: 'https://dtstack.yuque.com/rd-center/sm6war/chnwbl'
