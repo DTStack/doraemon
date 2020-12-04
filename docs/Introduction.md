@@ -5,7 +5,7 @@
 ## 简介
 
 ![Doraemon](./img/logo.png)
- [哆啦 A 梦（Doraemon）](http://172.16.100.225:7001/page/home)是一个帮你整理日常开发工具、配置文件、代理服务、主机等等资源的管理工具。
+ [哆啦 A 梦（Doraemon）](http://172.16.100.225:7001/page/home)是一个帮你整理日常开发、配置、代理服务、主机等资源的管理工具。
 
 通过`应用中心`可`收纳`、`分享`常用、好用的的`应用链接`；多环境的`主机（Host）`账号和密码等信息，在这里我们都可以统一管理维护，便于查看和管理；`配置管理`模块，可轻松维护远程服务主机上的`配置文件`；`在线代理（Proxy）`改变传统前后端联调方式，接口联调时，不再需要前后端另起本地服务。另外，前端同学需求切换开发环境时，只需要在线简单的配置即可。
 
@@ -27,11 +27,15 @@
 
 ### 新增代理服务
 
-![image.png](https://cdn.nlark.com/yuque/0/2020/png/188521/1606981488612-e1837130-d4ef-43e9-b26a-be69913cc91c.png#align=left&display=inline&height=325&margin=%5Bobject%20Object%5D&name=image.png&originHeight=325&originWidth=561&size=49523&status=done&style=none&width=561)
+<p align="center">
+  <img src="https://cdn.nlark.com/yuque/0/2020/png/188521/1606981488612-e1837130-d4ef-43e9-b26a-be69913cc91c.png#align=left&display=inline&height=325&margin=%5Bobject%20Object%5D&name=image.png&originHeight=325&originWidth=561&size=49523&status=done&style=none&width=561" />
+</p>
 
 ### 新增代理规则
 
-![image.png](https://cdn.nlark.com/yuque/0/2020/png/188521/1606981294056-8278e0cf-65b2-4af2-83f6-d6a70b337600.png#align=left&display=inline&height=351&margin=%5Bobject%20Object%5D&name=image.png&originHeight=406&originWidth=784&size=133509&status=done&style=none&width=677)
+<p align="center">
+  <img src="https://cdn.nlark.com/yuque/0/2020/png/188521/1606981294056-8278e0cf-65b2-4af2-83f6-d6a70b337600.png#align=left&display=inline&height=351&margin=%5Bobject%20Object%5D&name=image.png&originHeight=406&originWidth=784&size=133509&status=done&style=none&width=677" />
+</p>
 
 ### 如何配置使用
 
@@ -109,8 +113,14 @@ location /api/v1  {
 1. 输入文件路径，完成创建
 1. 点击编辑文件，修改当前文件配置。
 
-![image.png](https://cdn.nlark.com/yuque/0/2020/png/188521/1606984642834-752298b9-0f39-46ab-912c-01a26b2a1801.png#align=left&display=inline&height=427&margin=%5Bobject%20Object%5D&name=image.png&originHeight=576&originWidth=667&size=129350&status=done&style=none&width=495)
-![image.png](https://cdn.nlark.com/yuque/0/2020/png/188521/1606984975630-61aba3a8-9205-4b01-bae4-9945869d1dfd.png#align=left&display=inline&height=41&margin=%5Bobject%20Object%5D&name=image.png&originHeight=73&originWidth=1332&size=42699&status=done&style=none&width=746)
+<p align="center">
+  <img src="https://cdn.nlark.com/yuque/0/2020/png/188521/1606984642834-752298b9-0f39-46ab-912c-01a26b2a1801.png#align=left&display=inline&height=427&margin=%5Bobject%20Object%5D&name=image.png&originHeight=576&originWidth=667&size=129350&status=done&style=none&width=495" />
+</p>
+
+<p align="center">
+  <img src="https://cdn.nlark.com/yuque/0/2020/png/188521/1606984975630-61aba3a8-9205-4b01-bae4-9945869d1dfd.png#align=left&display=inline&height=41&margin=%5Bobject%20Object%5D&name=image.png&originHeight=73&originWidth=1332&size=42699&status=done&style=none&width=746" />
+</p>
+
 ![image.png](https://cdn.nlark.com/yuque/0/2020/png/188521/1606984803885-37209436-4add-4917-ba1f-2814d335de3c.png#align=left&display=inline&height=525&margin=%5Bobject%20Object%5D&name=image.png&originHeight=980&originWidth=1392&size=595179&status=done&style=none&width=746)
 其中文件修改不局限于 nginx 文件
 
