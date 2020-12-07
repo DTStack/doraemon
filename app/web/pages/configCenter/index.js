@@ -105,11 +105,12 @@ const ConfigCenter = ()=>{
   }
   const handleTableChange = (pagination,filters,sorter)=>{
     const {current} = pagination;
+    const { tags } = filters;
     setTablePagination(preState=>{
       return {
         ...preState,
         current,
-        ...filters
+        tags
       }
     });
   }
