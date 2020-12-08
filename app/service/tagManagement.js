@@ -35,11 +35,11 @@ class TagManagementService extends Service {
   }
   editTag(params){
     const {ctx} = this;
-    const {id,tagName,tagDesc,color} = params;
+    const {id,tagName,tagDesc,tagColor} = params;
     const newParams = {};
     if(!_.isNil(tagName)) newParams.tagName=tagName;
     if(!_.isNil(tagDesc)) newParams.tagDesc=tagDesc;
-    if(!_.isNil(color)) newParams.color=color;
+    if(!_.isNil(tagColor)) newParams.tagColor=tagColor;
     return ctx.model.TagManagement.update(newParams,{
       where:{
         id
