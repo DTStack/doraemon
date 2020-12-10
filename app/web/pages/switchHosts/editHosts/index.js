@@ -25,7 +25,15 @@ const EditHosts = (props) => {
       getHostsInfo();
     }
   }, [id]);
-
+  useEffect(()=>{
+    try {
+      require('codemirror/mode/nginx/nginx');
+      require('codemirror/mode/shell/shell');
+      require('codemirror/theme/material-darker.css');
+    } catch(err){
+      console.log(err)
+    }
+  },[])
   // 编辑条件下，获取hosts信息
   const getHostsInfo = () => {
     API.getHostsInfo({ id }).then(res => {
@@ -63,7 +71,8 @@ const EditHosts = (props) => {
         setLoadingAction(false);
         const { success } = res;
         if (success) {
-          message.success('保存成功')
+          message.success('保存成功');
+          props.history.push('/page/switch-hosts-list');
         }
       })
   }
@@ -76,7 +85,8 @@ const EditHosts = (props) => {
         setLoadingAction(false);
         const { success } = res;
         if (success) {
-          message.success('更新成功')
+          message.success('更新成功');
+          props.history.push('/page/switch-hosts-list');
         }
       })
   }

@@ -9,6 +9,7 @@
     "dev": "egg-bin dev",
     "start": "bash start.sh",
     "server": "egg-scripts start --daemon",
+    "server:test": "egg-scripts start --port=7002 --env=test --daemon",
     "stop": "egg-scripts stop",
     "lint": "eslint .",
     "fix": "eslint --fix .",
