@@ -366,7 +366,7 @@ class ProxyServer extends React.PureComponent {
               <div>2、当ip与本地ip不一致时，更新IP为本机ip；</div>
               <div>3、根据是否为同类型，决定是否更新目标代理服务</div>
             </div>
-            }>
+          }>
             <a onClick={() => this.onHandleUpdateProxyRule(row)}>更新</a>
           </Tooltip>
           <Divider type="vertical" />
@@ -379,14 +379,14 @@ class ProxyServer extends React.PureComponent {
       }
     }]
     return <div style={{ padding: '0 10px' }}>
-            <div className="text-right marginBottom12"><Button icon="plus" size="small" type="primary" onClick={() => { this.setState({ proxyRuleModalVisible: true }) }}>添加规则</Button></div>
-            <Table
-              size="small"
-              rowKey={(row) => row.id}
-              loading={subTableLoading}
-              columns={columns}
-              dataSource={subTableData}
-              pagination={false} />
+      <div className="text-right marginBottom12"><Button icon="plus" size="small" type="primary" onClick={() => { this.setState({ proxyRuleModalVisible: true }) }}>添加规则</Button></div>
+      <Table
+        size="small"
+        rowKey={(row) => row.id}
+        loading={subTableLoading}
+        columns={columns}
+        dataSource={subTableData}
+        pagination={false} />
     </div>
   }
   componentDidMount() {
@@ -455,7 +455,7 @@ class ProxyServer extends React.PureComponent {
               <div>设置为常用项目</div>
               <div>最多可设置4个常用项目</div>
             </div>
-            }>
+          }>
             <a onClick={() => this.setCommonTag(row,isCommon)}>{ isCommon ? '取消收藏':'收藏' }</a>
           </Tooltip>
         </React.Fragment>)
@@ -471,18 +471,18 @@ class ProxyServer extends React.PureComponent {
             onChange={this.onChangeSearch}
             onSearch={this.onSearchProject}
             className="search dt-form-shadow-bg" />
-              {
-                commonTagList.length ? (<span style={{ marginRight: 8,marginLeft:20 }}>常用项目:</span>):null
-              }
-              {commonTagList.map(tag => (
-                <CheckableTag
-                  key={tag}
-                  checked={tag==selectedTag}
-                  onChange={checked => this.handleChange(tag, checked)}
-                >
-                  {tag}
-                </CheckableTag>
-              ))}
+          {
+            commonTagList.length ? (<span style={{ marginRight: 8,marginLeft:20 }}>常用项目:</span>):null
+          }
+          {commonTagList.map(tag => (
+            <CheckableTag
+              key={tag}
+              checked={tag==selectedTag}
+              onChange={checked => this.handleChange(tag, checked)}
+            >
+              {tag}
+            </CheckableTag>
+          ))}
         </div>
         <Button type="primary" icon="plus" onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
       </div>

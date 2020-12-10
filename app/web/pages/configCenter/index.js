@@ -156,10 +156,10 @@ const ConfigCenter = ()=>{
   }, [tablePagination.current,...tablePagination.tags])
   return <div className="page-config-center">
     <div className="header_title">
-          <span className="title">
+      <span className="title">
             配置中心
-          </span>
-          <Button icon="plus-circle" type="primary" onClick={handleConfigFileAdd}>新增配置</Button>
+      </span>
+      <Button icon="plus-circle" type="primary" onClick={handleConfigFileAdd}>新增配置</Button>
     </div>
     <div>
       <Table
@@ -177,11 +177,11 @@ const ConfigCenter = ()=>{
         onChange={handleTableChange}/>
     </div>
     <ConfigFileModal
-       tagList={tagList}
-       value={currentConfigFile}
-       visible={configFileModalVisible}
-       onOk={handleConfigFileModalAction.bind(this,'ok')}
-       onCancel={handleConfigFileModalAction.bind(this,'cancel')}/>
+      tagList={tagList}
+      value={currentConfigFile}
+      visible={configFileModalVisible}
+      onOk={handleConfigFileModalAction.bind(this,'ok')}
+      onCancel={handleConfigFileModalAction.bind(this,'cancel')}/>
   </div>
 }
 export default ConfigCenter;

@@ -17,7 +17,7 @@ class TagManagementService extends Service {
       offset: size * (current - 1)
     })
   }
-    // 获取列表数据
+  // 获取列表数据
   getAllTagsList(reqParams) {
     const { searchText='' } = reqParams;
     return this.ctx.model.TagManagement.findAndCountAll({

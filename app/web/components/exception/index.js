@@ -7,7 +7,7 @@ import './style.scss';
 class Exception extends React.PureComponent {
   static defaultProps = {
     backText: '返回首页',
-    redirect: '/',
+    redirect: '/'
   };
 
   constructor(props) {
@@ -29,7 +29,7 @@ class Exception extends React.PureComponent {
       ...rest
     } = this.props;
     const pageType = type in config ? type : '404';
-    const clsString = classNames("comp-exception", className);
+    const clsString = classNames('comp-exception', className);
     return (
       <div className={clsString} {...rest}>
         <div className="imgBlock">
@@ -47,7 +47,7 @@ class Exception extends React.PureComponent {
                 linkElement,
                 {
                   to: redirect,
-                  href: redirect,
+                  href: redirect
                 },
                 <Button type="primary">{backText}</Button>
               )}

@@ -44,7 +44,7 @@ class ProxyServerModal extends React.PureComponent{
       },
       wrapperCol: {
         span: 17
-      },
+      }
     };
     return (<Modal
       title={`${editable?'编辑':'新增'}代理服务`}
@@ -58,7 +58,7 @@ class ProxyServerModal extends React.PureComponent{
           {
             getFieldDecorator('name',{
               rules:[{
-                required: true,message: '请输入代理服务名称',
+                required: true,message: '请输入代理服务名称'
               }],
               initialValue:name
             })(<Input placeholder="请输入代理服务名称"/>)
@@ -69,7 +69,7 @@ class ProxyServerModal extends React.PureComponent{
           {
             getFieldDecorator('target',{
               rules:[{
-                required: true,pattern:urlReg,message: '请输入正确格式的目标服务地址',
+                required: true,pattern:urlReg,message: '请输入正确格式的目标服务地址'
               }],
               initialValue:target
             })(<Input placeholder="请输入目标服务地址"/>)

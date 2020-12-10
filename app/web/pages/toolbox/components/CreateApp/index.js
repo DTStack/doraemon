@@ -39,10 +39,10 @@ class CreateApp extends React.PureComponent {
       },
       wrapperCol: {
         span: 15
-      },
+      }
     };
     return (<Modal
-      title={appInfo ? `添加应用` : '编辑应用'}
+      title={appInfo ? '添加应用' : '编辑应用'}
       visible={visible}
       confirmLoading={confirmLoading}
       onOk={this.handleModalOk}
@@ -55,7 +55,7 @@ class CreateApp extends React.PureComponent {
           {
             getFieldDecorator('appName',{
               rules:[{
-                required: true, message: '请输入应用名称',
+                required: true, message: '请输入应用名称'
               }],
               initialValue: appName || ''
             })(<Input placeholder="请输入请输入应用名称"/>)

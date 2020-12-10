@@ -123,36 +123,36 @@ const Toolbox = () => {
     </Fragment>
     return (<Col className="navigation-item-wrapper" key={id || appName} span={6}>
       <Card>
-      {
-        urlReg.test(appUrl) ? (
-          <a
-            href={appUrl}
-            rel="noopener noreferrer"
-            target='_blank'
+        {
+          urlReg.test(appUrl) ? (
+            <a
+              href={appUrl}
+              rel="noopener noreferrer"
+              target='_blank'
+              className="navigation-item"
+              onClick={() => onHandleClickApp(tool)}
+            >
+              {
+                componentContent
+              }
+            </a>
+          ) : (<Link
+            to={appUrl}
             className="navigation-item"
-            onClick={() => onHandleClickApp(tool)}
           >
             {
               componentContent
             }
-          </a>
-        ) : (<Link
-            to={appUrl}
-            className="navigation-item"
-          >
-          {
-            componentContent
-          }
-        </Link>)
-      }
+          </Link>)
+        }
       </Card>
     </Col>)
   })
   return (<Loading loading={loading}>
     <div className="page-toolbox">
       <div className="toolbox-header">
-          <div>应用中心</div>
-          <Button type="primary" onClick={onHandleAddApp}>添加应用</Button>
+        <div>应用中心</div>
+        <Button type="primary" onClick={onHandleAddApp}>添加应用</Button>
       </div>
       <Row className="tool-list" gutter={10}>
         {

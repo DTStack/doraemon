@@ -18,7 +18,7 @@ class TagsManagementController extends Controller{
       count: data.count
     });
   }
-   //获取标签列表
+  //获取标签列表
   async getAllTagsList() {
     const { app, ctx } = this;
     const { searchText } = ctx.request.query;

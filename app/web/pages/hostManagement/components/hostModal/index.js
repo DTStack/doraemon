@@ -63,9 +63,9 @@ const HostForm = Form.create()(
           }]
         })(
           <Select mode="multiple" placeholder="请选择标签">
-             {
-               tagList.map(item=><Option key={item.id}>{item.tagName}</Option>)
-             }
+            {
+              tagList.map(item=><Option key={item.id}>{item.tagName}</Option>)
+            }
           </Select>
         )}
       </FormItem>

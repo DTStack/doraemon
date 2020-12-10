@@ -26,7 +26,7 @@ const ConfigForm = Form.create()(
       loadHostsData();
     },[])
     return <Form labelCol={{span:5}} wrapperCol={{span:17}} >
-       <FormItem label="主机" hasFeedback>
+      <FormItem label="主机" hasFeedback>
         {getFieldDecorator('hostId',{
           initialValue:hostId,
           rules:[{
@@ -53,7 +53,7 @@ const ConfigForm = Form.create()(
           <Input placeholder="请输入文件名"/>
         )}
       </FormItem>
-     <FormItem label="文件路径" hasFeedback>
+      <FormItem label="文件路径" hasFeedback>
         {getFieldDecorator('filePath',{
           initialValue:filePath,
           rules:[{
@@ -71,12 +71,12 @@ const ConfigForm = Form.create()(
           }]
         })(
           <Select placeholder="请选择标签">
-             {
-               tagList.map(item=><Option key={item.id}>{item.tagName}</Option>)
-             }
+            {
+              tagList.map(item=><Option key={item.id}>{item.tagName}</Option>)
+            }
           </Select>
         )}
-        </FormItem>
+      </FormItem>
       <FormItem label="备注" hasFeedback>
         {getFieldDecorator('remark',{
           initialValue:remark
