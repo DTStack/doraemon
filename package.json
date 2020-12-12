@@ -13,6 +13,7 @@
     "stop": "egg-scripts stop",
     "lint": "eslint .",
     "fix": "eslint --fix .",
+    "release": "./scripts/release.sh",
     "ii": "npm install --registry https://registry.npm.taobao.org",
     "log": "conventional-changelog --config ./node_modules/vue-cli-plugin-commitlint/lib/log -i CHANGELOG.md -s -r 0",
     "cz": "npm run log && git add . && git cz"
