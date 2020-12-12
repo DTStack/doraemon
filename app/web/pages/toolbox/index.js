@@ -12,7 +12,7 @@ const Toolbox = () => {
       appName: 'Remote Hosts',
       appDesc: '袋鼠云内部团队host集中管理系统',
       appUrl: '/page/switch-hosts-list',
-      helpUrl: 'https://dtstack.yuque.com/rd-center/sm6war/chnwbl'
+      helpUrl: 'https://dtstack.yuque.com/rd-center/sm6war/rinsoa'
     }
   ];
   const [toolList, setToolList] = useState([]);
