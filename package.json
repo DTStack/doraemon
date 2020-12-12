@@ -13,6 +13,7 @@
     "stop": "egg-scripts stop",
     "lint": "eslint .",
     "fix": "eslint --fix .",
+    "release": "./scripts/release.sh",
     "ii": "npm install --registry https://registry.npm.taobao.org",
     "log": "conventional-changelog --config ./node_modules/vue-cli-plugin-commitlint/lib/log -i CHANGELOG.md -s -r 0",
     "cz": "npm run log && git add . && git cz"
@@ -79,6 +80,7 @@
     "redux-devtools-extension": "^2.13.8",
     "sass-loader": "^7.1.0",
     "sequelize-cli": "^5.4.0",
+    "standard-version": "^9.0.0",
     "url-loader": "^1.1.2",
     "vue-cli-plugin-commitlint": "^1.0.4",
     "webpack": "^4.30.0"
