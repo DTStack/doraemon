@@ -1,3 +1,22 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [1.1.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.1.0...v1.1.1) (2020-12-12)
+
+
+### Features
+
+* **script:** add scripts ([559fd30](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/559fd30e1e62dd920b693c1a85b48b18d57360ef))
+* **test:** add test database ([08936df](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/08936dfc3880f503f369434463eeb75ec9aaf7cd))
+
+
+### Bug Fixes
+
+* change link url ([c99f85c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c99f85c28cc9982d8578cba2f158507517b27b23))
+* **config center:** fix config center tag filter ([770c2f2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/770c2f2a00cb6147b778c6932b18176883d56772))
+* **tag management:** fix updata tag color ([c15c90e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c15c90e4cadb4eaed9cf1e10af80f13d54e2cabc))
+
 # [1.0.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/f116e4c...v1.0.0) (2020-09-04)
 
 ### 🌟 新功能
@@ -67,4 +86,3 @@
  - | 代理功能完成 | [1d52b7e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/1d52b7e)
  - | 代理服务操作 | [c984fbf](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c984fbf)
  - | 项目初始化 | [f116e4c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/f116e4c)
-

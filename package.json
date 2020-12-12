@@ -1,6 +1,6 @@
 {
   "name": "dt-doraemon",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "treasure box for programmer",
   "scripts": {
     "clean": "easy clean",
@@ -80,6 +80,7 @@
     "redux-devtools-extension": "^2.13.8",
     "sass-loader": "^7.1.0",
     "sequelize-cli": "^5.4.0",
+    "standard-version": "^9.0.0",
     "url-loader": "^1.1.2",
     "vue-cli-plugin-commitlint": "^1.0.4",
     "webpack": "^4.30.0"
