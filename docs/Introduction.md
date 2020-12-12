@@ -25,7 +25,7 @@ _我们正在不断迭代和完善中，还有更多功能等待你的探索。_
 
 ## Hosts 管理
 ![image.png](https://cdn.nlark.com/yuque/0/2020/png/188521/1607069497118-2d4a973d-ac1e-4cc4-939f-862f63de0bc8.png#align=left&display=inline&height=966&margin=%5Bobject%20Object%5D&name=image.png&originHeight=966&originWidth=1420&size=339014&status=done&style=none&width=1420)
-[Remote Hosts](##) 为集中化管理工具, 再也不用担心 `hosts` 配置杂乱、不能及时同步等问题。详情请参考 [Remote Hosts - 配置指南](https://dtstack.yuque.com/rd-center/sm6war/chnwbl)
+[Remote Hosts](##) 为集中化管理工具, 再也不用担心 `hosts` 配置杂乱、不能及时同步等问题。详情请参考 [Remote Hosts - 配置指南](https://dtstack.yuque.com/rd-center/sm6war/rinsoa)
 
 
 ## 代理服务 (Proxy)
