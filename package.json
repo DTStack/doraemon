@@ -1,6 +1,6 @@
 {
   "name": "dt-doraemon",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "treasure box for programmer",
   "scripts": {
     "clean": "easy clean",
