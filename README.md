@@ -1,4 +1,4 @@
-# egg-react-webpack-ant-boilerplate
+# egg-react-webpack-ant
 
 Egg + AntD Singe Page Application
 
@@ -24,12 +24,6 @@ Egg + AntD Singe Page Application
 
 ![工程化](http://hubcarl.github.io/img/webpack/egg-webpack-react-ssr.png)
 
-
-
-## 使用
-
-
-
 #### 安装依赖
 
 ```bash
@@ -49,16 +43,10 @@ npm run dev
 
 #### 发布模式启动应用
 
-- 首先在本地或者ci构建好jsbundle文件
-
-```bash
-npm run build 
-```
-
-- 然后,启动应用
-
 ```bash
 npm start 
+测试环境发布
+npm run start:test
 ```
 
 #### 项目构建
@@ -71,7 +59,36 @@ npm start
 npm run build 或者 easywebpack build prod
 
 ```
+#### 版本发布
+```
+# 默认分支为 master , 发布为此版本更新
+$ npm run release
 
+#【自定义】版本发布名称为 v1.0.0-test
+$ npm run release -- -r v1.0.0-test
+
+# 指定升级版本为【次】版本号
+$ npm run release -- -r minor
+
+# 指定升级版本为【主】版本号
+$ npm run release -- -r major
+
+# 指定升级版本为【修订】版本号
+$ npm run release -- -r patch
+
+# 指定发布分支
+$ npm run release -- -b branchName
+
+# 指定发布分支以及发布名称
+$ npm run release -- -b branchName -r versionName
+
+```
+#### 手动生成 CHANGELOG
+
+```
+$ npm run changelog
+
+```
 ## 项目结构和基本规范
 
     ├── app

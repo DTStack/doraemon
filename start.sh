@@ -1,5 +1,10 @@
 #!/bin/bash
 yarn
 yarn build
-yarn stop
-yarn server
+if [[ "$#" > 0 ]]; then
+    yarn server:test
+else 
+    yarn stop
+    yarn server
+    yarn dingBot
+fi

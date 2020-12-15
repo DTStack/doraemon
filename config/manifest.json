@@ -1,21 +1,21 @@
 {
-  "app.css": "/public/css/app.css",
-  "app.js": "/public/js/chunk/app.js",
-  "runtime.js": "/public/js/runtime.js",
-  "img/style.scss": "/public/img/bg.png",
-  "img/duraemon.svg": "/public/img/duraemon.svg",
-  "img/logo.png": "/public/img/logo.png",
-  "img/pic_404.png": "/public/img/pic_404.png",
-  "vendor.js": "/public/js/vendor.js",
+  "app.css": "/public/css/app.d63fec1a.css",
+  "app.js": "/public/js/chunk/app.eda6a2de.js",
+  "runtime.js": "/public/js/runtime.aa4ec267.js",
+  "img/style.scss": "/public/img/bg.0d9e392f.png",
+  "img/duraemon.svg": "/public/img/duraemon.3a686c53.svg",
+  "img/logo.png": "/public/img/logo.ff9eed58.png",
+  "img/pic_404.png": "/public/img/pic_404.7bea778a.png",
+  "vendor.js": "/public/js/vendor.3b7ad3e7.js",
   "deps": {
     "app.js": {
       "js": [
-        "/public/js/vendor.js",
-        "/public/js/runtime.js",
-        "/public/js/chunk/app.js"
+        "/public/js/vendor.3b7ad3e7.js",
+        "/public/js/runtime.aa4ec267.js",
+        "/public/js/chunk/app.eda6a2de.js"
       ],
       "css": [
-        "/public/css/app.css"
+        "/public/css/app.d63fec1a.css"
       ]
     }
   },
