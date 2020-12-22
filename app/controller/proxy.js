@@ -1,4 +1,5 @@
 const Controller = require('egg').Controller;
+const _ = require('lodash');
 class ProxyServerController extends Controller{
   //获取服务列表
   async list(){
@@ -18,20 +19,35 @@ class ProxyServerController extends Controller{
   }
   //创建服务
   async add(){
-    const proxyServer = this.ctx.request.body;
+    const { proxyServer, targetAddrs } = this.ctx.request.body;
+    // 创建服务
     const result = await this.ctx.service.proxyServer.create(proxyServer);
-    this.ctx.body = this.app.utils.response(result,null);
+    const { id } = result;
+    // 存储目标地址信息
+    await this.ctx.service.proxyServerAddrs.create(targetAddrs, id);
+    this.ctx.body = this.app.utils.response(true, null); 
   }
+
+  // 获取目标服务地址列表
+  async getTargetAddrs() {
+    const { id } = this.ctx.request.query;
+    if (_.isNil(id)) throw new Error('缺少必要参数id');
+    const result = await this.ctx.service.proxyServerAddrs.queryAddrs(id);
+    this.ctx.body = this.app.utils.response(true, result);
+  }
+  
   //更新服务
   async update(){
-    const proxyServer = this.ctx.request.body;
-    const result = await this.app.model.ProxyServer.update(proxyServer,{
+    const { proxyServer, targetAddrs } = this.ctx.request.body;
+    await this.app.model.ProxyServer.update(proxyServer,{
       where:{
         id:proxyServer.id
       }
     });
-    this.ctx.body = this.app.utils.response(true,result);
+    await this.ctx.service.proxyServerAddrs.update(targetAddrs, proxyServer.id);
+    this.ctx.body = this.app.utils.response(true, null);
   }
+
   //删除服务
   async delete(){
     const {id} = this.ctx.request.query;
