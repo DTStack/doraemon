@@ -19,6 +19,7 @@ class ProxyServer extends React.PureComponent {
     currentProxyServer: {},
     proxyServerModalVisible: false,
     proxyServerModalConfirmLoading: false,
+    targetAddrs: [],
     //代理规则
     currentProxyRule: {},
     proxyRuleModalVisible: false,
@@ -97,18 +98,16 @@ class ProxyServer extends React.PureComponent {
   handleProxyServerEdit = (row) => {
     const rowData = { ...row };
     // 获取关联的目标服务地址列表数据
-    API.getTargetAddrs({ id: row.id }).then((response) => {
-      const { success, data, message } = response;
-      if (success) {
+    this.getTargetAddrs(
+      row.id,
+      (data) => {
         rowData.addrs = data.map((item, index) => ({ rowId: index, ...item }));
-      } else {
-        Message.error(message);
+        this.setState({
+          currentProxyServer: rowData,
+          proxyServerModalVisible: true
+        });
       }
-      this.setState({
-        currentProxyServer: rowData,
-        proxyServerModalVisible: true
-      });
-    })
+    )
   }
   //删除
   handleProxyServerStatusChange = (row) => {
@@ -132,7 +131,7 @@ class ProxyServer extends React.PureComponent {
     })
   }
   handleProxyServerModalOk = (proxyServer) => {
-    const { currentProxyServer } = this.state;
+    const { currentProxyServer, expandedRowKeys } = this.state;
     const { name, target, addrs } = proxyServer;
     this.setState({
       proxyServerModalConfirmLoading: true
@@ -146,6 +145,14 @@ class ProxyServer extends React.PureComponent {
         Message.success(`${JSON.stringify(currentProxyServer) === '{}' ? '新增' : '编辑'}代理服务成功`)
         this.handleProxyServerModalCancel();
         this.loadMainData();
+        if (expandedRowKeys.length) {
+          this.getTargetAddrs(
+            expandedRowKeys[0],
+            (data) => {
+              this.setState({ targetAddrs: data || [] })
+            }
+          );
+        }
       } else {
         this.setState({
           proxyServerModalConfirmLoading: false
@@ -183,10 +190,17 @@ class ProxyServer extends React.PureComponent {
    * 代理规则
    */
   handleProxyRuleEdit = (row) => {
-    this.setState({
-      currentProxyRule: row,
-      proxyRuleModalVisible: true
-    });
+    const { expandedRowKeys } = this.state;
+    this.getTargetAddrs(
+      expandedRowKeys[0],
+      (data) => {
+        this.setState({
+          targetAddrs: data || [],
+          currentProxyRule: row,
+          proxyRuleModalVisible: true
+        })
+      }
+    );
   }
   handleProxyRuleDelete = (row, mainTableRow) => {
     const { name } = mainTableRow;
@@ -392,7 +406,7 @@ class ProxyServer extends React.PureComponent {
       }
     }]
     return <div style={{ padding: '0 10px' }}>
-      <div className="text-right marginBottom12"><Button icon="plus" size="small" type="primary" onClick={() => { this.setState({ proxyRuleModalVisible: true }) }}>添加规则</Button></div>
+      <div className="text-right marginBottom12"><Button icon="plus" size="small" type="primary" onClick={this.handleAddRule}>添加规则</Button></div>
       <Table
         size="small"
         rowKey={(row) => row.id}
@@ -402,6 +416,32 @@ class ProxyServer extends React.PureComponent {
         pagination={false} />
     </div>
   }
+
+  // 添加规则
+  handleAddRule = () => {
+    const { expandedRowKeys } = this.state;
+    this.getTargetAddrs(
+      expandedRowKeys[0],
+      (data) => {
+        this.setState({
+          targetAddrs: data || [],
+          proxyRuleModalVisible: true
+        })
+      }
+    );
+  }
+
+  // 获取已有目标服务列表
+  getTargetAddrs = (id, callback) => {
+    API.getTargetAddrs({ id }).then((response) => {
+      const { success, data, message } = response;
+      if (!success) {
+        Message.error(message);
+      }
+      callback && callback(data);
+    })
+  }
+
   componentDidMount() {
     this.loadMainData();
   }
@@ -531,6 +571,7 @@ class ProxyServer extends React.PureComponent {
         ref={(modal) => this.ProxyRuleModal = modal}
         editable={JSON.stringify(currentProxyRule) !== '{}'}
         proxyServer={currentProxyRule}
+        targetAddrs={this.state.targetAddrs}
         confirmLoading={proxyRuleModalConfirmLoading}
         visible={proxyRuleModalVisible}
         onOk={this.handleProxyRuleModalOk}
