@@ -112,7 +112,7 @@ const ProxyAddrsTable = (props) => {
         rowSelection={rowSelection}
         pagination={false}
       />
-      <Button className="mt-10" onClick={handleAddRow}>
+      <Button className="mt-10" type="dashed" block onClick={handleAddRow}>
         <Icon type="plus" />添加
       </Button>
     </div>
