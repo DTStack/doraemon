@@ -5,7 +5,7 @@ class ProxyServerController extends Controller{
   async list(){
     const {pageSize,pageNo,search} = this.ctx.request.body
     const result = await this.app.model.ProxyServer.findAndCountAll({
-      attributes:['id','name','proxy_server_address','status','target','created_at','updated_at'],
+      attributes: ['id', 'name', 'proxy_server_address', 'api_doc_url', 'status', 'target', 'created_at', 'updated_at'],
       where:{
         name:{
           '$like':`%${search}%`

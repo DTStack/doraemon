@@ -480,7 +480,13 @@ class ProxyServer extends React.PureComponent {
     }, {
       title: '默认代理目标',
       key: 'target',
-      dataIndex: 'target'
+      dataIndex: 'target',
+      render: (value, record) => (
+        <span>
+          {value}
+          {record.api_doc_url && <a href={record.api_doc_url} rel="noopener noreferrer" target='_blank'>&nbsp;[接口文档]</a>}
+        </span>
+      )
     }, {
       title: '状态',
       key: 'status',

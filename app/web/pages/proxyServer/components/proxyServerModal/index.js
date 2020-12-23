@@ -77,7 +77,7 @@ class ProxyServerModal extends React.PureComponent {
   render() {
     const { visible, editable, form, proxyServer, confirmLoading } = this.props;
     const { getFieldDecorator } = form;
-    const { name, target, addrs } = proxyServer;
+    const { name, target, api_doc_url, addrs } = proxyServer;
     const formItemLayout = {
       labelCol: {
         span: 6
@@ -114,6 +114,14 @@ class ProxyServerModal extends React.PureComponent {
               }],
               initialValue: target
             })(<Input placeholder="请通过下表选择默认目标服务地址" disabled />)
+          }
+        </Form.Item>
+        <Form.Item
+          label="接口文档地址">
+          {
+            getFieldDecorator('api_doc_url', {
+              initialValue: api_doc_url
+            })(<Input placeholder="请输入接口文档地址" />)
           }
         </Form.Item>
         <Form.Item
