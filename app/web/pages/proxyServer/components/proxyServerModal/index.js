@@ -63,6 +63,17 @@ class ProxyServerModal extends React.PureComponent {
     this.props.form.setFieldsValue({ target: selectedRow.target })
   }
 
+  // 默认选择的目标地址
+  getDefaultSelectedKeys = () => {
+    const { proxyServer } = this.props;
+    const { target, addrs } = proxyServer;
+    if (Array.isArray(addrs) && addrs.length) {
+      const addrIdx = addrs.findIndex(item => item.target === target);
+      return [addrIdx];
+    }
+    return [0];
+  }
+
   render() {
     const { visible, editable, form, proxyServer, confirmLoading } = this.props;
     const { getFieldDecorator } = form;
@@ -119,7 +130,10 @@ class ProxyServerModal extends React.PureComponent {
                 remark: ''
               }]
             })(
-              <ProxyAddrsTableRef onRowSelect={this.handleRowSelect} />
+              <ProxyAddrsTableRef
+                defaultSelectedKeys={this.getDefaultSelectedKeys()}
+                onRowSelect={this.handleRowSelect}
+              />
             )
           }
         </Form.Item>

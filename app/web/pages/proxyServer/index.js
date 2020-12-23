@@ -559,14 +559,14 @@ class ProxyServer extends React.PureComponent {
           showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{mainTableParams.pageSize}条</span>
         }} />
 
-      <ProxyServerModal
+      {proxyServerModalVisible && <ProxyServerModal
         ref={(modal) => this.ProxyServerModal = modal}
         editable={JSON.stringify(currentProxyServer) !== '{}'}
         proxyServer={currentProxyServer}
         confirmLoading={proxyServerModalConfirmLoading}
         visible={proxyServerModalVisible}
         onOk={this.handleProxyServerModalOk}
-        onCancel={this.handleProxyServerModalCancel} />
+        onCancel={this.handleProxyServerModalCancel} />}
       <ProxyRuleModal
         ref={(modal) => this.ProxyRuleModal = modal}
         editable={JSON.stringify(currentProxyRule) !== '{}'}

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Button, Icon, Input, message, Table } from 'antd';
 
 const ProxyAddrsTable = (props) => {
-  const [selectedRowKeys, setSelectedRowKeys] = useState([0]);
-  const { value, onChange } = props;
+  const { value, onChange, defaultSelectedKeys } = props;
+  const [selectedRowKeys, setSelectedRowKeys] = useState(defaultSelectedKeys);
   const initRow = {
     rowId: 0,
     target: '',
@@ -50,7 +50,7 @@ const ProxyAddrsTable = (props) => {
     }
   };
 
-    // 触发onChange
+  // 触发onChange
   const onDataSourceChange = (dataSource, index) => {
     onChange(dataSource);
     // 默认目标地址同步或重置
