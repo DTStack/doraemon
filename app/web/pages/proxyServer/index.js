@@ -132,12 +132,12 @@ class ProxyServer extends React.PureComponent {
   }
   handleProxyServerModalOk = (proxyServer) => {
     const { currentProxyServer, expandedRowKeys } = this.state;
-    const { name, target, addrs } = proxyServer;
+    const { addrs, ...rest } = proxyServer;
     this.setState({
       proxyServerModalConfirmLoading: true
     });
     API[proxyServer.id ? 'updateProxyServer' : 'addProxyServer']({
-      proxyServer: proxyServer.id ? proxyServer : { name, target },
+      proxyServer: proxyServer.id ? proxyServer : rest,
       targetAddrs: addrs
     }).then((response) => {
       const { success, message } = response;

@@ -65,9 +65,6 @@ class ProxyRuleModal extends React.PureComponent{
 
   // 目标地址校验
   targetAddrValidator = (rule, value, callback) => {
-    if (value.length > 1) {
-      callback('至多只可选择一个目标服务地址');
-    }
     for (const target of value) {
       if (!urlReg.test(target)) {
         callback('请输入正确格式的目标服务地址');
@@ -75,6 +72,15 @@ class ProxyRuleModal extends React.PureComponent{
     }
     callback();
   }
+
+  // 目标地址变更
+  handleTargetChange = (target) => {
+    if (Array.isArray(target)) {
+      return target.slice(-1);
+    }
+    return target;
+  }
+
   render(){
     const { visible, editable, form, proxyServer, confirmLoading, targetAddrs } = this.props;
     const {getFieldDecorator} = form;
@@ -111,6 +117,7 @@ class ProxyRuleModal extends React.PureComponent{
           label="目标服务地址">
           {
             getFieldDecorator('target',{
+              getValueFromEvent: this.handleTargetChange,
               rules:[
                 { required: true, message: '请输入或选择目标服务地址'},
                 { validator: this.targetAddrValidator }

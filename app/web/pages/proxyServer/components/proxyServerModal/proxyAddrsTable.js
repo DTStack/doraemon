@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Button, Icon, Input, message, Table } from 'antd';
 
 const ProxyAddrsTable = (props) => {
-  const { value, onChange, defaultSelectedKeys } = props;
-  const [selectedRowKeys, setSelectedRowKeys] = useState(defaultSelectedKeys);
+  const { value, onChange } = props;
   const initRow = {
     rowId: 0,
     target: '',
@@ -41,29 +40,10 @@ const ProxyAddrsTable = (props) => {
       )
     }
   ];
-  const rowSelection = {
-    type: 'radio',
-    selectedRowKeys,
-    onChange: (selectedRowKeys, selectedRows) => {
-      setSelectedRowKeys(selectedRowKeys);
-      props.onRowSelect(selectedRows[0]);
-    }
-  };
 
   // 触发onChange
-  const onDataSourceChange = (dataSource, index) => {
+  const onDataSourceChange = (dataSource) => {
     onChange(dataSource);
-    // 默认目标地址同步或重置
-    if (index !== undefined) {
-      const addr = dataSource[index] || {};
-      if (addr.rowId === selectedRowKeys[0]) {
-        props.onRowSelect(addr);
-      } else {
-        const firstAddr = dataSource[0]
-        setSelectedRowKeys([firstAddr.rowId]);
-        props.onRowSelect(firstAddr);
-      }
-    }
   }
 
   // 表格数据变更
@@ -74,7 +54,8 @@ const ProxyAddrsTable = (props) => {
     };
     const newDataSource = [].concat(value);
     newDataSource.splice(index, 1, rowItem);
-    onDataSourceChange(newDataSource, index);
+    onDataSourceChange(newDataSource);
+    handleRowSelect(rowItem, 'sync');
   }
 
   // 添加行
@@ -96,9 +77,41 @@ const ProxyAddrsTable = (props) => {
       message.warning('至少创建一条目标服务地址！');
       return;
     }
+    const rowItem = value[index];
     const newDataSource = [].concat(value);
     newDataSource.splice(index, 1);
     onDataSourceChange(newDataSource, index);
+    handleRowSelect(rowItem, 'delete');
+    handleRowDelete(rowItem.rowId);
+  }
+
+  // 可选择，并且同步目标地址
+  const handleRowSelect = (rowItem, type) => {
+    if (props.rowSelection) {
+      const { selectedRowKeys } = props.rowSelection;
+      const onRowSelect = props.rowSelection.onChange;
+      const rowId = rowItem.rowId;
+      if (rowId === selectedRowKeys[0]) {
+        // 默认地址同步
+        if (type === 'sync') {
+          onRowSelect([rowId], [rowItem]);
+        }
+        // 默认目标地址重置
+        if (type === 'delete') {
+          const firstAddr = value[0]
+          onRowSelect([firstAddr.rowId], [firstAddr]);
+        }
+      }
+    }
+  }
+
+  // 编辑时保存删除的id
+  const handleRowDelete = rowId => {
+    if (props.rowDelete) {
+      const { deleteRowKeys } = props.rowDelete;
+      const keys = [...deleteRowKeys, rowId];
+      props.rowDelete.onChange(keys);
+    }
   }
 
   return (
@@ -109,7 +122,7 @@ const ProxyAddrsTable = (props) => {
         className="dt-pagination-lower dt-table-border dt-table-last-row-noborder"
         columns={columns}
         dataSource={value}
-        rowSelection={rowSelection}
+        rowSelection={props.rowSelection}
         pagination={false}
       />
       <Button className="mt-10" type="dashed" block onClick={handleAddRow}>

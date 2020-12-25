@@ -7,6 +7,10 @@ import ProxyAddrsTable from './proxyAddrsTable';
 const ProxyAddrsTableRef = forwardRef((props, ref) => <ProxyAddrsTable {...props} />)
 
 class ProxyServerModal extends React.PureComponent {
+  state = {
+    selectedRowKeys: [0],
+    deleteRowKeys: []
+  }
   static defaultProps = {
     visible: false,
     onOk: () => { },
@@ -21,13 +25,22 @@ class ProxyServerModal extends React.PureComponent {
     proxyServer: PropsTypes.object,
     confirmLoading: PropsTypes.bool
   }
+
+  componentDidMount() {
+    const { target, addrs } = this.props.proxyServer;
+    if (Array.isArray(addrs) && addrs.length) {
+      const addrIdx = addrs.findIndex(item => item.target === target);
+      this.setState({
+        selectedRowKeys: [addrIdx]
+      });
+    }
+  }
+
   handleModalOk = () => {
     const { onOk, form, editable, proxyServer } = this.props;
     form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        // 表格数据去rowId
-        const newAddrs = values.addrs.map(({ rowId, ...rest }) => ({ ...rest }))
-        values.addrs = newAddrs;
+        values.addrs = this.formatTargetAddrs(values.addrs);
         // 保存
         if (editable) {
           onOk(Object.assign({}, proxyServer, values));
@@ -40,6 +53,27 @@ class ProxyServerModal extends React.PureComponent {
   handleModalCancel = () => {
     const { onCancel } = this.props;
     onCancel();
+  }
+
+  // 目标服务地址处理
+  formatTargetAddrs = (targetAddrs) => {
+    // 编辑，带上之前删掉的数据
+    const { editable, proxyServer: { addrs } } = this.props;
+    const { deleteRowKeys } = this.state;
+    const deleteRow = [];
+    if (editable) {
+      addrs.forEach(item => {
+        if (deleteRowKeys.includes(item.rowId)) {
+          deleteRow.push({
+            ...item,
+            is_delete: 1
+          })
+        }
+      })
+    }
+    // 表格数据去rowId
+    const newAddrs = [...targetAddrs, ...deleteRow].map(({ rowId, ...rest }) => ({ ...rest }));
+    return newAddrs;
   }
 
   // 目标服务地址列表校验
@@ -59,22 +93,15 @@ class ProxyServerModal extends React.PureComponent {
   }
 
   // 通过表格选择默认目标地址
-  handleRowSelect = (selectedRow) => {
-    this.props.form.setFieldsValue({ target: selectedRow.target })
-  }
-
-  // 默认选择的目标地址
-  getDefaultSelectedKeys = () => {
-    const { proxyServer } = this.props;
-    const { target, addrs } = proxyServer;
-    if (Array.isArray(addrs) && addrs.length) {
-      const addrIdx = addrs.findIndex(item => item.target === target);
-      return [addrIdx];
-    }
-    return [0];
+  handleRowSelect = (selectedRowKeys, selectedRows) => {
+    this.setState({ selectedRowKeys });
+    this.props.form.setFieldsValue({
+      target: selectedRows[0].target
+    })
   }
 
   render() {
+    const { selectedRowKeys, deleteRowKeys } = this.state;
     const { visible, editable, form, proxyServer, confirmLoading } = this.props;
     const { getFieldDecorator } = form;
     const { name, target, api_doc_url, addrs } = proxyServer;
@@ -139,8 +166,15 @@ class ProxyServerModal extends React.PureComponent {
               }]
             })(
               <ProxyAddrsTableRef
-                defaultSelectedKeys={this.getDefaultSelectedKeys()}
-                onRowSelect={this.handleRowSelect}
+                rowDelete={{
+                  deleteRowKeys,
+                  onChange: deleteRowKeys => this.setState({ deleteRowKeys })
+                }}
+                rowSelection={{
+                  type: 'radio',
+                  selectedRowKeys,
+                  onChange: this.handleRowSelect
+                }}
               />
             )
           }
