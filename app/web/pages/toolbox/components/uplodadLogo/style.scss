@@ -1,0 +1,13 @@
+.c-upload-logo__img {
+    position: relative;
+    height: 86px;
+    width: 86px;
+    overflow: hidden;
+    img {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        transform: translateY(-50%);
+    }
+}
