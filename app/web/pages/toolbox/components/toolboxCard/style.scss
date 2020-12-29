@@ -1,0 +1,29 @@
+.c-toolbox__ant-card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 160px;
+    .body-header,
+    .body-content,
+    .body-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .body-header.flex-end {
+        justify-content: flex-end;
+    }
+    .body-content {
+        justify-content: unset;
+        text-align: left;
+        .title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .desc {
+            color: #999;
+        }
+    }
+    // .body-bottom {
+    // }
+}

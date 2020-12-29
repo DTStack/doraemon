@@ -1,11 +1,13 @@
 .page-toolbox{
+  .toolbox-title {
+    font-size: 14px;
+    color: #333333;
+    font-weight: 500;
+  }
   .toolbox-header{
     display: flex;
     justify-content: space-between;
     margin-bottom: 12px;
-    font-size: 14px;
-    color: #333333;
-    font-weight: 500;
   }
   .tool-list{
     .navigation-item-wrapper{
@@ -27,35 +29,22 @@
         flex-direction: column;
         justify-content: center;
         color: #333;
-        height: 140px;
-        text-align: center;
-        padding: 20px;
+        // height: 140px;
+        // text-align: center;
+        padding: 15px;
         border-radius: 6px;
-        .icon{
-          position: absolute;
-          top:10px;
-          right: 10px;
-        }
-        .title{
-          font-size: 22px;
-          width: 200px;
-          margin: auto;
-          word-break: break-all;
-          a {
-            color: #fff;
-            text-decoration: none;
-          }
-        }
-        .desc {
-          color: #999;
-        }
-        .close-icon,.icon-top-right {
-          font-size: 16px;
-          position: absolute;
-          right: 20px;
-          top: 20px;
-          color: #999;
-        }
+        // .icon{
+        //   position: absolute;
+        //   top:10px;
+        //   right: 10px;
+        // }
+        // .close-icon,.icon-top-right {
+        //   font-size: 16px;
+        //   position: absolute;
+        //   right: 20px;
+        //   top: 20px;
+        //   color: #999;
+        // }
       }
     }
   }

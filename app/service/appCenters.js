@@ -3,7 +3,7 @@ const _ = require('lodash');
 
 class AppCentersService extends Service {
   updateApplications(config) {
-    const { id, appName, appUrl, appDesc } = config;
+    const { id, appName, appUrl, appDesc, appTags } = config;
     if (id) return this.ctx.model.AppCenters.update(config, {
       where:{
         id
@@ -12,12 +12,13 @@ class AppCentersService extends Service {
     return this.ctx.model.AppCenters.create({
       appName,
       appUrl,
-      appDesc
+      appDesc,
+      appTags
     });
   }
   clickApplications (config) {
     const { id, clickCount } = config;
-    return this.ctx.model.AppCenters.update({ ...config, clickCount: clickCount+1 }, {
+    return this.ctx.model.AppCenters.update({ clickCount: clickCount + 1 }, {
       where:{
         id
       }
@@ -25,7 +26,6 @@ class AppCentersService extends Service {
   }
 
   deleteApplications (id) {
-    console.log(id)
     return this.ctx.model.AppCenters.update({
       status:0
     },{

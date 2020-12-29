@@ -1,13 +1,15 @@
 import React from 'react';
-import {Modal,Form,Input} from 'antd';
+import { Modal, Form, Input, Select } from 'antd';
 import PropsTypes from 'prop-types';
 
+const { Option } = Select;
 class CreateApp extends React.PureComponent {
   static defaultProps = {
     visible:false,
     onOk:()=>{},
     onCancel:()=>{},
     proxyServer:{},
+    tagList: [],
     confirmLoading:false
   }
   static propsTypes ={
@@ -15,6 +17,7 @@ class CreateApp extends React.PureComponent {
     onOk:PropsTypes.func,
     onCancel:PropsTypes.func,
     proxyServer:PropsTypes.object,
+    tagList: PropsTypes.array,
     confirmLoading:PropsTypes.bool
   }
   handleModalOk=()=>{
@@ -30,9 +33,9 @@ class CreateApp extends React.PureComponent {
     onCancel();
   }
   render(){
-    const { visible, appInfo, confirmLoading } = this.props;
+    const { visible, appInfo, tagList, confirmLoading } = this.props;
     const { getFieldDecorator } = this.props.form;
-    const { appName, appUrl, appDesc } = appInfo;
+    const { appName, appUrl, appDesc, appTags } = appInfo;
     const formItemLayout = {
       labelCol: {
         span: 6
@@ -73,6 +76,26 @@ class CreateApp extends React.PureComponent {
               }],
               initialValue: appUrl || ''
             })(<Input placeholder="请输入应用URL"/>)
+          }
+        </Form.Item>
+        <Form.Item
+          label="应用标签"
+          hasFeedback
+        >
+          {
+            getFieldDecorator('appTags', {
+              initialValue: appTags ? appTags.split(',') : [],
+              rules: [{
+                type: 'array',
+                required: true, message: '请选择标签'
+              }]
+            })(
+              <Select mode="multiple" placeholder="请选择标签">
+                {
+                  tagList.map(item => <Option key={item.id}>{item.tagName}</Option>)
+                }
+              </Select>
+            )
           }
         </Form.Item>
         <Form.Item
