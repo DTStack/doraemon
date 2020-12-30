@@ -9,6 +9,7 @@ import { renderRoutes } from 'react-router-config'
 import * as actions from '@/store/actions';
 import 'ant-design-dtinsight-theme/theme/dt-theme/reset.less';
 import 'ant-design-dtinsight-theme/theme/dt-theme/index.less';
+import '../../public/font/iconfont.css';
 
 const App = ()=>{
   const {changeLocalIp} = bindActionCreators(actions,useDispatch());

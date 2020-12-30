@@ -29,6 +29,12 @@
             font-weight: 500;
             color: #333333;
             margin-bottom: 8px;
+            .iconicon_star {
+                margin-left: 8px;
+                color: #FFC240;
+                font-size: 12px;
+                vertical-align: top;
+            }
         }
         .desc {
             color: #666666;
@@ -47,9 +53,10 @@
         .page-view {
             color: #666666;
             font-size: 12px;
-            .anticon {
+            .iconfont {
                 font-size: 16px;
-                vertical-align: middle;
+                margin-right: 4px;
+                vertical-align: -2px;
             }
         }
     }
@@ -58,11 +65,13 @@
     &.ant-dropdown-menu {
         padding: 8px 0;
         width: 100px;
-        .ant-dropdown-menu-item, .ant-dropdown-menu-submenu-title {
+        .ant-dropdown-menu-item,
+        .ant-dropdown-menu-submenu-title {
             padding: 7px 9px;
             line-height: 18px;
-            .anticon {
+            .iconfont {
                 margin-right: 4px;
+                vertical-align: -1px;
             }
         }
     }

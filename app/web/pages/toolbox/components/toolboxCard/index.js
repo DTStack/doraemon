@@ -35,8 +35,8 @@ const ToolBoxCard = (props) => {
 
   const menu = (
     <Menu className="tool-acitons-menu" onClick={handleMenuClick}>
-      <Menu.Item key="edit"><Icon type="edit" />编辑应用</Menu.Item>
-      <Menu.Item key="delete"><Icon type="delete" />删除应用</Menu.Item>
+      <Menu.Item key="edit"><i className="iconfont iconicon_edit" />编辑应用</Menu.Item>
+      <Menu.Item key="delete"><i className="iconfont iconicon_delete" />删除应用</Menu.Item>
     </Menu >
   )
 
@@ -62,7 +62,7 @@ const ToolBoxCard = (props) => {
             ) : (
               <Dropdown trigger={['click']} overlay={menu} onClick={e => e.stopPropagation()}>
                 <span className="ant-dropdown-link">
-                  <Icon type="setting" />
+                  <i className="iconfont iconicon_more" />
                 </span>
               </Dropdown>
             )
@@ -76,7 +76,10 @@ const ToolBoxCard = (props) => {
           <UploadLogo tool={tool} />
         </div>
         <div>
-          <p className="title">{appName}</p>
+          <p className="title">
+            {appName}
+            {appType === 0 && <i className="iconfont iconicon_star" />}
+          </p>
           <p className="desc">{appDesc}</p>
         </div>
       </div>
@@ -92,7 +95,7 @@ const ToolBoxCard = (props) => {
           )}
         </div>
         <div className="page-view">
-          <Icon type="eye" />&nbsp;
+          <i className="iconfont iconicon_view" />
           {clickCount}
         </div>
       </div>
