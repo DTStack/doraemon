@@ -5,6 +5,7 @@ module.exports = app => {
     appName: STRING(100),
     appUrl: STRING(255),
     appTags: STRING(255),
+    appType: { type: INTEGER(2), defaultValue: 1 },
     appDesc: STRING(255),
     logoUrl: STRING(255),
     status: { type: INTEGER(2), defaultValue: 1 },

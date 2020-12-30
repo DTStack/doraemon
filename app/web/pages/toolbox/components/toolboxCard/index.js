@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
 import { Icon, Tag, Dropdown, Menu, Tooltip } from 'antd';
+import { builtInApp } from './constant';
 import UploadLogo from '../uplodadLogo';
 import './style.scss';
 
 const ToolBoxCard = (props) => {
-  const { tool, type } = props; // type 0 内置 1 外置
-  const { id, appName, appTags, appDesc, helpUrl, clickCount } = tool;
+  const { tool } = props;
+  const { id, appName, appTags, appDesc, appType, clickCount } = tool; // appType 0 内置 1 外置
+  const helpUrl = getHelpUrl();
+
+  // 内置应用的帮助文档链接
+  function getHelpUrl () {
+    if (appType === 0) {
+      const app = builtInApp.find(item => item.appName === appName);
+      return app ? app.helpUrl : ''
+    }
+    return '';
+  }
 
   // 点击操作
   const handleMenuClick = ({ key, domEvent }) => {
@@ -23,43 +34,40 @@ const ToolBoxCard = (props) => {
   }
 
   const menu = (
-    <Menu onClick={handleMenuClick}>
-      <Menu.Item key="edit">编辑</Menu.Item>
-      <Menu.Item key="delete">删除</Menu.Item>
+    <Menu className="tool-acitons-menu" onClick={handleMenuClick}>
+      <Menu.Item key="edit"><Icon type="edit" />编辑应用</Menu.Item>
+      <Menu.Item key="delete"><Icon type="delete" />删除应用</Menu.Item>
     </Menu >
   )
 
   return (
     <div className="c-toolbox__ant-card-body">
-      {
-        type === 0
-          ? (
-            <div className="body-header">
-              <Icon type="link" />
-              {helpUrl && (
+      <div className="body-header">
+        {
+          appType === 0
+            ? (
+              helpUrl && (
                 <Tooltip title={`${appName}帮助文档`}>
                   <Icon
                     type="question-circle"
                     onClick={(e) => {
                       e.preventDefault(); // 阻止页面跳转
                       e.stopPropagation(); // 阻止事件冒泡（点击浏览量）
-                      var otherWindow = window.open(helpUrl, '_blank');
+                      const otherWindow = window.open(helpUrl, '_blank');
                       otherWindow.opener = null;
                     }}
                   />
                 </Tooltip>
-              )}
-            </div>
-          ) : (
-            <div className="body-header flex-end">
+              )
+            ) : (
               <Dropdown trigger={['click']} overlay={menu} onClick={e => e.stopPropagation()}>
-                <span className="ant-dropdown-link" >
+                <span className="ant-dropdown-link">
                   <Icon type="setting" />
                 </span>
               </Dropdown>
-            </div>
-          )
-      }
+            )
+        }
+      </div>
       <div className="body-content">
         <div className="clearfix" onClick={e => {
           e.preventDefault();
@@ -67,7 +75,7 @@ const ToolBoxCard = (props) => {
         }}>
           <UploadLogo tool={tool} />
         </div>
-        <div className="ml-20">
+        <div>
           <p className="title">{appName}</p>
           <p className="desc">{appDesc}</p>
         </div>
@@ -76,7 +84,7 @@ const ToolBoxCard = (props) => {
         <div className="tags">
           {Array.isArray(appTags) && appTags.map(item =>
             <Tag
-              style={{ color: item.tagColor, background: `${item.tagColor}24`, borderColor: item.tagColor }}
+              style={{ color: item.tagColor, background: `${item.tagColor}1c` }}
               key={item.id}
             >
               {item.tagName}

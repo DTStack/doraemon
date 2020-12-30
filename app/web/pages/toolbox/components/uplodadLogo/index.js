@@ -70,7 +70,7 @@ const UploadLogo = (props) => {
     <Upload
       name="avatar"
       listType="picture-card"
-      className="avatar-uploader"
+      className="avatar-uploader c-upload-logo"
       showUploadList={false}
       action={`/api/appCenters/upload-logo/${id}`}
       headers={{
@@ -82,7 +82,7 @@ const UploadLogo = (props) => {
       {
         imageUrl
           ? logoImage
-          : <img src="/public/img/logo.png" alt="default" />
+          : <img src="/public/img/default.png" alt="default" width={50} />
       }
     </Upload>
   )

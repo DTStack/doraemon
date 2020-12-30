@@ -14,8 +14,8 @@ class AppCentersController extends Controller {
     const { app, ctx } = this;
     const { appName = '', appTags } = ctx.request.query;
     const appResult = await app.model.AppCenters.findAndCountAll({
-      attributes: ['id', 'appName', 'appTags', 'appDesc', 'appUrl', 'clickCount', 'logoUrl', 'created_at', 'updated_at'],
-      order: [['clickCount', 'DESC']],
+      attributes: ['id', 'appName', 'appTags', 'appDesc', 'appUrl', 'appType', 'clickCount', 'logoUrl', 'created_at', 'updated_at'],
+      order: [['appType', 'ASC'], ['clickCount', 'DESC']],
       where: {
         status: 1,
         appName: {

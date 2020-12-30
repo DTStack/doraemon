@@ -2,24 +2,14 @@ import React, { useState, useEffect, Fragment } from 'react';
 import { Row, Col, Icon, Button, Popconfirm, Card, Tooltip, Input, Select, Modal } from 'antd';
 import Loading from '@/components/loading';
 import { API } from '@/api';
-import { urlReg } from '@/utils/reg';
 import { Link } from 'react-router-dom';
 import CreateApp from './components/CreateApp';
-import ToolboxCard from './components/toolboxCard';
-import './style.scss';
 import ToolBoxCard from './components/toolboxCard';
+import './style.scss';
 const { Search } = Input;
 const { Option } = Select;
 
 const Toolbox = () => {
-  const initApp = [
-    {
-      appName: 'Remote Hosts',
-      appDesc: '袋鼠云内部团队host集中管理系统',
-      appUrl: '/page/switch-hosts-list',
-      helpUrl: 'https://dtstack.yuque.com/rd-center/sm6war/rinsoa'
-    }
-  ];
   const [tagList, setTagList] = useState([]);
   const [reqParams, setReqParams] = useState({
     appName: '',
@@ -159,10 +149,9 @@ const Toolbox = () => {
   }
 
   const renderCard = (list) => list.map((tool, index) => {
-    const { id, appName, appUrl } = tool;
+    const { id, appName, appUrl, appType } = tool;
     const componentContent = (
       <ToolBoxCard
-        type={urlReg.test(appUrl) ? 1 : 0}
         tool={tool}
         onEdit={handleEdit}
         onDelete={deleteApplication}
@@ -170,19 +159,15 @@ const Toolbox = () => {
     )
     return (
       <Col className="navigation-item-wrapper" key={id || appName} span={6}>
-        <Card>
+        <Card bordered={false} onClick={() => onHandleClickApp(tool)}>
           {
-            urlReg.test(appUrl)
+            appType
               ? (
                 <a
                   href={appUrl}
                   rel="noopener noreferrer"
                   target='_blank'
                   className="navigation-item"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onHandleClickApp(tool)
-                  }}
                 >
                   {componentContent}
                 </a>
@@ -202,20 +187,20 @@ const Toolbox = () => {
   })
   return (<Loading loading={loading}>
     <div className="page-toolbox">
-      <div className="toolbox-title mb-12">应用中心</div>
-      <div className="toolbox-header">
+      <div className="toolbox-header mb-12">
+        <div className="toolbox-title">应用中心</div>
         <div>
           <Search
             className="dt-form-shadow-bg"
-            style={{ width: 200 }}
+            style={{ width: 220 }}
             placeholder="请输入应用名称搜索"
             onSearch={handleNameSearch}
           />
           <span className="ml-20">
-            标签：
+            选择标签：
             <Select
               className="dt-form-shadow-bg"
-              style={{ width: 200 }}
+              style={{ width: 220 }}
               placeholder="请选择标签"
               mode="multiple"
               onChange={handleTagSearch}
@@ -223,13 +208,10 @@ const Toolbox = () => {
               {tagList.map(item => <Option key={item.id}>{item.tagName}</Option>)}
             </Select>
           </span>
+          <Button className="ml-20" type="primary" onClick={onHandleAddApp}>添加应用</Button>
         </div>
-        <Button type="primary" onClick={onHandleAddApp}>添加应用</Button>
       </div>
-      <Row className="tool-list" gutter={10}>
-        {
-          renderCard(initApp)
-        }
+      <Row className="tool-list" gutter={20}>
         {
           renderCard(toolList)
         }

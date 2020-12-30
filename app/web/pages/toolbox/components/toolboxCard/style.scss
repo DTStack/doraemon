@@ -1,29 +1,69 @@
 .c-toolbox__ant-card-body {
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 160px;
-    .body-header,
+    height: 100%;
+    .body-header {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        font-size: 16px;
+        line-height: 16px;
+        color: #999;
+    }
     .body-content,
     .body-bottom {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-    }
-    .body-header.flex-end {
-        justify-content: flex-end;
     }
     .body-content {
         justify-content: unset;
         text-align: left;
+        margin-top: 4px;
+        .title, .desc {
+            line-height: 22px;
+        }
         .title {
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 16px;
+            font-weight: 500;
+            color: #333333;
+            margin-bottom: 8px;
         }
         .desc {
-            color: #999;
+            color: #666666;
+            margin-bottom: 0;
         }
     }
-    // .body-bottom {
-    // }
+    .body-bottom {
+        margin-left: 62px;
+        .tags {
+            .ant-tag {
+                border: 0;
+                padding: 0 14px;
+                line-height: 20px;
+            }
+        }
+        .page-view {
+            color: #666666;
+            font-size: 12px;
+            .anticon {
+                font-size: 16px;
+                vertical-align: middle;
+            }
+        }
+    }
+}
+.tool-acitons-menu {
+    &.ant-dropdown-menu {
+        padding: 8px 0;
+        width: 100px;
+        .ant-dropdown-menu-item, .ant-dropdown-menu-submenu-title {
+            padding: 7px 9px;
+            line-height: 18px;
+            .anticon {
+                margin-right: 4px;
+            }
+        }
+    }
 }
