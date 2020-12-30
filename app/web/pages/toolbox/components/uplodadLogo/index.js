@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, Icon, message } from 'antd';
 import Cookies from 'js-cookie';
+import defaultLogo from '@/asset/images/default.png'
 import './style.scss';
 
 // 读取图片
@@ -82,7 +83,7 @@ const UploadLogo = (props) => {
       {
         imageUrl
           ? logoImage
-          : <img src="/public/img/default.png" alt="default" width={50} />
+          : <img src={defaultLogo} alt="default" width={50} />
       }
     </Upload>
   )
