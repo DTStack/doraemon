@@ -26,7 +26,9 @@ class AppCentersController extends Controller {
     let tagsResult = await ctx.model.TagManagement.findAll(); // query
     let result = [];
     appResult.rows.forEach(item => {
-      let tagids = item.get('appTags').split(',');
+      const tags = item.get('appTags');
+      console.log('tags ---- ', tags);
+      let tagids = tags ? tags.split(',') : '';
       let tagArrs = tagsResult.filter(ele => {
         return tagids.includes(`${ele.get('id')}`)
       });

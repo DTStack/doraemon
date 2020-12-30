@@ -87,7 +87,7 @@ class CreateApp extends React.PureComponent {
               initialValue: appTags ? appTags.split(',') : [],
               rules: [{
                 type: 'array',
-                required: true, message: '请选择标签'
+                required: true, max: 3, message: '请选择标签, 最多不超过3个'
               }]
             })(
               <Select mode="multiple" placeholder="请选择标签">
