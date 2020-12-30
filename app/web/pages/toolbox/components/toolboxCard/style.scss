@@ -1,62 +1,60 @@
 .c-toolbox__ant-card-body {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
+    text-align: center;
     .body-header {
-        position: absolute;
-        top: 0px;
-        right: 0px;
-        font-size: 16px;
-        line-height: 16px;
-        color: #999;
-    }
-    .body-content,
-    .body-bottom {
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end;
+        line-height: 16px;
+        font-size: 12px;
+        color: #666666;
+        margin-bottom: 5px;
+        .tool-view {
+            .iconicon_view {
+                margin-right: 4px;
+            }
+            & + * {
+                margin-left: 12px;
+            }
+        }
+        .iconfont,
+        .anticon {
+            font-size: 16px;
+            color: #999999;
+            vertical-align: middle;
+        }
     }
     .body-content {
-        justify-content: unset;
-        text-align: left;
-        margin-top: 4px;
-        .title, .desc {
+        .ant-upload-picture-card-wrapper {
+            width: unset;
+            margin-bottom: 15px;
+        }
+        .tool-title,
+        .tool-desc {
             line-height: 22px;
         }
-        .title {
-            font-size: 16px;
+        .tool-title {
+            font-size: 18px;
             font-weight: 500;
             color: #333333;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             .iconicon_star {
                 margin-left: 8px;
-                color: #FFC240;
+                color: #ffc240;
                 font-size: 12px;
                 vertical-align: top;
             }
         }
-        .desc {
+        .tool-desc {
             color: #666666;
-            margin-bottom: 0;
+            font-size: 14px;
+            margin-bottom: 12px;
         }
     }
     .body-bottom {
-        margin-left: 62px;
-        .tags {
+        .tool-tags {
             .ant-tag {
                 border: 0;
                 padding: 0 14px;
                 line-height: 20px;
-            }
-        }
-        .page-view {
-            color: #666666;
-            font-size: 12px;
-            .iconfont {
-                font-size: 16px;
-                margin-right: 4px;
-                vertical-align: -2px;
             }
         }
     }
@@ -75,4 +73,11 @@
             }
         }
     }
+}
+
+.text-ellipsis {
+    width: 302px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

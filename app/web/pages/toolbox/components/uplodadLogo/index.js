@@ -83,7 +83,7 @@ const UploadLogo = (props) => {
       {
         imageUrl
           ? logoImage
-          : <img src={defaultLogo} alt="default" width={50} />
+          : <img src={defaultLogo} alt="default" width={60} />
       }
     </Upload>
   )
