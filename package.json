@@ -1,6 +1,6 @@
 {
   "name": "dt-doraemon",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "treasure box for programmer",
   "scripts": {
     "clean": "easy clean",
@@ -11,7 +11,7 @@
     "start:test": "bash start.sh -t",
     "server": "egg-scripts start --daemon",
     "server:test": "egg-scripts start --port=7002 --env=test --daemon",
-    "dingBot":"node DingBot.js",
+    "dingBot": "node DingBot.js",
     "stop": "egg-scripts stop",
     "lint": "eslint .",
     "fix": "eslint --fix .",
