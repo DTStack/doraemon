@@ -8,6 +8,7 @@ module.exports = app => {
    */
   app.post('/api/proxy-server/server-list', app.controller.proxy.list);
   app.post('/api/proxy-server/add-server', app.controller.proxy.add);
+  app.get('/api/proxy-server/target-addrs-list', app.controller.proxy.getTargetAddrs);
   app.post('/api/proxy-server/update-server', app.controller.proxy.update);
   app.delete('/api/proxy-server/delete-server',app.controller.proxy.delete);
   app.get('/api/proxy-server/change-server-status', app.controller.proxy.changeStatus);

@@ -45,6 +45,11 @@ export default {
     method:'post',
     url:'/api/proxy-server/add-server'
   },
+  // 获取目标服务地址列表
+  getTargetAddrs: {
+    method: 'get',
+    url: '/api/proxy-server/target-addrs-list'
+  },
   //更新代理服务
   updateProxyServer:{
     method:'post',
