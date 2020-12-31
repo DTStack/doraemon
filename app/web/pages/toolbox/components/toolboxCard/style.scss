@@ -15,6 +15,12 @@
                 margin-left: 12px;
             }
         }
+        .ant-dropdown-link {
+            margin: -12px -12px 0 0;
+            width: 40px;
+            height: 28px;
+            line-height: 40px;
+        }
         .iconfont,
         .anticon {
             font-size: 16px;
@@ -47,15 +53,6 @@
             color: #666666;
             font-size: 14px;
             margin-bottom: 12px;
-        }
-    }
-    .body-bottom {
-        .tool-tags {
-            .ant-tag {
-                border: 0;
-                padding: 0 14px;
-                line-height: 20px;
-            }
         }
     }
 }

@@ -31,9 +31,9 @@ const UploadLogo = (props) => {
     </div>
   );
 
-  // 上传前校验下文件大小，以及文件类型
+  // 上传前校验下文件大小
   const beforeUpload = (file) => {
-    return isImageValidator(file) && maxSizeValidator(file);
+    return maxSizeValidator(file);
   }
 
   // 文件大小校验
@@ -43,15 +43,6 @@ const UploadLogo = (props) => {
       message.error('图片最大2MB!');
     }
     return maxSize;
-  }
-
-  // 文件格式校验
-  const isImageValidator = (file) => {
-    const isImage = file.type.indexOf('image/') > -1;
-    if (!isImage) {
-      message.error('请上传图片');
-    }
-    return isImage;
   }
 
   // 上传图片的回调
@@ -70,6 +61,7 @@ const UploadLogo = (props) => {
   return (
     <Upload
       name="avatar"
+      accept=".png,.jpeg,.jpg,.ico,.gif,.svg"
       listType="picture-card"
       className="avatar-uploader c-upload-logo"
       showUploadList={false}
@@ -85,6 +77,7 @@ const UploadLogo = (props) => {
           ? logoImage
           : <img src={defaultLogo} alt="default" width={60} />
       }
+      <span className="upload-actions"><Icon type="plus" /></span>
     </Upload>
   )
 }

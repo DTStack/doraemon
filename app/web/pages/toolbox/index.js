@@ -1,10 +1,10 @@
-import React, { useState, useEffect, Fragment } from 'react';
-import { Row, Col, Icon, Button, Popconfirm, Card, Tooltip, Input, Select, Modal } from 'antd';
-import Loading from '@/components/loading';
+import React, { useState, useEffect } from 'react';
+import { Row, Col, Button, Card, Input, Select, Modal, Spin, Empty } from 'antd';
 import { API } from '@/api';
 import { Link } from 'react-router-dom';
 import CreateApp from './components/CreateApp';
 import ToolBoxCard from './components/toolboxCard';
+import emptyImg from '@/asset/images/empty.png';
 import './style.scss';
 const { Search } = Input;
 const { Option } = Select;
@@ -22,7 +22,7 @@ const Toolbox = () => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const loadMainData = () => {
     setLoading(true);
-    API.getAppCentersList({}).then((response) => {
+    API.getAppCentersList(reqParams).then((response) => {
       setLoading(false);
       const { success, data } = response;
       if (success) {
@@ -48,17 +48,11 @@ const Toolbox = () => {
   }
 
   useEffect(() => {
-    loadMainData();
     getTagList();
   }, []);
 
   useEffect(() => {
-    API.getAppCentersList(reqParams).then((response) => {
-      const { success, data } = response;
-      if (success) {
-        setToolList(data.data);
-      }
-    });
+    loadMainData();
   }, [reqParams]);
 
   // 输入应用名称搜索
@@ -185,7 +179,7 @@ const Toolbox = () => {
       </Col>
     )
   })
-  return (<Loading loading={loading}>
+  return (
     <div className="page-toolbox">
       <div className="toolbox-header mb-12">
         <div className="toolbox-title">应用中心</div>
@@ -211,11 +205,19 @@ const Toolbox = () => {
           <Button className="ml-20" type="primary" onClick={onHandleAddApp}>添加应用</Button>
         </div>
       </div>
-      <Row className="tool-list" gutter={20}>
+      <Spin wrapperClassName="tool-list__ant-spin" spinning={loading}>
         {
-          renderCard(toolList)
+          Array(toolList) && toolList.length
+            ? (
+              <Row className="tool-list" gutter={20}>
+                {
+                  renderCard(toolList)
+                }
+              </Row>
+            ) : <Empty className="tool-empty" image={emptyImg} imageStyle={{ height: 200 }} description="无符合条件的应用" />
         }
-      </Row>
+
+      </Spin>
       <CreateApp
         key={visible}
         visible={visible}
@@ -225,6 +227,6 @@ const Toolbox = () => {
         onOk={updateApplication}
         onCancel={onHandleAddApp} />
     </div>
-  </Loading>)
+  )
 }
 export default Toolbox;

@@ -1,7 +1,8 @@
 import React from 'react';
-import { Icon, Tag, Dropdown, Menu, Tooltip } from 'antd';
+import { Icon, Dropdown, Menu, Tooltip } from 'antd';
 import { builtInApp } from './constant';
 import UploadLogo from '../uplodadLogo';
+import DtTag from '@/components/dtTag';
 import './style.scss';
 
 const ToolBoxCard = (props) => {
@@ -10,7 +11,7 @@ const ToolBoxCard = (props) => {
   const helpUrl = getHelpUrl();
 
   // 内置应用的帮助文档链接
-  function getHelpUrl () {
+  function getHelpUrl() {
     if (appType === 0) {
       const app = builtInApp.find(item => item.appName === appName);
       return app ? app.helpUrl : ''
@@ -66,7 +67,7 @@ const ToolBoxCard = (props) => {
             ) : (
               <Dropdown trigger={['click']} placement="bottomRight" overlay={menu} onClick={e => e.stopPropagation()}>
                 <span className="ant-dropdown-link">
-                  <i className="iconfont iconicon_more" />
+                  <i className="iconfont iconicon_more2" />
                 </span>
               </Dropdown>
             )
@@ -83,19 +84,16 @@ const ToolBoxCard = (props) => {
           {appName}
           {appType === 0 && <i className="iconfont iconicon_star" />}
         </p>
-        <Tooltip title={appDesc}>
-          <p className="tool-desc text-ellipsis">{appDesc}</p>
-        </Tooltip>
+        <p className="tool-desc text-ellipsis">
+          <Tooltip title={appDesc} mouseEnterDelay={1} placement="rightTop">
+            <span>{appDesc}</span>
+          </Tooltip>
+        </p>
       </div>
       <div className="body-bottom">
         <div className="tool-tags">
           {Array.isArray(appTags) && appTags.map(item =>
-            <Tag
-              style={{ color: item.tagColor, background: `${item.tagColor}1c` }}
-              key={item.id}
-            >
-              {item.tagName}
-            </Tag>
+            <DtTag key={item.id} color={item.tagColor}>{item.tagName}</DtTag>
           )}
         </div>
       </div>
