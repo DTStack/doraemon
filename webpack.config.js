@@ -31,7 +31,9 @@ module.exports = {
       '@':resolve('./app/web')
     }
   },
-  plugins:[],
+  plugins:[
+    { imagemini: false }
+  ],
   done() {
     console.log('---webpack compile finish---');
   }
