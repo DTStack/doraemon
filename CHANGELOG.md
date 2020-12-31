@@ -52,6 +52,31 @@ All notable changes to this project will be documented in this file. See [standa
 * **proxyaddrstable:** fix row selected bug ([9f992c2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/9f992c242a57aa06dc0859ecf4e726d21f964291))
 * **switchhost:** change file storage path ([83383e8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/83383e8a09f09a7d3820e54ac948ad9d2d6941c3))
 
+## [1.2.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.1.1...v1.2.0) (2020-12-31)
+
+
+### Features
+
+* **ding bot:** add ding bot and update test shell ([770f36d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/770f36dae23c3342e784ca9dce332bcadccc1e4d))
+* **dttag:** reset antd tag ([ec879cb](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/ec879cbb71c93d7b6740f492da1627b1a427d4ee))
+* **proxy rules:** allowed to choose target addr ([6540ab1](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6540ab16af34150b786c2a7caf0d8a3ea49e34f8))
+* **proxy service:** add proxy service addrs ([5d5e65c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/5d5e65cfa8454bf338925b059b874790b6eee78e))
+* **proxyserver:** add api_doc_url ([01506f3](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/01506f3f91f2f997c6c9f3285a31af356715b9bf))
+* **toolbox:** add tags and tags filter ([b3f6fb2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b3f6fb2151080e54ad020808a3fa1afae6629e24))
+* **upload:** upload logo and save(use stream) ([a15e829](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a15e829ff99f2c90abaf719bd8f6b25378fe0443))
+
+
+### Bug Fixes
+
+* **webpack.config.js:** fix imagemini plugin ([607d8c4](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/607d8c4d2729a5314163afaa52be79a21b74ea9f))
+* bugfix ([7279d06](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7279d06a8d56fc43d6ac500fe42c6a60a06e22fb))
+* bugfix ([2632e68](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2632e68f6d25a49dbb525b78ec5c47b29ca51cf9))
+* fix data month ([bb80631](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/bb806313d8a6041454602da024338b5346265251))
+* **appcenter:** inner app save into database, style change ([424448f](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/424448ff4f3f957d252090f222d6cd59d99ff49d))
+* bugfix ([2d033b9](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2d033b9960d27ef3b8f2374b76e0efc35328d293))
+* **proxyaddrstable:** fix row selected bug ([9f992c2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/9f992c242a57aa06dc0859ecf4e726d21f964291))
+* **switchhost:** change file storage path ([83383e8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/83383e8a09f09a7d3820e54ac948ad9d2d6941c3))
+
 ### [1.1.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.1.0...v1.1.1) (2020-12-12)
 
 
