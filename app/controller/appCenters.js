@@ -27,7 +27,6 @@ class AppCentersController extends Controller {
     let result = [];
     appResult.rows.forEach(item => {
       const tags = item.get('appTags');
-      console.log('tags ---- ', tags);
       let tagids = tags ? tags.split(',') : '';
       let tagArrs = tagsResult.filter(ele => {
         return tagids.includes(`${ele.get('id')}`)
@@ -123,7 +122,7 @@ class AppCentersController extends Controller {
     // 目标文件夹，没有就创建，创建多级目录存储
     // const dir = path.join(__dirname, '../../../doraemon_public/avatar');
     const date = new Date();
-    const dirTree = ['public', 'avatar', date.getFullYear(), date.getMonth(), date.getDate()];
+    const dirTree = ['public', 'avatar', date.getFullYear(), date.getMonth() + 1, date.getDate()];
     const dir = this.checkAndcreateDir(dirTree);
 
     // 创建文件
