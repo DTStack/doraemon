@@ -36,7 +36,7 @@ class SwitchHostsController extends Controller {
     if (_.isNil(data)) throw new Error('创建失败');
     // 创建对应hosts文件
     const hostsPath = 'hosts_' + data.id;
-    const hostDir = path.join(__dirname, '../../public/hosts');
+    const hostDir = path.join(__dirname, '../../../doraemon_hosts');
     const groupAddr = path.join(hostDir, hostsPath);
     if (!fs.existsSync(hostDir)) {
       fs.mkdirSync(hostDir);
