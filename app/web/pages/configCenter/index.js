@@ -1,8 +1,9 @@
 import React,{Fragment,useState,useEffect} from 'react';
-import {Button,Divider,Table,message as Message,Popconfirm,Tag} from 'antd';
+import {Button,Divider,Table,message as Message,Popconfirm} from 'antd';
 import {isEmpty} from 'lodash';
 import { Link } from 'react-router-dom';
 import ConfigFileModal from './components/configFileModal';
+import DtTag from '@/components/dtTag';
 import {API} from '@/api';
 import moment from 'moment';
 import './style.scss';
@@ -56,7 +57,7 @@ const ConfigCenter = ()=>{
         }
       }),
       render:(item) =>{
-        return <Tag color={item.tagColor}>{item.tagName}</Tag>
+        return <DtTag color={item.tagColor}>{item.tagName}</DtTag>
       }
     },{
       title:'备注',

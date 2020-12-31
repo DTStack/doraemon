@@ -1,6 +1,6 @@
 import React,{useState} from 'react';
 import { SketchPicker } from 'react-color';
-import { Tag } from 'antd';
+import DtTag from '@/components/dtTag';
 import './style.scss';
 
 const ColorPicker = (props) => {
@@ -21,7 +21,7 @@ const ColorPicker = (props) => {
     left: '0px'
   }
   return (<span className="colorPicker">
-    <Tag color={value} onClick={()=>setColorPicker(true)}>{value||'Pick Color'}</Tag>
+    <DtTag color={value} onClick={()=>setColorPicker(true)}>{value||'Pick Color'}</DtTag>
     <div className="tip">(可点击选择标签颜色)</div>
     { 
       colorPicker ? <div style={ popover }>

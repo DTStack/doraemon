@@ -1,7 +1,8 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
-import { Divider, Table, Button, Breadcrumb, Input, Modal,Tag,message as Message } from 'antd';
+import { Divider, Table, Button, Breadcrumb, Input, Modal, message as Message } from 'antd';
 import AddTagModal from './components/addTagModal'
+import DtTag from '@/components/dtTag';
 import { API } from '@/api';
 import './style.scss';
 const { Search } = Input;
@@ -60,7 +61,7 @@ const TagsManagement = (props) => {
         dataIndex: 'tagColor',
         key: 'tagColor',
         render: (text,record) => {
-          return <Tag color={text}>{record.tagName}</Tag>
+          return <DtTag color={text}>{record.tagName}</DtTag>
         }
       },
       {

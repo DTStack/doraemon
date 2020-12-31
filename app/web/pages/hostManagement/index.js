@@ -1,9 +1,10 @@
 import React,{useState,useEffect} from 'react';
-import {Table,Popconfirm,Divider,Typography,Button,Row,Col,message as Message,Tag} from 'antd';
+import {Table,Popconfirm,Divider,Typography,Button,Row,Col,message as Message} from 'antd';
 import {replace} from 'lodash';
 import {API} from '@/api';
 import HostModal from './components/hostModal';
 import PasswordModal from './components/passwordModal';
+import DtTag from '@/components/dtTag';
 import './style.scss';
 const {Paragraph} = Typography;
 export default (props)=>{
@@ -42,7 +43,7 @@ export default (props)=>{
         }
       }),
       render:(value) =>{
-        return value.map(item=><Tag key={item.id} color={item.tagColor}>{item.tagName}</Tag>)
+        return value.map(item =><DtTag key={item.id} color={item.tagColor}>{item.tagName}</DtTag>)
       }
     },{
       title:'备注',
