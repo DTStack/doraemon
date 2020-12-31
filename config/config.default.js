@@ -49,5 +49,10 @@ module.exports = app => {
     layout: path.join(app.baseDir, 'app/web/view/layout.html')
   };
 
+  exports.multipart = { // 文件上传
+    fileSize: '50mb',
+    mode: 'stream'
+  }
+
   return exports;
 };

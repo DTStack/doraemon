@@ -42,7 +42,7 @@ export default (props)=>{
         }
       }),
       render:(value) =>{
-        return value.map(item=><Tag color={item.tagColor}>{item.tagName}</Tag>)
+        return value.map(item=><Tag key={item.id} color={item.tagColor}>{item.tagName}</Tag>)
       }
     },{
       title:'备注',

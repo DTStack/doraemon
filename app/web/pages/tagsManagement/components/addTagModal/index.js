@@ -49,7 +49,7 @@ const AddTagModal = Form.create()((props)=>{
   }
   const { getFieldDecorator } = form; 
   return <Modal
-    title={data?'新增标签':'编辑标签'}
+    title={data?'编辑标签':'新增标签'}
     visible={visible}
     maskClosable={false}
     confirmLoading={confirmLoading}

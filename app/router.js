@@ -53,6 +53,7 @@ module.exports = app => {
   app.post('/api/appCenters/delete-applications',app.controller.appCenters.deleteApplications);
   app.post('/api/appCenters/click-applications',app.controller.appCenters.clickApplications);
   app.get('/api/appCenters/get-app-by-id',app.controller.appCenters.getApplicationById);
+  app.post('/api/appCenters/upload-logo/:id', app.controller.appCenters.uploadLogo);
   /**
    * switch hosts 管理列表
    */

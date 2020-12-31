@@ -1,0 +1,26 @@
+.c-upload-logo {
+    .ant-upload.ant-upload-select-picture-card {
+        width: 60px;
+        height: 60px;
+        margin: 0;
+        border: 0;
+        background-color: unset;
+        & > .ant-upload {
+            padding: 0;
+        }
+    }
+    .c-upload-logo__img {
+        position: relative;
+        height: 60px;
+        width: 60px;
+        border-radius: 50%;
+        overflow: hidden;
+        img {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            transform: translateY(-50%);
+        }
+    }
+}

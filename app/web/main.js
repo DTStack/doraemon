@@ -9,6 +9,7 @@ import App from '@/app';
 import { create } from './store/index';
 import routes from './router';
 import '@/scss/index.scss';
+import '@/asset/font/iconfont.css';
 const clientRender = () => {
   const store = create(window.__INITIAL_STATE__);
   const url = store.getState().url;
