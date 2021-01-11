@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Form, Input, Tooltip, Button, message as Message, Select } from 'antd';
+import { Modal, Form, Input, Tooltip, Button, message as Message, Select,Radio } from 'antd';
 import PropsTypes from 'prop-types';
 import {urlReg} from '@/utils/reg';
 import { API } from '@/api'
@@ -41,7 +41,6 @@ class ProxyRuleModal extends React.PureComponent{
     const {onOk,form,editable,proxyServer} = this.props;
     form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        values.target = values.target[0];
         if(editable){
           onOk(Object.assign({},proxyServer,values));
         }else{
@@ -62,29 +61,15 @@ class ProxyRuleModal extends React.PureComponent{
       target:`http://${ip||localIp}:8080`
     })
   }
-
-  // 目标地址校验
-  targetAddrValidator = (rule, value, callback) => {
-    for (const target of value) {
-      if (!urlReg.test(target)) {
-        callback('请输入正确格式的目标服务地址');
-      }
-    }
-    callback();
+  onChangeRadio = () => {
+    this.props.form.setFieldsValue({
+      target:undefined
+    })
   }
-
-  // 目标地址变更
-  handleTargetChange = (target) => {
-    if (Array.isArray(target)) {
-      return target.slice(-1);
-    }
-    return target;
-  }
-
   render(){
     const { visible, editable, form, proxyServer, confirmLoading, targetAddrs } = this.props;
-    const {getFieldDecorator} = form;
-    const {ip,target,remark} = proxyServer;
+    const {getFieldDecorator,getFieldValue} = form;
+    const {ip,target,remark,mode} = proxyServer;
     const { localIp } = this.state; 
     const formItemLayout = {
       labelCol: {
@@ -114,30 +99,59 @@ class ProxyRuleModal extends React.PureComponent{
           }
         </Form.Item>
         <Form.Item
-          label="目标服务地址">
+          label="代理模式">
           {
-            getFieldDecorator('target',{
-              getValueFromEvent: this.handleTargetChange,
-              rules:[
-                { required: true, message: '请输入或选择目标服务地址'},
-                { validator: this.targetAddrValidator }
-              ],
-              initialValue: target ? [target] : undefined
-            })(
-              <Select
-                mode="tags"
-                placeholder="请输入目标服务地址"
-              >
-                {
-                  targetAddrs.map(item => <Option key={item.id} value={item.target}>{item.remark}（{item.target}）</Option>)
-                }
-              </Select>
-            )
+            getFieldDecorator('mode',{
+              rules:[{
+                required: true, message: '请输入IP'
+              }],
+              initialValue:mode===undefined ? '0': mode
+            })(<Radio.Group onChange={this.onChangeRadio}>
+              <Radio value="0">手动</Radio>
+              <Radio value="1">引用</Radio>
+            </Radio.Group>)
           }
-          <Tooltip placement="topLeft" title={`快速填写默认目标地址默认为：http://${ip||localIp}:8080`}>
-            <Button shape="circle" className="retweet" size="small" onClick={this.onClickQuickInput} icon="retweet"/>
-          </Tooltip>
         </Form.Item>
+        {
+          getFieldValue('mode')==='0' ? (
+            <Form.Item
+            label="目标服务地址">
+            {
+              getFieldDecorator('target',{
+                rules: [{
+                  required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址'
+                }],
+                initialValue:target
+              })(<Input placeholder="请输入正确格式的目标服务地址"/>)
+            }
+            <Tooltip placement="topLeft" title={`快速填写默认目标地址默认为：http://${ip||localIp}:8080`}>
+              <Button shape="circle" className="retweet" size="small" onClick={this.onClickQuickInput} icon="retweet"/>
+            </Tooltip>
+          </Form.Item>
+          ):(
+            <Form.Item
+            label="目标服务地址">
+            {
+              getFieldDecorator('target',{
+                rules:[
+                  { required: true, message: '请输入或选择目标服务地址'}
+                ],
+                initialValue: target ? target : undefined
+              })(
+                <Select
+                  placeholder="请输入目标服务地址"
+                >
+                  {
+                    targetAddrs.map(item => <Option key={item.id} value={item.target}>{item.remark}（{item.target}）</Option>)
+                  }
+                </Select>
+              )
+            }
+          </Form.Item>
+         
+          )
+        }
+       
         <Form.Item
           label="备注">
           {
