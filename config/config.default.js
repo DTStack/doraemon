@@ -23,9 +23,11 @@ module.exports = app => {
 
   exports.static = {
     prefix: '/public/',
-    dir: path.join(app.baseDir, 'public')
+    dir: [path.join(app.baseDir, 'resources'),{
+      prefix: '/resources/',
+      dir: path.join(app.baseDir, 'resources')
+    }]
   };
-
   exports.keys = '123456';
   exports.github = {
     owner:'dtux-kangaroo',
