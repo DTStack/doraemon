@@ -3,7 +3,6 @@ const _ = require('lodash');
 const moment = require('moment');
 const path = require('path');
 const fs = require('fs');
-const ROOT_PATH = path.join(__dirname, '../../');
 //故名思意 异步二进制 写入流
 const awaitWriteStream = require('await-stream-ready').write;
 //管道读入一个虫洞。
@@ -98,19 +97,6 @@ class AppCentersController extends Controller {
     const result = await ctx.service.appCenters.deleteApplications(id);
     ctx.body = app.utils.response(true, result);
   }
-
-  // 创建文件夹
-  checkAndcreateDir(dirTree) {
-    let dirPath = ROOT_PATH;
-    dirTree.forEach(dir => {
-      dirPath = path.join(dirPath, dir.toString());
-      if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath);
-      }
-    })
-    return dirPath;
-  }
-
   // 上传logo
   async uploadLogo() {
     const { app, ctx } = this;
@@ -120,11 +106,9 @@ class AppCentersController extends Controller {
     // 文件名
     const fileName = stream.filename;
     // 目标文件夹，没有就创建，创建多级目录存储
-    // const dir = path.join(__dirname, '../../../doraemon_public/avatar');
     const date = new Date();
-    const dirTree = ['public', 'avatar', date.getFullYear(), date.getMonth() + 1, date.getDate()];
-    const dir = this.checkAndcreateDir(dirTree);
-
+    const dirTree = ['resources', 'imgs', date.getFullYear(), date.getMonth() + 1, date.getDate()];
+    const dir = app.utils.createFolder(dirTree);
     // 创建文件
     const target = path.join(dir, fileName);
     const writeStream = fs.createWriteStream(target);

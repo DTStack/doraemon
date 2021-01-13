@@ -35,13 +35,9 @@ class SwitchHostsController extends Controller {
     });
     if (_.isNil(data)) throw new Error('创建失败');
     // 创建对应hosts文件
-    const hostsPath = 'hosts_' + data.id;
-    const hostDir = path.join(__dirname, '../../../doraemon_hosts');
-    const groupAddr = path.join(hostDir, hostsPath);
-    if (!fs.existsSync(hostDir)) {
-      fs.mkdirSync(hostDir);
-    }
-    await this.editHostsConfig(hosts, groupAddr);
+    const fileName = 'hosts_' + data.id;
+    const paths = ['resources', 'hosts'];
+    const filePath = app.utils.createFileSync(paths,fileName,hosts);
     // 创建websocket连接
     // createWS(8080, '/websocket_' + data.id);
     // 更新数据
@@ -49,9 +45,9 @@ class SwitchHostsController extends Controller {
     const result = await ctx.service.switchHosts.updateHosts(data.id, {
       groupApi,
       // groupId,
-      groupAddr
+      groupAddr:filePath
     });
-    data.dataValues.groupAddr = groupAddr;
+    data.dataValues.groupAddr = filePath;
     data.dataValues.groupApi = groupApi;
     ctx.body = app.utils.response(result, data);
   }
@@ -64,7 +60,11 @@ class SwitchHostsController extends Controller {
     if (_.isNil(groupName)) throw new Error('缺少必要参数groupName');
     // 更新hosts
     const groupAddr = await ctx.service.switchHosts.getGroupAddr(id);
-    await this.editHostsConfig(hosts, groupAddr);
+    try {
+      fs.writeFileSync(groupAddr, hosts);
+    } catch (error) {
+      throw new Error('更新文件失败');
+    }
     // 更新参数
     const result = await ctx.service.switchHosts.updateHosts(id, {
       groupName,
@@ -74,12 +74,6 @@ class SwitchHostsController extends Controller {
     })
     ctx.body = app.utils.response(result);
   }
-
-  // 编译hosts文件内容
-  async editHostsConfig(hosts, groupAddr, groupAddrCache) {
-    fs.writeFileSync(groupAddr, hosts);
-  }
-
   // 推送
   async pushHosts() {
     const { ctx, app } = this;
