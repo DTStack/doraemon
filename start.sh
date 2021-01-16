@@ -6,4 +6,5 @@ if [[ "$#" > 0 ]]; then
 else 
     yarn stop
     yarn server
+    yarn dingBot
 fi
