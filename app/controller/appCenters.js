@@ -3,7 +3,7 @@ const _ = require('lodash');
 const moment = require('moment');
 const path = require('path');
 const fs = require('fs');
-//故名思意 异步二进制 写入流
+//异步二进制 写入流
 const awaitWriteStream = require('await-stream-ready').write;
 //管道读入一个虫洞。
 const sendToWormhole = require('stream-wormhole');
