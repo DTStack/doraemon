@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.2.0...v1.2.1) (2021-01-16)
+
+
+### Features
+
+* **dingbot:** update ding bot ([d425c09](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d425c09cb4db29415fc97c2089b47034396f9a26))
+* **file:** update file system ([de48fad](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/de48fad563d11d0e354da29d2cc6e753cec645a7))
+* **proxy server:** update proxy server list ([334ae5a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/334ae5aa6b2d867f23c3cdbc8bee5e9e797d04cd))
+* **public:** update static public resources ([108f81a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/108f81acb8d9ad6640a2b7ec579733d8269f53d4))
+* **resources:** add resources file ([0e02672](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0e02672894d45367f7d83e2074dbd97c5bac5b29))
+
 ### [1.2.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.2.0...v1.2.1) (2021-01-15)
 
 
