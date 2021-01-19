@@ -9,23 +9,28 @@ const { Header } = Layout;
 const navMenuList = [{
   name: '应用中心',
   path: '/page/toolbox',
-  icon: 'appstore'
+  icon: 'appstore',
+  routers:['toolbox','switch-hosts-list']
 },{
   name: '代理服务',
   path: '/page/proxy-server',
-  icon: 'cloud'
+  icon: 'cloud',
+  routers:['proxy-server']
 },{
   name:'主机管理',
   path:'/page/host-management',
-  icon:'desktop'
+  icon:'desktop',
+  routers:['host-management']
 },{
   name: '配置中心',
   path: '/page/config-center',
-  icon: 'setting'
+  icon: 'setting',
+  routers:['config-center','config-detail']
 },{
   name:'标签管理',
   path:'/page/tags',
-  icon:'tag'
+  icon:'tag',
+  routers:['tags']
 }]
 const HeaderComponent = (props) => {
   const { location } = props;
@@ -36,7 +41,8 @@ const HeaderComponent = (props) => {
     setSelectedKeys(e.key);
   }
   useEffect(() => {
-    setSelectedKeys([pathname])
+    let current  = navMenuList.filter(item=>item.routers.some((ele)=>pathname.indexOf(ele)>-1))
+    setSelectedKeys([current[0].path])
   }, [pathname])
   return (
         <Header className="dt-layout-header header_component">
