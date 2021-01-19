@@ -10,7 +10,7 @@ const navMenuList = [{
   name: '应用中心',
   path: '/page/toolbox',
   icon: 'appstore',
-  routers:['toolbox','switch-hosts-list']
+  routers:['toolbox','switch-hosts-list','switch-hosts-edit']
 },{
   name: '代理服务',
   path: '/page/proxy-server',
