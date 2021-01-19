@@ -15,4 +15,16 @@
   .marginBottom12{
     margin-bottom: 12px;
   }
+  .ip-wrap{
+    position: relative;
+    cursor: pointer;
+    .iconicon_star {
+      position: absolute;
+      left: -16px;
+      color: #ffc240;
+      font-size: 12px;
+      vertical-align: top;
+  }
+  }
+ 
 }

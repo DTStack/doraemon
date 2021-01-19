@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, Button, Typography, Tag, Table, message as Message, Divider, Modal, Badge, Popconfirm, Switch, Tooltip } from 'antd';
+import { Input, Button, Typography, Tag, Table, message as Message, Divider, Modal, Badge, Popconfirm, Switch, Tooltip,notification } from 'antd';
 import { API } from '@/api';
 import ProxyServerModal from './components/proxyServerModal';
 import ProxyRuleModal from './components/proxyRuleModal';
@@ -16,6 +16,7 @@ const commonTags = JSON.parse(Cookies.get('common-tags') || '[]') || [];
 class ProxyServer extends React.PureComponent {
   state = {
     //代理服务
+    localIp:'',
     currentProxyServer: {},
     proxyServerModalVisible: false,
     proxyServerModalConfirmLoading: false,
@@ -41,8 +42,39 @@ class ProxyServer extends React.PureComponent {
     commonTagList: commonTags,
     selectedTag: ''
   }
+  componentDidMount() {
+    this.loadMainData();
+  }
   //获取页面主要数据
-  loadMainData() {
+  loadMainData = ()=> {
+    this.getProxyServerList()
+    this.getLocalIp()
+  }
+  getLocalIp = () => {
+    API.getLocalIp().then((response)=>{
+      const {success,data,message} = response;
+      if(success){
+        const localIp = data.localIp;
+        const rememberIp = Cookies.get('rememberIp')||''
+        console.log(rememberIp,localIp)
+        if(rememberIp&&rememberIp!==localIp){
+          notification.warning({
+            message: 'IP地址变更',
+            description:'您的IP地址【较上次登录时】已发生变更、请留意代理服务配置！',
+            duration:30,
+            onClose: () => {
+              Cookies.set('rememberIp',localIp)
+            }
+          });
+        }
+      
+        this.setState({
+          localIp
+        })
+      }
+    })
+  }
+  getProxyServerList = () => {
     const { mainTableParams } = this.state;
     this.setState({
       mainTableLoading: true
@@ -124,7 +156,7 @@ class ProxyServer extends React.PureComponent {
           const { success } = response;
           if (success) {
             Message.success(`代理服务${statusStr}成功`);
-            this.loadMainData();
+            this.getProxyServerList();
           }
         });
       }
@@ -144,7 +176,7 @@ class ProxyServer extends React.PureComponent {
       if (success) {
         Message.success(`${JSON.stringify(currentProxyServer) === '{}' ? '新增' : '编辑'}代理服务成功`)
         this.handleProxyServerModalCancel();
-        this.loadMainData();
+        this.getProxyServerList();
         if (expandedRowKeys.length) {
           this.getTargetAddrs(
             expandedRowKeys[0],
@@ -180,7 +212,7 @@ class ProxyServer extends React.PureComponent {
           const { success } = response;
           if (success) {
             Message.success('代理服务删除成功');
-            this.loadMainData();
+            this.getProxyServerList();
           }
         });
       }
@@ -296,7 +328,7 @@ class ProxyServer extends React.PureComponent {
       }),
       selectedTag: search ? [] : selectedTag
     }, () => {
-      this.loadMainData();
+      this.getProxyServerList();
     });
   }
   handleTableChange = (pagination) => {
@@ -308,7 +340,7 @@ class ProxyServer extends React.PureComponent {
         pageSize
       })
     }, () => {
-      this.loadMainData();
+      this.getProxyServerList();
     });
   }
   handleTableExpandChange = (expanded, record) => {
@@ -352,25 +384,29 @@ class ProxyServer extends React.PureComponent {
     Cookies.set('common-tags', JSON.stringify(newList));
   };
   tableExpandedRowRender = (mainTableRow) => {
-    const { subTableLoading, subTableData } = this.state;
+    const { subTableLoading, subTableData,localIp } = this.state;
     const columns = [{
       title: '序号',
       key: 'index',
+      width: 100,
       render: (value, row, index) => index + 1
     }, {
       title: 'IP',
       key: 'ip',
       dataIndex: 'ip',
-      width: 200
+      width: 200,
+      render:(text)=>{
+        return text===localIp ?    <Tooltip placement="topLeft" title={`当前用户 IP:${localIp}`}>
+        <span className="ip-wrap"><i className="iconfont iconicon_star" />{text}</span>
+      </Tooltip>:text
+      }
     }, {
       title: '目标代理服务地址',
       key: 'target',
-      dataIndex: 'target',
-      width: '20%'
+      dataIndex: 'target'
     }, {
       title: '备注',
       key: 'remark',
-      width: '20%',
       dataIndex: 'remark'
     }, {
       title: '状态',
@@ -441,12 +477,9 @@ class ProxyServer extends React.PureComponent {
       callback && callback(data);
     })
   }
-
-  componentDidMount() {
-    this.loadMainData();
-  }
   render() {
     const {
+      localIp,
       maintTableList,
       mainTableParams,
       maintTableTotal,
@@ -575,6 +608,7 @@ class ProxyServer extends React.PureComponent {
         onCancel={this.handleProxyServerModalCancel} />}
       <ProxyRuleModal
         ref={(modal) => this.ProxyRuleModal = modal}
+        localIp={localIp}
         editable={JSON.stringify(currentProxyRule) !== '{}'}
         proxyServer={currentProxyRule}
         targetAddrs={this.state.targetAddrs}

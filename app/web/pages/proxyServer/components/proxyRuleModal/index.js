@@ -10,6 +10,7 @@ const { Option } = Select;
 class ProxyRuleModal extends React.PureComponent{
   static defaultProps = {
     visible:false,
+    localIp:'',
     onOk:()=>{},
     onCancel:()=>{},
     proxyServer:{},
@@ -17,25 +18,13 @@ class ProxyRuleModal extends React.PureComponent{
     confirmLoading:false
   }
   static propsTypes ={
+    localIp:PropsTypes.string,
     visible:PropsTypes.bool,
     onOk:PropsTypes.func,
     onCancel:PropsTypes.func,
     proxyServer:PropsTypes.object,
     targetAddrs:PropsTypes.array,
     confirmLoading:PropsTypes.bool
-  }
-  state = {
-    localIp:''
-  }
-  componentDidMount(){
-    API.getLocalIp().then((response)=>{
-      const {success,data,message} = response;
-      if(success){
-        this.setState({
-          localIp:data.localIp
-        })
-      }
-    })
   }
   handleModalOk=()=>{
     const {onOk,form,editable,proxyServer} = this.props;
@@ -54,9 +43,8 @@ class ProxyRuleModal extends React.PureComponent{
     onCancel();
   }
   onClickQuickInput = () => {
-    const {form,proxyServer} = this.props;
+    const {form,proxyServer,localIp} = this.props;
     const {ip} = proxyServer;
-    const { localIp } = this.state;
     form.setFieldsValue({
       target:`http://${ip||localIp}:8080`
     })
@@ -67,10 +55,9 @@ class ProxyRuleModal extends React.PureComponent{
     })
   }
   render(){
-    const { visible, editable, form, proxyServer, confirmLoading, targetAddrs } = this.props;
+    const { visible, editable, form, proxyServer, confirmLoading, targetAddrs,localIp } = this.props;
     const {getFieldDecorator,getFieldValue} = form;
     const {ip,target,remark,mode} = proxyServer;
-    const { localIp } = this.state; 
     const formItemLayout = {
       labelCol: {
         span: 5
