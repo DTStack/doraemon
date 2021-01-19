@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.2.1...v1.2.2) (2021-01-19)
+
+
+### Features
+
+* **layout:** update layout select header ([954738e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/954738ed338ba12145d3f5fd34c71b04c228eca2))
+* **proxy:** adds the current user agent identity ([b47fe28](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b47fe28b9a28b29802b7e6378367f5cff4ce2947))
+
+
+### Bug Fixes
+
+* **proxy:** fix proxy change origin ([d6c4486](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d6c44866816b1375bceef70fc7aa01586c11f2b5))
+
 ### [1.2.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.2.0...v1.2.1) (2021-01-16)
 
 
