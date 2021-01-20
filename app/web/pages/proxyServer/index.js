@@ -56,7 +56,6 @@ class ProxyServer extends React.PureComponent {
       if(success){
         const localIp = data.localIp;
         const rememberIp = Cookies.get('rememberIp')||''
-        console.log(rememberIp,localIp)
         if(rememberIp&&rememberIp!==localIp){
           notification.warning({
             message: 'IP地址变更',
