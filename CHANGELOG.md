@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.3](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.2.2...v1.2.3) (2021-01-22)
+
+
+### Features
+
+* **path:** optimize routing redirection ([955f1aa](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/955f1aa283bd304ed98ec63ff6b70d83324140bb))
+
+
+### Bug Fixes
+
+* **proxy:** fix the domain name broker ([8feeb3f](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/8feeb3f0beef21a780add4a163c6a8c60c4397a1))
+* **toolbox:** fix host file edits ([003cc63](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/003cc63a36c0cad3bfde8df8bcc962ed169f7ac0))
+
 ### [1.2.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.2.1...v1.2.2) (2021-01-19)
 
 
