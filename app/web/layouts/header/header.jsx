@@ -42,7 +42,7 @@ const HeaderComponent = (props) => {
   }
   useEffect(() => {
     let current  = navMenuList.filter(item=>item.routers.some((ele)=>pathname.indexOf(ele)>-1))
-    setSelectedKeys([current[0].path])
+    current.length&&setSelectedKeys([current[0].path])
   }, [pathname])
   return (
         <Header className="dt-layout-header header_component">
