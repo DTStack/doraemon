@@ -1,4 +1,9 @@
 {
+  "chunk/0.css": "/public/css/0.css",
+  "chunk/0.js": "/public/js/chunk/0.js",
+  "chunk/1.css": "/public/css/1.css",
+  "chunk/1.js": "/public/js/chunk/1.js",
+  "chunk/2.js": "/public/js/chunk/2.js",
   "app.css": "/public/css/app.css",
   "app.js": "/public/js/chunk/app.js",
   "runtime.js": "/public/js/runtime.js",

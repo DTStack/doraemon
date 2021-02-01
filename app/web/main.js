@@ -31,6 +31,7 @@ const clientRender = () => {
 
 const serverRender = (context, options)=> {
   const url = context.state.url;
+  console.log('routes----------------',routes)
   const branch = matchRoutes(routes, url);
   const promises = branch.map(({route}) => {
     const fetch = route.component&&route.component.fetch;

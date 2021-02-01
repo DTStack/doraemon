@@ -7,7 +7,7 @@ module.exports = {
   entry: {
     app: resolve('./app/web/main.js')
   },
-  dll: ['react', 'react-dom','react-redux','redux','redux-thunk','react-router','react-router-config','react-router-dom','react-router-redux'],
+  dll: ['react', 'react-dom','react-redux','redux','redux-thunk','react-router','react-router-config','react-router-dom','react-router-redux','xterm'],
   loaders: {
     babel: {
       include: [resolve('./app/web')],

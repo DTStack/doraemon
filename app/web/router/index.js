@@ -1,7 +1,13 @@
 import BasicLayout from '@/layouts/basicLayout';
+import Loadable from 'react-loadable';
+import Loading from '@/components/cLoading';
 import Home from '@/pages/home';
 //代理服务
-import ProxyServer from '@/pages/proxyServer';
+const ProxyServer = Loadable({
+  loader: () => import('@/pages/proxyServer'),
+  loading: Loading
+});
+// import ProxyServer from '@/pages/proxyServer';
 //内部网址导航
 import InnerUrlNavigation from '@/pages/innerUrlNavigation';
 //工具箱
@@ -16,11 +22,14 @@ import ConfigCenter from '@/pages/configCenter';
 import ConfigDetail from '@/pages/configDetail';
 // hosts列表
 import SwitchHostsList from '@/pages/switchHosts';
-// hosts编辑
-import SwitchHostsEdit from '@/pages/switchHosts/editHosts';
-
-import WebTerminal from '@/pages/webTerminal';
-
+const SwitchHostsEdit = Loadable({
+  loader: () => import('@/pages/switchHosts/editHosts'),
+  loading: Loading
+});
+const WebTerminal = Loadable({
+  loader: () => import('@/pages/webTerminal'),
+  loading: Loading
+});
 
 import NotFound from '@/pages/exception/404';
 const urlPrefix = '/page'
