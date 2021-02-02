@@ -150,7 +150,7 @@ export default class MainSign extends React.PureComponent  {
           else {
             this.setState({err: ''})
             copy.toBlob((blob) => {
-              saveAs(blob, this.state.name + ".png");
+              saveAs(blob, this.state.name + '.png');
             });
           }
         }, 100);

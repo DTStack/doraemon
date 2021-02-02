@@ -15,7 +15,7 @@ class ProxyServerService extends Service {
         id
       }
     });
-    return updateResult;
+    return { id };
   }
   //关闭
   async close(id){

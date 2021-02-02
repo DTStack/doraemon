@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react';
 import { Form, Input, Typography } from 'antd';
+import { useSelector } from 'react-redux';
 const { Paragraph } = Typography;
 const FormItem = Form.Item;
 const formItemLayout = {
@@ -12,23 +13,24 @@ const formItemLayout = {
 };
 
 const HostsInfo = (props) => {
+  const { serverInfo } = useSelector((state) => state.global);
   const { isEdit, form, hostsInfo } = props;
   const { getFieldDecorator } = form;
 
   return (
     <Form>
       <FormItem
-        label="群组名称"
+        label="分组名称"
         {...formItemLayout}
       >
         {getFieldDecorator('groupName', {
           initialValue: isEdit ? hostsInfo.groupName : '',
           rules: [
-            { required: true, message: '请输入群组名称' },
+            { required: true, message: '请输入分组名称' },
             { max: 64, message: '长度不超过64个字符' }
           ]
         })(
-          <Input placeholder="请输入群组名称，长度不超过64个字符" />
+          <Input placeholder="请输入分组名称，长度不超过64个字符" />
         )}
       </FormItem>
       {
@@ -37,10 +39,10 @@ const HostsInfo = (props) => {
             {/* <FormItem label="群組ID" {...formItemLayout}>
               <span>{hostsInfo.groupId || '--'}</span>
             </FormItem> */}
-            <FormItem label="群組API" {...formItemLayout}>
+            <FormItem label="分组API" {...formItemLayout}>
               {
                 hostsInfo.groupApi
-                  ? <Paragraph style={{ marginBottom: 0 }} copyable>{hostsInfo.groupApi}</Paragraph>
+                  ? <Paragraph style={{ marginBottom: 0 }} copyable>{`${serverInfo.protocol}://${serverInfo.host}${hostsInfo.groupApi}`}</Paragraph>
                   : '--'
               }
             </FormItem>
@@ -48,7 +50,7 @@ const HostsInfo = (props) => {
         )
       }
       <FormItem
-        label="群组描述"
+        label="分组描述"
         {...formItemLayout}
       >
         {getFieldDecorator('groupDesc', {
@@ -57,7 +59,7 @@ const HostsInfo = (props) => {
             { max: 255, message: '长度不超过255个字符' }
           ]
         })(
-          <Input.TextArea placeholder="请输入群组描述，长度不超过255个字符" />
+          <Input.TextArea placeholder="请输入分组描述，长度不超过255个字符" />
         )}
       </FormItem>
     </Form>

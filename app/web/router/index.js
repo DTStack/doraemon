@@ -30,6 +30,9 @@ const WebTerminal = Loadable({
   loader: () => import('@/pages/webTerminal'),
   loading: Loading
 });
+// hosts编辑
+
+import TagsManagement from '@/pages/tagsManagement'
 
 import NotFound from '@/pages/exception/404';
 const urlPrefix = '/page'
@@ -82,6 +85,10 @@ const routes = [
       {
         path: `${urlPrefix}/webTerminal`,
         component: WebTerminal
+      },
+      {
+        path: `${urlPrefix}/tags`,
+        component: TagsManagement
       },
       {
         path: '*',

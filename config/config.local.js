@@ -34,13 +34,11 @@ module.exports = () => {
       {
         delegate: 'model',
         baseDir: 'model',
-        database: 'doraemon',
+        database: 'doraemon_test',
         dialect: 'mysql',
-        // host: '127.0.0.1',//172.16.8.163
         host: '172.16.100.225',
         port: 3306,
         username:'root',
-        // password:'abc123'
         password:'Admin123!@#'
       }
     ]

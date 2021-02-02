@@ -23,9 +23,11 @@ module.exports = app => {
 
   exports.static = {
     prefix: '/public/',
-    dir: path.join(app.baseDir, 'public')
+    dir: [path.join(app.baseDir, 'public'),{
+      prefix: '/resources/',
+      dir: path.join(app.baseDir, 'resources')
+    }]
   };
-
   exports.keys = '123456';
   exports.github = {
     owner:'dtux-kangaroo',
@@ -48,6 +50,11 @@ module.exports = app => {
   exports.reactssr = {
     layout: path.join(app.baseDir, 'app/web/view/layout.html')
   };
+
+  exports.multipart = { // 文件上传
+    fileSize: '50mb',
+    mode: 'stream'
+  }
 
   return exports;
 };

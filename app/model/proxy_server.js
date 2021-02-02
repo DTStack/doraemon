@@ -4,6 +4,7 @@ module.exports = app => {
     id: { type: INTEGER, primaryKey: true, autoIncrement: true },
     name: INTEGER,
     target: STRING(60),
+    api_doc_url: STRING(255),
     proxy_server_address: STRING(100),
     status: INTEGER,
     is_delete: INTEGER,

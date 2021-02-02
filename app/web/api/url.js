@@ -26,16 +26,12 @@ export default {
     method: 'get',
     url:'/api/appCenters/get-app-by-id'
   },
-  //获取本机Ip
+  //获取本机Ip，端口等信息
   getLocalIp:{
     method:'get',
     url:'/api/github/get-local-ip'
   },
-  // 获取服务信息
-  getServerInfo: {
-    method: 'get',
-    url: '/api/common/get-server-info'
-  },
+
   /**
    * 代理服务
    */
@@ -48,6 +44,11 @@ export default {
   addProxyServer:{
     method:'post',
     url:'/api/proxy-server/add-server'
+  },
+  // 获取目标服务地址列表
+  getTargetAddrs: {
+    method: 'get',
+    url: '/api/proxy-server/target-addrs-list'
   },
   //更新代理服务
   updateProxyServer:{
@@ -179,9 +180,30 @@ export default {
     method: 'post',
     url: '/api/switch-hosts/delete-hosts'
   },
-  //getServerInfo
-  getServerInfo:{
+  // 获取所有标签列表
+  getAllTagList: {
     method: 'get',
-    url: '/api/common/get-server-info'
+    url: '/api/tags/get-all-tag-list'
+  },
+  // 获取标签列表
+  getTagList: {
+    method: 'post',
+    url: '/api/tags/get-tag-list'
+  },
+  // 创建标签
+  createTag: {
+    method: 'post',
+    url: '/api/tags/create-tag'
+  },
+  // 删除标签
+  deleteTag: {
+    method: 'post',
+    url: '/api/tags/delete-tag'
+  },
+  // 更新标签
+  updateTag: {
+    method: 'post',
+    url: '/api/tags/update-tag'
   }
+ 
 }

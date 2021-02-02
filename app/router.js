@@ -8,6 +8,7 @@ module.exports = app => {
    */
   app.post('/api/proxy-server/server-list', app.controller.proxy.list);
   app.post('/api/proxy-server/add-server', app.controller.proxy.add);
+  app.get('/api/proxy-server/target-addrs-list', app.controller.proxy.getTargetAddrs);
   app.post('/api/proxy-server/update-server', app.controller.proxy.update);
   app.delete('/api/proxy-server/delete-server',app.controller.proxy.delete);
   app.get('/api/proxy-server/change-server-status', app.controller.proxy.changeStatus);
@@ -48,11 +49,11 @@ module.exports = app => {
    */
   app.get('/api/appCenters/get-app-list',app.controller.appCenters.getAppCenterList);
   app.get('/api/github/get-local-ip',app.controller.common.getLocalIp);
-  app.get('/api/common/get-server-info', app.controller.common.getServerInfo);
   app.post('/api/appCenters/update-applications',app.controller.appCenters.updateApplications);
   app.post('/api/appCenters/delete-applications',app.controller.appCenters.deleteApplications);
   app.post('/api/appCenters/click-applications',app.controller.appCenters.clickApplications);
   app.get('/api/appCenters/get-app-by-id',app.controller.appCenters.getApplicationById);
+  app.post('/api/appCenters/upload-logo/:id', app.controller.appCenters.uploadLogo);
   /**
    * switch hosts 管理列表
    */
@@ -66,4 +67,13 @@ module.exports = app => {
   app.post('/api/switch-hosts/update-hosts', app.controller.switchHosts.updateHosts);
   app.get('/api/switch-hosts/get-hosts-info', app.controller.switchHosts.getHostsInfo);
   app.get('/api/switch-hosts/connect/:id', app.controller.switchHosts.getHostsConfig);
+
+  /**
+   * tag management 配置内容 增删改查
+   */
+  app.get('/api/tags/get-all-tag-list', app.controller.tagManagement.getAllTagsList);
+  app.post('/api/tags/get-tag-list', app.controller.tagManagement.getTagsList);
+  app.post('/api/tags/create-tag', app.controller.tagManagement.addTag);
+  app.post('/api/tags/update-tag', app.controller.tagManagement.editTag);
+  app.post('/api/tags/delete-tag', app.controller.tagManagement.deleteTag);
 };

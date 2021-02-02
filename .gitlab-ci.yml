@@ -1,0 +1,19 @@
+# Read more: https://docs.gitlab.com/12.7/ee/ci/yaml/README.html
+
+cache:
+  paths:
+  - .yarn
+  - node_modules/
+before_script:
+  - yarn install --cache-folder .yarn
+
+stages:
+  - lint
+
+# 当 merge_requests 执行 eslint 检查
+code_quality: 
+  stage: lint
+  script: 
+  - yarn lint
+  only:
+  - merge_requests

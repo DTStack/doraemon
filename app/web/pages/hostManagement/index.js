@@ -4,6 +4,7 @@ import {replace} from 'lodash';
 import {API} from '@/api';
 import HostModal from './components/hostModal';
 import PasswordModal from './components/passwordModal';
+import DtTag from '@/components/dtTag';
 import './style.scss';
 const {Paragraph} = Typography;
 export default (props)=>{
@@ -12,15 +13,38 @@ export default (props)=>{
   const [hostModalVisible,setHostModalVisible] = useState(false);
   const [passwordModalVisible,setPasswordModalVisible] = useState(false);
   const [currentHost,setCurrentHost] = useState({});
+  const [tagList, setTagList] = useState([])
+  useEffect(()=>{
+    API.getAllTagList().then(response=>{
+      const {success,data} = response;
+      if(success){
+        setTagList(data.data)
+      }
+    })
+  },[])
   const getColumns = ()=>{
     const columns = [{
+      title:'主机名',
+      key:'hostName',
+      dataIndex:'hostName'
+    },{
       title:'主机IP',
       key:'hostIp',
       dataIndex:'hostIp'
     },{
-      title:'主机名',
-      key:'hostName',
-      dataIndex:'hostName'
+      title:'标签',
+      key:'tags',
+      dataIndex:'tags',
+      filterMultiple:true,
+      filters:tagList.map(item=>{
+        return {
+          text:item.tagName,
+          value:item.id
+        }
+      }),
+      render:(value) =>{
+        return value.map(item =><DtTag key={item.id} color={item.tagColor}>{item.tagName}</DtTag>)
+      }
     },{
       title:'备注',
       key:'remark',
@@ -104,9 +128,9 @@ export default (props)=>{
     }
     setPasswordModalVisible(false);
   }
-  const loadTableData = ()=>{
+  const loadTableData = (params={})=>{
     setTableLoading(true);
-    API.getHostList().then((response)=>{
+    API.getHostList(params).then((response)=>{
       const {success,data} = response;
       if(success){
         setHostList(data);
@@ -114,9 +138,12 @@ export default (props)=>{
       setTableLoading(false);
     });
   }
+  const onTableChange = (pagination, filters, sorter) => {
+    loadTableData(filters)
+  }
   useEffect(()=>{
     loadTableData()
-  },[])
+  },[]);
   return <div className="page-host-management">
     <div className="title_wrap">
       <div className="title">主机管理</div>
@@ -131,8 +158,10 @@ export default (props)=>{
       loading={tableLoading}
       dataSource={hostList}
       pagination={false}
+      onChange={onTableChange}
       expandedRowRender={expandedRowRender}/>
     <HostModal
+      tagList={tagList}
       value={currentHost}
       visible={hostModalVisible}
       onOk={handleHostModalAction.bind(this,'ok')}

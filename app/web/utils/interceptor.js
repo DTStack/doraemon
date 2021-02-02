@@ -58,10 +58,10 @@ export function authBeforeRes(response) {
 export function authAfterRes(response) {
   if (!response.success) {
     singletonNotification(
-              '异常',
-              response.message,
-              'error'
-          );
+      '异常',
+      response.message,
+      'error'
+    );
   }
   return response;
 }

@@ -3,6 +3,7 @@ import {Button,Divider,Table,message as Message,Popconfirm} from 'antd';
 import {isEmpty} from 'lodash';
 import { Link } from 'react-router-dom';
 import ConfigFileModal from './components/configFileModal';
+import DtTag from '@/components/dtTag';
 import {API} from '@/api';
 import moment from 'moment';
 import './style.scss';
@@ -14,8 +15,19 @@ const ConfigCenter = ()=>{
     size: 'small',
     current: 1,
     pageSize: 20,
-    total: 0
+    total: 0,
+    tags:[]
   });
+  const [tagList, setTagList] = useState([])
+  const [loading, setTableLoading] = useState(false)
+  useEffect(()=>{
+    API.getAllTagList().then(response=>{
+      const {success,data} = response;
+      if(success){
+        setTagList(data.data)
+      }
+    })
+  },[])
   const getTableColumns = ()=>{
     return [{
       title:'文件名',
@@ -33,6 +45,20 @@ const ConfigCenter = ()=>{
       key:'hostIp',
       dataIndex:'hostIp',
       width:180
+    },{
+      title:'标签',
+      key:'tags',
+      dataIndex:'tags',
+      filterMultiple:true,
+      filters:tagList.map(item=>{
+        return {
+          text:item.tagName,
+          value:`${item.id}`
+        }
+      }),
+      render:(item) =>{
+        return <DtTag color={item.tagColor}>{item.tagName}</DtTag>
+      }
     },{
       title:'备注',
       key:'remark',
@@ -80,16 +106,22 @@ const ConfigCenter = ()=>{
   }
   const handleTableChange = (pagination,filters,sorter)=>{
     const {current} = pagination;
-    setTablePagination({
-      ...tablePagination,
-      current
+    const { tags } = filters;
+    setTablePagination(preState=>{
+      return {
+        ...preState,
+        current,
+        tags
+      }
     });
   }
   const loadMainData=()=>{
-    const {current,pageSize} = tablePagination;
+    const {current,pageSize,tags } = tablePagination;
+    setTableLoading(true)
     API.getConfigList({
       current,
-      size:pageSize
+      size:pageSize,
+      tags
     }).then((response)=>{
       const {success,data} = response;
       if(success){
@@ -99,6 +131,8 @@ const ConfigCenter = ()=>{
           total:data.total
         })
       }
+    }).finally(()=>{
+      setTableLoading(false);
     });
   }
   const handleConfigFileModalAction = (type)=>{
@@ -118,15 +152,15 @@ const ConfigCenter = ()=>{
       }
     }
   }
-  useEffect(()=>{
+  useEffect(() => {
     loadMainData();
-  },[tablePagination.current])
+  }, [tablePagination.current,...tablePagination.tags])
   return <div className="page-config-center">
     <div className="header_title">
-          <span className="title">
+      <span className="title">
             配置中心
-          </span>
-          <Button icon="plus-circle" type="primary" onClick={handleConfigFileAdd}>新增配置</Button>
+      </span>
+      <Button icon="plus-circle" type="primary" onClick={handleConfigFileAdd}>新增配置</Button>
     </div>
     <div>
       <Table
@@ -136,6 +170,7 @@ const ConfigCenter = ()=>{
         style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
         columns={getTableColumns()}
         dataSource={configList}
+        loading={loading}
         pagination={{
           ...tablePagination,
           showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{tablePagination.pageSize}条</span>
@@ -143,10 +178,11 @@ const ConfigCenter = ()=>{
         onChange={handleTableChange}/>
     </div>
     <ConfigFileModal
-       value={currentConfigFile}
-       visible={configFileModalVisible}
-       onOk={handleConfigFileModalAction.bind(this,'ok')}
-       onCancel={handleConfigFileModalAction.bind(this,'cancel')}/>
+      tagList={tagList}
+      value={currentConfigFile}
+      visible={configFileModalVisible}
+      onOk={handleConfigFileModalAction.bind(this,'ok')}
+      onCancel={handleConfigFileModalAction.bind(this,'cancel')}/>
   </div>
 }
 export default ConfigCenter;

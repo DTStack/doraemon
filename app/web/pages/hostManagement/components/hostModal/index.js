@@ -1,28 +1,19 @@
 import React,{useState,useEffect,useRef} from 'react';
 import {isEmpty,isFunction,isNull} from 'lodash';
-import {Modal,Form,Input,Spin,message as Message} from 'antd';
+import {Modal,Form,Input,Spin,message as Message,Select} from 'antd';
 import {API} from '@/api';
 const FormItem = Form.Item;
 const {TextArea} = Input;
-
+const { Option } = Select
 
 const HostForm = Form.create()(
   (props)=>{
-    const {form,value} = props;
+    const {form,value,tagList=[]} = props;
     const {getFieldDecorator} = form;
-    const {hostIp,hostName,username,password,remark} = value;
+    const {hostIp,hostName,username,password,remark,tags=[]} = value;
+    const tagIds = tags.map(item=>`${item.id}`);
     const isAdd = isEmpty(value);
     return <Form labelCol={{span:5}} wrapperCol={{span:17}} >
-      <FormItem label="主机IP" hasFeedback>
-        {getFieldDecorator('hostIp',{
-          initialValue:hostIp,
-          rules:[{
-            required:true,message:'请输入主机IP'
-          }]
-        })(
-          <Input placeholder="请输入主机IP"/>
-        )}
-      </FormItem>
       <FormItem label="主机名" hasFeedback>
         {getFieldDecorator('hostName',{
           initialValue:hostName,
@@ -31,6 +22,16 @@ const HostForm = Form.create()(
           }]
         })(
           <Input placeholder="请输入主机名"/>
+        )}
+      </FormItem>
+      <FormItem label="主机IP" hasFeedback>
+        {getFieldDecorator('hostIp',{
+          initialValue:hostIp,
+          rules:[{
+            required:true,message:'请输入主机IP'
+          }]
+        })(
+          <Input placeholder="请输入主机IP"/>
         )}
       </FormItem>
       {isAdd&&<FormItem label="用户名" hasFeedback>
@@ -53,6 +54,21 @@ const HostForm = Form.create()(
           <Input type="password" placeholder="请输入密码"/>
         )}
       </FormItem>}
+      <FormItem label="标签" hasFeedback>
+        {getFieldDecorator('tagIds',{
+          initialValue:tagIds,
+          rules:[{
+            type: 'array',
+            required:true,message:'请选择标签'
+          }]
+        })(
+          <Select mode="multiple" placeholder="请选择标签">
+            {
+              tagList.map(item=><Option key={item.id}>{item.tagName}</Option>)
+            }
+          </Select>
+        )}
+      </FormItem>
       <FormItem label="备注" hasFeedback>
         {getFieldDecorator('remark',{
           initialValue:remark
@@ -64,11 +80,11 @@ const HostForm = Form.create()(
   }
 )
 const HostModal = (props)=>{
-  const {value,visible,onOk,onCancel} = props;
+  const {value,visible,onOk,onCancel,tagList} = props;
   const [confirmLoading,setConfirmLoading] = useState(false);
   const hostFormRef = useRef(null);
   const isAdd = isEmpty(value);
-  const {id,hostName,} = value;
+  const {id,hostName} = value;
   const handleModalOk = ()=>{
     if(!isNull(hostFormRef.current)){
       hostFormRef.current.validateFields((err,values)=>{
@@ -100,11 +116,12 @@ const HostModal = (props)=>{
   return <Modal
     title={isAdd?'新增主机':'编辑主机'}
     visible={visible}
+    maskClosable={false}
     confirmLoading={confirmLoading}
     onOk={handleModalOk}
     onCancel={handleModalCancel}>
     <Spin spinning={confirmLoading}>
-      {visible&&<HostForm value={value} ref={hostFormRef}/>}
+      {visible&&<HostForm tagList={tagList} value={value} ref={hostFormRef}/>}
     </Spin>
   </Modal>
 }

@@ -8,6 +8,8 @@ const Toolbox = () => {
   const initTerm = () => {
     // Terminal.applyAddon(fit)
     // Terminal.applyAddon(attach)
+    // let linkpath = '';
+    // let ws = new WebSocket(linkpath);
     let term = new Terminal({
       cols: 100,
       rows: 20,
@@ -25,6 +27,21 @@ const Toolbox = () => {
     term.prompt = () => {
       term.write(' ~ ')
     }
+    term.onKey(e => {
+      const printable = !e.domEvent.altKey && !e.domEvent.altGraphKey && !e.domEvent.ctrlKey && !e.domEvent.metaKey;
+      console.log('e.domEvent',e.domEvent)
+      if (e.domEvent.keyCode === 13) {
+        term.write(term);
+      } else if (e.domEvent.keyCode === 8) {
+          // Do not delete the prompt
+        if (term._core.buffer.x > 2) {
+          term.write('\b \b');
+        }
+      } else if (printable) {
+        term.write(e.key);
+      }
+      console.log(e.key);
+    });
     // 实际需要使用socket来交互
     if ('WebSocket' in window) {
       term.writeln('\x1b[1;1;32mThe Browser supports websocket!\x1b[0m')
@@ -34,12 +51,14 @@ const Toolbox = () => {
     } else {
       term.writeln('\x1b[1;1;31mThe Browser does not support websocket!\x1b[0m')
     }
-    term.textarea.onkeydown = function (e) {
-      console.log('User pressed key with keyCode: ', e.keyCode);
-      //console.log('编码',)
-      //ws.send(that.encodeBase64Content(e.keyCode.toString()));
-      //ws.send('bHM=');
+    term.textarea.onkeydown = function (ev) {
+      console.log('User pressed key with keyCode: ', ev);
     }
+    term.attachCustomKeyEventHandler(function (e) {
+      if (e.keyCode == 13) {                              
+        return false;
+      }
+    });
 
     
     // term.on('key', function(key, ev) {

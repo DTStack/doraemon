@@ -4,3 +4,7 @@ config/manifest.json
 run
 logs
 cache
+.history
+public
+resources
+app/view

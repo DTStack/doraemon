@@ -22,37 +22,37 @@ const SiderComponent = (props)=>{
     setCollapsed(!collapsed)
   }
   return (
-        <Sider
-          trigger={null} 
-          collapsible 
-          className="left-container"
-          collapsed={collapsed}
-          style={{height:'100%',background:'#262E36'}}
-        >
-          <div className="collapsed-wrap">
-            <Icon
-              className="trigger"
-              type={collapsed ? 'menu-unfold' : 'menu-fold'}
-              onClick={handleCollapseChange}
-            />
-          </div>
-          <Menu
-            mode="inline"
-            theme="dark"
-            style={{background:'#262E36'}}
-            selectedKeys={[pathname]}
-            >
-            {
-              navMenuList.map((nav)=>{
-                const {children,name,path,icon} = nav;
-                if(Array.isArray(children)&&children.length>0){
-                  return <SubMenu key={name} title={<span><Icon type={icon} /><span>Navigation Two</span></span>}>{children.map((navChild)=><Menu.Item key={navChild.path}><Link to={navChild.path}><Icon type={navChild.icon} /><span>{navChild.name}</span></Link></Menu.Item>)}</SubMenu>
-                }else{
-                  return <Menu.Item key={path}><Link to={path}><Icon type={icon} /><span>{name}</span></Link></Menu.Item>
-                }
-              })
+    <Sider
+      trigger={null} 
+      collapsible 
+      className="left-container"
+      collapsed={collapsed}
+      style={{height:'100%',background:'#262E36'}}
+    >
+      <div className="collapsed-wrap">
+        <Icon
+          className="trigger"
+          type={collapsed ? 'menu-unfold' : 'menu-fold'}
+          onClick={handleCollapseChange}
+        />
+      </div>
+      <Menu
+        mode="inline"
+        theme="dark"
+        style={{background:'#262E36'}}
+        selectedKeys={[pathname]}
+      >
+        {
+          navMenuList.map((nav)=>{
+            const {children,name,path,icon} = nav;
+            if(Array.isArray(children)&&children.length>0){
+              return <SubMenu key={name} title={<span><Icon type={icon} /><span>Navigation Two</span></span>}>{children.map((navChild)=><Menu.Item key={navChild.path}><Link to={navChild.path}><Icon type={navChild.icon} /><span>{navChild.name}</span></Link></Menu.Item>)}</SubMenu>
+            }else{
+              return <Menu.Item key={path}><Link to={path}><Icon type={icon} /><span>{name}</span></Link></Menu.Item>
             }
-          </Menu>
-        </Sider>)
+          })
+        }
+      </Menu>
+    </Sider>)
 }
 export default SiderComponent;

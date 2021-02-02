@@ -10,9 +10,10 @@ const {Option} = Select;
 const ConfigForm = Form.create()(
   (props)=>{
     const [hostList,setHostList] = useState([]);
-    const {form,value} = props;
+    const {form,value,tagList} = props;
     const {getFieldDecorator} = form;
-    const {filename,hostId,filePath,remark} = value;
+    const {filename,hostId,filePath,remark,tags={}} = value;
+    const { id ='' } = tags;
     const loadHostsData = ()=>{
       API.getHostList().then((response)=>{
         const {success,data} = response;
@@ -25,16 +26,6 @@ const ConfigForm = Form.create()(
       loadHostsData();
     },[])
     return <Form labelCol={{span:5}} wrapperCol={{span:17}} >
-      <FormItem label="文件名" hasFeedback>
-        {getFieldDecorator('filename',{
-          initialValue:filename,
-          rules:[{
-            required:true,message:'请输入文件名'
-          }]
-        })(
-          <Input placeholder="请输入文件名"/>
-        )}
-      </FormItem>
       <FormItem label="主机" hasFeedback>
         {getFieldDecorator('hostId',{
           initialValue:hostId,
@@ -52,6 +43,16 @@ const ConfigForm = Form.create()(
           </Select>
         )}
       </FormItem>
+      <FormItem label="文件名" hasFeedback>
+        {getFieldDecorator('filename',{
+          initialValue:filename,
+          rules:[{
+            required:true,message:'请输入文件名'
+          }]
+        })(
+          <Input placeholder="请输入文件名"/>
+        )}
+      </FormItem>
       <FormItem label="文件路径" hasFeedback>
         {getFieldDecorator('filePath',{
           initialValue:filePath,
@@ -60,6 +61,20 @@ const ConfigForm = Form.create()(
           }]
         })(
           <Input placeholder="请输入文件路径"/>
+        )}
+      </FormItem>
+      <FormItem label="标签" hasFeedback>
+        {getFieldDecorator('tagIds',{
+          initialValue:`${id}`,
+          rules:[{
+            required:true,message:'请选择标签'
+          }]
+        })(
+          <Select placeholder="请选择标签">
+            {
+              tagList.map(item=><Option key={item.id}>{item.tagName}</Option>)
+            }
+          </Select>
         )}
       </FormItem>
       <FormItem label="备注" hasFeedback>
@@ -73,11 +88,11 @@ const ConfigForm = Form.create()(
   }
 )
 const ConfigModal = (props)=>{
-  const {value,visible,onOk,onCancel} = props;
+  const {value,visible,onOk,onCancel,tagList} = props;
   const [confirmLoading,setConfirmLoading] = useState(false);
   const configFormRef = useRef(null);
   const isAdd = isEmpty(value);
-  const {id,filename,} = value;
+  const {id,filename} = value;
   const handleModalOk = ()=>{
     if(!isNull(configFormRef.current)){
       configFormRef.current.validateFields((err,values)=>{
@@ -113,7 +128,7 @@ const ConfigModal = (props)=>{
     onOk={handleModalOk}
     onCancel={handleModalCancel}>
     <Spin spinning={confirmLoading}>
-      {visible&&<ConfigForm value={value} ref={configFormRef}/>}
+      {visible&&<ConfigForm tagList={tagList} value={value} ref={configFormRef}/>}
     </Spin>
   </Modal>
 }

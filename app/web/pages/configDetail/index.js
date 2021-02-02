@@ -93,18 +93,18 @@ const ConfigDetail = (props)=>{
 
   },[])
   return <div className="page-config-detail">
-      <Loading loading={loading}>
+    <Loading loading={loading}>
       <Row className="mb-12">
-          <Col span={18}>
-            <Breadcrumb>
-              <Breadcrumb.Item><Link to="/page/config-center">配置中心</Link></Breadcrumb.Item>
-              <Breadcrumb.Item>配置详情</Breadcrumb.Item>
-            </Breadcrumb>
-          </Col>
-          <Col span={6} style={{textAlign:'right'}}>
-            <Button type="primary" loading={updating} icon="check" onClick={handleConfigSave}>应用</Button>
-          </Col>
-        </Row>
+        <Col span={18}>
+          <Breadcrumb>
+            <Breadcrumb.Item><Link to="/page/config-center">配置中心</Link></Breadcrumb.Item>
+            <Breadcrumb.Item>配置详情</Breadcrumb.Item>
+          </Breadcrumb>
+        </Col>
+        <Col span={6} style={{textAlign:'right'}}>
+          <Button type="primary" loading={updating} icon="check" onClick={handleConfigSave}>应用</Button>
+        </Col>
+      </Row>
       <div className="page-content">
         <Row gutter={16}>
           <Col span={18}>
