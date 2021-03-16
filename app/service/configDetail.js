@@ -16,6 +16,30 @@ class ConfigDetailService extends Service {
       }]
     })
   }
+  async getNoticeListById(id) {
+    const {ctx} = this;
+    return ctx.model.ConfigNoticeUrl.findAll({
+      attributes:['id','url'],
+      where:{
+        configId: id
+      },
+    })
+  }
+  async addNoticeUrl(id,url) {
+    const {ctx} = this;
+    return ctx.model.ConfigNoticeUrl.create({
+      configId: id,
+      url
+    })
+  }
+  async delNoticeUrl(id) {
+    const {ctx} = this;
+    return ctx.model.ConfigNoticeUrl.destroy({
+      where:{
+        id
+      }
+    })
+  }
   async getConfigSpecificInfo(id,attributes=[]){
     const {ctx,app} = this;
     ctx.model.ConfigManagement.belongsTo(ctx.model.HostManagement,{ foreignKey: 'host_id', targetKey: 'id'});

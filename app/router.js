@@ -38,6 +38,9 @@ module.exports = app => {
    * 配置详情
    */
   app.get('/api/config-detail/get-basic-info',app.controller.configDetail.getBasicInfo);
+  app.get('/api/config-detail/get-notice-list',app.controller.configDetail.getNoticeList)
+  app.post('/api/config-detail/add-config-notice-url',app.controller.configDetail.addNoticeUrl)
+  app.get('/api/config-detail/del-config-notice-url',app.controller.configDetail.delNoticeUrl)
   app.get('/api/config-detail/get-remote-config',app.controller.configDetail.getRemoteConfig);
   app.post('/api/config-detail/save',app.controller.configDetail.saveConfig)
   /**

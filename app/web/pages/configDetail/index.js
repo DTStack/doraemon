@@ -1,5 +1,5 @@
 import React,{useState,useRef,useEffect,useCallback} from 'react';
-import {Button,Row,Col,Card,Icon,Breadcrumb,Tooltip,message as Message,Typography} from 'antd';
+import {Button,Row,Col,Card,Icon,Breadcrumb,Tooltip,message as Message,Typography, Table, Modal, Input, message, Popconfirm} from 'antd';
 import {isEmpty,replace} from 'lodash';
 import {Controlled as CodeMirror} from 'react-codemirror2';
 import Loading from '@/components/loading';
@@ -8,7 +8,6 @@ import './style.scss';
 import { Link } from 'react-router-dom';
 
 const { Title,Paragraph } = Typography;
-
 const ConfigDetail = (props)=>{
   const {match} = props;
   const {params} = match;
@@ -21,7 +20,41 @@ const ConfigDetail = (props)=>{
   const [updating,setUpdating] = useState(false);
   const [errorMessage,setErrorMessage] = useState('');
   const [shell,setShell] = useState('#!/bin/bash\n');
+  const [dingTalkList,setDingTalkList] = useState([])
+  const [showAddRulModal,setShowAddRulModal] = useState(false)
+  const [noticeUrl,setNoticeUrl] = useState('')
   const {filename,filePath,hostIp,hostName,username,password,remark} = basicInfo;
+  const getTableColumns = ()=>{
+    return [
+      {
+        title: 'url',
+        key: 'url',
+        dataIndex: 'url',
+        width: 250
+      },
+      {
+        title: '操作',
+        key: 'id',
+        dataIndex: 'id',
+        width: 100,
+        render: (value) => {
+          return <Popconfirm title='确认是否删除？' onConfirm={() => {delUrl(value)}}>
+          <a >删除</a>
+        </Popconfirm>
+        }
+      }
+    ]
+  }
+  const delUrl = (id) => {
+    return API.delNoticeUrl({
+      id
+    }).then((response)=>{
+      const {success} = response;
+      if(success){
+        loadConfigNoticeUrlList()
+      }
+    })
+  }
   const loadBasicInfoData = useCallback(()=>{
     return API.getConfigDetail({
       id
@@ -33,6 +66,16 @@ const ConfigDetail = (props)=>{
       }
     })
   },[id]);
+  const loadConfigNoticeUrlList = useCallback(() => {
+    return API.getConfigNoticeUrlList({
+      id
+    }).then((response)=>{
+      const {success,data} = response;
+      if(success){
+        setDingTalkList(data)
+      }
+    })}, [id],
+  )
   const loadRemoteConfigInfo = useCallback(()=>{
     return API.getRemoteConfig({
       id
@@ -43,6 +86,26 @@ const ConfigDetail = (props)=>{
       }
     })
   },[id]);
+  const addNoticeUrl = () => {
+    if (noticeUrl.indexOf('https://oapi.dingtalk.com/robot/send?access_token=') > -1) {
+      message.error('url格式异常')
+      return
+    }
+    if (noticeUrl.length > 255) {
+      message.error('url长度不能超过255')
+      return
+    }
+    return API.addConfigNoticeUrl({
+      id,
+      url: noticeUrl
+    }).then((response)=>{
+      const {success,data} = response;
+      if(success){
+        setNoticeUrl('');
+        setShowAddRulModal(false);
+      }
+    })
+  }
   const handleConfigSave = ()=>{
     setUpdating(true);
     API.saveConfig({
@@ -87,7 +150,7 @@ const ConfigDetail = (props)=>{
     } catch(err){
       console.log(err)
     }
-    Promise.all([loadBasicInfoData(),loadRemoteConfigInfo()]).then(()=>{
+    Promise.all([loadBasicInfoData(),loadRemoteConfigInfo(),loadConfigNoticeUrlList()]).then(()=>{
       setLoading(false);
     });
 
@@ -174,6 +237,18 @@ const ConfigDetail = (props)=>{
             {!isEmpty(errorMessage)&&<Card title="错误信息" style={{marginTop:20}}>
               <div style={{color:'red'}}>{errorMessage}</div>
             </Card>}
+            <Card title="通知配置" className="card-form" style={{marginTop:20}}>
+              <Button onClick={() => {setShowAddRulModal(true)}}>添加通知</Button>
+              <Table columns={getTableColumns()} dataSource={dingTalkList} style={{marginTop:20}}></Table>
+              <Modal
+                visible={showAddRulModal}
+                title="添加url"
+                onOk={addNoticeUrl}
+                onCancel={() => {setNoticeUrl('');setShowAddRulModal(false)}}
+              >
+                <Input value={noticeUrl} onChange={(e) => {setNoticeUrl(e.target.value)}}></Input>
+              </Modal>
+            </Card>
           </Col>
         </Row>
       </div>

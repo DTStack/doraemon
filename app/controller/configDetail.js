@@ -13,6 +13,28 @@ class ConfigDetail extends Controller{
     if(_.isNil(data))   throw new Error('获取不到该文件的相关信息');
     ctx.body = app.utils.response(true,data);
   }
+  async getNoticeList() {
+    const {ctx,app} = this;
+    const {id} = ctx.query;
+    if(_.isNil(id)) throw new Error('缺少必要参数id');
+    const data = await ctx.service.configDetail.getNoticeListById(id);
+    ctx.body = app.utils.response(true,data);
+  }
+  async delNoticeUrl() {
+    const {ctx,app} = this;
+    const {id} = ctx.query;
+    if(_.isNil(id)) throw new Error('缺少必要参数id');
+    const data = await ctx.service.configDetail.delNoticeUrl(id);
+    ctx.body = app.utils.response(true,data);
+  }
+  async addNoticeUrl() {
+    const {ctx,app} = this;
+    const {id,url} = ctx.request.body;
+    if(_.isNil(id)) throw new Error('缺少必要参数id');
+    if(_.isNil(url)) throw new Error('缺少必要参数url');
+    const data = await ctx.service.configDetail.addNoticeUrl(id,url);
+    ctx.body = app.utils.response(true,data);
+  }
   async getRemoteConfig(){
     const {ctx,app} = this;
     const {id} = ctx.query;
