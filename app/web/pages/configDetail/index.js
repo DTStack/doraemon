@@ -111,7 +111,8 @@ const ConfigDetail = (props)=>{
     API.saveConfig({
       id,
       config,
-      shell
+      shell,
+      basicInfo
     }).then((response)=>{
       setUpdating(false);
       const {success,data,message} = response;

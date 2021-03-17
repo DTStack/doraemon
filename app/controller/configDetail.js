@@ -60,8 +60,12 @@ class ConfigDetail extends Controller{
   }
   async saveConfig(){
     const {ctx,app} = this;
-    const {id,config,shell} = ctx.request.body;
+    const {id,config,shell,basicInfo} = ctx.request.body;
     const configDetail = await ctx.service.configDetail.getConfigSpecificInfo(id,['id','filename','filePath',[app.Sequelize.col('host_management.host_ip'),'hostIp'],[app.Sequelize.col('host_management.username'),'username'],[app.Sequelize.col('host_management.password'),'password']]);
+    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id)
+    noticeUrlList.forEach(item => {
+      app.utils.sendMsg(item.url,basicInfo)
+    })
     const {filePath,filename,hostIp,username,password} = configDetail.dataValues;
     const configFilePath = path.join(__dirname,'../../cache/',filename);
     const shellPath = path.join(__dirname,'../../cache',`${filename}_shell`);
