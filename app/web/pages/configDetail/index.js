@@ -87,7 +87,7 @@ const ConfigDetail = (props)=>{
     })
   },[id]);
   const addNoticeUrl = () => {
-    if (noticeUrl.indexOf('https://oapi.dingtalk.com/robot/send?access_token=') > -1) {
+    if (noticeUrl.indexOf('https://oapi.dingtalk.com/robot/send?access_token=') < 0) {
       message.error('url格式异常')
       return
     }
@@ -103,6 +103,7 @@ const ConfigDetail = (props)=>{
       if(success){
         setNoticeUrl('');
         setShowAddRulModal(false);
+        loadConfigNoticeUrlList()
       }
     })
   }

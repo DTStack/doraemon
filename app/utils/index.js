@@ -29,17 +29,14 @@ const createFileSync = (paths,fileName,data) => {
   }
 }
 const sendMsg = async (webhook_url,basicInfo) => {
-  const { filename, filePath, hostIp, hostName, username, remark} = basicInfo
+  const { filename, filePath, hostIp, hostName } = basicInfo
   const feChatRobot = new ChatBot({
     webhook: webhook_url
   });
-  const mdTxt = "#### 配置中心变更通知\n" +
-                "文件名：" + filename  +
-                "\n文件路径：" + filePath  +
-                "\n主机IP：" + hostIp  +
-                "\n主机名：" + hostName  +
-                "\nSSH连接：" + username +"@"+ hostIp  +
-                "\n备注：" + remark 
+  const mdTxt = "Doraemon - 配置中心变更通知：\n\n\n" +
+                "主机：" + hostIp + "(" + hostName + ")\n\n" +
+                "文件名：" + filename + "\n\n\n" + 
+                "配置文件已更新 / 已删除"
   feChatRobot
     .markdown('配置中心变更通知', mdTxt)
     .catch(ex => console.error(ex));
