@@ -29,7 +29,7 @@ const createFileSync = (paths,fileName,data) => {
   }
 }
 const sendMsg = async (webhook_url,basicInfo) => {
-  const { filename, filePath, hostIp, hostName } = basicInfo
+  const { filename, hostIp, hostName } = basicInfo
   const feChatRobot = new ChatBot({
     webhook: webhook_url
   });
