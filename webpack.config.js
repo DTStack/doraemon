@@ -1,40 +1,36 @@
 'use strict';
 const path = require('path');
-const resolve = (filepath) => path.resolve(__dirname, filepath);
-
 const theme = require('./theme');
+const resolve = (filepath) => path.resolve(__dirname, filepath);
 module.exports = {
-  entry: {
-    app: resolve('./app/web/main.js')
-  },
-  dll: ['react', 'react-dom','react-redux','redux','redux-thunk','react-router','react-router-config','react-router-dom','react-router-redux'],
-  loaders: {
-    babel: {
-      include: [resolve('./app/web')],
-      exclude: [resolve('./node_modules')]
+    entry: {
+        app: resolve('app/web/main.tsx')
     },
-    less: {
-      include: [resolve('./app/web'), resolve('./node_modules')],
-      options: {
-        javascriptEnabled: true,
-        modifyVars:theme
-      }
+    dll: ['react', 'react-dom', 'react-redux', 'redux', 'redux-thunk', 'react-router', 'react-router-config', 'react-router-dom', 'react-router-redux'],
+    loaders: {
+        babel: {
+            include: [resolve('app/web'), resolve('node_modules')]
+        },
+        less: {
+            include: [resolve('./app/web'), resolve('./node_modules')],
+            options: {
+                javascriptEnabled: true,
+                modifyVars: theme
+            }
+        },
+        typescript: true,
+        scss: true,
+        css: true,
+        urlimage: true,
+        urlfont: true
     },
-    scss: true,
-    urlimage: true,
-    urlfont: true,
-    css:true
-  },
-  resolve:{
-    extensions: ['.js', '.jsx', '.scss', '.css','less' ,'.json'],
     alias: {
-      '@':resolve('./app/web')
+        '@': resolve('app/web')
+    },
+    plugins: {
+        imagemini: false
+    },
+    done() {
+        console.log('---webpack compile finish---');
     }
-  },
-  plugins:[
-    { imagemini: false }
-  ],
-  done() {
-    console.log('---webpack compile finish---');
-  }
 };
