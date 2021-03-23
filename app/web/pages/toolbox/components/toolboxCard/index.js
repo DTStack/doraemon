@@ -1,5 +1,6 @@
 import React from 'react';
-import { Icon, Dropdown, Menu, Tooltip } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Dropdown, Menu, Tooltip } from 'antd';
 import { builtInApp } from './constant';
 import UploadLogo from '../uplodadLogo';
 import DtTag from '@/components/dtTag';
@@ -53,15 +54,13 @@ const ToolBoxCard = (props) => {
             ? (
               helpUrl && (
                 <Tooltip title={`${appName}帮助文档`}>
-                  <Icon
-                    type="question-circle"
+                  <QuestionCircleOutlined
                     onClick={(e) => {
                       e.preventDefault(); // 阻止页面跳转
                       e.stopPropagation(); // 阻止事件冒泡（点击浏览量）
                       const otherWindow = window.open(helpUrl, '_blank');
                       otherWindow.opener = null;
-                    }}
-                  />
+                    }} />
                 </Tooltip>
               )
             ) : (
@@ -98,6 +97,6 @@ const ToolBoxCard = (props) => {
         </div>
       </div>
     </div>
-  )
+  );
 }
 export default ToolBoxCard;

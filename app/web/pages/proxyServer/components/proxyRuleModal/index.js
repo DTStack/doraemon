@@ -1,5 +1,8 @@
 import React from 'react';
-import { Modal, Form, Input, Tooltip, Button, message as Message, Select,Radio } from 'antd';
+import { RetweetOutlined } from '@ant-design/icons';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Modal, Input, Tooltip, Button, message as Message, Select, Radio } from 'antd';
 import PropsTypes from 'prop-types';
 import {urlReg} from '@/utils/reg';
 import { API } from '@/api'
@@ -66,92 +69,94 @@ class ProxyRuleModal extends React.PureComponent{
         span: 18
       }
     };
-    return (<Modal
-      title={`${editable?'编辑':'新增'}代理规则`}
-      visible={visible}
-      confirmLoading={confirmLoading}
-      onOk={this.handleModalOk}
-      className="proxyRuleModal"
-      onCancel={this.handleModalCancel}>
-      <Form {...formItemLayout} >
-        <Form.Item
-          label="IP">
-          {
-            getFieldDecorator('ip',{
-              rules:[{
-                required: true, message: '请输入IP'
-              }],
-              initialValue:ip||localIp
-            })(<Input placeholder="请输入ip"/>)
-          }
-        </Form.Item>
-        <Form.Item
-          label="代理模式">
-          {
-            getFieldDecorator('mode',{
-              rules:[{
-                required: true, message: '请输入IP'
-              }],
-              initialValue:mode===undefined ? '0': mode
-            })(<Radio.Group onChange={this.onChangeRadio}>
-              <Radio value="0">手动</Radio>
-              <Radio value="1">引用</Radio>
-            </Radio.Group>)
-          }
-        </Form.Item>
-        {
-          getFieldValue('mode')==='0' ? (
-            <Form.Item
-            label="目标服务地址">
+    return (
+      <Modal
+        title={`${editable?'编辑':'新增'}代理规则`}
+        visible={visible}
+        confirmLoading={confirmLoading}
+        onOk={this.handleModalOk}
+        className="proxyRuleModal"
+        onCancel={this.handleModalCancel}>
+        <Form {...formItemLayout} >
+          <Form.Item
+            label="IP">
             {
-              getFieldDecorator('target',{
-                rules: [{
-                  required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址'
+              getFieldDecorator('ip',{
+                rules:[{
+                  required: true, message: '请输入IP'
                 }],
-                initialValue:target
-              })(<Input placeholder="请输入正确格式的目标服务地址"/>)
+                initialValue:ip||localIp
+              })(<Input placeholder="请输入ip"/>)
             }
-            <Tooltip placement="topLeft" title={`快速填写默认目标地址默认为：http://${ip||localIp}:8080`}>
-              <Button shape="circle" className="retweet" size="small" onClick={this.onClickQuickInput} icon="retweet"/>
-            </Tooltip>
           </Form.Item>
-          ):(
-            <Form.Item
-            label="目标服务地址">
+          <Form.Item
+            label="代理模式">
             {
-              getFieldDecorator('target',{
-                rules:[
-                  { required: true, message: '请输入或选择目标服务地址'}
-                ],
-                initialValue: target ? target : undefined
-              })(
-                <Select
-                  placeholder="请输入目标服务地址"
-                >
-                  {
-                    targetAddrs.map(item => <Option key={item.id} value={item.target}>{item.remark}（{item.target}）</Option>)
-                  }
-                </Select>
-              )
+              getFieldDecorator('mode',{
+                rules:[{
+                  required: true, message: '请输入IP'
+                }],
+                initialValue:mode===undefined ? '0': mode
+              })(<Radio.Group onChange={this.onChangeRadio}>
+                <Radio value="0">手动</Radio>
+                <Radio value="1">引用</Radio>
+              </Radio.Group>)
             }
           </Form.Item>
-         
-          )
-        }
-       
-        <Form.Item
-          label="备注">
           {
-            getFieldDecorator('remark',{
-              rules:[{
-                required: false, message: '请输入备注'
-              }],
-              initialValue:remark
-            })(<TextArea rows={4} placeholder="请输入备注"/>)
+            getFieldValue('mode')==='0' ? (
+              <Form.Item
+              label="目标服务地址">
+              {
+                getFieldDecorator('target',{
+                  rules: [{
+                    required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址'
+                  }],
+                  initialValue:target
+                })(<Input placeholder="请输入正确格式的目标服务地址"/>)
+              }
+              <Tooltip placement="topLeft" title={`快速填写默认目标地址默认为：http://${ip||localIp}:8080`}>
+                <Button shape="circle" className="retweet" size="small" onClick={this.onClickQuickInput} icon={<RetweetOutlined />}/>
+              </Tooltip>
+            </Form.Item>
+            ):(
+              <Form.Item
+              label="目标服务地址">
+              {
+                getFieldDecorator('target',{
+                  rules:[
+                    { required: true, message: '请输入或选择目标服务地址'}
+                  ],
+                  initialValue: target ? target : undefined
+                })(
+                  <Select
+                    placeholder="请输入目标服务地址"
+                  >
+                    {
+                      targetAddrs.map(item => <Option key={item.id} value={item.target}>{item.remark}（{item.target}）</Option>)
+                    }
+                  </Select>
+                )
+              }
+            </Form.Item>
+           
+            )
           }
-        </Form.Item>
-      </Form>
-    </Modal>)
+         
+          <Form.Item
+            label="备注">
+            {
+              getFieldDecorator('remark',{
+                rules:[{
+                  required: false, message: '请输入备注'
+                }],
+                initialValue:remark
+              })(<TextArea rows={4} placeholder="请输入备注"/>)
+            }
+          </Form.Item>
+        </Form>
+      </Modal>
+    );
   }
 }
 

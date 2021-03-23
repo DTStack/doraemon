@@ -1,5 +1,6 @@
 import React,{useState} from 'react';
-import {Layout,Menu,Icon} from 'antd';
+import { Icon as LegacyIcon } from '@ant-design/compatible';
+import { Layout, Menu } from 'antd';
 import {Link} from 'react-router-dom';
 import './style.scss';
 const {Sider } = Layout;
@@ -30,7 +31,7 @@ const SiderComponent = (props)=>{
       style={{height:'100%',background:'#262E36'}}
     >
       <div className="collapsed-wrap">
-        <Icon
+        <LegacyIcon
           className="trigger"
           type={collapsed ? 'menu-unfold' : 'menu-fold'}
           onClick={handleCollapseChange}
@@ -46,13 +47,14 @@ const SiderComponent = (props)=>{
           navMenuList.map((nav)=>{
             const {children,name,path,icon} = nav;
             if(Array.isArray(children)&&children.length>0){
-              return <SubMenu key={name} title={<span><Icon type={icon} /><span>Navigation Two</span></span>}>{children.map((navChild)=><Menu.Item key={navChild.path}><Link to={navChild.path}><Icon type={navChild.icon} /><span>{navChild.name}</span></Link></Menu.Item>)}</SubMenu>
+              return <SubMenu key={name} title={<span><LegacyIcon type={icon} /><span>Navigation Two</span></span>}>{children.map((navChild)=><Menu.Item key={navChild.path}><Link to={navChild.path}><LegacyIcon type={navChild.icon} /><span>{navChild.name}</span></Link></Menu.Item>)}</SubMenu>;
             }else{
-              return <Menu.Item key={path}><Link to={path}><Icon type={icon} /><span>{name}</span></Link></Menu.Item>
+              return <Menu.Item key={path}><Link to={path}><LegacyIcon type={icon} /><span>{name}</span></Link></Menu.Item>;
             }
           })
         }
       </Menu>
-    </Sider>)
+    </Sider>
+  );
 }
 export default SiderComponent;

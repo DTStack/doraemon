@@ -1,5 +1,6 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
+import { PlusCircleOutlined } from '@ant-design/icons';
 import { Divider, Table, Button, Breadcrumb, Input, Modal, message as Message } from 'antd';
 import AddTagModal from './components/addTagModal'
 import DtTag from '@/components/dtTag';
@@ -175,7 +176,7 @@ const TagsManagement = (props) => {
           className="dt-form-shadow-bg"
           onSearch={handleSearchGroup}
         />
-        <Button className="fl-r" type="primary" icon="plus-circle" onClick={handleAddTag}>新增标签</Button>
+        <Button className="fl-r" type="primary" icon={<PlusCircleOutlined />} onClick={handleAddTag}>新增标签</Button>
       </div>
       <Table
         rowKey="id"
@@ -190,6 +191,6 @@ const TagsManagement = (props) => {
       />
       <AddTagModal visible={visible} data={editData} onOk={onHandleOkModal} onCancel={onHandleCancelModal}/>
     </div>
-  )
+  );
 }
 export default TagsManagement;

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { CheckOutlined } from '@ant-design/icons';
 import { Card, Row, Col, Breadcrumb, Button, message } from 'antd';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import { API } from '@/api';
@@ -112,7 +113,7 @@ const EditHosts = (props) => {
           <Button
             type="primary"
             loading={saveLoading}
-            icon="check"
+            icon={<CheckOutlined />}
             onClick={() => handleHostsSave({ is_push: 0 })}
           >保存</Button>
         </Col>
@@ -146,7 +147,7 @@ const EditHosts = (props) => {
         </Row>
       </div>
     </Loading>
-  )
+  );
 }
 
 export default EditHosts;

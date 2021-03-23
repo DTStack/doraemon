@@ -1,5 +1,6 @@
 import React, { useState,useEffect } from 'react';
-import { Layout, Menu, Icon } from 'antd';
+import { Icon as LegacyIcon } from '@ant-design/compatible';
+import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import logo from '../../asset/images/logo.png';
@@ -45,32 +46,33 @@ const HeaderComponent = (props) => {
     current.length&&setSelectedKeys([current[0].path])
   }, [pathname])
   return (
-        <Header className="dt-layout-header header_component">
-            <div className="dt-header-log-wrapper logo">
-                <Link to='/page/toolbox'>
-                    <img className="logo_img" src={logo} />
-                    <span className="system-title">Doraemon</span>
-                </Link>
-            </div>
-            <div className="menu_content">
-                <Menu
-                        mode="horizontal"
-                        theme="dark"
-                        onClick={handleSelectedKeys}
-                        selectedKeys={selectedKeys}>
-                        {
-                            navMenuList.map((nav) => {
-                              const { children, name, path, icon } = nav;
-                              if (Array.isArray(children) && children.length > 0) {
-                                return <SubMenu key={name} title={<span><Icon type={icon} /><span>Navigation Two</span></span>}>{children.map((navChild) => <Menu.Item key={navChild.path}><Link to={navChild.path}><Icon type={navChild.icon} /><span>{navChild.name}</span></Link></Menu.Item>)}</SubMenu>
-                              } else {
-                                return <Menu.Item key={path}><Link to={path}><Icon type={icon} /><span>{name}</span></Link></Menu.Item>
-                              }
-                            })
-                        }
-                  </Menu>
-                <div><span className="local-ip">{`本机IP: ${localIp}`}</span></div>
-            </div>
-        </Header>)
+    <Header className="dt-layout-header header_component">
+        <div className="dt-header-log-wrapper logo">
+            <Link to='/page/toolbox'>
+                <img className="logo_img" src={logo} />
+                <span className="system-title">Doraemon</span>
+            </Link>
+        </div>
+        <div className="menu_content">
+            <Menu
+                    mode="horizontal"
+                    theme="dark"
+                    onClick={handleSelectedKeys}
+                    selectedKeys={selectedKeys}>
+                    {
+                        navMenuList.map((nav) => {
+                          const { children, name, path, icon } = nav;
+                          if (Array.isArray(children) && children.length > 0) {
+                            return <SubMenu key={name} title={<span><LegacyIcon type={icon} /><span>Navigation Two</span></span>}>{children.map((navChild) => <Menu.Item key={navChild.path}><Link to={navChild.path}><LegacyIcon type={navChild.icon} /><span>{navChild.name}</span></Link></Menu.Item>)}</SubMenu>;
+                          } else {
+                            return <Menu.Item key={path}><Link to={path}><LegacyIcon type={icon} /><span>{name}</span></Link></Menu.Item>;
+                          }
+                        })
+                    }
+              </Menu>
+            <div><span className="local-ip">{`本机IP: ${localIp}`}</span></div>
+        </div>
+    </Header>
+  );
 }
 export default HeaderComponent;

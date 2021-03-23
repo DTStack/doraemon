@@ -1,5 +1,7 @@
 import React, { Fragment } from 'react';
-import { Form, Input, Typography } from 'antd';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Input, Typography } from 'antd';
 import { useSelector } from 'react-redux';
 const { Paragraph } = Typography;
 const FormItem = Form.Item;

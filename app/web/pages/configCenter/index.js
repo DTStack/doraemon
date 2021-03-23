@@ -1,4 +1,5 @@
 import React,{Fragment,useState,useEffect} from 'react';
+import { PlusCircleOutlined } from '@ant-design/icons';
 import {Button,Divider,Table,message as Message,Popconfirm} from 'antd';
 import {isEmpty} from 'lodash';
 import { Link } from 'react-router-dom';
@@ -155,34 +156,36 @@ const ConfigCenter = ()=>{
   useEffect(() => {
     loadMainData();
   }, [tablePagination.current,...tablePagination.tags])
-  return <div className="page-config-center">
-    <div className="header_title">
-      <span className="title">
-            配置中心
-      </span>
-      <Button icon="plus-circle" type="primary" onClick={handleConfigFileAdd}>新增配置</Button>
+  return (
+    <div className="page-config-center">
+      <div className="header_title">
+        <span className="title">
+              配置中心
+        </span>
+        <Button icon={<PlusCircleOutlined />} type="primary" onClick={handleConfigFileAdd}>新增配置</Button>
+      </div>
+      <div>
+        <Table
+          rowKey="id"
+          className="dt-table-fixed-base"
+          scroll={{ y: true }}
+          style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
+          columns={getTableColumns()}
+          dataSource={configList}
+          loading={loading}
+          pagination={{
+            ...tablePagination,
+            showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{tablePagination.pageSize}条</span>
+          }}
+          onChange={handleTableChange}/>
+      </div>
+      <ConfigFileModal
+        tagList={tagList}
+        value={currentConfigFile}
+        visible={configFileModalVisible}
+        onOk={handleConfigFileModalAction.bind(this,'ok')}
+        onCancel={handleConfigFileModalAction.bind(this,'cancel')}/>
     </div>
-    <div>
-      <Table
-        rowKey="id"
-        className="dt-table-fixed-base"
-        scroll={{ y: true }}
-        style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
-        columns={getTableColumns()}
-        dataSource={configList}
-        loading={loading}
-        pagination={{
-          ...tablePagination,
-          showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{tablePagination.pageSize}条</span>
-        }}
-        onChange={handleTableChange}/>
-    </div>
-    <ConfigFileModal
-      tagList={tagList}
-      value={currentConfigFile}
-      visible={configFileModalVisible}
-      onOk={handleConfigFileModalAction.bind(this,'ok')}
-      onCancel={handleConfigFileModalAction.bind(this,'cancel')}/>
-  </div>
+  );
 }
 export default ConfigCenter;

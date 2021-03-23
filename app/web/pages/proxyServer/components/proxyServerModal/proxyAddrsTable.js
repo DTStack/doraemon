@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Button, Icon, Input, message, Table } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Input, message, Table } from 'antd';
 
 const ProxyAddrsTable = (props) => {
   const { value, onChange } = props;
@@ -126,10 +127,10 @@ const ProxyAddrsTable = (props) => {
         pagination={false}
       />
       <Button className="mt-10" type="dashed" block onClick={handleAddRow}>
-        <Icon type="plus" />添加
+        <PlusOutlined />添加
       </Button>
     </div>
-  )
+  );
 }
 
 export default ProxyAddrsTable;

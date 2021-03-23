@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
-import { Divider, Table, Button, Breadcrumb, Input, Typography, Modal, Icon } from 'antd';
+import { PlusCircleOutlined } from '@ant-design/icons';
+import { Divider, Table, Button, Breadcrumb, Input, Typography, Modal } from 'antd';
 import { API } from '@/api';
 import { useSelector } from 'react-redux';
 
@@ -184,7 +185,7 @@ const SwitchHostsList = (props) => {
           className="dt-form-shadow-bg"
           onSearch={handleSearchGroup}
         />
-        <Button className="fl-r" type="primary" icon="plus-circle" onClick={handleAddHosts}>新增分组</Button>
+        <Button className="fl-r" type="primary" icon={<PlusCircleOutlined />} onClick={handleAddHosts}>新增分组</Button>
       </div>
       <Table
         rowKey="id"
@@ -198,6 +199,6 @@ const SwitchHostsList = (props) => {
         onChange={handleTableChange}
       />
     </div>
-  )
+  );
 }
 export default SwitchHostsList;

@@ -1,6 +1,8 @@
 import React,{useState,useEffect,useRef} from 'react';
 import {isEmpty,isFunction,isNull} from 'lodash';
-import {Modal,Form,Input,Select,Spin,message as Message} from 'antd';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Modal, Input, Select, Spin, message as Message } from 'antd';
 import {API} from '@/api';
 const FormItem = Form.Item;
 const {TextArea} = Input;

@@ -1,6 +1,8 @@
 import React,{useState,useEffect} from 'react';
 import {isFunction} from 'lodash';
-import {Modal,Form,Input,message as Message} from 'antd';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Modal, Input, message as Message } from 'antd';
 import ColorPicker from '../colorPicker';
 import {API} from '@/api';
 const FormItem = Form.Item;

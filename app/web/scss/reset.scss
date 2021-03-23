@@ -6,14 +6,6 @@ body,
 
 // table 滚动状态下的样式, small table
 .ant-table {
-    .ant-table-scroll {
-        .ant-table-header {
-            margin-bottom: -16px;
-            padding-bottom: 0px;
-            min-width: 0px;
-            overflow: scroll hidden;
-        }
-    }
     .ant-table-small > .ant-table-content > .ant-table-body {
         margin: 0;
         & > table > {
@@ -45,6 +37,11 @@ body,
     }
     .ant-spin-container > .ant-table-pagination {
         background-color: #fff;
+    }
+    .ant-table-pagination {
+        &.ant-pagination.mini {
+            align-items: center;
+        }
     }
 }
 
@@ -104,3 +101,15 @@ body,
 .ant-select-selection {
     border-radius: 2px;
 }
+.ant-input-search {
+    & > .ant-input-group > .ant-input-group-addon:last-child {
+        .ant-input-search-button.ant-btn-icon-only {
+            padding: 0;
+            border: 0;
+            border-radius: 0 2px 2px 0;
+        }
+    }
+}
+// .dt-form-shadow-bg {
+
+// }

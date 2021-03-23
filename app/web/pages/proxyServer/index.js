@@ -1,4 +1,5 @@
 import React from 'react';
+import { PlusOutlined } from '@ant-design/icons';
 import { Input, Button, Typography, Tag, Table, message as Message, Divider, Modal, Badge, Popconfirm, Switch, Tooltip,notification } from 'antd';
 import { API } from '@/api';
 import ProxyServerModal from './components/proxyServerModal';
@@ -440,16 +441,18 @@ class ProxyServer extends React.PureComponent {
         </React.Fragment>)
       }
     }]
-    return <div style={{ padding: '0 10px' }}>
-      <div className="text-right marginBottom12"><Button icon="plus" size="small" type="primary" onClick={this.handleAddRule}>添加规则</Button></div>
-      <Table
-        size="small"
-        rowKey={(row) => row.id}
-        loading={subTableLoading}
-        columns={columns}
-        dataSource={subTableData}
-        pagination={false} />
-    </div>
+    return (
+      <div style={{ padding: '0 10px' }}>
+        <div className="text-right marginBottom12"><Button icon={<PlusOutlined />} size="small" type="primary" onClick={this.handleAddRule}>添加规则</Button></div>
+        <Table
+          size="small"
+          rowKey={(row) => row.id}
+          loading={subTableLoading}
+          columns={columns}
+          dataSource={subTableData}
+          pagination={false} />
+      </div>
+    );
   }
 
   // 添加规则
@@ -553,69 +556,72 @@ class ProxyServer extends React.PureComponent {
       }
     }];
 
-    return (<div className="page-proxy-server">
-      <div className="title_wrap">
-        <div>
-          <Search
-            placeholder="请输入项目名称搜索"
-            value={search}
-            onChange={this.onChangeSearch}
-            onSearch={this.onSearchProject}
-            className="search dt-form-shadow-bg" />
-          {
-            commonTagList.length ? (<span style={{ marginRight: 8, marginLeft: 20 }}>常用项目:</span>) : null
-          }
-          {commonTagList.map(tag => (
-            <CheckableTag
-              key={tag}
-              checked={tag == selectedTag}
-              onChange={checked => this.handleChange(tag, checked)}
-            >
-              {tag}
-            </CheckableTag>
-          ))}
+    return (
+      <div className="page-proxy-server">
+        <div className="title_wrap">
+          <div>
+            <Search
+              placeholder="请输入项目名称搜索"
+              value={search}
+              onChange={this.onChangeSearch}
+              onSearch={this.onSearchProject}
+              className="search dt-form-shadow-bg" />
+            {
+              commonTagList.length ? (<span style={{ marginRight: 8, marginLeft: 20 }}>常用项目:</span>) : null
+            }
+            {commonTagList.map(tag => (
+              <CheckableTag
+                key={tag}
+                checked={tag == selectedTag}
+                onChange={checked => this.handleChange(tag, checked)}
+              >
+                {tag}
+              </CheckableTag>
+            ))}
+          </div>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
         </div>
-        <Button type="primary" icon="plus" onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
-      </div>
-      <Table
-        rowKey={(row) => row.id}
-        loading={mainTableLoading}
-        columns={columns}
-        scroll={{ y: true }}
-        style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
-        dataSource={maintTableList}
-        className="dt-table-fixed-base"
-        expandedRowKeys={expandedRowKeys}
-        expandedRowRender={this.tableExpandedRowRender}
-        onExpand={this.handleTableExpandChange}
-        onChange={this.handleTableChange}
-        pagination={{
-          size: 'small',
-          total: maintTableTotal,
-          current: mainTableParams.pageNo,
-          pageSize: mainTableParams.pageSize,
-          showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{mainTableParams.pageSize}条</span>
-        }} />
+        <Table
+          rowKey={(row) => row.id}
+          loading={mainTableLoading}
+          columns={columns}
+          scroll={{ y: 'calc(100vh - 64px - 40px - 44px - 44px - 67px)' }}
+          // style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
+          dataSource={maintTableList}
+          className="dt-table-fixed-base"
+          expandedRowKeys={expandedRowKeys}
+          expandedRowRender={this.tableExpandedRowRender}
+          onExpand={this.handleTableExpandChange}
+          onChange={this.handleTableChange}
+          pagination={{
+            size: 'small',
+            showSizeChanger: false,
+            total: maintTableTotal,
+            current: mainTableParams.pageNo,
+            pageSize: mainTableParams.pageSize,
+            showTotal: (total) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{mainTableParams.pageSize}条</span>
+          }} />
 
-      {proxyServerModalVisible && <ProxyServerModal
-        ref={(modal) => this.ProxyServerModal = modal}
-        editable={JSON.stringify(currentProxyServer) !== '{}'}
-        proxyServer={currentProxyServer}
-        confirmLoading={proxyServerModalConfirmLoading}
-        visible={proxyServerModalVisible}
-        onOk={this.handleProxyServerModalOk}
-        onCancel={this.handleProxyServerModalCancel} />}
-      <ProxyRuleModal
-        ref={(modal) => this.ProxyRuleModal = modal}
-        localIp={localIp}
-        editable={JSON.stringify(currentProxyRule) !== '{}'}
-        proxyServer={currentProxyRule}
-        targetAddrs={this.state.targetAddrs}
-        confirmLoading={proxyRuleModalConfirmLoading}
-        visible={proxyRuleModalVisible}
-        onOk={this.handleProxyRuleModalOk}
-        onCancel={this.handleProxyRuleModalCancel} />
-    </div>)
+        {proxyServerModalVisible && <ProxyServerModal
+          ref={(modal) => this.ProxyServerModal = modal}
+          editable={JSON.stringify(currentProxyServer) !== '{}'}
+          proxyServer={currentProxyServer}
+          confirmLoading={proxyServerModalConfirmLoading}
+          visible={proxyServerModalVisible}
+          onOk={this.handleProxyServerModalOk}
+          onCancel={this.handleProxyServerModalCancel} />}
+        <ProxyRuleModal
+          ref={(modal) => this.ProxyRuleModal = modal}
+          localIp={localIp}
+          editable={JSON.stringify(currentProxyRule) !== '{}'}
+          proxyServer={currentProxyRule}
+          targetAddrs={this.state.targetAddrs}
+          confirmLoading={proxyRuleModalConfirmLoading}
+          visible={proxyRuleModalVisible}
+          onOk={this.handleProxyRuleModalOk}
+          onCancel={this.handleProxyRuleModalCancel} />
+      </div>
+    );
   }
 }
 function mapStateToProps(state) {

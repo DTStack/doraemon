@@ -21,6 +21,8 @@ import SwitchHostsEdit from '@/pages/switchHosts/editHosts'
 
 import TagsManagement from '@/pages/tagsManagement'
 
+import Test from '@/pages/test';
+
 import NotFound from '@/pages/exception/404';
 const urlPrefix = '/page'
 const routes = [
@@ -72,6 +74,10 @@ const routes = [
       {
         path: `${urlPrefix}/tags`,
         component: TagsManagement
+      },
+      {
+        path: `${urlPrefix}/test`,
+        component: Test
       },
       {
         path: '*',

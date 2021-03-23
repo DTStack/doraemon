@@ -1,5 +1,7 @@
 import React, { forwardRef } from 'react';
-import { Modal, Form, Input, Table } from 'antd';
+import { Form } from '@ant-design/compatible';
+import '@ant-design/compatible/assets/index.css';
+import { Modal, Input, Table } from 'antd';
 import PropsTypes from 'prop-types';
 import { urlReg } from '@/utils/reg';
 import ProxyAddrsTable from './proxyAddrsTable';
