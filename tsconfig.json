@@ -24,17 +24,11 @@
         ]
     },
     "exclude": [
-        "public",
-        "app/web",
-        "app/public",
-        "app/view",
-        "node_modules"
+        "node_modules",
+        "app/web/view/*"
     ],
     "include": [
-        "index.ts",
-        "app/**/*.ts",
-        "config/**/*.ts",
-        "mock/**/*.ts",
-        "test/**/*.ts"
+        "./app/web/**/*.ts",
+        "./app/web/**/*.tsx",
     ],
 }
