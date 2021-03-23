@@ -4,7 +4,6 @@ import thunk from 'redux-thunk';
 import global from './reducer';
 import { API } from '@/api';
 
-declare var EASY_ENV_IS_DEV: any;
 const appReducer: any = {
     global
 };
@@ -15,6 +14,6 @@ export const create = (initalState: any) => {
         combineReducers({ ...appReducer }),
         EASY_ENV_IS_DEV ? composeWithDevTools(applyMiddleware(...middlewares)) : applyMiddleware(...middlewares)
     )
-};;
+};
 
 

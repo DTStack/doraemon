@@ -95,4 +95,5 @@ class Http {
         }
     }
 }
+/* eslint-enable */
 export default new Http()

@@ -11,8 +11,7 @@ import routes from './router';
 import '@/scss/index.scss';
 import '@/asset/font/iconfont.css';
 declare var window: any;
-declare var EASY_ENV_IS_DEV: any;
-declare var EASY_ENV_IS_NODE: any;
+declare var module: any;
 
 const clientRender = () => {
     const store = create(window.__INITIAL_STATE__);
@@ -20,7 +19,7 @@ const clientRender = () => {
     const Entry = () => (<div style={{ height: '100%' }}>
         <Provider store={store}>
             <BrowserRouter>
-                <App url={url} />
+                <App />
             </BrowserRouter>
         </Provider>
     </div>
@@ -28,8 +27,8 @@ const clientRender = () => {
     const render = (Page: any) => {
         ReactDOM.hydrate(EASY_ENV_IS_DEV ? <AppContainer><Page /></AppContainer> : <Page />, document.getElementById('app'));
     };
-    if (EASY_ENV_IS_DEV && (module as any).hot) {
-        (module as any).hot.accept();
+    if (EASY_ENV_IS_DEV && module.hot) {
+        module.hot.accept();
     }
     render(Entry);
 };
@@ -53,7 +52,7 @@ const serverRender = (context: any, options: any) => {
                 <div style={{ height: '100%' }}>
                     <Provider store={store}>
                         <StaticRouter location={url} context={{}}>
-                            <App url={url} />
+                            <App />
                         </StaticRouter>
                     </Provider>
                 </div>

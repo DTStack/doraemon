@@ -1,21 +1,15 @@
 'use strict';
 const path = require('path');
-const resolve = (filepath) => path.resolve(__dirname, filepath);
-
 const theme = require('./theme');
+const resolve = (filepath) => path.resolve(__dirname, filepath);
 module.exports = {
     entry: {
-        app: resolve('./app/web/main.js')
+        app: resolve('app/web/main.tsx')
     },
     dll: ['react', 'react-dom', 'react-redux', 'redux', 'redux-thunk', 'react-router', 'react-router-config', 'react-router-dom', 'react-router-redux'],
     loaders: {
         babel: {
-            include: [resolve('./app/web')],
-            exclude: [resolve('./node_modules')]
-        },
-        typescript: {
-            include: [resolve('./app/web')],
-            exclude: [resolve('./node_modules')]
+            include: [resolve('app/web'), resolve('node_modules')]
         },
         less: {
             include: [resolve('./app/web'), resolve('./node_modules')],
@@ -24,20 +18,18 @@ module.exports = {
                 modifyVars: theme
             }
         },
+        typescript: true,
         scss: true,
+        css: true,
         urlimage: true,
-        urlfont: true,
-        css: true
+        urlfont: true
     },
-    resolve: {
-        extensions: ['ts', 'tsx', '.js', '.jsx', '.scss', '.css', 'less', '.json'],
-        alias: {
-            '@': resolve('./app/web')
-        }
+    alias: {
+        '@': resolve('app/web')
     },
-    plugins: [
-        { imagemini: false }
-    ],
+    plugins: {
+        imagemini: false
+    },
     done() {
         console.log('---webpack compile finish---');
     }

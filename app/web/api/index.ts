@@ -1,25 +1,23 @@
-import _ from 'lodash';
-import API_URL from './url';
 import http from '@/utils/http';
-
-function mapUrlObjToFuncObj(urlObj: any) {
+import API_URL from './url';
+const { keys, assign } = Object;
+let combineApi = assign({}, API_URL);
+function mapUrlObjToFuncObj (urlObj: any) {
     const API: any = {};
-    _.keys(urlObj).forEach((key) => {
+    const URL: any = {};
+    keys(urlObj).forEach((key) => {
         const item = urlObj[key]
-        API[key] = function (params: any) {
-            return http[item.method](item.url, params)
+        URL[key] = item.url
+        API[key] = async function (params: any) {
+            // eslint-disable-next-line no-return-await
+            return await http[item.method.toLowerCase()](item.url, params)
         }
     });
-    return API;
+    return { API, URL };
 }
-function mapUrlObjToStrObj(urlObj: any) {
-    const Url: any = {};
-    _.keys(urlObj).forEach((key) => {
-        const item = urlObj[key]
-        Url[key] = item.url
-    });
-    return Url;
-}
+const { API, URL } = mapUrlObjToFuncObj(combineApi);
+export {
+    API,
+    URL
+};
 
-export const API = mapUrlObjToFuncObj(API_URL);
-export const URL = mapUrlObjToStrObj(API_URL);

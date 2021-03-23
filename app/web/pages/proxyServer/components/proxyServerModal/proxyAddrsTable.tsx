@@ -42,7 +42,7 @@ const ProxyAddrsTable = (props: any) => {
     ];
 
     // 触发onChange
-    const onDataSourceChange = (dataSource: any) => {
+    const onDataSourceChange = (dataSource: any, index?: any) => {
         onChange(dataSource);
     }
 

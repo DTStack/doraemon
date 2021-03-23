@@ -68,7 +68,7 @@ const themes: any = [
     'yonce.css',
     'zenburn.css'
 ];
-function DtCodemirror(props) {
+function DtCodemirror(props: any) {
     const { fileType = 'nginx' } = props;
     const defaultTheme = 'ayu-dark.css'
     const [theme, setThemes] = useState(defaultTheme)
@@ -103,7 +103,7 @@ function DtCodemirror(props) {
             }
         >
             {
-                themes.map(item => <Option value={item}>{item}</Option>)
+                themes.map((item: any) => <Option value={item}>{item}</Option>)
             }
         </Select>
     </div>)

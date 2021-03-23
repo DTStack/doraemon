@@ -42,7 +42,7 @@ const TagsManagement = (props: any) => {
                     totalElement: data.count || 0
                 });
             } else {
-                message.error(msg);
+                Message.error(msg);
             }
         }).finally(()=>{
             setTableLoading(false);

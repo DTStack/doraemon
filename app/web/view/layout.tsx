@@ -1,5 +1,4 @@
 import * as React from 'react';
-declare var EASY_ENV_IS_NODE: any;
 export default class Layout extends React.Component<any, any> {
     render() {
         if (EASY_ENV_IS_NODE) {

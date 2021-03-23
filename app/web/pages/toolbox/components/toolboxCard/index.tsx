@@ -20,7 +20,7 @@ const ToolBoxCard = (props: any) => {
     }
 
     // 点击操作
-    const handleMenuClick = ({ key, domEvent }) => {
+    const handleMenuClick = ({ key, domEvent }: any) => {
         domEvent.stopPropagation();
         switch (key) {
         case 'edit':
@@ -58,7 +58,7 @@ const ToolBoxCard = (props: any) => {
                                         onClick={(e: any) => {
                                             e.preventDefault(); // 阻止页面跳转
                                             e.stopPropagation(); // 阻止事件冒泡（点击浏览量）
-                                            const otherWindow = window.open(helpUrl, '_blank');
+                                            const otherWindow: any = window.open(helpUrl, '_blank');
                                             otherWindow.opener = null;
                                         }}
                                     />

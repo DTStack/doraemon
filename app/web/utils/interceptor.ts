@@ -1,6 +1,6 @@
 import { notification } from 'antd'
-let operator = 1; let preTitle: any; let preMessage: any; let preType: any;
-const singletonNotification = (title: any, message: any, type: any) => {
+let operator = 1; let preTitle: any; let preMessage: any; let preType: string;
+const singletonNotification = (title: any, message: any, type: string) => {
     if ((preTitle != title) || (preMessage != message) || (preType != type) || (operator === 1)) {
         preTitle = title;
         preMessage = message;

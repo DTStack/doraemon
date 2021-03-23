@@ -1,4 +1,4 @@
-import pic_404 from '../../asset/images/pic_404.png';
+import pic_404 from '@/asset/images/pic_404.png';
 const config: any = {
     403: {
         img: pic_404,
