@@ -29,6 +29,8 @@ const SwitchHostsList = (props) => {
   const [modalVisibile, setModalVisibile] = useState(false)
   const [dingTalkList,setDingTalkList] = useState([])
   const [dingHooks, setDingHooks] = useState('')
+  const [talkListLoading, setTalkListLoading] = useState(false)
+  const [hostId, setHostId] = useState()
 
   useEffect(() => {
     getHostsList();
@@ -48,6 +50,32 @@ const SwitchHostsList = (props) => {
         message.error(msg);
       }
       setTableLoading(false);
+    })
+  }
+
+  const loadHostsNoticeUrlList = (id) => {
+    setTalkListLoading(true)
+    API.getConfigNoticeUrlList({id, type: 'switch-hosts'}).then((res)=>{
+      const {success,data} = res;
+      setTalkListLoading(false)
+      if(success){
+        setDingTalkList(data)
+      }
+    })
+  }
+
+  const handleConfigDingTalk = (id) => {
+    setModalVisibile(true)
+    setHostId(id)
+    loadHostsNoticeUrlList(id)
+  }
+
+  const delDingTalk = (id) => {
+    API.delNoticeUrl({id, type: 'switch-hosts'}).then((res)=>{
+      const {success} = res;
+      if(success){
+        loadHostsNoticeUrlList(hostId)
+      }
     })
   }
 
@@ -95,6 +123,8 @@ const SwitchHostsList = (props) => {
         key: 'actions',
         width:200,
         render: (text, record) => {
+          const { id } = record
+
           return <Fragment>
             <a onClick={() => handleEditHosts(record)}>编辑</a>
             {/* {
@@ -108,7 +138,7 @@ const SwitchHostsList = (props) => {
               <a onClick={() => handleDeleteHosts(record)}>删除</a>
             </Fragment>
             <Divider type="vertical" />
-              <a onClick={() => setModalVisibile(true)}>钉钉webhooks</a>
+              <a onClick={() => handleConfigDingTalk(id)}>钉钉webhooks</a>
           </Fragment>
         }
       }
@@ -121,17 +151,18 @@ const SwitchHostsList = (props) => {
       title: 'url',
       key: 'url',
       dataIndex: 'url',
-      width: '70%',
-      ellipsis: true
+      width: '70%'
     },
     {
       title: '操作',
       key: 'operation',
       dataIndex: 'operation',
       width: '30%',
-      render: (value) => {
+      render: (value, record) => {
+        const { id } = record
+
         return (
-          <Popconfirm title='确认是否删除？' onConfirm={() => {}}>
+          <Popconfirm title='确认是否删除？' onConfirm={() => delDingTalk(id)}>
             <a >删除</a>
           </Popconfirm>
       )
@@ -209,6 +240,19 @@ const SwitchHostsList = (props) => {
       message.error('url长度不能超过255')
       return
     }
+    API.addConfigNoticeUrl({id: hostId,url: dingHooks,type: 'switch-hosts'}).then((res)=>{
+      const { success } = res;
+      if(success){
+        setDingHooks('');
+        loadHostsNoticeUrlList(hostId)
+      }
+    })
+  }
+
+  const handleCloseModal = () => {
+    setModalVisibile(false)
+    setDingTalkList([])
+    setDingHooks('')
   }
 
   return (
@@ -241,8 +285,8 @@ const SwitchHostsList = (props) => {
         title="钉钉webhooks配置"
         visible={modalVisibile}
         width={650}
-        onOk={() => {}}
-        onCancel={() => setModalVisibile(false)}
+        onOk={handleCloseModal}
+        onCancel={handleCloseModal}
       >
         <Row type="flex" align="middle">
           <Col span={5} className="text-right">
@@ -250,6 +294,7 @@ const SwitchHostsList = (props) => {
           </Col>
           <Col span={16} className="flex">
             <Input 
+              value={dingHooks}
               placeholder="请输入webhook" 
               allowClear 
               onChange={({target:{value}}) => setDingHooks(value)}
@@ -266,9 +311,11 @@ const SwitchHostsList = (props) => {
         <Row className="mt-12">
           <Col offset={5} span={16}>
             <Table
+              rowKey="id"
               columns={dingHooksColumns}
               dataSource={dingTalkList}
               pagination={false}
+              loading={talkListLoading}
               scroll={{ y: 'calc(100vh - 550px)' }}
               className="dt-table-border dt-table-last-row-noborder"
             />

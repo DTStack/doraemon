@@ -41,10 +41,24 @@ const sendMsg = async (webhook_url,basicInfo) => {
     .markdown('配置中心变更通知', mdTxt)
     .catch(ex => console.error(ex));
 }
+const sendHostsUpdateMsg = async (webhook_url, basicInfo, ip) => {
+  const { groupName, groupApi } = basicInfo
+  const feChatRobot = new ChatBot({
+    webhook: webhook_url
+  });
+  const mdTxt = "Doraemon - Hosts管理变更通知：\n\n\n" +
+                "分组名称：" + groupName + "\n\n\n" +
+                "API：" + ip + groupApi + "\n\n\n" +
+                "配置文件已更新 / 已删除"
+  feChatRobot
+    .markdown('Hosts管理变更通知', mdTxt)
+    .catch(ex => console.error(ex));
+}
 module.exports = {
   createFolder,
   createFileSync,
   sendMsg,
+  sendHostsUpdateMsg,
   response:(success,data=null,message)=>{
     if(success){
       message='执行成功';
