@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
-import { Divider, Table, Button, Breadcrumb, Input, Typography, Modal, Icon } from 'antd';
+import { Divider, Table, Button, Breadcrumb, Input, Typography, Modal, Icon, Row, Col, Popconfirm, message } from 'antd';
 import { API } from '@/api';
 import { useSelector } from 'react-redux';
 
@@ -26,6 +26,9 @@ const SwitchHostsList = (props) => {
   }
   const [tableLoading, setTableLoading] = useState(false);
   const { serverInfo } = useSelector((state) => state.global);
+  const [modalVisibile, setModalVisibile] = useState(false)
+  const [dingTalkList,setDingTalkList] = useState([])
+  const [dingHooks, setDingHooks] = useState('')
 
   useEffect(() => {
     getHostsList();
@@ -90,7 +93,7 @@ const SwitchHostsList = (props) => {
         title: '操作',
         dataIndex: 'actions',
         key: 'actions',
-        width:160,
+        width:200,
         render: (text, record) => {
           return <Fragment>
             <a onClick={() => handleEditHosts(record)}>编辑</a>
@@ -104,12 +107,38 @@ const SwitchHostsList = (props) => {
               <Divider type="vertical" />
               <a onClick={() => handleDeleteHosts(record)}>删除</a>
             </Fragment>
+            <Divider type="vertical" />
+              <a onClick={() => setModalVisibile(true)}>钉钉webhooks</a>
           </Fragment>
         }
       }
     ];
     return columns;
   }
+
+  const dingHooksColumns = [
+    {
+      title: 'url',
+      key: 'url',
+      dataIndex: 'url',
+      width: '70%',
+      ellipsis: true
+    },
+    {
+      title: '操作',
+      key: 'operation',
+      dataIndex: 'operation',
+      width: '30%',
+      render: (value) => {
+        return (
+          <Popconfirm title='确认是否删除？' onConfirm={() => {}}>
+            <a >删除</a>
+          </Popconfirm>
+      )
+      }
+    }
+  ]
+
 
   // 编辑
   const handleEditHosts = (record) => {
@@ -171,6 +200,17 @@ const SwitchHostsList = (props) => {
     })
   }
 
+  const addDingHooks = () => {
+    if(!dingHooks.includes('https://oapi.dingtalk.com/robot/send?access_token=')){
+      message.error('url格式异常')
+      return
+    }
+    if (dingHooks.length > 255) {
+      message.error('url长度不能超过255')
+      return
+    }
+  }
+
   return (
     <div>
       <Breadcrumb>
@@ -197,6 +237,44 @@ const SwitchHostsList = (props) => {
         pagination={pagination}
         onChange={handleTableChange}
       />
+      <Modal
+        title="钉钉webhooks配置"
+        visible={modalVisibile}
+        width={650}
+        onOk={() => {}}
+        onCancel={() => setModalVisibile(false)}
+      >
+        <Row type="flex" align="middle">
+          <Col span={5} className="text-right">
+            webhook：
+          </Col>
+          <Col span={16} className="flex">
+            <Input 
+              placeholder="请输入webhook" 
+              allowClear 
+              onChange={({target:{value}}) => setDingHooks(value)}
+            />
+            <Button 
+              type="primary" 
+              className="ml-10"
+              onClick={addDingHooks}
+            >
+              添加
+            </Button>
+          </Col>
+        </Row>
+        <Row className="mt-12">
+          <Col offset={5} span={16}>
+            <Table
+              columns={dingHooksColumns}
+              dataSource={dingTalkList}
+              pagination={false}
+              scroll={{ y: 'calc(100vh - 550px)' }}
+              className="dt-table-border dt-table-last-row-noborder"
+            />
+          </Col>
+        </Row>
+      </Modal>
     </div>
   )
 }
