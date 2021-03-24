@@ -6,17 +6,15 @@ body,
 
 // table 滚动状态下的样式, small table
 .ant-table {
-    .ant-table-small > .ant-table-content > .ant-table-body {
-        margin: 0;
-        & > table > {
-            .ant-table-thead > tr > th:first-child,
-            .ant-table-tbody > tr > td:first-child {
-                padding-left: 20px;
-            }
-            .ant-table-thead > tr > th:last-child,
-            .ant-table-tbody > tr > td:last-child {
-                padding-right: 20px;
-            }
+    .ant-table-small {
+        font-size: 12px;
+        .ant-table-thead > tr > th:first-child,
+        .ant-table-tbody > tr > td:first-child {
+            padding-left: 20px;
+        }
+        .ant-table-thead > tr > th:last-child,
+        .ant-table-tbody > tr > td:last-child {
+            padding-right: 20px;
         }
     }
     // 复制
@@ -109,7 +107,58 @@ body,
             border-radius: 0 2px 2px 0;
         }
     }
+    &.dt-form-shadow-bg {
+        .ant-input-wrapper {
+            box-shadow: 0px 2px 8px 0px rgba(6, 14, 26, 0.08);
+        }
+        .ant-input,
+        .ant-btn-icon-only {
+            box-shadow: none;
+        }
+    }
 }
-// .dt-form-shadow-bg {
 
-// }
+// dt-form-shadow-bg
+.dt-form-shadow-bg {
+    &.ant-select {
+        .ant-select-selector {
+            border-color: transparent;
+            box-shadow: 0px 2px 8px 0px rgba(6, 14, 26, 0.08);
+            &:hover {
+                border-color: #3f87ff;
+            }
+        }
+        &.ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input)
+            .ant-select-selector {
+            box-shadow: none;
+            outline: 0;
+        }
+    }
+}
+
+// select - 选择框
+.ant-select-dropdown {
+    .ant-select-item {
+        font-size: 12px;
+        &.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+            background-color: #f0f8ff;
+        }
+    }
+}
+
+// form - 表单
+.ant-form {
+    .ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before,
+    .ant-form-item-explain,
+    .ant-form-item-extra,
+    .has-error.has-feedback .ant-form-item-children-icon,
+    .has-success.has-feedback .ant-form-item-children-icon,
+    .has-warning.has-feedback .ant-form-item-children-icon,
+    .is-validating.has-feedback .ant-form-item-children-icon {
+        font-size: 12px;
+    }
+    .ant-form-item-explain,
+    .ant-form-item-extra {
+        line-height: 18px;
+    }
+}

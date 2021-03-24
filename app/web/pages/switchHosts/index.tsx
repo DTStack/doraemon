@@ -20,6 +20,7 @@ const SwitchHostsList = (props: any) => {
     })
     const pagination: any = {
         size: 'small',
+        showSizeChanger: false,
         current: reqParams.current,
         pageSize: reqParams.size,
         total: hostsList.totalElement,

@@ -1,5 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Button, Row, Col, Card, Icon, Breadcrumb, Tooltip, message as Message, Typography } from 'antd';
+import { CheckOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import {
+    Button,
+    Row,
+    Col,
+    Card,
+    Breadcrumb,
+    Tooltip,
+    message as Message,
+    Typography,
+} from 'antd';
 import { isEmpty, replace } from 'lodash';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import Loading from '@/components/loading';
@@ -92,92 +102,94 @@ const ConfigDetail = (props: any) => {
         });
 
     }, [])
-    return <div className="page-config-detail">
-        <Loading loading={loading}>
-            <Row className="mb-12">
-                <Col span={18}>
-                    <Breadcrumb>
-                        <Breadcrumb.Item><Link to="/page/config-center">配置中心</Link></Breadcrumb.Item>
-                        <Breadcrumb.Item>配置详情</Breadcrumb.Item>
-                    </Breadcrumb>
-                </Col>
-                <Col span={6} style={{ textAlign: 'right' }}>
-                    <Button type="primary" loading={updating} icon="check" onClick={handleConfigSave}>应用</Button>
-                </Col>
-            </Row>
-            <div className="page-content">
-                <Row gutter={16}>
+    return (
+        <div className="page-config-detail">
+            <Loading loading={loading}>
+                <Row className="mb-12">
                     <Col span={18}>
-                        <CodeMirror
-                            ref={codeEditorRef}
-                            value={config}
-                            options={{
-                                mode: 'nginx',
-                                tabSize: 2,
-                                theme: 'dracula',
-                                lineNumbers: true
-                            }}
-                            onGutterClick={onGutterClick}
-                            onBeforeChange={(editor: any, data: any, value: any) => {
-                                setConfig(value)
-                            }}
-                            editorDidMount={(editor: any, data: any, value: any) => { editor.setSize('auto', '460px') }}
-                        />
-                        <Title style={{ marginTop: 20 }} level={4}>Execute shell <Tooltip title="文件更新之后执行下面脚本" placement="right"><Icon type="question-circle" /></Tooltip></Title>
-                        <CodeMirror
-                            ref={shellEditorRef}
-                            value={shell}
-                            options={{
-                                mode: 'shell',
-                                tabSize: 2,
-                                theme: 'dracula',
-                                lineNumbers: true,
-                                height: 300
-                            }}
-                            onBeforeChange={(editor: any, data: any, value: any) => {
-                                console.log(value);
-                                setShell(value)
-                            }}
-                            onChange={(editor: any, data: any, value: any) => { }} />
+                        <Breadcrumb>
+                            <Breadcrumb.Item><Link to="/page/config-center">配置中心</Link></Breadcrumb.Item>
+                            <Breadcrumb.Item>配置详情</Breadcrumb.Item>
+                        </Breadcrumb>
                     </Col>
-                    <Col span={6}>
-                        <Card title="信息简介" className="card-form">
-                            <Row gutter={8} className="info-item">
-                                <Col span={6} className="label">文件名：</Col>
-                                <Col span={18}>{filename}</Col>
-                            </Row>
-                            <Row gutter={8} className="info-item">
-                                <Col span={6} className="label">文件路径：</Col>
-                                <Col span={18}>{filePath}</Col>
-                            </Row>
-                            <Row gutter={8} className="info-item">
-                                <Col span={6} className="label">主机IP：</Col>
-                                <Col span={18}>{hostIp}</Col>
-                            </Row>
-                            <Row gutter={8} className="info-item">
-                                <Col span={6} className="label">主机名：</Col>
-                                <Col span={18}>{hostName}</Col>
-                            </Row>
-                            <Row gutter={8} className="info-item">
-                                <Col span={6} className="label">SSH连接：</Col>
-                                <Col span={18}><Paragraph style={{ marginBottom: 0 }} copyable>{`ssh ${username}@${hostIp}`}</Paragraph></Col>
-                            </Row>
-                            <Row gutter={8} className="info-item">
-                                <Col span={6} className="label">密码：</Col>
-                                <Col span={18}><Paragraph style={{ marginBottom: 0 }} copyable={{ text: password }}>{replace(password, /./g, '*')}</Paragraph></Col>
-                            </Row>
-                            <Row gutter={8} className="info-item">
-                                <Col span={6} className="label">备注：</Col>
-                                <Col span={18}>{remark}</Col>
-                            </Row>
-                        </Card>
-                        {!isEmpty(errorMessage) && <Card title="错误信息" style={{ marginTop: 20 }}>
-                            <div style={{ color: 'red' }}>{errorMessage}</div>
-                        </Card>}
+                    <Col span={6} style={{ textAlign: 'right' }}>
+                        <Button type="primary" loading={updating} icon={<CheckOutlined />} onClick={handleConfigSave}>应用</Button>
                     </Col>
                 </Row>
-            </div>
-        </Loading>
-    </div>
+                <div className="page-content">
+                    <Row gutter={16}>
+                        <Col span={18}>
+                            <CodeMirror
+                                ref={codeEditorRef}
+                                value={config}
+                                options={{
+                                    mode: 'nginx',
+                                    tabSize: 2,
+                                    theme: 'dracula',
+                                    lineNumbers: true
+                                }}
+                                onGutterClick={onGutterClick}
+                                onBeforeChange={(editor: any, data: any, value: any) => {
+                                    setConfig(value)
+                                }}
+                                editorDidMount={(editor: any, data: any, value: any) => { editor.setSize('auto', '460px') }}
+                            />
+                            <Title style={{ marginTop: 20 }} level={4}>Execute shell <Tooltip title="文件更新之后执行下面脚本" placement="right"><QuestionCircleOutlined /></Tooltip></Title>
+                            <CodeMirror
+                                ref={shellEditorRef}
+                                value={shell}
+                                options={{
+                                    mode: 'shell',
+                                    tabSize: 2,
+                                    theme: 'dracula',
+                                    lineNumbers: true,
+                                    height: 300
+                                }}
+                                onBeforeChange={(editor: any, data: any, value: any) => {
+                                    console.log(value);
+                                    setShell(value)
+                                }}
+                                onChange={(editor: any, data: any, value: any) => { }} />
+                        </Col>
+                        <Col span={6}>
+                            <Card title="信息简介" className="card-form">
+                                <Row gutter={8} className="info-item">
+                                    <Col span={6} className="label">文件名：</Col>
+                                    <Col span={18}>{filename}</Col>
+                                </Row>
+                                <Row gutter={8} className="info-item">
+                                    <Col span={6} className="label">文件路径：</Col>
+                                    <Col span={18}>{filePath}</Col>
+                                </Row>
+                                <Row gutter={8} className="info-item">
+                                    <Col span={6} className="label">主机IP：</Col>
+                                    <Col span={18}>{hostIp}</Col>
+                                </Row>
+                                <Row gutter={8} className="info-item">
+                                    <Col span={6} className="label">主机名：</Col>
+                                    <Col span={18}>{hostName}</Col>
+                                </Row>
+                                <Row gutter={8} className="info-item">
+                                    <Col span={6} className="label">SSH连接：</Col>
+                                    <Col span={18}><Paragraph style={{ marginBottom: 0 }} copyable>{`ssh ${username}@${hostIp}`}</Paragraph></Col>
+                                </Row>
+                                <Row gutter={8} className="info-item">
+                                    <Col span={6} className="label">密码：</Col>
+                                    <Col span={18}><Paragraph style={{ marginBottom: 0 }} copyable={{ text: password }}>{replace(password, /./g, '*')}</Paragraph></Col>
+                                </Row>
+                                <Row gutter={8} className="info-item">
+                                    <Col span={6} className="label">备注：</Col>
+                                    <Col span={18}>{remark}</Col>
+                                </Row>
+                            </Card>
+                            {!isEmpty(errorMessage) && <Card title="错误信息" style={{ marginTop: 20 }}>
+                                <div style={{ color: 'red' }}>{errorMessage}</div>
+                            </Card>}
+                        </Col>
+                    </Row>
+                </div>
+            </Loading>
+        </div>
+    );
 }
 export default ConfigDetail;

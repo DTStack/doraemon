@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PlusCircleOutlined } from '@ant-design/icons';
 import { Table, Popconfirm, Divider, Typography, Button, Row, Col, message as Message } from 'antd';
 import { replace } from 'lodash';
 import { API } from '@/api';
@@ -68,11 +69,13 @@ export default (props: any) => {
     const expandedRowRender = (row: any) => {
         const { username, hostIp, password } = row;
         const sshText = `ssh ${username}@${hostIp}`;
-        return <div>
-            <Row gutter={16}><Col style={{ textAlign: 'right' }} span={2}>用户名：</Col><Col span={12}><Paragraph editable={{ onChange: handleTextChange.bind(this, row, 'username') }} copyable={{ text: username }}>{username}</Paragraph></Col></Row>
-            <Row gutter={16} style={{ marginTop: 14 }}><Col style={{ textAlign: 'right' }} span={2}>密码：</Col><Col span={12}><Paragraph editable={{ editing: false, onStart: handlePasswordEdit.bind(this, row) }} copyable={{ text: password }}>{replace(password, /./g, '*')}</Paragraph></Col></Row>
-            <Row gutter={16} style={{ marginTop: 14 }}><Col style={{ textAlign: 'right' }} span={2}>SSH链接：</Col><Col span={12}><Paragraph copyable={{ text: sshText }}>{sshText}</Paragraph></Col></Row>
-        </div>
+        return (
+            <div>
+                <Row gutter={16}><Col style={{ textAlign: 'right' }} span={2}>用户名：</Col><Col span={12}><Paragraph editable={{ onChange: handleTextChange.bind(this, row, 'username') }} copyable={{ text: username }}>{username}</Paragraph></Col></Row>
+                <Row gutter={16} style={{ marginTop: 14 }}><Col style={{ textAlign: 'right' }} span={2}>密码：</Col><Col span={12}><Paragraph editable={{ editing: false, onStart: handlePasswordEdit.bind(this, row) }} copyable={{ text: password }}>{replace(password, /./g, '*')}</Paragraph></Col></Row>
+                <Row gutter={16} style={{ marginTop: 14 }}><Col style={{ textAlign: 'right' }} span={2}>SSH链接：</Col><Col span={12}><Paragraph copyable={{ text: sshText }}>{sshText}</Paragraph></Col></Row>
+            </div>
+        );
     }
     const handleTextChange = (row: any, fieldName: any, value: any) => {
         const { id, hostName } = row;
@@ -144,32 +147,34 @@ export default (props: any) => {
     useEffect(() => {
         loadTableData()
     }, []);
-    return <div className="page-host-management">
-        <div className="title_wrap">
-            <div className="title">主机管理</div>
-            <Button type="primary" icon="plus-circle" onClick={handleHostAdd}>新增主机</Button>
+    return (
+        <div className="page-host-management">
+            <div className="title_wrap">
+                <div className="title">主机管理</div>
+                <Button type="primary" icon={<PlusCircleOutlined />} onClick={handleHostAdd}>新增主机</Button>
+            </div>
+            <Table
+                rowKey="id"
+                columns={getColumns()}
+                className="dt-table-fixed-base"
+                scroll={{ y: true }}
+                style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
+                loading={tableLoading}
+                dataSource={hostList}
+                pagination={false}
+                onChange={onTableChange}
+                expandedRowRender={expandedRowRender} />
+            <HostModal
+                tagList={tagList}
+                value={currentHost}
+                visible={hostModalVisible}
+                onOk={handleHostModalAction.bind(this, 'ok')}
+                onCancel={handleHostModalAction.bind(this, 'cancel')} />
+            <PasswordModal
+                value={currentHost}
+                visible={passwordModalVisible}
+                onOk={handlePasswordModalAction.bind(this, 'ok')}
+                onCancel={handlePasswordModalAction.bind(this, 'cancel')} />
         </div>
-        <Table
-            rowKey="id"
-            columns={getColumns()}
-            className="dt-table-fixed-base"
-            scroll={{ y: true }}
-            style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
-            loading={tableLoading}
-            dataSource={hostList}
-            pagination={false}
-            onChange={onTableChange}
-            expandedRowRender={expandedRowRender} />
-        <HostModal
-            tagList={tagList}
-            value={currentHost}
-            visible={hostModalVisible}
-            onOk={handleHostModalAction.bind(this, 'ok')}
-            onCancel={handleHostModalAction.bind(this, 'cancel')} />
-        <PasswordModal
-            value={currentHost}
-            visible={passwordModalVisible}
-            onOk={handlePasswordModalAction.bind(this, 'ok')}
-            onCancel={handlePasswordModalAction.bind(this, 'cancel')} />
-    </div>
+    );
 }

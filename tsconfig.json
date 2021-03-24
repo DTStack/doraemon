@@ -28,7 +28,6 @@
         "app/web/view/*"
     ],
     "include": [
-        "./app/web/**/*.ts",
-        "./app/web/**/*.tsx",
+        "./app/web/**/*"
     ],
 }

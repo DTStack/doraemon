@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Row, Col, Icon, Tooltip } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Tabs, Row, Col, Tooltip } from 'antd';
 import Loading from '@/components/loading';
 import { API } from '@/api';
 import { colorList } from '@/constant';
@@ -28,35 +29,41 @@ const InnerUrlNavigation = () => {
     useEffect(() => {
         loadMainData();
     }, []);
-    return (<Loading loading={loading}>
-        <div className="page-internal-url-navigation">
-            <Tabs activeKey={activePaneKey} onChange={handleTabChange}>
-                {
-                    navigationData.map((group: any, index: any) => {
-                        const { groupName, children } = group;
-                        return <TabPane className="tab-pane" tab={groupName} key={index}>
-                            <Row gutter={10}>
-                                {
-                                    children.map((child: any, index: any) => {
-                                        const { name, url, desc, remark } = child;
-                                        return (<Col className="navigation-item-wrapper" key={name} span={6}>
-                                            <a href={url} target="_blank" className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
-                                                {remark && <Tooltip title={remark}>
-                                                    <Icon className="icon" type="question-circle" />
-                                                </Tooltip>}
-                                                <div className="title">{name}</div>
-                                                <div className="desc">{desc}</div>
-                                            </a>
-                                        </Col>)
-                                    })
-                                }
-                            </Row>
-                        </TabPane>
-                    })
-                }
-            </Tabs>
-        </div>
-    </Loading>)
+    return (
+        <Loading loading={loading}>
+            <div className="page-internal-url-navigation">
+                <Tabs activeKey={activePaneKey} onChange={handleTabChange}>
+                    {
+                        navigationData.map((group: any, index: any) => {
+                            const { groupName, children } = group;
+                            return (
+                                <TabPane className="tab-pane" tab={groupName} key={index}>
+                                    <Row gutter={10}>
+                                        {
+                                            children.map((child: any, index: any) => {
+                                                const { name, url, desc, remark } = child;
+                                                return (
+                                                    <Col className="navigation-item-wrapper" key={name} span={6}>
+                                                        <a href={url} target="_blank" className="navigation-item" style={{ background: colorList[index % colorList.length] }}>
+                                                            {remark && <Tooltip title={remark}>
+                                                                <QuestionCircleOutlined className="icon" />
+                                                            </Tooltip>}
+                                                            <div className="title">{name}</div>
+                                                            <div className="desc">{desc}</div>
+                                                        </a>
+                                                    </Col>
+                                                );
+                                            })
+                                        }
+                                    </Row>
+                                </TabPane>
+                            );
+                        })
+                    }
+                </Tabs>
+            </div>
+        </Loading>
+    );
 }
 
 export default InnerUrlNavigation;
