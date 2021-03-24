@@ -43,7 +43,7 @@ class ConfigCenter extends Controller{
       tagIds
     });
     const basicInfo = await ctx.service.configDetail.getConfigBasicInfo(id);
-    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id)
+    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'config-center')
     noticeUrlList.forEach(item => {
       app.utils.sendMsg(item.url,basicInfo.dataValues)
     })
@@ -55,7 +55,7 @@ class ConfigCenter extends Controller{
     if(_.isNil(id)) throw new Error('缺少必要参数id');
     await ctx.service.configCenter.deleteConfig(id);
     const basicInfo = await ctx.service.configDetail.getConfigBasicInfo(id);
-    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id)
+    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'config-center')
     noticeUrlList.forEach(item => {
       app.utils.sendMsg(item.url,basicInfo.dataValues)
     })

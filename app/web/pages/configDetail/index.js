@@ -47,7 +47,8 @@ const ConfigDetail = (props)=>{
   }
   const delUrl = (id) => {
     return API.delNoticeUrl({
-      id
+      id,
+      type: 'config-center'
     }).then((response)=>{
       const {success} = response;
       if(success){
@@ -68,7 +69,8 @@ const ConfigDetail = (props)=>{
   },[id]);
   const loadConfigNoticeUrlList = useCallback(() => {
     return API.getConfigNoticeUrlList({
-      id
+      id,
+      type: 'config-center'
     }).then((response)=>{
       const {success,data} = response;
       if(success){
@@ -97,7 +99,8 @@ const ConfigDetail = (props)=>{
     }
     return API.addConfigNoticeUrl({
       id,
-      url: noticeUrl
+      url: noticeUrl,
+      type: 'config-center'
     }).then((response)=>{
       const {success,data} = response;
       if(success){
