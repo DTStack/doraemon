@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Upload, Icon, message } from 'antd';
+import { PlusOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Upload, message } from 'antd';
 import Cookies from 'js-cookie';
 import defaultLogo from '@/asset/images/default.png'
 import './style.scss';
@@ -19,7 +20,7 @@ const UploadLogo = (props: any) => {
     // 上传按钮
     const uploadButton = (
         <div>
-            <Icon type={loading ? 'loading' : 'plus'} />
+            {loading ? <LoadingOutlined /> : <PlusOutlined />}
             <div className="ant-upload-text">Upload</div>
         </div>
     );
@@ -77,8 +78,8 @@ const UploadLogo = (props: any) => {
                     ? logoImage
                     : <img src={defaultLogo} alt="default" width={60} />
             }
-            <span className="upload-actions"><Icon type="plus" /></span>
+            <span className="upload-actions"><PlusOutlined /></span>
         </Upload>
-    )
+    );
 }
 export default UploadLogo;

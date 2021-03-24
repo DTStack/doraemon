@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Button, Card, Input, Select, Modal, Spin, Empty } from 'antd';
+import { Row, Col, Button, Card, Input, Select, Modal, Spin, Empty, message } from 'antd';
 import { API } from '@/api';
 import { Link } from 'react-router-dom';
 import CreateApp from './components/CreateApp';
@@ -114,13 +114,14 @@ const Toolbox = () => {
         setAppInfo({})
     }
 
+    // 获取appInfo
     const onHandleEditApp = (id: any) => {
-        setVisbile(!visible)
         API.getApplicationById({ id }).then((response: any) => {
             const { success, data } = response
             if (success) {
                 setAppInfo(data)
             }
+            setVisbile(!visible)
         });
     }
 
@@ -191,7 +192,7 @@ const Toolbox = () => {
                         onSearch={handleNameSearch}
                     />
                     <span className="ml-20">
-            选择标签：
+                        选择标签：
                         <Select
                             className="dt-form-shadow-bg"
                             style={{ width: 220 }}
@@ -199,7 +200,7 @@ const Toolbox = () => {
                             mode="multiple"
                             onChange={handleTagSearch}
                         >
-                            {tagList.map((item: any) => <Option key={item.id}>{item.tagName}</Option>)}
+                            {tagList.map((item: any) => <Option key={item.id} value={item.id}>{item.tagName}</Option>)}
                         </Select>
                     </span>
                     <Button className="ml-20" type="primary" onClick={onHandleAddApp}>添加应用</Button>
@@ -218,14 +219,14 @@ const Toolbox = () => {
                 }
 
             </Spin>
-            <CreateApp
-                key={visible}
+            {visible && <CreateApp
                 visible={visible}
                 appInfo={appInfo}
                 tagList={tagList}
                 confirmLoading={confirmLoading}
                 onOk={updateApplication}
-                onCancel={onHandleAddApp} />
+                onCancel={onHandleAddApp}
+            />}
         </div>
     )
 }
