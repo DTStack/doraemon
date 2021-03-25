@@ -58,8 +58,6 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
     }
     render() {
         const { visible, editable, proxyServer, confirmLoading, targetAddrs, localIp } = this.props;
-        // const { getFieldValue } = this.formRef;
-        const getFieldValue = this.formRef?.getFieldValue || (() => {});
         const { ip, target, remark, mode } = proxyServer;
         const formItemLayout: any = {
             labelCol: {
@@ -75,7 +73,7 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
                 visible={visible}
                 confirmLoading={confirmLoading}
                 onOk={this.handleModalOk}
-                className="proxyRuleModal"
+                className="proxy-rule-modal"
                 onCancel={this.handleModalCancel}
             >
                 <Form
@@ -107,31 +105,36 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
                         </Radio.Group>
                     </Form.Item>
                     <Form.Item
-                        label="目标服务地址"
-                        name="target"
-                        shouldUpdate
-                        rules={[{
-                            required: true,
-                            pattern: getFieldValue('mode') === '0' ? urlReg : undefined,
-                            message: '请输入正确格式的目标服务地址'
-                        }]}
+                        noStyle
+                        shouldUpdate={(prevValues: any, currentValues: any) => prevValues.mode !== currentValues.mode}
                     >
-                        {
-                            getFieldValue('mode') === '0'
-                                ? (
-                                    <React.Fragment>
+                        {({ getFieldValue }) =>
+                            getFieldValue('mode') === '0' ? (
+                                <div className="proxy-rule-modal__form-target">
+                                    <Form.Item
+                                        label="目标服务地址"
+                                        name="target"
+                                        rules={[{ required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址' }]}
+                                    >
                                         <Input placeholder="请输入正确格式的目标服务地址" />
-                                        <Tooltip placement="topLeft" title={`快速填写默认目标地址默认为：http://${ip || localIp}:8080`}>
-                                            <Button shape="circle" className="retweet" size="small" onClick={this.onClickQuickInput} icon={<RetweetOutlined />} />
-                                        </Tooltip>
-                                    </React.Fragment>
-                                ) : (
+                                    </Form.Item>
+                                    <Tooltip placement="topLeft" title={`快速填写默认目标地址默认为：http://${ip || localIp}:8080`}>
+                                        <Button shape="circle" className="retweet" size="small" onClick={this.onClickQuickInput} icon={<RetweetOutlined />} />
+                                    </Tooltip>
+                                </div>
+                            ) : (
+                                <Form.Item
+                                    label="目标服务地址"
+                                    name="target"
+                                    rules={[{ required: true, message: '请输入正确格式的目标服务地址' }]}
+                                >
                                     <Select placeholder="请输入目标服务地址">
                                         {
                                             targetAddrs.map((item: any) => <Option key={item.id} value={item.target}>{item.remark}（{item.target}）</Option>)
                                         }
                                     </Select>
-                                )
+                                </Form.Item>
+                            )
                         }
                     </Form.Item>
                     <Form.Item

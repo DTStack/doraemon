@@ -614,7 +614,7 @@ class ProxyServer extends React.PureComponent<any, any> {
                     visible={proxyServerModalVisible}
                     onOk={this.handleProxyServerModalOk}
                     onCancel={this.handleProxyServerModalCancel} />}
-                <ProxyRuleModal
+                {proxyRuleModalVisible && <ProxyRuleModal
                     ref={(modal: any) => this.ProxyRuleModal = modal}
                     localIp={localIp}
                     editable={JSON.stringify(currentProxyRule) !== '{}'}
@@ -623,7 +623,7 @@ class ProxyServer extends React.PureComponent<any, any> {
                     confirmLoading={proxyRuleModalConfirmLoading}
                     visible={proxyRuleModalVisible}
                     onOk={this.handleProxyRuleModalOk}
-                    onCancel={this.handleProxyRuleModalCancel} />
+                    onCancel={this.handleProxyRuleModalCancel} />}
             </div>
         );
     }
