@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppstoreOutlined, CloudOutlined, DesktopOutlined, TagOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, CloudOutlined, DesktopOutlined, TagOutlined, SettingOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -27,7 +27,7 @@ const navMenuList: any = [{
 }, {
     name: '配置中心',
     path: '/page/config-center',
-    icon: 'setting',
+    icon: <SettingOutlined />,
     routers: ['config-center', 'config-detail']
 }, {
     name: '标签管理',
