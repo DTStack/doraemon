@@ -128,7 +128,7 @@ const SwitchHostsList = (props: any) => {
     const handleDeleteHosts = (record: any) => {
         Modal.confirm({
             title: '删除后分组将无法使用，是否要删除该分组？',
-            okType: 'danger',
+            okButtonProps: { danger: true },
             okText: '删除',
             cancelText: '取消',
             onOk: () => {

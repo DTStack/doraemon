@@ -168,23 +168,27 @@ const ConfigCenter = () => {
                 <Table
                     rowKey="id"
                     className="dt-table-fixed-base"
-                    scroll={{ y: true }}
+                    scroll={{ y: 'calc(100vh - 64px - 40px - 44px - 44px - 67px)' }}
                     style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
                     columns={getTableColumns()}
                     dataSource={configList}
                     loading={loading}
                     pagination={{
-                        ...tablePagination,
+                        size: 'small',
+                        showSizeChanger: false,
+                        total: tablePagination.total,
+                        current: tablePagination.current,
+                        pageSize: tablePagination.pageSize,
                         showTotal: (total: any) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{tablePagination.pageSize}条</span>
                     }}
                     onChange={handleTableChange} />
             </div>
-            <ConfigFileModal
+            {configFileModalVisible && <ConfigFileModal
                 tagList={tagList}
                 value={currentConfigFile}
                 visible={configFileModalVisible}
                 onOk={handleConfigFileModalAction.bind(this, 'ok')}
-                onCancel={handleConfigFileModalAction.bind(this, 'cancel')} />
+                onCancel={handleConfigFileModalAction.bind(this, 'cancel')} />}
         </div>
     );
 }

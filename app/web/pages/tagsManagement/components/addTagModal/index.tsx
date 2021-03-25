@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { isFunction } from 'lodash';
-import { Form } from '@ant-design/compatible';
-import '@ant-design/compatible/assets/index.css';
-import { Modal, Input, message as Message } from 'antd';
+import { Modal, Input, message as Message, Form } from 'antd';
 import ColorPicker from '../colorPicker';
 import { API } from '@/api';
 const FormItem = Form.Item;
 const { TextArea } = Input;
-const AddTagModal = Form.create<any>()((props: any) => {
-    const { data, visible, onOk, onCancel, form } = props;
+const AddTagModal = (props: any) => {
+    const [form] = Form.useForm();
+    const { data, visible, onOk, onCancel } = props;
     const [confirmLoading, setConfirmLoading] = useState(false);
     useEffect(() => {
         if (visible && data) {
@@ -32,13 +31,10 @@ const AddTagModal = Form.create<any>()((props: any) => {
         })
     }
     const handleModalOk = () => {
-        form.validateFields((err: any, values: any) => {
-            if (!err) {
-                updataTags(Object.assign(values, {
-                    id: data ? data.id : ''
-                }))
-
-            }
+        form.validateFields().then((values: any) => {
+            updataTags(Object.assign(values, {
+                id: data ? data.id : ''
+            }))
         })
     }
     const handleModalCancel = () => {
@@ -49,7 +45,6 @@ const AddTagModal = Form.create<any>()((props: any) => {
         setConfirmLoading(false);
         form.resetFields();
     }
-    const { getFieldDecorator } = form;
     return <Modal
         title={data ? '编辑标签' : '新增标签'}
         visible={visible}
@@ -57,35 +52,30 @@ const AddTagModal = Form.create<any>()((props: any) => {
         confirmLoading={confirmLoading}
         onOk={handleModalOk}
         onCancel={handleModalCancel}>
-        <Form labelCol={{ span: 5 }} wrapperCol={{ span: 17 }} >
-            <FormItem label="标签名称" hasFeedback>
-                {getFieldDecorator('tagName', {
-                    initialValue: '',
-                    rules: [{
-                        required: true, message: '请输入标签名称'
-                    }]
-                })(
-                    <Input placeholder="请输入文件名" />
-                )}
+        <Form form={form} labelCol={{ span: 5 }} wrapperCol={{ span: 17 }} initialValues={{ ...data }}>
+            <FormItem
+                label="标签名称"
+                name="tagName"
+                rules={[{ required: true, message: '请输入标签名称' }]}
+                hasFeedback
+            >
+                <Input placeholder="请输入文件名" />
             </FormItem>
-            <FormItem label="标签备注" hasFeedback>
-                {getFieldDecorator('tagDesc', {
-                    initialValue: ''
-                })(
-                    <TextArea placeholder="请输入备注" rows={4} />
-                )}
+            <FormItem
+                label="标签备注"
+                name="tagDesc"
+                hasFeedback
+            >
+                <TextArea placeholder="请输入备注" rows={4} />
             </FormItem>
-            <FormItem label="标签标识">
-                {getFieldDecorator('tagColor', {
-                    initialValue: '',
-                    rules: [{
-                        required: true, message: '请选择标签标识'
-                    }]
-                })(
-                    <ColorPicker />
-                )}
+            <FormItem
+                label="标签标识"
+                name="tagColor"
+                rules={[{ required: true, message: '请选择标签标识' }]}
+            >
+                <ColorPicker />
             </FormItem>
         </Form>
     </Modal>
-})
+}
 export default AddTagModal;

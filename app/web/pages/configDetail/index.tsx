@@ -8,14 +8,14 @@ import {
     Breadcrumb,
     Tooltip,
     message as Message,
-    Typography,
+    Typography
 } from 'antd';
+import { Link } from 'react-router-dom';
 import { isEmpty, replace } from 'lodash';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import Loading from '@/components/loading';
 import { API } from '@/api';
 import './style.scss';
-import { Link } from 'react-router-dom';
 
 const { Title, Paragraph } = Typography;
 

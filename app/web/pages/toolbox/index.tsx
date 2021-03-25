@@ -95,7 +95,7 @@ const Toolbox = () => {
     const deleteApplication = (id: any) => {
         Modal.confirm({
             title: '确认将该应用移除？',
-            okType: 'danger',
+            okButtonProps: { danger: true },
             okText: '删除',
             cancelText: '取消',
             onOk: () => {

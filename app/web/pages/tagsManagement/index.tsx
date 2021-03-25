@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { Divider, Table, Button, Breadcrumb, Input, Modal, message as Message } from 'antd';
+import { Divider, Table, Button, Breadcrumb, Input, Modal, message as Message, TablePaginationConfig } from 'antd';
 import AddTagModal from './components/addTagModal'
 import DtTag from '@/components/dtTag';
 import { API } from '@/api';
@@ -10,8 +10,8 @@ const { Search } = Input;
 
 const TagsManagement = (props: any) => {
     const [tableLoading, setTableLoading] = useState(false);
-    const [visible,setVisible] = useState(false);
-    const [editData,setEditData] = useState(null);
+    const [visible, setVisible] = useState(false);
+    const [editData, setEditData] = useState(null);
     const [tagList, setTagList] = useState({
         data: [],
         totalElement: 0
@@ -21,8 +21,9 @@ const TagsManagement = (props: any) => {
         size: 20,
         searchText: ''
     })
-    const pagination: any = {
+    const pagination: TablePaginationConfig = {
         size: 'small',
+        showSizeChanger: false,
         current: reqParams.current,
         pageSize: reqParams.size,
         total: tagList.totalElement,
@@ -30,7 +31,7 @@ const TagsManagement = (props: any) => {
     }
     useEffect(() => {
         getTagList();
-    }, []);
+    }, [reqParams]);
 
     // 获取列表数据
     const getTagList = () => {
@@ -45,7 +46,7 @@ const TagsManagement = (props: any) => {
             } else {
                 Message.error(msg);
             }
-        }).finally(()=>{
+        }).finally(() => {
             setTableLoading(false);
         })
     }
@@ -87,17 +88,17 @@ const TagsManagement = (props: any) => {
                 title: '操作',
                 dataIndex: 'actions',
                 key: 'actions',
-                width:160,
+                width: 160,
                 render: (text: any, record: any) => {
                     return <Fragment>
                         <a onClick={() => handleEditTag(record)}>编辑</a>
                         {
-                            record.isAdmin ? null:( <Fragment>
+                            record.isAdmin ? null : (<Fragment>
                                 <Divider type="vertical" />
                                 <a onClick={() => handleDeleteTag(record)}>删除</a>
                             </Fragment>)
                         }
-           
+
                     </Fragment>
                 }
             }
@@ -115,7 +116,7 @@ const TagsManagement = (props: any) => {
     const handleDeleteTag = (record: any) => {
         Modal.confirm({
             title: '删除后标签将无法使用，是否要删除该标签？',
-            okType: 'danger',
+            okButtonProps: { danger: true },
             okText: '删除',
             cancelText: '取消',
             onOk: () => {
@@ -153,7 +154,6 @@ const TagsManagement = (props: any) => {
             current: 1,
             searchText: value
         });
-        getTagList();
     }
     const onHandleOkModal = () => {
         setVisible(false);
@@ -182,14 +182,14 @@ const TagsManagement = (props: any) => {
                 rowKey="id"
                 loading={tableLoading}
                 className="dt-table-fixed-base"
-                scroll={{ y: true }}
+                scroll={{ y: 'calc(100vh - 64px - 21px - 24px - 32px - 40px - 44px - 67px)' }}
                 style={{ height: 'calc(100vh - 64px - 21px - 24px - 32px - 40px)' }}
                 dataSource={tagList.data}
                 columns={initColumns()}
                 pagination={pagination}
                 onChange={handleTableChange}
             />
-            <AddTagModal visible={visible} data={editData} onOk={onHandleOkModal} onCancel={onHandleCancelModal}/>
+            {visible && <AddTagModal visible={visible} data={editData} onOk={onHandleOkModal} onCancel={onHandleCancelModal} />}
         </div>
     );
 }

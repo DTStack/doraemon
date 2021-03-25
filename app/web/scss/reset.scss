@@ -6,8 +6,11 @@ body,
 
 // table 滚动状态下的样式, small table
 .ant-table {
-    .ant-table-small {
+    .ant-table-small,
+    &.ant-table-middle {
         font-size: 12px;
+    }
+    .ant-table-small {
         .ant-table-thead > tr > th:first-child,
         .ant-table-tbody > tr > td:first-child {
             padding-left: 20px;
@@ -20,6 +23,25 @@ body,
     // 复制
     .ant-typography {
         margin-bottom: 0 !important;
+    }
+    // 筛选
+    .ant-table-thead > tr > th {
+        .ant-table-filter-column {
+            display: block;
+            margin: 0;
+            .ant-table-filter-column-title {
+                padding: 16px 0;
+            }
+            .ant-table-filter-trigger-container {
+                display: inline;
+                right: unset;
+                .ant-table-filter-icon,
+                .anticon-filter {
+                    top: 45%;
+                    left: 50%;
+                }
+            }
+        }
     }
 }
 
@@ -94,11 +116,13 @@ body,
         }
     }
 }
+
 // input
 .ant-input,
 .ant-select-selection {
     border-radius: 2px;
 }
+// input-search
 .ant-input-search {
     & > .ant-input-group > .ant-input-group-addon:last-child {
         .ant-input-search-button.ant-btn-icon-only {
@@ -161,4 +185,22 @@ body,
     .ant-form-item-extra {
         line-height: 18px;
     }
+}
+
+// ant-btn - 按钮
+.ant-btn {
+    &.ant-btn-dangerous.ant-btn-primary:hover,
+    &.ant-btn-dangerous.ant-btn-primary:focus {
+        color: #fff;
+        background: #ff7875;
+        border-color: #ff7875;
+    }
+}
+
+// ant-menu - 菜单
+.dt-layout-header .ant-menu-horizontal > .ant-menu-item {
+    top: 0;
+}
+.ant-menu-dark.ant-menu-horizontal > .ant-menu-item:hover {
+    background-color: transparent;
 }
