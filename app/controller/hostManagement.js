@@ -36,7 +36,7 @@ class HostManagementController extends Controller{
             remark,
             username,
             password,
-            tags:tagIds.join(',')
+            tags: tagIds ? tagIds.join(',') : undefined
         });
         ctx.body = app.utils.response(true);
     }

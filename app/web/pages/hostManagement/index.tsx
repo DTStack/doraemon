@@ -157,24 +157,24 @@ export default (props: any) => {
                 rowKey="id"
                 columns={getColumns()}
                 className="dt-table-fixed-base"
-                scroll={{ y: true }}
+                scroll={{ y: 'calc(100vh - 64px - 40px - 44px - 44px)' }}
                 style={{ height: 'calc(100vh - 64px - 40px - 44px)' }}
                 loading={tableLoading}
                 dataSource={hostList}
                 pagination={false}
                 onChange={onTableChange}
                 expandedRowRender={expandedRowRender} />
-            <HostModal
+            {hostModalVisible && <HostModal
                 tagList={tagList}
                 value={currentHost}
                 visible={hostModalVisible}
                 onOk={handleHostModalAction.bind(this, 'ok')}
-                onCancel={handleHostModalAction.bind(this, 'cancel')} />
-            <PasswordModal
+                onCancel={handleHostModalAction.bind(this, 'cancel')} />}
+            {passwordModalVisible && <PasswordModal
                 value={currentHost}
                 visible={passwordModalVisible}
                 onOk={handlePasswordModalAction.bind(this, 'ok')}
-                onCancel={handlePasswordModalAction.bind(this, 'cancel')} />
+                onCancel={handlePasswordModalAction.bind(this, 'cancel')} />}
         </div>
     );
 }
