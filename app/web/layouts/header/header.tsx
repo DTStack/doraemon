@@ -1,26 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Icon as LegacyIcon } from '@ant-design/compatible';
+import { AppstoreOutlined, CloudOutlined, DesktopOutlined, TagOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import logo from '../../asset/images/logo.png';
 import './style.scss';
 
+const { SubMenu } = Menu;
+
 const { Header } = Layout;
 const navMenuList: any = [{
     name: '应用中心',
     path: '/page/toolbox',
-    icon: 'appstore',
+    icon: <AppstoreOutlined />,
     routers: ['toolbox', 'switch-hosts-list', 'switch-hosts-edit']
 }, {
     name: '代理服务',
     path: '/page/proxy-server',
-    icon: 'cloud',
+    icon: <CloudOutlined />,
     routers: ['proxy-server']
 }, {
     name: '主机管理',
     path: '/page/host-management',
-    icon: 'desktop',
+    icon: <DesktopOutlined />,
     routers: ['host-management']
 }, {
     name: '配置中心',
@@ -30,7 +32,7 @@ const navMenuList: any = [{
 }, {
     name: '标签管理',
     path: '/page/tags',
-    icon: 'tag',
+    icon: <TagOutlined />,
     routers: ['tags']
 }]
 const HeaderComponent = (props: any) => {
@@ -63,9 +65,9 @@ const HeaderComponent = (props: any) => {
                         navMenuList.map((nav: any) => {
                             const { children, name, path, icon } = nav;
                             if (Array.isArray(children) && children.length > 0) {
-                                return <SubMenu key={name} title={<span><LegacyIcon type={icon} /><span>Navigation Two</span></span>}>{children.map((navChild: any) => <Menu.Item key={navChild.path}><Link to={navChild.path}><LegacyIcon type={navChild.icon} /><span>{navChild.name}</span></Link></Menu.Item>)}</SubMenu>;
+                                return <SubMenu key={name} title={<span>{icon}<span>Navigation Two</span></span>}>{children.map((navChild: any) => <Menu.Item key={navChild.path}><Link to={navChild.path}>{navChild.icon}<span>{navChild.name}</span></Link></Menu.Item>)}</SubMenu>;
                             } else {
-                                return <Menu.Item key={path}><Link to={path}><LegacyIcon type={icon} /><span>{name}</span></Link></Menu.Item>;
+                                return <Menu.Item key={path}><Link to={path}>{icon}<span>{name}</span></Link></Menu.Item>;
                             }
                         })
                     }

@@ -21,7 +21,6 @@
     "cz": "npm run log && git add . && git cz"
   },
   "dependencies": {
-    "@ant-design/compatible": "^1.0.8",
     "@ant-design/icons": "4.5.0",
     "@types/classnames": "^2.2.11",
     "@types/file-saver": "^2.0.1",

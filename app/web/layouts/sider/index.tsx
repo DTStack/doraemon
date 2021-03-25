@@ -1,5 +1,5 @@
 import React,{useState} from 'react';
-import { Icon as LegacyIcon } from '@ant-design/compatible';
+import { SettingOutlined, DesktopOutlined, MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import {Link} from 'react-router-dom';
 import './style.scss';
@@ -9,11 +9,11 @@ const SubMenu = Menu.SubMenu;
 const navMenuList: any = [{
     name:'配置中心',
     path:'/page/config-center',
-    icon:'setting'
+    icon:<SettingOutlined />
 },{
     name:'主机管理',
     path:'/page/host-management',
-    icon:'desktop'
+    icon:<DesktopOutlined />
 }]
 const SiderComponent = (props: any)=>{
     const {location} = props;
@@ -31,11 +31,11 @@ const SiderComponent = (props: any)=>{
             style={{height:'100%',background:'#262E36'}}
         >
             <div className="collapsed-wrap">
-                <LegacyIcon
-                    className="trigger"
-                    type={collapsed ? 'menu-unfold' : 'menu-fold'}
-                    onClick={handleCollapseChange}
-                />
+                {
+                    collapsed 
+                        ? <MenuUnfoldOutlined className="trigger" onClick={handleCollapseChange} /> 
+                        : <MenuFoldOutlined className="trigger" onClick={handleCollapseChange}/>
+                }
             </div>
             <Menu
                 mode="inline"
@@ -47,9 +47,9 @@ const SiderComponent = (props: any)=>{
                     navMenuList.map((nav: any)=>{
                         const {children,name,path,icon} = nav;
                         if(Array.isArray(children)&&children.length>0){
-                            return <SubMenu key={name} title={<span><LegacyIcon type={icon} /><span>Navigation Two</span></span>}>{children.map((navChild)=><Menu.Item key={navChild.path}><Link to={navChild.path}><LegacyIcon type={navChild.icon} /><span>{navChild.name}</span></Link></Menu.Item>)}</SubMenu>;
+                            return <SubMenu key={name} title={<span>{icon}<span>Navigation Two</span></span>}>{children.map((navChild)=><Menu.Item key={navChild.path}><Link to={navChild.path}>{navChild.icon}<span>{navChild.name}</span></Link></Menu.Item>)}</SubMenu>;
                         }else{
-                            return <Menu.Item key={path}><Link to={path}><LegacyIcon type={icon} /><span>{name}</span></Link></Menu.Item>;
+                            return <Menu.Item key={path}><Link to={path}>{icon}<span>{name}</span></Link></Menu.Item>;
                         }
                     })
                 }
