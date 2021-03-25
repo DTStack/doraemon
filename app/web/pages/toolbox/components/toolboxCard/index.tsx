@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Icon, Dropdown, Menu, Tooltip } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Dropdown, Menu, Tooltip } from 'antd';
 import { builtInApp } from './constant';
 import UploadLogo from '../uplodadLogo';
 import DtTag from '@/components/dtTag';
@@ -53,20 +54,18 @@ const ToolBoxCard = (props: any) => {
                         ? (
                             helpUrl && (
                                 <Tooltip title={`${appName}帮助文档`}>
-                                    <Icon
-                                        type="question-circle"
+                                    <QuestionCircleOutlined
                                         onClick={(e: any) => {
                                             e.preventDefault(); // 阻止页面跳转
                                             e.stopPropagation(); // 阻止事件冒泡（点击浏览量）
                                             const otherWindow: any = window.open(helpUrl, '_blank');
                                             otherWindow.opener = null;
-                                        }}
-                                    />
+                                        }} />
                                 </Tooltip>
                             )
                         ) : (
-                            <Dropdown trigger={['click']} placement="bottomRight" overlay={menu} onClick={(e: any) => e.stopPropagation()}>
-                                <span className="ant-dropdown-link">
+                            <Dropdown trigger={['click']} placement="bottomRight" overlay={menu}>
+                                <span className="ant-dropdown-link" onClick={(e: any) => e.stopPropagation()}>
                                     <i className="iconfont iconicon_more2" />
                                 </span>
                             </Dropdown>
@@ -98,6 +97,6 @@ const ToolBoxCard = (props: any) => {
                 </div>
             </div>
         </div>
-    )
+    );
 }
 export default ToolBoxCard;

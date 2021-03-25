@@ -1,7 +1,10 @@
-.proxyRuleModal{
-    .retweet{
-        position: absolute;
-        right: -30px;
-        top: -6px;
+.proxy-rule-modal {
+    &__form-target {
+        position: relative;
+        .retweet {
+            position: absolute;
+            right: -14px;
+            top: 4px;
+        }
     }
 }

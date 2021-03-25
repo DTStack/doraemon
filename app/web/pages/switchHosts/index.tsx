@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
-import { Divider, Table, Button, Breadcrumb, Input, Typography, Modal, Icon } from 'antd';
+import { PlusCircleOutlined } from '@ant-design/icons';
+import { Divider, Table, Button, Breadcrumb, Input, Typography, Modal, message } from 'antd';
 import { API } from '@/api';
 import { useSelector } from 'react-redux';
 
@@ -19,6 +20,7 @@ const SwitchHostsList = (props: any) => {
     })
     const pagination: any = {
         size: 'small',
+        showSizeChanger: false,
         current: reqParams.current,
         pageSize: reqParams.size,
         total: hostsList.totalElement,
@@ -94,12 +96,6 @@ const SwitchHostsList = (props: any) => {
                 render: (text: any, record: any) => {
                     return <Fragment>
                         <a onClick={() => handleEditHosts(record)}>编辑</a>
-                        {/* {
-              !record.is_push && <Fragment>
-                <Divider type="vertical" />
-                <a onClick={() => handlePushHosts(record)}>推送</a>
-              </Fragment>
-            } */}
                         <Fragment>
                             <Divider type="vertical" />
                             <a onClick={() => handleDeleteHosts(record)}>删除</a>
@@ -132,7 +128,7 @@ const SwitchHostsList = (props: any) => {
     const handleDeleteHosts = (record: any) => {
         Modal.confirm({
             title: '删除后分组将无法使用，是否要删除该分组？',
-            okType: 'danger',
+            okButtonProps: { danger: true },
             okText: '删除',
             cancelText: '取消',
             onOk: () => {
@@ -184,20 +180,20 @@ const SwitchHostsList = (props: any) => {
                     className="dt-form-shadow-bg"
                     onSearch={handleSearchGroup}
                 />
-                <Button className="fl-r" type="primary" icon="plus-circle" onClick={handleAddHosts}>新增分组</Button>
+                <Button className="fl-r" type="primary" icon={<PlusCircleOutlined />} onClick={handleAddHosts}>新增分组</Button>
             </div>
             <Table
                 rowKey="id"
                 loading={tableLoading}
                 className="dt-table-fixed-base"
-                scroll={{ y: true }}
-                style={{ height: 'calc(100vh - 64px - 21px - 24px - 32px - 40px)' }}
+                scroll={{ y: 'calc(100vh - 64px - 77px - 40px - 44px - 67px)' }}
+                style={{ height: 'calc(100vh - 64px - 77px - 40px)' }}
                 dataSource={hostsList.data}
                 columns={initColumns()}
                 pagination={pagination}
                 onChange={handleTableChange}
             />
         </div>
-    )
+    );
 }
 export default SwitchHostsList;

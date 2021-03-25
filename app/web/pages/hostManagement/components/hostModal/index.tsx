@@ -1,84 +1,94 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Fragment } from 'react';
 import { isEmpty, isFunction, isNull } from 'lodash';
-import { Modal, Form, Input, Spin, message as Message, Select } from 'antd';
+import { Modal, Input, Spin, message as Message, Select, Form } from 'antd';
 import { API } from '@/api';
 const FormItem = Form.Item;
 const { TextArea } = Input;
 const { Option } = Select
 
-const HostForm = Form.create<any>()(
-    (props: any) => {
-        const { form, value, tagList = [] } = props;
-        const { getFieldDecorator } = form;
-        const { hostIp, hostName, username, password, remark, tags = [] } = value;
-        const tagIds = tags.map((item: any) => `${item.id}`);
-        const isAdd = isEmpty(value);
-        return <Form labelCol={{ span: 5 }} wrapperCol={{ span: 17 }} >
-            <FormItem label="主机名" hasFeedback>
-                {getFieldDecorator('hostName', {
-                    initialValue: hostName,
-                    rules: [{
-                        required: true, message: '请输入主机名'
-                    }]
-                })(
-                    <Input placeholder="请输入主机名" />
-                )}
+const HostForm = (props: any) => {
+    const { value, tagList = [], forwardRef } = props;
+    const { hostIp, hostName, username, password, remark, tags = [] } = value;
+    const tagIds = tags.map((item: any) => Number(item.id));
+    const isAdd = isEmpty(value);
+    return (
+        <Form
+            labelCol={{ span: 5 }}
+            wrapperCol={{ span: 17 }}
+            ref={forwardRef}
+            initialValues={{
+                hostName: hostName,
+                hostIp: hostIp,
+                username: username,
+                password: password,
+                tagIds: tagIds,
+                remark: remark
+            }}
+        >
+            <FormItem
+                label="主机名"
+                name="hostName"
+                rules={[{ required: true, message: '请输入主机名' }]}
+                hasFeedback
+            >
+                <Input placeholder="请输入主机名" />
             </FormItem>
-            <FormItem label="主机IP" hasFeedback>
-                {getFieldDecorator('hostIp', {
-                    initialValue: hostIp,
-                    rules: [{
-                        required: true, message: '请输入主机IP'
-                    }]
-                })(
-                    <Input placeholder="请输入主机IP" />
-                )}
+            <FormItem
+                label="主机IP"
+                name="hostIp"
+                rules={[{ required: true, message: '请输入主机IP' }]}
+                hasFeedback
+            >
+                <Input placeholder="请输入主机IP" />
             </FormItem>
-            {isAdd && <FormItem label="用户名" hasFeedback>
-                {getFieldDecorator('username', {
-                    initialValue: username,
-                    rules: [{
-                        required: true, message: '请输入用户名'
-                    }]
-                })(
+            {isAdd && <Fragment>
+                <FormItem
+                    label="用户名"
+                    name="username"
+                    rules={[{ required: true, message: '请输入用户名' }]}
+                    hasFeedback
+                >
                     <Input placeholder="请输入用户名" />
-                )}
-            </FormItem>}
-            {isAdd && <FormItem label="密码" hasFeedback>
-                {getFieldDecorator('password', {
-                    initialValue: password,
-                    rules: [{
-                        required: true, message: '请输入密码'
-                    }]
-                })(
+                </FormItem>
+                <FormItem
+                    label="密码"
+                    name="password"
+                    rules={[{ required: true, message: '请输入密码' }]}
+                    hasFeedback
+                >
                     <Input type="password" placeholder="请输入密码" />
-                )}
-            </FormItem>}
-            <FormItem label="标签" hasFeedback>
-                {getFieldDecorator('tagIds', {
-                    initialValue: tagIds,
-                    rules: [{
-                        type: 'array',
-                        required: true, message: '请选择标签'
-                    }]
-                })(
-                    <Select mode="multiple" placeholder="请选择标签">
-                        {
-                            tagList.map((item: any) => <Option key={item.id}>{item.tagName}</Option>)
-                        }
-                    </Select>
-                )}
+                </FormItem>
+            </Fragment>}
+            <FormItem
+                label="标签"
+                name="tagIds"
+                rules={[{
+                    type: 'array',
+                    required: true, message: '请选择标签'
+                }]}
+                hasFeedback
+            >
+                <Select mode="multiple" placeholder="请选择标签">
+                    {
+                        tagList.map((item: any) => <Option key={item.id} value={item.id}>{item.tagName}</Option>)
+                    }
+                </Select>
             </FormItem>
-            <FormItem label="备注" hasFeedback>
-                {getFieldDecorator('remark', {
-                    initialValue: remark
-                })(
-                    <TextArea placeholder="请输入备注" rows={4} />
-                )}
+            <FormItem
+                label="备注"
+                name="remark"
+                hasFeedback
+            >
+                <TextArea placeholder="请输入备注" rows={4} />
             </FormItem>
         </Form>
-    }
-)
+    )
+};
+
+const HostFormRef = React.forwardRef((props: any, ref: any) => {
+    return <HostForm {...props} forwardRef={ref} />
+})
+
 const HostModal = (props: any) => {
     const { value, visible, onOk, onCancel, tagList } = props;
     const [confirmLoading, setConfirmLoading] = useState(false);
@@ -87,8 +97,8 @@ const HostModal = (props: any) => {
     const { id, hostName } = value;
     const handleModalOk = () => {
         if (!isNull(hostFormRef.current)) {
-            hostFormRef.current.validateFields((err: any, values: any) => {
-                if (!err) {
+            hostFormRef.current.validateFields()
+                .then((values: any) => {
                     setConfirmLoading(true);
                     API[isAdd ? 'addHost' : 'editHost']({
                         id: isAdd ? undefined : id,
@@ -101,8 +111,7 @@ const HostModal = (props: any) => {
                             isFunction(onOk) && onOk(values);
                         }
                     })
-                }
-            })
+                })
         }
     }
     const handleModalCancel = () => {
@@ -121,7 +130,7 @@ const HostModal = (props: any) => {
         onOk={handleModalOk}
         onCancel={handleModalCancel}>
         <Spin spinning={confirmLoading}>
-            {visible && <HostForm tagList={tagList} value={value} ref={hostFormRef} />}
+            {visible && <HostFormRef tagList={tagList} value={value} ref={hostFormRef} />}
         </Spin>
     </Modal>
 }

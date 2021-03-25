@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { Modal, Form, Input, Table } from 'antd';
+import { Modal, Input, Form, FormInstance } from 'antd';
 import PropsTypes from 'prop-types';
 import { urlReg } from '@/utils/reg';
 import ProxyAddrsTable from './proxyAddrsTable';
@@ -26,6 +26,8 @@ class ProxyServerModal extends React.PureComponent<any, any> {
         confirmLoading: PropsTypes.bool
     }
 
+    formRef: FormInstance<any> = null;
+
     componentDidMount() {
         const { target, addrs } = this.props.proxyServer;
         if (Array.isArray(addrs) && addrs.length) {
@@ -37,19 +39,18 @@ class ProxyServerModal extends React.PureComponent<any, any> {
     }
 
     handleModalOk = () => {
-        const { onOk, form, editable, proxyServer } = this.props;
-        form.validateFieldsAndScroll((err: any, values: any) => {
-            if (!err) {
-                values.addrs = this.formatTargetAddrs(values.addrs);
-                // 保存
-                if (editable) {
-                    onOk(Object.assign({}, proxyServer, values));
-                } else {
-                    onOk(values);
-                }
+        const { onOk, editable, proxyServer } = this.props;
+        this.formRef.validateFields().then((values: any) => {
+            values.addrs = this.formatTargetAddrs(values.addrs);
+            // 保存
+            if (editable) {
+                onOk(Object.assign({}, proxyServer, values));
+            } else {
+                onOk(values);
             }
-        });
+        })
     }
+
     handleModalCancel = () => {
         const { onCancel } = this.props;
         onCancel();
@@ -95,15 +96,14 @@ class ProxyServerModal extends React.PureComponent<any, any> {
     // 通过表格选择默认目标地址
     handleRowSelect = (selectedRowKeys: any, selectedRows: any) => {
         this.setState({ selectedRowKeys });
-        this.props.form.setFieldsValue({
+        this.formRef.setFieldsValue({
             target: selectedRows[0].target
         })
     }
 
     render() {
         const { selectedRowKeys, deleteRowKeys } = this.state;
-        const { visible, editable, form, proxyServer, confirmLoading } = this.props;
-        const { getFieldDecorator } = form;
+        const { visible, editable, proxyServer, confirmLoading } = this.props;
         const { name, target, api_doc_url, addrs } = proxyServer;
         const formItemLayout: any = {
             labelCol: {
@@ -120,67 +120,67 @@ class ProxyServerModal extends React.PureComponent<any, any> {
             confirmLoading={confirmLoading}
             onOk={this.handleModalOk}
             onCancel={this.handleModalCancel}>
-            <Form {...formItemLayout} >
+            <Form
+                {...formItemLayout}
+                ref={(form: any) => this.formRef = form}
+                initialValues={{
+                    name: name,
+                    target: target,
+                    api_doc_url: api_doc_url,
+                    addrs: addrs && addrs.length ? addrs : [{
+                        rowId: 0,
+                        target: '',
+                        remark: ''
+                    }]
+                }}
+                scrollToFirstError={true}
+            >
                 <Form.Item
-                    label="代理服务名称">
-                    {
-                        getFieldDecorator('name', {
-                            rules: [{
-                                required: true, message: '请输入代理服务名称'
-                            }],
-                            initialValue: name
-                        })(<Input placeholder="请输入代理服务名称" />)
-                    }
+                    label="代理服务名称"
+                    name="name"
+                    rules={[{
+                        required: true, message: '请输入代理服务名称'
+                    }]}
+                >
+                    <Input placeholder="请输入代理服务名称" />
                 </Form.Item>
                 <Form.Item
-                    label="默认目标服务地址">
-                    {
-                        getFieldDecorator('target', {
-                            rules: [{
-                                required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址'
-                            }],
-                            initialValue: target
-                        })(<Input placeholder="请通过下表选择默认目标服务地址" disabled />)
-                    }
+                    label="默认目标服务地址"
+                    name="target"
+                    rules={[{
+                        required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址'
+                    }]}
+                >
+                    <Input placeholder="请通过下表选择默认目标服务地址" disabled />
                 </Form.Item>
                 <Form.Item
-                    label="接口文档地址">
-                    {
-                        getFieldDecorator('api_doc_url', {
-                            initialValue: api_doc_url
-                        })(<Input placeholder="请输入接口文档地址" />)
-                    }
+                    label="接口文档地址"
+                    name="api_doc_url"
+                >
+                    <Input placeholder="请输入接口文档地址" />
                 </Form.Item>
                 <Form.Item
-                    label="目标服务地址列表">
-                    {
-                        getFieldDecorator('addrs', {
-                            rules: [
-                                { required: true, message: '至少创建一条目标服务地址' },
-                                { validator: this.addrsValidator }
-                            ],
-                            initialValue: addrs && addrs.length ? addrs : [{
-                                rowId: 0,
-                                target: '',
-                                remark: ''
-                            }]
-                        })(
-                            <ProxyAddrsTableRef
-                                rowDelete={{
-                                    deleteRowKeys,
-                                    onChange: (deleteRowKeys: any) => this.setState({ deleteRowKeys })
-                                }}
-                                rowSelection={{
-                                    type: 'radio',
-                                    selectedRowKeys,
-                                    onChange: this.handleRowSelect
-                                }}
-                            />
-                        )
-                    }
+                    label="目标服务地址列表"
+                    name="addrs"
+                    rules={[
+                        { required: true, message: '至少创建一条目标服务地址' },
+                        { validator: this.addrsValidator }
+                    ]}
+                >
+                    <ProxyAddrsTableRef
+                        rowDelete={{
+                            deleteRowKeys,
+                            onChange: (deleteRowKeys: any) => this.setState({ deleteRowKeys })
+                        }}
+                        rowSelection={{
+                            type: 'radio',
+                            selectedRowKeys,
+                            onChange: this.handleRowSelect
+                        }}
+                    />
                 </Form.Item>
             </Form>
         </Modal>)
     }
 }
-export default Form.create<any>()(ProxyServerModal)
+export default ProxyServerModal;

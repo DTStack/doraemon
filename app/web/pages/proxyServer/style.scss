@@ -1,21 +1,21 @@
-.page-proxy-server{
-  .title_wrap{
+.page-proxy-server {
+  .title_wrap {
     display: flex;
     justify-content: space-between;
     align-self: center;
     margin-bottom: 12px;
-    .search{
+    .search {
       width: 200px;
       height: 32px;
     }
   }
-  .ant-tag-checkable{
+  .ant-tag-checkable {
     cursor: pointer;
   }
-  .marginBottom12{
+  .marginBottom12 {
     margin-bottom: 12px;
   }
-  .ip-wrap{
+  .ip-wrap {
     position: relative;
     cursor: pointer;
     .iconicon_star {
@@ -24,7 +24,6 @@
       color: #ffc240;
       font-size: 12px;
       vertical-align: top;
+    }
   }
-  }
- 
 }

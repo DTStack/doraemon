@@ -1,92 +1,103 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { isEmpty, isFunction, isNull } from 'lodash';
-import { Modal, Form, Input, Select, Spin, message as Message } from 'antd';
+import { Modal, Input, Select, Spin, message as Message, Form } from 'antd';
 import { API } from '@/api';
 const FormItem = Form.Item;
 const { TextArea } = Input;
 const { Option } = Select;
 
 
-const ConfigForm = Form.create<any>()(
-    (props) => {
-        const [hostList, setHostList] = useState([]);
-        const { form, value, tagList }: any = props;
-        const { getFieldDecorator }: any = form;
-        const { filename, hostId, filePath, remark, tags = {} } = value;
-        const { id = '' }: any = tags;
-        const loadHostsData = () => {
-            API.getHostList().then((response: any) => {
-                const { success, data } = response;
-                if (success) {
-                    setHostList(data);
-                }
-            })
-        }
-        useEffect(() => {
-            loadHostsData();
-        }, [])
-        return <Form labelCol={{ span: 5 }} wrapperCol={{ span: 17 }} >
-            <FormItem label="主机" hasFeedback>
-                {getFieldDecorator('hostId', {
-                    initialValue: hostId,
-                    rules: [{
-                        required: true, message: '请选择主机'
-                    }]
-                })(
-                    <Select placeholder="请选择主机">
-                        {
-                            hostList.map((host) => {
-                                const { id, hostIp, hostName } = host;
-                                return <Option key={id} value={id}>{`${hostIp}-${hostName}`}</Option>
-                            })
-                        }
-                    </Select>
-                )}
+const ConfigForm = (props) => {
+    const [hostList, setHostList] = useState([]);
+    const { value, tagList, forwardRef }: any = props;
+    const { filename, hostId, filePath, remark, tags = {} } = value;
+    const { id = '' }: any = tags;
+    const loadHostsData = () => {
+        API.getHostList().then((response: any) => {
+            const { success, data } = response;
+            if (success) {
+                setHostList(data);
+            }
+        })
+    }
+    useEffect(() => {
+        loadHostsData();
+    }, [])
+    return (
+        <Form
+            labelCol={{ span: 5 }}
+            wrapperCol={{ span: 17 }}
+            ref={forwardRef}
+            initialValues={{
+                hostId: hostId,
+                filename: filename,
+                filePath: filePath,
+                tagIds: id || undefined,
+                remark: remark
+            }}
+        >
+            <FormItem
+                label="主机"
+                name="hostId"
+                rules={[{
+                    required: true, message: '请选择主机'
+                }]}
+                hasFeedback
+            >
+                <Select placeholder="请选择主机">
+                    {
+                        hostList.map((host) => {
+                            const { id, hostIp, hostName } = host;
+                            return <Option key={id} value={id}>{`${hostIp}-${hostName}`}</Option>
+                        })
+                    }
+                </Select>
             </FormItem>
-            <FormItem label="文件名" hasFeedback>
-                {getFieldDecorator('filename', {
-                    initialValue: filename,
-                    rules: [{
-                        required: true, message: '请输入文件名'
-                    }]
-                })(
-                    <Input placeholder="请输入文件名" />
-                )}
+            <FormItem
+                label="文件名"
+                name="filename"
+                rules={[{
+                    required: true, message: '请输入文件名'
+                }]}
+                hasFeedback
+            >
+                <Input placeholder="请输入文件名" />
             </FormItem>
-            <FormItem label="文件路径" hasFeedback>
-                {getFieldDecorator('filePath', {
-                    initialValue: filePath,
-                    rules: [{
-                        required: true, message: '请输入文件路径'
-                    }]
-                })(
-                    <Input placeholder="请输入文件路径" />
-                )}
+            <FormItem
+                label="文件路径"
+                name="filePath"
+                rules={[{
+                    required: true, message: '请输入文件路径'
+                }]}
+                hasFeedback
+            >
+                <Input placeholder="请输入文件路径" />
             </FormItem>
-            <FormItem label="标签" hasFeedback>
-                {getFieldDecorator('tagIds', {
-                    initialValue: `${id}`,
-                    rules: [{
-                        required: true, message: '请选择标签'
-                    }]
-                })(
-                    <Select placeholder="请选择标签">
-                        {
-                            tagList.map((item: any) => <Option key={item.id}>{item.tagName}</Option>)
-                        }
-                    </Select>
-                )}
+            <FormItem
+                label="标签"
+                name="tagIds"
+                rules={[{
+                    required: true, message: '请选择标签'
+                }]}
+                hasFeedback
+            >
+                <Select placeholder="请选择标签">
+                    {
+                        tagList.map((item: any) => <Option key={item.id} value={item.id}>{item.tagName}</Option>)
+                    }
+                </Select>
             </FormItem>
-            <FormItem label="备注" hasFeedback>
-                {getFieldDecorator('remark', {
-                    initialValue: remark
-                })(
-                    <TextArea placeholder="请输入备注" rows={4} />
-                )}
+            <FormItem label="备注" name="remark" hasFeedback>
+                <TextArea placeholder="请输入备注" rows={4} />
             </FormItem>
         </Form>
-    }
-)
+    )
+}
+
+const ConfigFormRef = React.forwardRef((props: any, ref: any) => {
+    return <ConfigForm {...props} forwardRef={ref} />
+})
+
 const ConfigModal = (props: any) => {
     const { value, visible, onOk, onCancel, tagList } = props;
     const [confirmLoading, setConfirmLoading] = useState(false);
@@ -95,8 +106,8 @@ const ConfigModal = (props: any) => {
     const { id, filename } = value;
     const handleModalOk = () => {
         if (!isNull(configFormRef.current)) {
-            configFormRef.current.validateFields((err: any, values: any) => {
-                if (!err) {
+            configFormRef.current.validateFields()
+                .then((values: any) => {
                     setConfirmLoading(true);
                     API[isAdd ? 'addConfig' : 'editConfig']({
                         id: isAdd ? undefined : id,
@@ -109,8 +120,7 @@ const ConfigModal = (props: any) => {
                             isFunction(onOk) && onOk(values);
                         }
                     })
-                }
-            })
+                })
         }
     }
     const handleModalCancel = () => {
@@ -128,7 +138,7 @@ const ConfigModal = (props: any) => {
         onOk={handleModalOk}
         onCancel={handleModalCancel}>
         <Spin spinning={confirmLoading}>
-            {visible && <ConfigForm tagList={tagList} value={value} ref={configFormRef} />}
+            {visible && <ConfigFormRef tagList={tagList} value={value} ref={configFormRef} />}
         </Spin>
     </Modal>
 }
