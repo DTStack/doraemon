@@ -8,7 +8,12 @@ import {
     Breadcrumb,
     Tooltip,
     message as Message,
-    Typography
+    Typography, 
+    Table, 
+    Modal, 
+    Input, 
+    message, 
+    Popconfirm
 } from 'antd';
 import { Link } from 'react-router-dom';
 import { isEmpty, replace } from 'lodash';
@@ -31,7 +36,41 @@ const ConfigDetail = (props: any) => {
     const [updating, setUpdating] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [shell, setShell] = useState('#!/bin/bash\n');
+    const [dingTalkList,setDingTalkList] = useState([])
+    const [showAddRulModal,setShowAddRulModal] = useState(false)
+    const [noticeUrl,setNoticeUrl] = useState('')
     const { filename, filePath, hostIp, hostName, username, password, remark }: any = basicInfo;
+    const getTableColumns = ()=>{
+        return [
+          {
+            title: 'url',
+            key: 'url',
+            dataIndex: 'url',
+            render: (text) => (<div style={{width: 200}}>{text}</div>)
+          },
+          {
+            title: '操作',
+            key: 'id',
+            dataIndex: 'id',
+            render: (value) => {
+              return <Popconfirm title='确认是否删除？' onConfirm={() => {delUrl(value)}}>
+              <a >删除</a>
+            </Popconfirm>
+            }
+          }
+        ]
+      }
+      const delUrl = (id) => {
+        return API.delNoticeUrl({
+          id,
+          type: 'config-center'
+        }).then((response)=>{
+          const {success} = response;
+          if(success){
+            loadConfigNoticeUrlList()
+          }
+        })
+      }    
     const loadBasicInfoData = useCallback(() => {
         return API.getConfigDetail({
             id
@@ -43,6 +82,17 @@ const ConfigDetail = (props: any) => {
             }
         })
     }, [id]);
+    const loadConfigNoticeUrlList = useCallback(() => {
+        return API.getConfigNoticeUrlList({
+          id,
+          type: 'config-center'
+        }).then((response)=>{
+          const {success,data} = response;
+          if(success){
+            setDingTalkList(data)
+          }
+        })}, [id],
+      )    
     const loadRemoteConfigInfo = useCallback(() => {
         return API.getRemoteConfig({
             id
@@ -53,12 +103,35 @@ const ConfigDetail = (props: any) => {
             }
         })
     }, [id]);
+    const addNoticeUrl = () => {
+        if (noticeUrl.indexOf('https://oapi.dingtalk.com/robot/send?access_token=') < 0) {
+          message.error('url格式异常')
+          return
+        }
+        if (noticeUrl.length > 255) {
+          message.error('url长度不能超过255')
+          return
+        }
+        return API.addConfigNoticeUrl({
+          id,
+          url: noticeUrl,
+          type: 'config-center'
+        }).then((response)=>{
+          const {success,data} = response;
+          if(success){
+            setNoticeUrl('');
+            setShowAddRulModal(false);
+            loadConfigNoticeUrlList()
+          }
+        })
+      }    
     const handleConfigSave = () => {
         setUpdating(true);
         API.saveConfig({
             id,
             config,
-            shell
+            shell,
+            basicInfo
         }).then((response: any) => {
             setUpdating(false);
             const { success, data, message } = response;
@@ -97,7 +170,7 @@ const ConfigDetail = (props: any) => {
         } catch (err) {
             console.log(err)
         }
-        Promise.all([loadBasicInfoData(), loadRemoteConfigInfo()]).then(() => {
+        Promise.all([loadBasicInfoData(),loadRemoteConfigInfo(),loadConfigNoticeUrlList()]).then(()=>{
             setLoading(false);
         });
 
@@ -185,6 +258,18 @@ const ConfigDetail = (props: any) => {
                             {!isEmpty(errorMessage) && <Card title="错误信息" style={{ marginTop: 20 }}>
                                 <div style={{ color: 'red' }}>{errorMessage}</div>
                             </Card>}
+                            <Card title="通知配置" className="card-form" style={{marginTop:20}}>
+                                <Button onClick={() => {setShowAddRulModal(true)}}>添加通知</Button>
+                                <Table columns={getTableColumns()} dataSource={dingTalkList} style={{marginTop:20}}></Table>
+                                <Modal
+                                    visible={showAddRulModal}
+                                    title="添加url"
+                                    onOk={addNoticeUrl}
+                                    onCancel={() => {setNoticeUrl('');setShowAddRulModal(false)}}
+                                >
+                                    <Input value={noticeUrl} onChange={(e) => {setNoticeUrl(e.target.value)}}></Input>
+                                </Modal>
+                            </Card>
                         </Col>
                     </Row>
                 </div>

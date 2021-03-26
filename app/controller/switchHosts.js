@@ -72,6 +72,11 @@ class SwitchHostsController extends Controller {
             is_push,
             updated_at: new Date()
         })
+        const { dataValues } = await ctx.service.switchHosts.getHostsInfo(id);
+        const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'switch-hosts')
+        noticeUrlList.forEach(({url}) => {
+            app.utils.sendHostsUpdateMsg(url,dataValues,ctx.request.origin)
+        })
         ctx.body = app.utils.response(result);
     }
     // 推送
@@ -85,48 +90,23 @@ class SwitchHostsController extends Controller {
         });
         ctx.body = app.utils.response(result);
     }
-    // 更新参数
-    const result = await ctx.service.switchHosts.updateHosts(id, {
-      groupName,
-      groupDesc,
-      is_push,
-      updated_at: new Date()
-    })
-    const { dataValues } = await ctx.service.switchHosts.getHostsInfo(id);
-    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'switch-hosts')
-    noticeUrlList.forEach(({url}) => {
-      app.utils.sendHostsUpdateMsg(url,dataValues,ctx.request.origin)
-    })
-    ctx.body = app.utils.response(result);
-  }
-  // 推送
-  async pushHosts() {
-    const { ctx, app } = this;
-    const { id } = ctx.request.body;
-    if (_.isNil(id)) throw new Error('缺少必要参数id');
-    const result = await ctx.service.switchHosts.updateHosts(id, {
-      is_push: 1,
-      updated_at: new Date()
-    });
-    ctx.body = app.utils.response(result);
-  }
 
-  // 删除
-  async deleteHosts() {
-    const { ctx, app } = this;
-    const { id } = ctx.request.body;
-    if (_.isNil(id)) throw new Error('缺少必要参数id');
-    const result = await ctx.service.switchHosts.updateHosts(id, {
-      is_delete: 1,
-      updated_at: new Date()
-    });
-    const { dataValues } = await ctx.service.switchHosts.getHostsInfo(id);
-    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'switch-hosts')
-    noticeUrlList.forEach(({url}) => {
-      app.utils.sendHostsUpdateMsg(url,dataValues,ctx.request.origin)
-    })
-    ctx.body = app.utils.response(result);
-  }
+    // 删除
+    async deleteHosts() {
+        const { ctx, app } = this;
+        const { id } = ctx.request.body;
+        if (_.isNil(id)) throw new Error('缺少必要参数id');
+        const result = await ctx.service.switchHosts.updateHosts(id, {
+            is_delete: 1,
+            updated_at: new Date()
+        });
+        const { dataValues } = await ctx.service.switchHosts.getHostsInfo(id);
+        const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'switch-hosts')
+        noticeUrlList.forEach(({url}) => {
+            app.utils.sendHostsUpdateMsg(url,dataValues,ctx.request.origin)
+        })
+        ctx.body = app.utils.response(result);
+    }
 
     // 获取hosts分组信息
     async getHostsInfo() {
