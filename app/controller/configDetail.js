@@ -109,7 +109,6 @@ class ConfigDetail extends Controller{
       fs.unlinkSync(shellPath);
       throw err;
     }
-  }
 }
 
 module.exports=ConfigDetail;

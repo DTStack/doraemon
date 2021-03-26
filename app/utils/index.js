@@ -5,28 +5,28 @@ const ROOT_PATH = path.join(__dirname, '../../');
 const ChatBot = require('dingtalk-robot-sender');
 
 const createFolder  = (paths) => {
-  let dirPath = ROOT_PATH;
-  try {
-    paths.forEach(dir => {
-      dirPath = path.join(dirPath, dir.toString());
-      if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath);
-      }
-    })
-    return dirPath;
-  } catch {
-    throw new Error('创建文件夹出错')
-  }
+    let dirPath = ROOT_PATH;
+    try {
+        paths.forEach(dir => {
+            dirPath = path.join(dirPath, dir.toString());
+            if (!fs.existsSync(dirPath)) {
+                fs.mkdirSync(dirPath);
+            }
+        })
+        return dirPath;
+    } catch {
+        throw new Error('创建文件夹出错')
+    }
 }
 const createFileSync = (paths,fileName,data) => {
-  try {
-    const dir = createFolder(paths);
-    const filePath = path.join(dir,fileName)
-    fs.writeFileSync(filePath,data);
-    return filePath;
-  } catch {
-    throw new Error('创建文件出错')
-  }
+    try {
+        const dir = createFolder(paths);
+        const filePath = path.join(dir,fileName)
+        fs.writeFileSync(filePath,data);
+        return filePath;
+    } catch {
+        throw new Error('创建文件出错')
+    }
 }
 const sendMsg = async (webhook_url,basicInfo) => {
   const { filename, hostIp, hostName } = basicInfo
@@ -68,5 +68,4 @@ module.exports = {
       data,
       message
     }
-  }
 }

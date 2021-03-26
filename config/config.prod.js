@@ -6,20 +6,20 @@
 
 
 module.exports = () => {
-  const exports = {};
-  exports.sequelize = {
-    datasources:[
-      {
-        delegate: 'model',
-        baseDir: 'model',
-        database: 'doraemon',
-        dialect: 'mysql',
-        host: '127.0.0.1',
-        port: 3306,
-        username:'root',
-        password:'Admin123!@#'
-      }
-    ]
-  };
-  return exports;
+    const exports = {};
+    exports.sequelize = {
+        datasources:[
+            {
+                delegate: 'model',
+                baseDir: 'model',
+                database: 'doraemon',
+                dialect: 'mysql',
+                host: '127.0.0.1',
+                port: 3306,
+                username:'root',
+                password:'Admin123!@#'
+            }
+        ]
+    };
+    return exports;
 };
