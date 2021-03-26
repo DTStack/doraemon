@@ -3,6 +3,7 @@ module.exports = app => {
   const ConfigNoticeUrl = app.model.define('config_notice_url', {
     id: { type: INTEGER, primaryKey: true, autoIncrement: true },
     url:STRING(255),
+    type:STRING(255),
     configId:{type:INTEGER,field:'config_id'},
   },{
     freezeTableName: true,

@@ -72,6 +72,11 @@ class SwitchHostsController extends Controller {
       is_push,
       updated_at: new Date()
     })
+    const { dataValues } = await ctx.service.switchHosts.getHostsInfo(id);
+    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'switch-hosts')
+    noticeUrlList.forEach(({url}) => {
+      app.utils.sendHostsUpdateMsg(url,dataValues,ctx.request.origin)
+    })
     ctx.body = app.utils.response(result);
   }
   // 推送
@@ -95,6 +100,11 @@ class SwitchHostsController extends Controller {
       is_delete: 1,
       updated_at: new Date()
     });
+    const { dataValues } = await ctx.service.switchHosts.getHostsInfo(id);
+    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'switch-hosts')
+    noticeUrlList.forEach(({url}) => {
+      app.utils.sendHostsUpdateMsg(url,dataValues,ctx.request.origin)
+    })
     ctx.body = app.utils.response(result);
   }
 

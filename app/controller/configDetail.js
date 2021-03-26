@@ -15,24 +15,24 @@ class ConfigDetail extends Controller{
   }
   async getNoticeList() {
     const {ctx,app} = this;
-    const {id} = ctx.query;
+    const {id,type} = ctx.query;
     if(_.isNil(id)) throw new Error('缺少必要参数id');
-    const data = await ctx.service.configDetail.getNoticeListById(id);
+    const data = await ctx.service.configDetail.getNoticeListById(id,type);
     ctx.body = app.utils.response(true,data);
   }
   async delNoticeUrl() {
     const {ctx,app} = this;
-    const {id} = ctx.query;
+    const {id,type} = ctx.query;
     if(_.isNil(id)) throw new Error('缺少必要参数id');
-    const data = await ctx.service.configDetail.delNoticeUrl(id);
+    const data = await ctx.service.configDetail.delNoticeUrl(id,type);
     ctx.body = app.utils.response(true,data);
   }
   async addNoticeUrl() {
     const {ctx,app} = this;
-    const {id,url} = ctx.request.body;
+    const {id,url,type} = ctx.request.body;
     if(_.isNil(id)) throw new Error('缺少必要参数id');
     if(_.isNil(url)) throw new Error('缺少必要参数url');
-    const data = await ctx.service.configDetail.addNoticeUrl(id,url);
+    const data = await ctx.service.configDetail.addNoticeUrl(id,url,type);
     ctx.body = app.utils.response(true,data);
   }
   async getRemoteConfig(){
@@ -62,7 +62,7 @@ class ConfigDetail extends Controller{
     const {ctx,app} = this;
     const {id,config,shell,basicInfo} = ctx.request.body;
     const configDetail = await ctx.service.configDetail.getConfigSpecificInfo(id,['id','filename','filePath',[app.Sequelize.col('host_management.host_ip'),'hostIp'],[app.Sequelize.col('host_management.username'),'username'],[app.Sequelize.col('host_management.password'),'password']]);
-    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id)
+    const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'config-center')
     noticeUrlList.forEach(item => {
       app.utils.sendMsg(item.url,basicInfo)
     })
