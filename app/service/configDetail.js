@@ -19,28 +19,34 @@ class ConfigDetailService extends Service {
     async getNoticeListById(id,type) {
         const {ctx} = this;
         return ctx.model.ConfigNoticeUrl.findAll({
-            attributes:['id','url'],
+            attributes:['id','webHook','accept_group'],
             where:{
                 configId: id,
-                type
+                type,
+                is_delete: 0
             }
         })
     }
-    async addNoticeUrl(id,url,type) {
+    async addNoticeUrl(id,webHook,type,accept_group) {
         const {ctx} = this;
         return ctx.model.ConfigNoticeUrl.create({
             configId: id,
-            url,
-            type
+            webHook,
+            type,
+            accept_group,
+            is_delete: 0
         })
     }
-    async delNoticeUrl(id,type) {
-        const {ctx} = this;
-        return ctx.model.ConfigNoticeUrl.destroy({
-            where:{
-                id,
-                type
-            }
+    async updateNoticeUrl(id, type, updateParams) {
+        const { ctx } = this;
+        return ctx.model.ConfigNoticeUrl.update(updateParams, {
+            where: { id, type }
+        })
+    }
+    async updateNoticeAllUrl(id, type, updateParams) {
+        const { ctx } = this;
+        return ctx.model.ConfigNoticeUrl.update(updateParams, {
+            where: { type, configId: id }
         })
     }
     async getConfigSpecificInfo(id,attributes=[]){

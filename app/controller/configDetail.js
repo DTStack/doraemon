@@ -24,15 +24,17 @@ class ConfigDetail extends Controller{
         const {ctx,app} = this;
         const {id,type} = ctx.query;
         if(_.isNil(id)) throw new Error('缺少必要参数id');
-        const data = await ctx.service.configDetail.delNoticeUrl(id,type);
+        const data = await ctx.service.configDetail.updateNoticeUrl(id,type,{
+            is_delete: 1
+        });
         ctx.body = app.utils.response(true,data);
     }
     async addNoticeUrl() {
         const {ctx,app} = this;
-        const {id,url,type} = ctx.request.body;
+        const {id,accept_group,type,webHook} = ctx.request.body;
         if(_.isNil(id)) throw new Error('缺少必要参数id');
-        if(_.isNil(url)) throw new Error('缺少必要参数url');
-        const data = await ctx.service.configDetail.addNoticeUrl(id,url,type);
+        if(_.isNil(webHook)) throw new Error('缺少必要参数webHook');
+        const data = await ctx.service.configDetail.addNoticeUrl(id,webHook,type,accept_group);
         ctx.body = app.utils.response(true,data);
     }
     async getRemoteConfig(){
@@ -64,7 +66,7 @@ class ConfigDetail extends Controller{
         const configDetail = await ctx.service.configDetail.getConfigSpecificInfo(id,['id','filename','filePath',[app.Sequelize.col('host_management.host_ip'),'hostIp'],[app.Sequelize.col('host_management.username'),'username'],[app.Sequelize.col('host_management.password'),'password']]);
         const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'config-center')
         noticeUrlList.forEach(item => {
-            app.utils.sendMsg(item.url,basicInfo)
+            app.utils.sendMsg(item.webHook,basicInfo,'已更新',ctx.request.header.referer)
         })
         const {filePath,filename,hostIp,username,password} = configDetail.dataValues;
         const configFilePath = path.join(__dirname,'../../cache/',filename);

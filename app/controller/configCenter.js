@@ -45,7 +45,7 @@ class ConfigCenter extends Controller{
         const basicInfo = await ctx.service.configDetail.getConfigBasicInfo(id);
         const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'config-center')
         noticeUrlList.forEach(item => {
-            app.utils.sendMsg(item.url,basicInfo.dataValues)
+            app.utils.sendMsg(item.webHook,basicInfo.dataValues,'已更新',ctx.request.header.referer)
         })
         ctx.body = app.utils.response(true);
     }
@@ -55,10 +55,14 @@ class ConfigCenter extends Controller{
         if(_.isNil(id)) throw new Error('缺少必要参数id');
         await ctx.service.configCenter.deleteConfig(id);
         const basicInfo = await ctx.service.configDetail.getConfigBasicInfo(id);
-        const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'config-center')
+        const type = 'config-center'
+        const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,type)
         noticeUrlList.forEach(item => {
-            app.utils.sendMsg(item.url,basicInfo.dataValues)
+            app.utils.sendMsg(item.webHook,basicInfo.dataValues,'已删除',ctx.request.header.referer)
         })
+        await ctx.service.configDetail.updateNoticeAllUrl(id,type,{
+            is_delete: 1
+        });
         ctx.body = app.utils.response(true)
     }
 }
