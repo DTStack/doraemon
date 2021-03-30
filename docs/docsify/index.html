@@ -16,21 +16,21 @@
   <script>
     window.$docsify = {
       name: 'Doraemon',
+      nameLink: {
+        '/': '/#/zh-cn/'
+      },
+      alias: {
+        '/zh-cn/.*/_sidebar.md': '/zh-cn/_sidebar.md',
+        '/.*/_navbar.md': '/_navbar.md'
+      },
       repo: 'http://gitlab.prod.dtstack.cn/dt-insight-front/infrastructure/doraemon',
       loadNavbar: true, // 加载导航栏
       loadSidebar: true, // 加载侧边栏
-      subMaxLevel: 2, // 子项展开最大数
+      subMaxLevel: 3, // 子项展开最大数
       search: { // 搜索
         paths: 'auto',
-        // 支持本地化
-        placeholder: {
-          '/zh-cn/': '搜索',
-          '/': 'Type to search'
-        },
-        noData: {
-          '/zh-cn/': '找不到结果',
-          '/': 'No Results'
-        }
+        placeholder: '搜索',
+        noData: '找不到结果'
       }
     }
   </script>

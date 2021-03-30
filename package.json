@@ -3,7 +3,7 @@
   "version": "1.2.3",
   "description": "treasure box for programmer",
   "scripts": {
-    "helpDoc": "docsify serve ./docs",
+    "helpDoc": "docsify serve ./docs/docsify",
     "clean": "easy clean",
     "build": "easy build",
     "debug": "egg-bin debug",
