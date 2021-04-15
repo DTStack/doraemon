@@ -6,6 +6,9 @@ body,
 
 // table 滚动状态下的样式, small table
 .ant-table {
+    &.ant-table-ping-right:not(.ant-table-has-fix-right) .ant-table-container::after {
+        box-shadow: none;
+    }
     .ant-table-small,
     &.ant-table-middle {
         font-size: 12px;
@@ -56,9 +59,9 @@ body,
         }
     }
     .ant-spin-container > .ant-table-pagination {
+        line-height: 67px;
+        height: 67px;
         background-color: #fff;
-    }
-    .ant-table-pagination {
         &.ant-pagination.mini {
             align-items: center;
         }

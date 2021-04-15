@@ -10,7 +10,7 @@ module.exports = app => {
     app.post('/api/proxy-server/add-server', app.controller.proxy.add);
     app.get('/api/proxy-server/target-addrs-list', app.controller.proxy.getTargetAddrs);
     app.post('/api/proxy-server/update-server', app.controller.proxy.update);
-    app.delete('/api/proxy-server/delete-server',app.controller.proxy.delete);
+    app.delete('/api/proxy-server/delete-server', app.controller.proxy.delete);
     app.get('/api/proxy-server/change-server-status', app.controller.proxy.changeStatus);
     /**
    * 代理服务规则增删改查
@@ -30,29 +30,32 @@ module.exports = app => {
     /**
    * 配置中心
    */
-    app.post('/api/config-center/config-list',app.controller.configCenter.getConfigList);
-    app.post('/api/config-center/add-config',app.controller.configCenter.addConfig);
-    app.post('/api/config-center/edit-config',app.controller.configCenter.editConfig);
-    app.delete('/api/config-center/delete-config',app.controller.configCenter.deleteConfig);
+    app.post('/api/config-center/config-list', app.controller.configCenter.getConfigList);
+    app.post('/api/config-center/add-config', app.controller.configCenter.addConfig);
+    app.post('/api/config-center/edit-config', app.controller.configCenter.editConfig);
+    app.delete('/api/config-center/delete-config', app.controller.configCenter.deleteConfig);
     /**
    * 配置详情
    */
-    app.get('/api/config-detail/get-basic-info',app.controller.configDetail.getBasicInfo);
-    app.get('/api/config-detail/get-remote-config',app.controller.configDetail.getRemoteConfig);
-    app.post('/api/config-detail/save',app.controller.configDetail.saveConfig)
+    app.get('/api/config-detail/get-basic-info', app.controller.configDetail.getBasicInfo);
+    app.get('/api/config-detail/get-notice-list', app.controller.configDetail.getNoticeList)
+    app.post('/api/config-detail/add-config-notice-url', app.controller.configDetail.addNoticeUrl)
+    app.get('/api/config-detail/del-config-notice-url', app.controller.configDetail.delNoticeUrl)
+    app.get('/api/config-detail/get-remote-config', app.controller.configDetail.getRemoteConfig);
+    app.post('/api/config-detail/save', app.controller.configDetail.saveConfig)
     /**
-   * 服务代理
-   */
+     * 服务代理
+     */
     app.all('/proxy/:id/*', app.middleware.proxy);
     /**
    * 通用接口
    */
-    app.get('/api/appCenters/get-app-list',app.controller.appCenters.getAppCenterList);
-    app.get('/api/github/get-local-ip',app.controller.common.getLocalIp);
-    app.post('/api/appCenters/update-applications',app.controller.appCenters.updateApplications);
-    app.post('/api/appCenters/delete-applications',app.controller.appCenters.deleteApplications);
-    app.post('/api/appCenters/click-applications',app.controller.appCenters.clickApplications);
-    app.get('/api/appCenters/get-app-by-id',app.controller.appCenters.getApplicationById);
+    app.get('/api/appCenters/get-app-list', app.controller.appCenters.getAppCenterList);
+    app.get('/api/github/get-local-ip', app.controller.common.getLocalIp);
+    app.post('/api/appCenters/update-applications', app.controller.appCenters.updateApplications);
+    app.post('/api/appCenters/delete-applications', app.controller.appCenters.deleteApplications);
+    app.post('/api/appCenters/click-applications', app.controller.appCenters.clickApplications);
+    app.get('/api/appCenters/get-app-by-id', app.controller.appCenters.getApplicationById);
     app.post('/api/appCenters/upload-logo/:id', app.controller.appCenters.uploadLogo);
     /**
    * switch hosts 管理列表
