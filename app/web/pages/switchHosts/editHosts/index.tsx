@@ -5,6 +5,7 @@ import { Card, Row, Col, Breadcrumb, Button, message } from 'antd';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import { API } from '@/api';
 import Loading from '@/components/loading';
+import DTDingConfig from '@/components/dtDingconfig' 
 import HostsInfo from './hostsInfo';
 
 const EditHosts = (props: any) => {
@@ -141,6 +142,12 @@ const EditHosts = (props: any) => {
                                 hostsInfo={hostsInfo}
                             />
                         </Card>
+                        {!isCreate&&
+                            <DTDingConfig 
+                                id={id}
+                                type='switch-hosts'
+                            />
+                        }
                     </Col>
                 </Row>
             </div>

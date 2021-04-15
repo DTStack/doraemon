@@ -139,6 +139,18 @@ export default {
         method: 'get',
         url: '/api/config-detail/get-basic-info'
     },
+    getConfigNoticeUrlList:{
+        method:'get',
+        url:'/api/config-detail/get-notice-list'
+    },
+    addConfigNoticeUrl:{
+        method:'post',
+        url:'/api/config-detail/add-config-notice-url'
+    },
+    delNoticeUrl:{
+        method:'get',
+        url:'/api/config-detail/del-config-notice-url'
+    },    
     getRemoteConfig: {
         method: 'get',
         url: '/api/config-detail/get-remote-config'

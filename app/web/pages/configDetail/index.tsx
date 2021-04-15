@@ -8,12 +8,14 @@ import {
     Breadcrumb,
     Tooltip,
     message as Message,
-    Typography
+    Typography, 
+    Popconfirm
 } from 'antd';
 import { Link } from 'react-router-dom';
 import { isEmpty, replace } from 'lodash';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import Loading from '@/components/loading';
+import DTDingConfig from '@/components/dtDingconfig'
 import { API } from '@/api';
 import './style.scss';
 
@@ -32,6 +34,26 @@ const ConfigDetail = (props: any) => {
     const [errorMessage, setErrorMessage] = useState('');
     const [shell, setShell] = useState('#!/bin/bash\n');
     const { filename, filePath, hostIp, hostName, username, password, remark }: any = basicInfo;
+    const getTableColumns = ()=>{
+        return [
+          {
+            title: 'url',
+            key: 'url',
+            dataIndex: 'url',
+            render: (text) => (<div style={{width: 200}}>{text}</div>)
+          },
+          {
+            title: '操作',
+            key: 'id',
+            dataIndex: 'id',
+            render: (value) => {
+              return <Popconfirm title='确认是否删除？' onConfirm={() => {delUrl(value)}}>
+              <a >删除</a>
+            </Popconfirm>
+            }
+          }
+        ]
+      }
     const loadBasicInfoData = useCallback(() => {
         return API.getConfigDetail({
             id
@@ -42,7 +64,7 @@ const ConfigDetail = (props: any) => {
                 setShell(isEmpty(data.updateShell) ? '#!/bin/bash\n' : data.updateShell);
             }
         })
-    }, [id]);
+    }, [id]);  
     const loadRemoteConfigInfo = useCallback(() => {
         return API.getRemoteConfig({
             id
@@ -52,13 +74,14 @@ const ConfigDetail = (props: any) => {
                 setConfig(data);
             }
         })
-    }, [id]);
+    }, [id]);   
     const handleConfigSave = () => {
         setUpdating(true);
         API.saveConfig({
             id,
             config,
-            shell
+            shell,
+            basicInfo
         }).then((response: any) => {
             setUpdating(false);
             const { success, data, message } = response;
@@ -97,7 +120,7 @@ const ConfigDetail = (props: any) => {
         } catch (err) {
             console.log(err)
         }
-        Promise.all([loadBasicInfoData(), loadRemoteConfigInfo()]).then(() => {
+        Promise.all([loadBasicInfoData(),loadRemoteConfigInfo()]).then(()=>{
             setLoading(false);
         });
 
@@ -185,6 +208,10 @@ const ConfigDetail = (props: any) => {
                             {!isEmpty(errorMessage) && <Card title="错误信息" style={{ marginTop: 20 }}>
                                 <div style={{ color: 'red' }}>{errorMessage}</div>
                             </Card>}
+                            <DTDingConfig 
+                                id={id}
+                                type='config-center'
+                                />
                         </Col>
                     </Row>
                 </div>

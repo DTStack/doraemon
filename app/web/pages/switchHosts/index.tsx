@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import moment from 'moment';
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { Divider, Table, Button, Breadcrumb, Input, Typography, Modal, message } from 'antd';
+import { Divider, Table, Button, Breadcrumb, Input, Typography, Modal, Row, Col, Popconfirm, message } from 'antd';
 import { API } from '@/api';
 import { useSelector } from 'react-redux';
 
@@ -48,7 +48,7 @@ const SwitchHostsList = (props: any) => {
             }
             setTableLoading(false);
         })
-    }
+    }   
 
     // 初始化表格列
     const initColumns = () => {
@@ -92,15 +92,18 @@ const SwitchHostsList = (props: any) => {
                 title: '操作',
                 dataIndex: 'actions',
                 key: 'actions',
-                width: 160,
+                width: 200,
                 render: (text: any, record: any) => {
-                    return <Fragment>
-                        <a onClick={() => handleEditHosts(record)}>编辑</a>
+                    const { id } = record
+                    return (
                         <Fragment>
-                            <Divider type="vertical" />
-                            <a onClick={() => handleDeleteHosts(record)}>删除</a>
+                            <a onClick={() => handleEditHosts(record)}>编辑</a>
+                            <Fragment>
+                                <Divider type="vertical" />
+                                <a onClick={() => handleDeleteHosts(record)}>删除</a>
+                            </Fragment>
                         </Fragment>
-                    </Fragment>
+                    )
                 }
             }
         ];
