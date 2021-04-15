@@ -34,10 +34,10 @@ const sendMsg = async (webhook_url,basicInfo,operation,address) => {
         webhook: webhook_url
     });
     const mdTxt = "Doraemon - 配置中心变更通知：\n\n\n" +
+                "文件名：" + filename + "\n\n\n" +
                 "主机：" + hostIp + "(" + hostName + ")\n\n" +
-                "文件名：" + filename + "\n\n\n" + 
                 "详情地址：" + address + "\n\n\n" +
-                "配置文件" + operation
+                "该配置文件" + operation
     feChatRobot
         .markdown('配置中心变更通知', mdTxt)
         .catch(ex => console.error(ex));
@@ -51,7 +51,7 @@ const sendHostsUpdateMsg = async (webhook_url, basicInfo, ip, address,operation)
                 "分组名称：" + groupName + "\n\n\n" +
                 "API：" + ip + groupApi + "\n\n\n" +
                 "详情地址：" + address + "\n\n\n" +
-                "配置文件" + operation
+                "该Hosts文件" + operation
     feChatRobot
         .markdown('Hosts管理变更通知', mdTxt)
         .catch(ex => console.error(ex));

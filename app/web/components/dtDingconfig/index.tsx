@@ -99,7 +99,7 @@ function DTDingConfig(props: Props) {
   const checkReapt = (rule: any, value: string, callback: Function) => {
       dingTalkList.some(({accept_group}) => {
         if(accept_group === value) {
-          callback(new Error('已存在该接收群组'))
+          callback(new Error('已存在该接收群名称'))
         }
       })
       callback()
@@ -107,7 +107,7 @@ function DTDingConfig(props: Props) {
 
   const columns = [
       {
-        title: '接收群组',
+        title: '接收群名称',
         key: 'accept_group',
         dataIndex: 'accept_group',
         width: '70%',
@@ -152,14 +152,14 @@ function DTDingConfig(props: Props) {
             onCancel={handleModalCancel}
             onOk={handleModalOk}
         >
-            <Form form={form} {...formItemLayout} requiredMark={false} autoComplete="off">
+            <Form form={form} {...formItemLayout} autoComplete="off">
               <Item 
-                label="接收群组" 
+                label="接收群名称" 
                 name="accept_group"
                 validateFirst={true}
-                rules={[{required: true, message: '请输入接收群组'}, {validator: checkReapt}]}
+                rules={[{required: true, message: '请输入接收群名称'}, {validator: checkReapt}]}
               >
-                <Input placeholder='请输入接收群组' maxLength={255}/>
+                <Input placeholder='请输入接收群名称' maxLength={255}/>
               </Item>
               <Item 
                 label="webHook"
