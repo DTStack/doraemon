@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppstoreOutlined, CloudOutlined, DesktopOutlined, TagOutlined, SettingOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, CloudOutlined, DesktopOutlined, TagOutlined, SettingOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -40,6 +40,7 @@ const HeaderComponent = (props: any) => {
     const { localIp } = useSelector((state: any) => state.global);
     const { pathname } = location;
     const [selectedKeys, setSelectedKeys] = useState([pathname]);
+    const [helpDocUrl, setHelpDocUrl] = useState('');
     const handleSelectedKeys = (e: any) => {
         setSelectedKeys(e.key);
     }
@@ -47,6 +48,11 @@ const HeaderComponent = (props: any) => {
         let current = navMenuList.filter(item => item.routers.some((ele) => pathname.indexOf(ele) > -1))
         current.length && setSelectedKeys([current[0].path])
     }, [pathname])
+
+    useEffect(() => {
+        const url = window.location.protocol + '//' + window.location.hostname + ':7003/#/';
+        setHelpDocUrl(url);
+    }, []);
     return (
         <Header className="dt-layout-header header_component">
             <div className="dt-header-log-wrapper logo">
@@ -72,7 +78,12 @@ const HeaderComponent = (props: any) => {
                         })
                     }
                 </Menu>
-                <div><span className="local-ip">{`本机IP: ${localIp}`}</span></div>
+                <div>
+                    <a href={helpDocUrl} rel="noopener noreferrer" target='_blank'>
+                        <QuestionCircleOutlined className="help-link" />
+                    </a>
+                    <span className="local-ip ml-20">{`本机IP: ${localIp}`}</span>
+                </div>
             </div>
         </Header>
     );
