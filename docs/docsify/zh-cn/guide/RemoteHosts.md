@@ -3,6 +3,7 @@
 ## 开始
 
 Remote Hosts 是对桌面端 hosts 文件进行统一管理的 hosts 集中化管理平台，并通过远程服务端推送实时信息来更新本地 hosts 文件。
+
 该平台支持个人使用者自定义 hosts 管理，同时支持团队使用者集中化管理成员组的 hosts 配置。
 
 配合 SwitchHosts 使用体验更佳！

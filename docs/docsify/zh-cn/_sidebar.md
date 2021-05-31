@@ -3,6 +3,7 @@
 * 入门
   + [快速开始](zh-cn/start/快速开始)
   + [开发者使用](zh-cn/start/开发者使用)
+  + [贡献指南](zh-cn/start/贡献者文档)
 * 配置
   + [mysql](zh-cn/configuration/mysql)
 * 指南

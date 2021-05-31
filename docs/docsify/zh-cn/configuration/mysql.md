@@ -1,7 +1,8 @@
 # MySQL
-## 简介
 
-哆啦A梦使用 **Sequelize** 连接到 MySQL 数据源，具体配置项文件位于 app/config 文件夹，其中分为 本地(local)、生产(prod)、测试(test) 三种环境数据库配置文件，配置项会覆盖和集成默认配置项文件(config.default.js)数据库配置项。
+哆啦 A 梦使用 **Sequelize** 连接到 MySQL 数据源，具体配置项文件位于 app/config 文件夹
+
+其中分为 本地(local)、生产(prod)、测试(test) 三种环境数据库配置文件，配置项会覆盖和集成默认配置项文件(config.default.js)数据库配置项。
 ## 步骤
 
 ###### 数栈开发环境配置如下
@@ -10,7 +11,7 @@
 1. 在 app/config 文件夹下添加配置文件，如 config.prod.js
 2. 写入相应数据库配置项，如下所示
 
-```
+```javascript
 /**
  * 生产环境配置
  *
