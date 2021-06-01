@@ -6,9 +6,9 @@
 ## 步骤
 
 ###### 数栈开发环境配置如下
-###### 操作步骤
 
 1. 在 app/config 文件夹下添加配置文件，如 config.prod.js
+
 2. 写入相应数据库配置项，如下所示
 
 ```javascript
@@ -30,7 +30,7 @@ module.exports = () => {
                 host: '127.0.0.1',
                 port: 3306,
                 username:'root',
-                password:'Admin123!@#'
+                password:'******'
             }
         ]
     };

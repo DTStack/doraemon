@@ -1,4 +1,4 @@
-# Doraemon开发和发布流程
+# Doraemon 开发和发布流程
 
 #### 本地开发启动
 
@@ -37,18 +37,18 @@ port: 3306
 #### 发布流程
 
 ``` javascript
-1、 release合到master并打tag //npm run release
+1、 release 合到 master 并打 tag //npm run release
 2、 版本发布邮件通知
-3、 登到 172.16 .100 .225 重新拉取代码
-路径： / home / app / doraemon
-git pull
-git checkout master
+3、 登到 172.16.100.225 重新拉取代码
+    路径： /home/app/doraemon
+    git pull
+    git checkout master
 5、 执行yarn start
 6、 上线验证
 7、 版本发布成功邮件通知
 ```
 
-#### Doraemon GIT工作流
+#### Doraemon GIT 工作流
 
 ``` javascript
 一.分支管理
@@ -64,17 +64,15 @@ git checkout master
 1. 本次迭代要上的
 
 master
-    -
-    > feat / hotfix -
-    > dev & release（ 注： dev和release都要合， 测试用哪个分支都可以） -
-    > 预上线前release终测 -
-    > 基于release打tag合到master
+    -> feat/hotfix 
+    -> dev & release（ 注： dev和release都要合， 测试用哪个分支都可以） 
+    -> 预上线前release终测 
+    -> 基于release打tag合到master
 
 2. 本次迭代不上， 但已经预先开发的
 
 master
-    -
-    > feat / hotfix -
-    > dev -
-    > 等到要上的那个版本在合到release
+    -> feat/hotfix 
+    -> dev 
+    -> 等到要上的那个版本在合到release
 ```

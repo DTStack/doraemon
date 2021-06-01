@@ -5,7 +5,7 @@
   + [开发者使用](zh-cn/start/开发者使用)
   + [贡献指南](zh-cn/start/贡献者文档)
 * 配置
-  + [mysql](zh-cn/configuration/mysql)
+  + [MySQL](zh-cn/configuration/mysql)
 * 指南
   + [应用中心](zh-cn/guide/应用中心)
   + [代理服务](zh-cn/guide/代理服务)
