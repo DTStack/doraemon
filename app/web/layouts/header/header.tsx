@@ -9,6 +9,8 @@ import './style.scss';
 const { SubMenu } = Menu;
 
 const { Header } = Layout;
+
+const HELP_DOC_URL = 'https://dtstack.github.io/Doraemon/docsify/#/';
 const navMenuList: any = [{
     name: '应用中心',
     path: '/page/toolbox',
@@ -40,7 +42,6 @@ const HeaderComponent = (props: any) => {
     const { localIp } = useSelector((state: any) => state.global);
     const { pathname } = location;
     const [selectedKeys, setSelectedKeys] = useState([pathname]);
-    const [helpDocUrl, setHelpDocUrl] = useState('');
     const handleSelectedKeys = (e: any) => {
         setSelectedKeys(e.key);
     }
@@ -49,10 +50,6 @@ const HeaderComponent = (props: any) => {
         current.length && setSelectedKeys([current[0].path])
     }, [pathname])
 
-    useEffect(() => {
-        const url = window.location.protocol + '//' + window.location.hostname + ':7003/#/';
-        setHelpDocUrl(url);
-    }, []);
     return (
         <Header className="dt-layout-header header_component">
             <div className="dt-header-log-wrapper logo">
@@ -79,7 +76,7 @@ const HeaderComponent = (props: any) => {
                     }
                 </Menu>
                 <div>
-                    <a href={helpDocUrl} rel="noopener noreferrer" target='_blank'>
+                    <a href={HELP_DOC_URL} rel="noopener noreferrer" target='_blank'>
                         <QuestionCircleOutlined className="help-link" />
                     </a>
                     <span className="local-ip ml-20">{`本机IP: ${localIp}`}</span>
