@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.2.3...v1.3.0) (2021-04-16)
+
+
+### Features
+
+* 哆啦A梦配置中心-配置详情应用配置发送钉钉消息到群 ([414ee5c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/414ee5ced6b2e5a18d5f192a55ee03e8d182d44f))
+* 哆啦A梦配置中心-配置详情钉钉提示url增删处理 ([2add30d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2add30d33d476e82e1685ae5d0d7ccf61ef99250))
+* 修改url验正，提示格式 ([618f455](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/618f4558255e3147ca52d93acdd8a3bf77904127))
+* 编辑/删除发送钉钉消息到群处理 ([b691cc4](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b691cc49dc42be2434c14918b7415084d967b693))
+* add type to config_notice_url table ([96f355e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/96f355e4cb73cc07daee0c964ee0a023709e2146))
+* antd4.0 ([f69932b](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/f69932bd6b6d2645268ee00eed6afcabaf6e1c58))
+* antd4.x upgrade ([01aba09](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/01aba09d1d99a61c8c96d6e68c4227b2c32789b4))
+* antd4.x upgrade stash ([08eb9a7](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/08eb9a7972675c4337f43431e9d67410096e55f8))
+* change untils dingTalk send message function ([df39d50](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/df39d500e8920fd163c54d0568077edc78d4b6a7))
+* finished hosts Dingtalk config ([6c61dc1](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6c61dc1272009f3c431f0be6d7548dca3c30a7a2))
+* init hosts webhooks layout ([e789360](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e7893606ea507c612e6b22821f01b238157a563d))
+* lint-fix and transfer dingTalk config ([6379344](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6379344b77c66e21b64e130df2399ebe0f1f1d60))
+* merge dev ([9813252](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/9813252c1e358901222156ac2963744c928f63bb))
+* migrate to ts ([9e5edc9](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/9e5edc9d671380e87d39b76237664b2926f88fdf))
+* optimize ([89bd163](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/89bd16385b26129431faa601c183489148dae7e7))
+* remove @ant-design/compatible ([f6e8860](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/f6e88603e82a20280c0afed0653405ddbc7f597f))
+* update api and config_notice_url table ([f2fef24](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/f2fef243c6e77d1c0c9e154a528aa4e073611cb1))
+* **hostmanagement:** host management antd4.x upgrade, and bugfix ([68be760](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/68be760011d4b191dbec200edc5b73daff625e16))
+* **proxyserver:** proxy server antd4.x upgrade, fix form bug ([34c7f92](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/34c7f928cea80a6d80aaf450216995201ce1dee9))
+* **switchhosts:** switch hosts antd4.x upgrade ([1c6ee51](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/1c6ee51c6c033662293f91d6ce51f91d6823b943))
+* **toolbox:** toolbox antd4.x upgrade and bugfix ([8a5c163](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/8a5c163726cb9f06706cf0bd0888cd2fb0d33778))
+
+
+### Bug Fixes
+
+* fix ts bug ([4743cd5](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/4743cd546e8b075f6385514579ca56a8c663a078))
+* update package version ([f867310](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/f867310dd4f36745f6f85a183b05f88064cfd91e))
+
 ### [1.2.3](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.2.2...v1.2.3) (2021-01-22)
 
 
