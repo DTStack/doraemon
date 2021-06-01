@@ -3,15 +3,18 @@
 ## 开始
 
 Remote Hosts 是对桌面端 hosts 文件进行统一管理的 hosts 集中化管理平台，并通过远程服务端推送实时信息来更新本地 hosts 文件。
+
 该平台支持个人使用者自定义 hosts 管理，同时支持团队使用者集中化管理成员组的 hosts 配置。
+
+配合 SwitchHosts 使用体验更佳！
 
 ## 特性
 
-- 配合 switchhosts 使用
+* 配合 switchhosts 使用
 
-- 支持自定义配置
+* 支持自定义配置
 
-- 支持团队集中化管理
+* 支持团队集中化管理
 
 ## 快速上手
 
@@ -24,20 +27,26 @@ Remote Hosts 是对桌面端 hosts 文件进行统一管理的 hosts 集中化�
 ### 创建分组
 
 填写分组名称及其描述，在编译器中填写 hosts 配置，并保存
-![create_hosts.png](https://cdn.nlark.com/yuque/0/2020/png/324288/1606981093912-086aac9a-3f1b-40f2-b612-c7cafbbb7469.png#align=left&display=inline&height=1638&margin=%5Bobject%20Object%5D&name=create_hosts.png&originHeight=1638&originWidth=2880&size=227772&status=done&style=none&width=2880)
+
+![create_hosts.png](../../imgs/create_hosts.png)
+
 保存后，在 hosts 管理列表中，找到刚刚创建的 hosts 分组
 复制 API 进行远程连接
-![hosts_list.png](https://cdn.nlark.com/yuque/0/2020/png/324288/1606981111955-d2c01093-0558-4a56-8f65-984d1465b5d2.png#align=left&display=inline&height=1636&margin=%5Bobject%20Object%5D&name=hosts_list.png&originHeight=1636&originWidth=2880&size=238105&status=done&style=none&width=2880)
+
+![hosts_list.png](../../imgs/hosts_list.png)
 
 ### 建立远程连接
 
 在进行该步骤前，如尚未安装 switchhosts，请阅读之前的步骤，进行安装
 打开 switchhosts，添加 hosts 规则
 您可以选择自动更新的时间间隔
-![switchhosts.png](https://cdn.nlark.com/yuque/0/2020/png/324288/1606981129749-ba7f0baf-4f99-4f03-8e3b-2befe0174e57.png#align=left&display=inline&height=996&margin=%5Bobject%20Object%5D&name=switchhosts.png&originHeight=996&originWidth=1600&size=123300&status=done&style=none&width=1600)
+
+![switchhosts.png](../../imgs/switchhosts.png)
+
 添加完成后，请耐心等待几秒
 hosts 配置将会从远程同步到您本地
-![hosts_info.png](https://cdn.nlark.com/yuque/0/2020/png/324288/1606981147927-b02b1685-fd27-4720-823d-1462987bb204.png#align=left&display=inline&height=996&margin=%5Bobject%20Object%5D&name=hosts_info.png&originHeight=996&originWidth=1600&size=138127&status=done&style=none&width=1600)
+
+![hosts_info.png](../../imgs/hosts_info.png)
 
 ### 编辑分组
 
