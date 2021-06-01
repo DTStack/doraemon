@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppstoreOutlined, CloudOutlined, DesktopOutlined, TagOutlined, SettingOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, CloudOutlined, DesktopOutlined, TagOutlined, SettingOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -9,6 +9,8 @@ import './style.scss';
 const { SubMenu } = Menu;
 
 const { Header } = Layout;
+
+const HELP_DOC_URL = 'https://dtstack.github.io/Doraemon/docsify/#/';
 const navMenuList: any = [{
     name: '应用中心',
     path: '/page/toolbox',
@@ -47,6 +49,7 @@ const HeaderComponent = (props: any) => {
         let current = navMenuList.filter(item => item.routers.some((ele) => pathname.indexOf(ele) > -1))
         current.length && setSelectedKeys([current[0].path])
     }, [pathname])
+
     return (
         <Header className="dt-layout-header header_component">
             <div className="dt-header-log-wrapper logo">
@@ -72,7 +75,12 @@ const HeaderComponent = (props: any) => {
                         })
                     }
                 </Menu>
-                <div><span className="local-ip">{`本机IP: ${localIp}`}</span></div>
+                <div>
+                    <a href={HELP_DOC_URL} rel="noopener noreferrer" target='_blank'>
+                        <QuestionCircleOutlined className="help-link" />
+                    </a>
+                    <span className="local-ip ml-20">{`本机IP: ${localIp}`}</span>
+                </div>
             </div>
         </Header>
     );

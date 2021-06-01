@@ -6,7 +6,8 @@ body,
 
 // table 滚动状态下的样式, small table
 .ant-table {
-    &.ant-table-ping-right:not(.ant-table-has-fix-right) .ant-table-container::after {
+    &.ant-table-ping-right:not(.ant-table-has-fix-right) .ant-table-container::after,
+    &.ant-table-ping-left:not(.ant-table-has-fix-left) .ant-table-container:before {
         box-shadow: none;
     }
     .ant-table-small,
