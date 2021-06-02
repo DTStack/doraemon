@@ -4,6 +4,7 @@
   + [快速开始](zh-cn/start/快速开始)
   + [开发者使用](zh-cn/start/开发者使用)
 * 配置
+  + [配置项](zh-cn/configuration/envConfig)
   + [MySQL](zh-cn/configuration/mysql)
 * 功能
   + [应用中心](zh-cn/guide/应用中心)
@@ -13,5 +14,5 @@
   + [标签管理](zh-cn/guide/标签管理)
   + [Remote Hosts](zh-cn/guide/RemoteHosts)
   + [意见反馈](zh-cn/guide/意见反馈)
-+ [贡献指南](zh-cn/start/贡献者文档)
-+ [ChangeLog](zh-cn/start/CHANGELOG)
++ [贡献指南](zh-cn/other/贡献者文档)
++ [ChangeLog](zh-cn/other/CHANGELOG)
