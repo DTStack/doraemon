@@ -1,3 +1,4 @@
+import Loadable from 'react-loadable';
 import BasicLayout from '@/layouts/basicLayout';
 import Home from '@/pages/home';
 //代理服务
@@ -21,7 +22,16 @@ import SwitchHostsEdit from '@/pages/switchHosts/editHosts'
 
 import TagsManagement from '@/pages/tagsManagement'
 
+
 import NotFound from '@/pages/exception/404';
+
+import { Loading } from '@/components/newLoading';
+
+const WebTerminal = Loadable({
+    loader: () => import('@/pages/webTerminal'),
+    loading: Loading
+})
+
 const urlPrefix = '/page'
 const routes: any = [
     {
@@ -71,6 +81,10 @@ const routes: any = [
             {
                 path: `${urlPrefix}/tags`,
                 component: TagsManagement
+            },
+            {
+                path: `${urlPrefix}/webTerminal`,
+                component: WebTerminal
             },
             {
                 path: '*',
