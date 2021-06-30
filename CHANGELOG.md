@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.3.1...v1.3.2) (2021-06-30)
+
+
+### Features
+
+* add config to set prod msyql link ([88bab5f](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/88bab5f219ce7ed2103e2b9e4e3a151475523724))
+
+
+### Bug Fixes
+
+* (?.) can not use under node.js v14.15.0 ([f4e1f62](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/f4e1f62f31ff99115ac7e83790ca52ae175193eb))
+
 ### [1.3.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.3.0...v1.3.1) (2021-06-30)
 
 
