@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.3.0...v1.3.1) (2021-06-30)
+
+
+### Features
+
+* **env.json:** data desensitization ([7152fdf](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7152fdf7574424d7c76c893c27950b50e746d460))
+* add help link ([dd63daf](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/dd63daf1a0cd81684c01db3ca35175489e68e891))
+* change help_doc_url ([5d7db31](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/5d7db31d4c10101bbcd12ba3ebcf098485124472))
+* pull out the configuration and document it ([dcf11ac](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/dcf11ac590fa19fe6d0d8776bc294fee845f587f))
+
 ## [1.3.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.2.3...v1.3.0) (2021-04-16)
 
 
