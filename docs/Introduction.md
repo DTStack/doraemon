@@ -7,7 +7,7 @@
 
 
 ## 简介
-![logo.png](https://cdn.nlark.com/yuque/0/2020/png/241689/1607057068446-ff5ec595-bea8-4cf5-9554-42c9df000885.png#align=left&display=inline&height=64&margin=%5Bobject%20Object%5D&name=logo.png&originHeight=64&originWidth=64&size=5693&status=done&style=none&width=64)[哆啦 A 梦（Doraemon）](http://172.16.100.225:7001/page/home)是一个帮你整理日常开发、配置、代理服务、主机等资源的管理工具。
+![logo.png](https://cdn.nlark.com/yuque/0/2020/png/241689/1607057068446-ff5ec595-bea8-4cf5-9554-42c9df000885.png#align=left&display=inline&height=64&margin=%5Bobject%20Object%5D&name=logo.png&originHeight=64&originWidth=64&size=5693&status=done&style=none&width=64)[哆啦 A 梦（Doraemon）](http://doraemon:7001/page/home)是一个帮你整理日常开发、配置、代理服务、主机等资源的管理工具。
 
 
 通过`应用中心`可`收纳`、`分享`常用、好用的的`应用链接`；多环境的`主机（Host）`账号和密码等信息，在这里我们都可以统一管理维护，便于查看和管理；`配置管理`模块，可轻松维护远程服务主机上的`配置文件`；`在线代理（Proxy）`改变传统前后端联调方式，接口联调时，不再需要前后端另起本地服务。另外，前端同学需求切换开发环境时，只需要在线简单的配置即可。
@@ -19,7 +19,7 @@ _我们正在不断迭代和完善中，还有更多功能等待你的探索。_
 ## 应用中心
 
 
-我们默认内置了[签名制作（袋鼠云邮箱签名制作）](http://172.16.100.225:7001/page/mail-sign)、[Remote Hosts](##) 等应用，还有更多实用工具等`快捷链接`。
+我们默认内置了[签名制作（袋鼠云邮箱签名制作）](http://doraemon:7001/page/mail-sign)、[Remote Hosts](##) 等应用，还有更多实用工具等`快捷链接`。
 ![新logo应用中心.2020-12-04 15_51_20.gif](https://cdn.nlark.com/yuque/0/2020/gif/188521/1607068291520-432b2a0b-f33f-454c-af6c-e78b44db93a0.gif#align=left&display=inline&height=980&margin=%5Bobject%20Object%5D&name=%E6%96%B0logo%E5%BA%94%E7%94%A8%E4%B8%AD%E5%BF%83.2020-12-04%2015_51_20.gif&originHeight=980&originWidth=1392&size=1028800&status=done&style=none&width=1392)
 
 
@@ -71,7 +71,7 @@ module.exports = {
         host: '0.0.0.0',
         proxy: {
             '/api/v1': { // 标签引擎
-                target: 'http://172.16.8.163:7001/proxy/16', // 哆啦A梦
+                target: 'http://xxx.xxx.xxx.xxx:7001/proxy/16', // 哆啦A梦
                 changeOrigin: true,
                 secure: false,
                 "onProxyReq":function(proxyReq, req, res) {
