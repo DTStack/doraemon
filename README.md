@@ -7,13 +7,9 @@ A management tool to help you organize your daily development, configuration, pr
 ## Features
 
 - Change the traditional front-end and back-end joint mode. There is no need for front-end and back-end restarts of local services during API tuning.
-
 - Support to receive, share commonly used, easy to use application links.
-
 - Support multi-environment Host account and password and other information maintenance.
-
 - Supports configuration file modifications on remote service hosts.
-
 - Support unified maintenance of local hosts files
 
 ## Environment Support
@@ -41,9 +37,7 @@ yarn install
 #### Import MySQL Database
 
 1. Please create the database under the service first.
-
 2. Find the `sql` folder in the directory and import the `doraemon.sql` file in the folder into the database created just now.
-
 3. Refer to Configure [MySQL](https://dtstack.github.io/Doraemon/docsify/#/zh-cn/configuration/mysql), to configure the database connection.
 
 ### Running
