@@ -1,3 +1,7 @@
+const config = require('../env.json');
+const mysqlConfig = (config && config.mysql && config.mysql.prod) || {};
+const { database, host, port, username, password } = mysqlConfig;
+
 /**
  * 生产环境配置
  *
@@ -8,16 +12,16 @@
 module.exports = () => {
     const exports = {};
     exports.sequelize = {
-        datasources:[
+        datasources: [
             {
                 delegate: 'model',
                 baseDir: 'model',
-                database: 'doraemon',
+                database: database || 'doraemon',
                 dialect: 'mysql',
-                host: '127.0.0.1',
-                port: 3306,
-                username:'root',
-                password:''
+                host: host || '127.0.0.1',
+                port: port || 3306,
+                username: username || 'root',
+                password: password || ''
             }
         ]
     };

@@ -48,3 +48,24 @@ dingBot 的通知模板的跳转路径，默认跳转到帮助文档，可自行
     "helpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/"
 }
 ```
+
+## mysql
+
+- 类型：Object
+- 默认值：无
+
+数据库连接配置，目前仅提供 config.prod.js 生产下的数据库连接配置
+
+```json
+{
+    "mysql": {
+        "prod": {
+            "database": "doraemon",
+            "host": "127.0.0.1",
+            "port": 3306,
+            "username": "root",
+            "password": "******"
+        }
+    }
+}
+```
