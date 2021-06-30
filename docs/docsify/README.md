@@ -56,7 +56,7 @@ yarn dev
 #### 发布模式启动应用
 
 ```bash
-yarn start 
+yarn start
 
 yarn start:test // 测试环境发布
 ```
