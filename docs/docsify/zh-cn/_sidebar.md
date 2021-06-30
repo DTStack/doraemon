@@ -1,8 +1,7 @@
 <!-- docs/_sidebar.md -->
 
-* 入门
-  + [快速开始](zh-cn/start/快速开始)
-  + [开发者使用](zh-cn/start/开发者使用)
++ [快速开始](zh-cn/start/快速开始)
++ [开发者使用](zh-cn/start/开发者使用)
 * 配置
   + [配置项](zh-cn/configuration/envConfig)
   + [MySQL](zh-cn/configuration/mysql)
