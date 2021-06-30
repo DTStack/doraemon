@@ -5,8 +5,8 @@
 ```json
 {
     "webhookUrls": [],
-    "msgSingleUrl": "https://dtstack.github.io/Doraemon/docsify/#/",
-    "helpDocUrl": "https://dtstack.github.io/Doraemon/docsify/#/"
+    "msgSingleUrl": "https://dtstack.github.io/doraemon/docsify/#/",
+    "helpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/"
 }
 ```
 
@@ -26,25 +26,25 @@ dingBot 的钉钉接收群 token 集合，默认为空，如果需要配置通�
 ## msgSingleUrl
 
 - 类型：String
-- 默认值：'https://dtstack.github.io/Doraemon/docsify/#/'
+- 默认值：'https://dtstack.github.io/doraemon/docsify/#/'
 
 dingBot 的通知模板的跳转路径，默认跳转到帮助文档，可自行配置
 
 ```json
 {
-    "msgSingleUrl": "https://dtstack.github.io/Doraemon/docsify/#/"
+    "msgSingleUrl": "https://dtstack.github.io/doraemon/docsify/#/"
 }
 ```
 
 ## helpDocUrl
 
 - 类型：String
-- 默认值：'https://dtstack.github.io/Doraemon/docsify/#/'
+- 默认值：'https://dtstack.github.io/doraemon/docsify/#/'
 
 导航栏帮助文档跳转链接，默认跳转到 GitHub 文档，可自行配置
 
 ```json
 {
-    "helpDocUrl": "https://dtstack.github.io/Doraemon/docsify/#/"
+    "helpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/"
 }
 ```

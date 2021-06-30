@@ -39,7 +39,7 @@ yarn install
 
 1. 请先在服务下创建数据库
 2. 找到目录下 `sql` 文件夹，将文件夹下的 `doraemon.sql` 文件导入到刚才创建好的数据库中
-3. 请参考配置 [MySQL](https://dtstack.github.io/Doraemon/docsify/#/zh-cn/configuration/mysql)，配置数据库连接
+3. 请参考配置 [MySQL](https://dtstack.github.io/doraemon/docsify/#/zh-cn/configuration/mysql)，配置数据库连接
 
 ### 启动
 
@@ -62,7 +62,7 @@ yarn start:test // 测试环境发布
 
 ## 使用指南
 
-查看完整的 Doraemon 功能使用指南，请访问 [在线文档](https://dtstack.github.io/Doraemon/docsify/#/) 
+查看完整的 Doraemon 功能使用指南，请访问 [在线文档](https://dtstack.github.io/doraemon/docsify/#/) 
 
 ## 如何贡献
 

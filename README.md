@@ -38,7 +38,7 @@ yarn install
 
 1. Please create the database under the service first.
 2. Find the `sql` folder in the directory and import the `doraemon.sql` file in the folder into the database created just now.
-3. Refer to Configure [MySQL](https://dtstack.github.io/Doraemon/docsify/#/zh-cn/configuration/mysql), to configure the database connection.
+3. Refer to Configure [MySQL](https://dtstack.github.io/doraemon/docsify/#/zh-cn/configuration/mysql), to configure the database connection.
 
 ### Running
 
@@ -60,7 +60,7 @@ yarn start:test // test environment publishing
 
 ## Documentation
 
-Visit [Doraemon Docs](https://dtstack.github.io/Doraemon/docsify/#/) for the full Doraemon documentation.
+Visit [Doraemon Docs](https://dtstack.github.io/doraemon/docsify/#/) for the full Doraemon documentation.
 
 ## Contributing
 
