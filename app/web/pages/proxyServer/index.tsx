@@ -13,7 +13,6 @@ const confirm = Modal.confirm;
 const { Search } = Input;
 const { CheckableTag } = Tag;
 
-const commonTags = JSON.parse(Cookies.get('common-tags') || '[]') || [];
 class ProxyServer extends React.PureComponent<any, any> {
     state: any = {
         //代理服务
@@ -40,7 +39,7 @@ class ProxyServer extends React.PureComponent<any, any> {
         //子表格
         subTableData: [],
         subTableLoading: true,
-        commonTagList: commonTags,
+        commonTagList: [],
         selectedTag: ''
     }
     ProxyServerModal: any
@@ -51,7 +50,12 @@ class ProxyServer extends React.PureComponent<any, any> {
     //获取页面主要数据
     loadMainData = () => {
         this.getProxyServerList()
+        this.getCommonTagList()
         this.getLocalIp()
+    }
+    getCommonTagList = () => {
+        const commonTagList = JSON.parse(localStorage.getItem('common-tags') || '[]') || []
+        this.setState({ commonTagList })
     }
     getLocalIp = () => {
         API.getLocalIp().then((response: any) => {
@@ -383,7 +387,7 @@ class ProxyServer extends React.PureComponent<any, any> {
         this.setState({
             commonTagList: newList
         });
-        Cookies.set('common-tags', JSON.stringify(newList));
+        localStorage.setItem('common-tags', JSON.stringify(newList));
     };
     tableExpandedRowRender = (mainTableRow: any) => {
         const { subTableLoading, subTableData, localIp } = this.state;
