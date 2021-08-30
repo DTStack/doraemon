@@ -20,7 +20,7 @@ http: //127.0.0.1:7001
 
 ``` javascript
 database: 'doraemon_test' //publish database: doraemon
-host: '172.16.100.225'
+host: ''
 port: 3306
 
 表同步
@@ -39,7 +39,7 @@ port: 3306
 ``` javascript
 1、 release 合到 master 并打 tag //npm run release
 2、 版本发布邮件通知
-3、 登到 172.16.100.225 重新拉取代码
+3、 登到服务上重新拉取代码
     路径： /home/app/doraemon
     git pull
     git checkout master
