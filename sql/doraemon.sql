@@ -37,6 +37,43 @@ CREATE TABLE `app_centers` (
 ) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
+-- Table structure for article_subscription
+-- ----------------------------
+DROP TABLE IF EXISTS `article_subscription`;
+CREATE TABLE `article_subscription` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `group_name` varchar(64) NOT NULL COMMENT '群名称',
+  `webHook` varchar(500) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '钉钉机器人 webHook',
+  `remark` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL COMMENT '备注',
+  `topic_ids` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '订阅主题的 id 集合',
+  `send_type` tinyint NOT NULL DEFAULT 1 COMMENT '推送时间 1-周一至周五 2-每天',
+  `send_cron` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '定时规则',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '订阅状态 1-开启 2-关闭',
+  `is_delete` int DEFAULT 0 COMMENT '是否删除 1-已删除 0-未删除',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- ----------------------------
+-- Table structure for article_subscription_topic
+-- ----------------------------
+DROP TABLE IF EXISTS `article_subscription_topic`;
+CREATE TABLE `article_subscription_topic` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `site_name` varchar(64) NOT NULL COMMENT '网站名称',
+  `topic_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '订阅主题名称',
+  `topic_url` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '订阅主题路径',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+  `sort` int COMMENT '序号',
+  `is_delete` int DEFAULT 0 COMMENT '是否删除 1-已删除 0-未删除',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+INSERT INTO article_subscription_topic (site_name, topic_name, topic_url, sort) VALUES ('掘金', '前端', 'front', 1);
+
+-- ----------------------------
 -- Table structure for config_management
 -- ----------------------------
 DROP TABLE IF EXISTS `config_management`;
