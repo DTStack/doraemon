@@ -61,8 +61,8 @@ module.exports = {
     createFileSync,
     sendMsg,
     sendHostsUpdateMsg,
-    response:(success,data=null,message)=>{
-        if(success){
+    response: (success, data = null, message)=>{
+        if(success) {
             message='执行成功';
         }
         return {
