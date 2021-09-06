@@ -72,6 +72,11 @@ module.exports = app => {
     app.get('/api/switch-hosts/connect/:id', app.controller.switchHosts.getHostsConfig);
 
     /**
+     * 文章订阅
+     */
+    app.get('/api/article-subscription/github', app.controller.articleTimedTask.getGithubTrending);
+
+    /**
    * tag management 配置内容 增删改查
    */
     app.get('/api/tags/get-all-tag-list', app.controller.tagManagement.getAllTagsList);
