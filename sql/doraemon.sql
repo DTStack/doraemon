@@ -36,6 +36,8 @@ CREATE TABLE `app_centers` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- INSERT INTO app_centers (appName, appType, appDesc, appUrl, status) VALUES ('文章订阅', 0, '定时推送技术网站排行榜到钉钉群，每天都能学到新知识', '/page/article-subscription-list', 1);
+
 -- ----------------------------
 -- Table structure for article_subscription
 -- ----------------------------
