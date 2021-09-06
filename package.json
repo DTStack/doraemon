@@ -12,6 +12,7 @@
     "start:test": "bash start.sh -t",
     "server": "egg-scripts start --daemon",
     "server:test": "egg-scripts start --port=7002 --env=test --daemon",
+    "server:docker": "egg-scripts start",
     "dingBot": "node DingBot.js",
     "stop": "egg-scripts stop",
     "lint": "eslint .",
