@@ -44,16 +44,17 @@ CREATE TABLE `app_centers` (
 DROP TABLE IF EXISTS `article_subscription`;
 CREATE TABLE `article_subscription` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `groupName` varchar(64) NOT NULL COMMENT '群名称',
+  `groupName` varchar(64) NOT NULL COMMENT '钉钉群名称',
   `webHook` varchar(500) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '钉钉机器人 webHook',
   `remark` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL COMMENT '备注',
   `topicIds` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '订阅主题的 id 集合',
   `sendType` tinyint NOT NULL DEFAULT 1 COMMENT '推送时间 1-周一至周五 2-每天',
   `sendCron` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '定时规则',
   `status` tinyint NOT NULL DEFAULT 1 COMMENT '订阅状态 1-开启 2-关闭',
+  `time` datetime NOT NULL COMMENT '推送时间点',
+  `is_delete` int DEFAULT 0 COMMENT '是否删除 1-已删除 0-未删除',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  `is_delete` int DEFAULT 0 COMMENT '是否删除 1-已删除 0-未删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
@@ -67,13 +68,16 @@ CREATE TABLE `article_subscription_topic` (
   `topicName` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '订阅主题名称',
   `topicUrl` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '订阅主题路径',
   `sort` int COMMENT '序号',
+  `is_delete` int DEFAULT 0 COMMENT '是否删除 1-已删除 0-未删除',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-  `is_delete` int DEFAULT 0 COMMENT '是否删除 1-已删除 0-未删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
-INSERT INTO article_subscription_topic (site_name, topic_name, topic_url, sort) VALUES ('掘金', '前端', 'front', 1);
+INSERT INTO article_subscription_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'TypeScript', 'front', 2);
+INSERT INTO article_subscription_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'JavaScript', 'front', 1);
+INSERT INTO article_subscription_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'Java', 'front', 3);
+INSERT INTO article_subscription_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'Any', 'front', 4);
 
 -- ----------------------------
 -- Table structure for config_management

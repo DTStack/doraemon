@@ -1,6 +1,4 @@
 const Controller = require('egg').Controller;
-const path = require('path');
-const fs = require('fs');
 const _ = require('lodash');
 
 class ArticleSubscriptionController extends Controller {
@@ -36,7 +34,6 @@ class ArticleSubscriptionController extends Controller {
     async updateSubscription() {
         const { ctx, app } = this;
         const { id, groupName, webHook, remark, topicIds, sendType, sendCron, status } = ctx.request.body;
-        const { origin, referer } = ctx.request.header;
         if (_.isNil(id)) throw new Error('缺少必要参数 id');
         if (_.isNil(groupName)) throw new Error('缺少必要参数 groupName');
         if (_.isNil(webHook)) throw new Error('缺少必要参数 webHook');
@@ -53,11 +50,11 @@ class ArticleSubscriptionController extends Controller {
         const { ctx, app } = this;
         const { id } = ctx.request.body;
         if (_.isNil(id)) throw new Error('缺少必要参数 id');
-        const result = await ctx.service.articleSubscription.deleteSubscription(id, { is_delete: 1, updated_at: new Date() });
+        const result = await ctx.service.articleSubscription.updateSubscription(id, { is_delete: 1, updated_at: new Date() });
         ctx.body = app.utils.response(result);
     }
 
-    // 获取单条数据
+    // 获取详情
     async getSubscriptionInfo() {
         const { ctx, app } = this;
         const { id } = ctx.query;

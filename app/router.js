@@ -75,6 +75,12 @@ module.exports = app => {
      * 文章订阅
      */
     app.get('/api/article-subscription/github', app.controller.articleTimedTask.getGithubTrending);
+    app.post('/api/article-subscription/create-subscription', app.controller.articleSubscription.createSubscription);
+    app.post('/api/article-subscription/delete-subscription', app.controller.articleSubscription.deleteSubscription);
+    app.post('/api/article-subscription/update-subscription', app.controller.articleSubscription.updateSubscription);
+    app.post('/api/article-subscription/get-subscription-list', app.controller.articleSubscription.getSubscriptionList);
+    app.get('/api/article-subscription/get-subscription-info', app.controller.articleSubscription.getSubscriptionInfo);
+    app.get('/api/article-subscription-topic/get-topic-list', app.controller.articleSubscriptionTopic.getTopicList);
 
     /**
    * tag management 配置内容 增删改查

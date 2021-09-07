@@ -216,6 +216,38 @@ export default {
     updateTag: {
         method: 'post',
         url: '/api/tags/update-tag'
+    },
+    /**
+     * 文章订阅
+     */
+    // 新增
+    createSubscription: {
+        method: 'post',
+        url: '/api/article-subscription/create-subscription'
+    },
+    // 删除
+    deleteSubscription: {
+        method: 'post',
+        url: '/api/article-subscription/delete-subscription'
+    },
+    // 编辑
+    updateSubscription: {
+        method: 'post',
+        url: '/api/article-subscription/update-subscription'
+    },
+    // 获取列表
+    getSubscriptionList: {
+        method: 'post',
+        url: '/api/article-subscription/get-subscription-list'
+    },
+    // 获取详情
+    getSubscriptionInfo: {
+        method: 'post',
+        url: '/api/article-subscription/get-subscription-info'
+    },
+    // 获取订阅项列表
+    getTopicList: {
+        method: 'get',
+        url: '/api/article-subscription-topic/get-topic-list'
     }
-
 }

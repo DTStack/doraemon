@@ -9,7 +9,8 @@ module.exports = app => {
     };
     exports.security = {
         csrf: {
-            ignore: /^\/proxy/
+            // ignore: /^\/proxy/
+            enable: false
         }
     };
     exports.cacheDirectory = path.join(__dirname,'../cache')
