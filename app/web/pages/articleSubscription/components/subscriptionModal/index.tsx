@@ -1,37 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, Select, message as Message, Form, TimePicker } from 'antd';
-import moment from 'antd/node_modules/moment';
+import { Modal, Input, Select, message as Message, Form } from 'antd';
+import ChooseSendTime from '../ChooseSendTime';
+import { SUBSCRIPTIONSENDTYPE } from '../../consts';
 import { isFunction } from 'lodash';
 import { API } from '@/api';
 import './style.scss'
 
-const FormItem = Form.Item;
-const { TextArea } = Input;
-const { Option, OptGroup } = Select;
+const FormItem = Form.Item
+const { TextArea } = Input
+const { Option, OptGroup } = Select
 
 const SubscriptionModal = (props: any) => {
-    const [form] = Form.useForm();
-    const { visible, data, topicList, onOk, onCancel } = props;
-    const [confirmLoading, setConfirmLoading] = useState(false);
+    const [form] = Form.useForm()
+    const { visible, data, topicList, onOk, onCancel } = props
+    const [confirmLoading, setConfirmLoading] = useState(false)
+    const [siteNames, setSiteNames] = useState('')
 
     useEffect(() => {
         if (visible && data) {
-            const { groupName = '', webHook = '', remark = '', topicIds = [], sendType = 1, sendCron = '', time = '' } = data
+            const { groupName = '', webHook = '', remark = '', topicIds = [], siteNames = '', sendType = SUBSCRIPTIONSENDTYPE.WORKDAY, time = '' } = data
+            setSiteNames(siteNames)
             form.setFieldsValue({
-                groupName, webHook, remark, topicIds, time
+                groupName,
+                webHook,
+                remark,
+                topicIds,
+                sendTime: {
+                    sendType,
+                    time
+                }
             })
         }
     }, [visible])
 
     const updataSubscription = (params: any) => {
-        setConfirmLoading(true);
+        setConfirmLoading(true)
         API[params.id ? 'updataSubscription' : 'createSubscription'](params).then(({ success, msg }) => {
             if (success) {
                 Message.success(params.id ? '编辑成功' : '新增成功')
                 isFunction(onOk) && onOk()
                 restData()
             } else {
-                Message.error(msg);
+                Message.error(msg)
             }
         }).finally(() => {
             setConfirmLoading(false)
@@ -40,10 +50,31 @@ const SubscriptionModal = (props: any) => {
 
     const handleModalOk = () => {
         form.validateFields().then((values: any) => {
+            const { sendTime, topicIds = [] } = values
+            const { sendType, time } = sendTime
+            const sendCron = getCron(sendType, time)
             updataSubscription(Object.assign(values, {
-                id: data?.id || ''
+                id: data?.id || '',
+                topicIds: topicIds.join(','),
+                siteNames,
+                sendType,
+                sendCron,
+                time
             }))
         })
+    }
+
+    // 转换成 cron 格式
+    const getCron = (type, time = '09:00') => {
+        let cron = ''
+        const hour = time.split(':')[0]
+        const minute = time.split(':')[1]
+        if (type === SUBSCRIPTIONSENDTYPE.WORKDAY) {
+            cron = `0 ${ minute } ${ hour } ? * MON-FRI`
+        } else if (type === SUBSCRIPTIONSENDTYPE.EVERYDAY) {
+            cron = `0 ${ minute } ${ hour } ? * *`
+        }
+        return cron
     }
 
     const handleModalCancel = () => {
@@ -57,11 +88,7 @@ const SubscriptionModal = (props: any) => {
     }
 
     const handleTopicChange = (value, option) => {
-        console.log(123, value, option)
-    }
-
-    const handleTimeChange = (value) => {
-        console.log(2222, value)
+        setSiteNames(Array.from(new Set(option.map(item => item.children.split(' - ')[0]))).join('、'))
     }
 
     return (<Modal
@@ -75,7 +102,10 @@ const SubscriptionModal = (props: any) => {
                 <FormItem
                     label="钉钉群名称"
                     name="groupName"
-                    rules={[{ required: true, message: '请输入钉钉群名称' }]}
+                    rules={[
+                        { required: true, message: '请输入钉钉群名称' },
+                        { max: 64, message: '长度不超过64个字符' }
+                    ]}
                     hasFeedback
                 >
                     <Input placeholder="请输入钉钉群名称" />
@@ -83,7 +113,10 @@ const SubscriptionModal = (props: any) => {
                 <FormItem
                     label="webHook"
                     name="webHook"
-                    rules={[{ required: true, message: '请输入webHook' }]}
+                    rules={[
+                        { required: true, message: '请输入webHook' },
+                        { max: 500, message: '长度不超过500个字符' }
+                    ]}
                     hasFeedback
                 >
                     <Input placeholder="请输入webHook" />
@@ -91,13 +124,16 @@ const SubscriptionModal = (props: any) => {
                 <FormItem
                     label="订阅项"
                     name="topicIds"
-                    rules={[{ required: true, message: '请选择订阅项，最多三个' }]}
+                    rules={[
+                        { required: true, message: '请选择订阅项，最多三个' }
+                    ]}
                     hasFeedback
                 >
                     <Select
                         showSearch
                         mode="multiple"
                         onChange={handleTopicChange}
+                        placeholder="请选择订阅项，最多三个"
                     >
                         {
                             topicList.map(site => {
@@ -105,7 +141,7 @@ const SubscriptionModal = (props: any) => {
                                     <OptGroup key={site.name} label={site.name}>
                                         {
                                             site?.children?.map(item => {
-                                                return <Option key={item.id} value={item.name}>{item.name}</Option>
+                                                return <Option key={item.id} value={item.id}>{item.name}</Option>
                                             })
                                         }
                                     </OptGroup>
@@ -120,22 +156,13 @@ const SubscriptionModal = (props: any) => {
                     rules={[{ required: true, message: '请选择推送时间' }]}
                     hasFeedback
                 >
-                    <div className="send-time">
-                        <Select style={{ width: 120 }} defaultValue="1" onChange={handleTimeChange}>
-                            <Option value="1">周一至周五</Option>
-                            <Option value="2">每天</Option>
-                        </Select>
-
-                        {/* <TimePicker style={{ width: 200 }} defaultValue={moment('09:20', 'HH:mm')} minuteStep={5} format="HH:mm" disabledHours={() => { return [0, 1, 2, 3, 4, 5, 6] }} /> */}
-                        <TimePicker style={{ width: 200 }} defaultValue={moment('09:20', 'HH:mm')} minuteStep={5} format="HH:mm" />
-                    </div>
+                    <ChooseSendTime />
                 </FormItem>
                 <FormItem
                     label="备注"
                     name="remark"
-                    hasFeedback
                 >
-                    <TextArea placeholder="请输入备注" rows={4} />
+                    <TextArea placeholder="请输入备注" rows={4} maxLength={255} />
                 </FormItem>
             </Form>
         </Modal>)

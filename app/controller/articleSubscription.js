@@ -8,6 +8,7 @@ class ArticleSubscriptionController extends Controller {
         const { current, size, searchText } = ctx.request.body;
         if (_.isNil(current)) throw new Error('缺少必要参 current');
         if (_.isNil(size)) throw new Error('缺少必要参数 size');
+
         const data = await ctx.service.articleSubscription.getSubscriptionList({ current, size, searchText });
         ctx.body = app.utils.response(true, {
             data: data.rows,
@@ -18,14 +19,16 @@ class ArticleSubscriptionController extends Controller {
     // 新增
     async createSubscription() {
         const { app, ctx } = this;
-        const { groupName, webHook, remark, topicIds, sendType, sendCron, status } = ctx.request.body;
+        const { groupName, webHook, remark, topicIds, siteNames, sendType, sendCron, time, status } = ctx.request.body;
         if (_.isNil(groupName)) throw new Error('缺少必要参数 groupName');
         if (_.isNil(webHook)) throw new Error('缺少必要参数 webHook');
         if (_.isNil(topicIds)) throw new Error('缺少必要参数 topicIds');
+        if (_.isNil(siteNames)) throw new Error('缺少必要参数 siteNames');
         if (_.isNil(sendType)) throw new Error('缺少必要参数 sendType');
         if (_.isNil(sendCron)) throw new Error('缺少必要参数 sendCron');
+        if (_.isNil(time)) throw new Error('缺少必要参数 time');
         // 数据库插入数据
-        const data = await ctx.service.articleSubscription.createSubscription({ groupName, webHook, remark, topicIds, sendType, sendCron, status });
+        const data = await ctx.service.articleSubscription.createSubscription({ groupName, webHook, remark, topicIds, siteNames, sendType, sendCron, time, status });
         if (_.isNil(data)) throw new Error('创建失败');
         ctx.body = app.utils.response(true, data);
     }
@@ -33,15 +36,16 @@ class ArticleSubscriptionController extends Controller {
     // 更新
     async updateSubscription() {
         const { ctx, app } = this;
-        const { id, groupName, webHook, remark, topicIds, sendType, sendCron, status } = ctx.request.body;
+        const { id, groupName, webHook, remark, topicIds, siteNames, sendType, sendCron, time, status } = ctx.request.body;
         if (_.isNil(id)) throw new Error('缺少必要参数 id');
         if (_.isNil(groupName)) throw new Error('缺少必要参数 groupName');
         if (_.isNil(webHook)) throw new Error('缺少必要参数 webHook');
         if (_.isNil(topicIds)) throw new Error('缺少必要参数 topicIds');
+        if (_.isNil(siteNames)) throw new Error('缺少必要参数 siteNames');
         if (_.isNil(sendType)) throw new Error('缺少必要参数 sendType');
         if (_.isNil(sendCron)) throw new Error('缺少必要参数 sendCron');
 
-        const result = await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds, sendType, sendCron, status, updated_at: new Date() })
+        const result = await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds, siteNames, sendType, sendCron, time, status, updated_at: new Date() })
         ctx.body = app.utils.response(result);
     }
 

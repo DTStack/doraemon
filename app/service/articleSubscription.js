@@ -7,24 +7,19 @@ class ArticleSubscriptionService extends Service {
         const { size, current, searchText } = reqParams
         return this.ctx.model.ArticleSubscription.findAndCountAll({
             where: {
-                groupName:{
-                    '$like':`%${searchText}%`
+                groupName: {
+                    '$like':`%${ searchText }%`
                 },
                 is_delete: 0
             },
-            limit: size,
             order: [['updated_at', 'DESC']],
+            limit: size,
             offset: size * (current - 1)
         })
     }
 
     // 新增
     createSubscription(params) {
-        // return this.ctx.model.ArticleSubscription.create({
-        //     ...params,
-        //     created_at: new Date(),
-        //     updated_at: new Date()
-        // })
         return this.ctx.model.ArticleSubscription.create(params)
     }
 

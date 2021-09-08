@@ -1,10 +1,10 @@
 const Controller = require('egg').Controller;
 
-class ArticleSubscriptionTopicController extends Controller {
+class ArticleController extends Controller {
     // 获取订阅项列表
     async getTopicList() {
         const { ctx, app } = this;
-        const data = await ctx.service.articleSubscriptionTopic.getTopicList() || [];
+        const data = await ctx.service.articleTopic.getTopicList() || [];
         const nameList = Array.from(new Set(data.map(item => item.siteName)))
         let list = []
 
@@ -13,7 +13,7 @@ class ArticleSubscriptionTopicController extends Controller {
             for (let item of data) {
                 if (name === item.siteName) {
                     let { id, siteName, topicName, topicUrl } = item
-                    children.push({ id, name: `${ siteName } - ${ topicName }`, topicUrl })
+                    children.push({ id, name: `${ siteName } - ${ topicName }`, siteName, topicUrl })
                 }
             }
             list.push({
@@ -25,4 +25,4 @@ class ArticleSubscriptionTopicController extends Controller {
     }
 }
 
-module.exports = ArticleSubscriptionTopicController;
+module.exports = ArticleController;

@@ -1,6 +1,6 @@
 module.exports = app => {
     const { STRING, INTEGER, DATE } = app.Sequelize;
-    const ArticleSubscriptionTopic = app.model.define('article_subscription_topic', {
+    const ArticleTopic = app.model.define('article_topic', {
         id: { type: INTEGER, primaryKey: true, autoIncrement: true },
         siteName: STRING(64),
         topicName: STRING(255),
@@ -12,6 +12,6 @@ module.exports = app => {
     },{
         freezeTableName: true
     });
-    return ArticleSubscriptionTopic;
+    return ArticleTopic;
 };
   

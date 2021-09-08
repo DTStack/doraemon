@@ -1,7 +1,8 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { PlusCircleOutlined } from '@ant-design/icons';
-import SubscriptionModal from './components/subscriptionModal';
+import SubscriptionModal from './components/SubscriptionModal';
 import { Divider, Table, Button, Breadcrumb, Input, Modal, Switch, message as Message } from 'antd';
+import { SUBSCRIPTIONSENDTYPECN, SUBSCRIPTIONSTATUS } from './consts';
 import { API } from '@/api';
 
 const { Search } = Input;
@@ -47,9 +48,8 @@ const ArticleSubscriptionList = (props: any) => {
             },
             {
                 title: '订阅项',
-                dataIndex: 'topicList',
-                key: 'topicList',
-                render: (text: any) => text.join('、') || '-'
+                dataIndex: 'siteNames',
+                key: 'siteNames'
             },
             {
                 title: '备注',
@@ -59,15 +59,18 @@ const ArticleSubscriptionList = (props: any) => {
             },
             {
                 title: '推送时间',
-                dataIndex: 'sendTime',
-                key: 'sendTime'
+                dataIndex: 'sendType',
+                key: 'sendType',
+                render: (text: any, record: any) => {
+                    return `${ SUBSCRIPTIONSENDTYPECN[text] } ${ record.time }`
+                }
             },
             {
                 title: '状态',
                 key: 'status',
                 dataIndex: 'status',
                 render: (text: any, record: any) => {
-                    return <Switch defaultChecked={!!text} checkedChildren="开" unCheckedChildren="关" onChange={(e: any) => handleChangeStatus(e, record)} />
+                    return <Switch defaultChecked={text === SUBSCRIPTIONSTATUS.OPEN} checkedChildren="开" unCheckedChildren="关" onChange={(e: any) => handleChangeStatus(e, record)} />
                 }
             },
             {
@@ -117,31 +120,25 @@ const ArticleSubscriptionList = (props: any) => {
 
     // 改变订阅状态
     const handleChangeStatus = (check: any, record: any) => {
-        console.log(222, check, record)
-        // const { maintTableList, expandedRowKeys } = this.state;
-        // const currentProxyServer = maintTableList.find((row: any) => row.id === expandedRowKeys[0]);
-        // const { id } = record;
-        // API.updateProxyRuleStatus({
-        //     id,
-        //     status: check ? 1 : 0
-        // }).then((res: any) => {
-        //     if (res.success) {
-        //         Message.success(check ? '启用代理' : '禁用代理');
-        //         this.loadSubTableData(currentProxyServer);
-        //     }
-        // })
+        const status = check ? SUBSCRIPTIONSTATUS.OPEN : SUBSCRIPTIONSTATUS.CLOSE
+        API.updateSubscription({ ...record, status }).then(({ success }) => {
+            success && Message.success(check ? '订阅已开启' : '订阅已关闭')
+        }).finally(() => {
+            getSubscriptionList()
+        })
     }
 
     // 编辑
     const handleEdit = (record: any) => {
         console.log(111, record)
+        setVisible(true)
+        setEditData(record)
     }
 
     // 删除
     const handleDelete = (record: any) => {
-        console.log(333, record)
         const { id, status } = record
-        if (status === 2) return Message.warning('请先将订阅关闭！')
+        if (status === SUBSCRIPTIONSTATUS.OPEN) return Message.warning('请先将订阅关闭！')
         Modal.confirm({
             title: '删除后将不再给该钉钉群推送该订阅，是否要删除？',
             okButtonProps: { danger: true },
@@ -149,7 +146,9 @@ const ArticleSubscriptionList = (props: any) => {
             cancelText: '取消',
             onOk: () => {
                 API.deleteSubscription({ id }).then(({ success }) => {
-                    success && getSubscriptionList()
+                    success && Message.success('删除成功')
+                }).finally(() => {
+                    getSubscriptionList()
                 })
             }
         })

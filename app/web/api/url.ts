@@ -248,6 +248,6 @@ export default {
     // 获取订阅项列表
     getTopicList: {
         method: 'get',
-        url: '/api/article-subscription-topic/get-topic-list'
+        url: '/api/article-topic/get-topic-list'
     }
 }

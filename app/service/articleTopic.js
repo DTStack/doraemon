@@ -1,9 +1,9 @@
 const Service = require('egg').Service
 
-class ArticleSubscriptionTopicService extends Service {
+class ArticleTopicService extends Service {
     // 获取订阅项列表
     getTopicList() {
-        return this.ctx.model.ArticleSubscriptionTopic.findAll({
+        return this.ctx.model.ArticleTopic.findAll({
             where: {
                 is_delete: 0
             },
@@ -13,4 +13,4 @@ class ArticleSubscriptionTopicService extends Service {
     }
 }
 
-module.exports = ArticleSubscriptionTopicService
+module.exports = ArticleTopicService

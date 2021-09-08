@@ -6,10 +6,11 @@ module.exports = app => {
         webHook: STRING(500),
         remark: STRING(255),
         topicIds: STRING(255),
+        siteNames: STRING(255),
         sendType: { type: INTEGER(2), defaultValue: 1 },
         sendCron: STRING(255),
+        time: STRING(255),
         status: { type: INTEGER(2), defaultValue: 1 },
-        time: DATE,
         is_delete: { type: INTEGER(2), defaultValue: 0 },
         created_at: DATE,
         updated_at: DATE

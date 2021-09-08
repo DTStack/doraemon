@@ -80,7 +80,7 @@ module.exports = app => {
     app.post('/api/article-subscription/update-subscription', app.controller.articleSubscription.updateSubscription);
     app.post('/api/article-subscription/get-subscription-list', app.controller.articleSubscription.getSubscriptionList);
     app.get('/api/article-subscription/get-subscription-info', app.controller.articleSubscription.getSubscriptionInfo);
-    app.get('/api/article-subscription-topic/get-topic-list', app.controller.articleSubscriptionTopic.getTopicList);
+    app.get('/api/article-topic/get-topic-list', app.controller.articleTopic.getTopicList);
 
     /**
    * tag management 配置内容 增删改查
