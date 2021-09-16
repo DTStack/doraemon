@@ -41,7 +41,6 @@ class ChooseSendTime extends React.Component<IProps, IState> {
                 time: moment(val).format(defaultFormat)
             }
         }
-        console.log(111, realVal, onChange)
         onChange?.(realVal)
     }
 

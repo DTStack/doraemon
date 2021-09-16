@@ -12,9 +12,10 @@ class ArticleSubscriptionService extends Service {
                 },
                 is_delete: 0
             },
-            order: [['updated_at', 'DESC']],
+            order: [['created_at', 'DESC']],
             limit: size,
-            offset: size * (current - 1)
+            offset: size * (current - 1),
+            raw: true
         })
     }
 
@@ -30,7 +31,7 @@ class ArticleSubscriptionService extends Service {
         })
     }
 
-    // 获取详情
+    // 获取详情 - 暂未使用
     async getSubscriptionInfo(id) {
         const data = await this.ctx.model.ArticleSubscription.findOne({
             where: { id }

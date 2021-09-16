@@ -17,6 +17,7 @@ const SubscriptionModal = (props: any) => {
     const [siteNames, setSiteNames] = useState('')
 
     useEffect(() => {
+        visible && form.resetFields()
         if (visible && data) {
             const { groupName = '', webHook = '', remark = '', topicIds = [], siteNames = '', sendType = SUBSCRIPTIONSENDTYPE.WORKDAY, time = '' } = data
             setSiteNames(siteNames)
@@ -30,16 +31,16 @@ const SubscriptionModal = (props: any) => {
                     time
                 }
             })
+            form.validateFields()
         }
     }, [visible])
 
-    const updataSubscription = (params: any) => {
+    const updateSubscription = (params: any) => {
         setConfirmLoading(true)
-        API[params.id ? 'updataSubscription' : 'createSubscription'](params).then(({ success, msg }) => {
+        API[params.id ? 'updateSubscription' : 'createSubscription'](params).then(({ success, msg }) => {
             if (success) {
                 Message.success(params.id ? '编辑成功' : '新增成功')
                 isFunction(onOk) && onOk()
-                restData()
             } else {
                 Message.error(msg)
             }
@@ -53,12 +54,13 @@ const SubscriptionModal = (props: any) => {
             const { sendTime, topicIds = [] } = values
             const { sendType, time } = sendTime
             const sendCron = getCron(sendType, time)
-            updataSubscription(Object.assign(values, {
+            updateSubscription(Object.assign(values, {
                 id: data?.id || '',
-                topicIds: topicIds.join(','),
+                topicIds,
                 siteNames,
                 sendType,
                 sendCron,
+                status: data?.status,
                 time
             }))
         })
@@ -79,12 +81,6 @@ const SubscriptionModal = (props: any) => {
 
     const handleModalCancel = () => {
         isFunction(onCancel) && onCancel()
-        restData()
-    }
-
-    const restData = () => {
-        setConfirmLoading(false)
-        form.resetFields()
     }
 
     const handleTopicChange = (value, option) => {
@@ -106,7 +102,6 @@ const SubscriptionModal = (props: any) => {
                         { required: true, message: '请输入钉钉群名称' },
                         { max: 64, message: '长度不超过64个字符' }
                     ]}
-                    hasFeedback
                 >
                     <Input placeholder="请输入钉钉群名称" />
                 </FormItem>
@@ -117,7 +112,6 @@ const SubscriptionModal = (props: any) => {
                         { required: true, message: '请输入webHook' },
                         { max: 500, message: '长度不超过500个字符' }
                     ]}
-                    hasFeedback
                 >
                     <Input placeholder="请输入webHook" />
                 </FormItem>
@@ -125,9 +119,16 @@ const SubscriptionModal = (props: any) => {
                     label="订阅项"
                     name="topicIds"
                     rules={[
-                        { required: true, message: '请选择订阅项，最多三个' }
+                        { required: true, message: '请选择订阅项，最多三个' },
+                        {
+                            validator: (rule, value = [], callback) => {
+                                if (value?.length > 3) {
+                                    callback('最多选择三个订阅项')
+                                }
+                                callback()
+                            }
+                        }
                     ]}
-                    hasFeedback
                 >
                     <Select
                         showSearch
@@ -154,7 +155,6 @@ const SubscriptionModal = (props: any) => {
                     label="推送时间"
                     name="sendTime"
                     rules={[{ required: true, message: '请选择推送时间' }]}
-                    hasFeedback
                 >
                     <ChooseSendTime />
                 </FormItem>

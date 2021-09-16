@@ -11,7 +11,12 @@ class ArticleSubscriptionController extends Controller {
 
         const data = await ctx.service.articleSubscription.getSubscriptionList({ current, size, searchText });
         ctx.body = app.utils.response(true, {
-            data: data.rows,
+            data: data.rows.map(item => {
+                return {
+                    ...item,
+                    topicIds: item.topicIds.split(',').map(i => +i)
+                }
+            }),
             count: data.count
         });
     }
@@ -28,7 +33,7 @@ class ArticleSubscriptionController extends Controller {
         if (_.isNil(sendCron)) throw new Error('缺少必要参数 sendCron');
         if (_.isNil(time)) throw new Error('缺少必要参数 time');
         // 数据库插入数据
-        const data = await ctx.service.articleSubscription.createSubscription({ groupName, webHook, remark, topicIds, siteNames, sendType, sendCron, time, status });
+        const data = await ctx.service.articleSubscription.createSubscription({ groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status });
         if (_.isNil(data)) throw new Error('创建失败');
         ctx.body = app.utils.response(true, data);
     }
@@ -45,7 +50,7 @@ class ArticleSubscriptionController extends Controller {
         if (_.isNil(sendType)) throw new Error('缺少必要参数 sendType');
         if (_.isNil(sendCron)) throw new Error('缺少必要参数 sendCron');
 
-        const result = await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds, siteNames, sendType, sendCron, time, status, updated_at: new Date() })
+        const result = await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status, updated_at: new Date() })
         ctx.body = app.utils.response(result);
     }
 

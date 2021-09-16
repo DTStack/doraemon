@@ -130,7 +130,6 @@ const ArticleSubscriptionList = (props: any) => {
 
     // 编辑
     const handleEdit = (record: any) => {
-        console.log(111, record)
         setVisible(true)
         setEditData(record)
     }
