@@ -28,7 +28,7 @@ const createFileSync = (paths,fileName,data) => {
         throw new Error('创建文件出错')
     }
 }
-const sendMsg = async (webhook_url,basicInfo,operation,address) => {
+const sendMsg = async (webhook_url, basicInfo, operation, address) => {
     const { filename, hostIp, hostName } = basicInfo
     const feChatRobot = new ChatBot({
         webhook: webhook_url
@@ -42,7 +42,7 @@ const sendMsg = async (webhook_url,basicInfo,operation,address) => {
         .markdown('配置中心变更通知', mdTxt)
         .catch(ex => console.error(ex));
 }
-const sendHostsUpdateMsg = async (webhook_url, basicInfo, ip, address,operation) => {
+const sendHostsUpdateMsg = async (webhook_url, basicInfo, ip, address, operation) => {
     const { groupName, groupApi } = basicInfo
     const feChatRobot = new ChatBot({
         webhook: webhook_url
@@ -56,11 +56,24 @@ const sendHostsUpdateMsg = async (webhook_url, basicInfo, ip, address,operation)
         .markdown('Hosts管理变更通知', mdTxt)
         .catch(ex => console.error(ex));
 }
+
+// 发送文章订阅消息
+const sendArticleMsg = async (title, webhook, basicInfo) => {
+    console.log(222222, title, webhook, basicInfo)
+    // const { filename, hostIp, hostName } = basicInfo
+    // const feChatRobot = new ChatBot({ webhook });
+    // let mdTxt = ''
+    // feChatRobot
+    //     .markdown(title, mdTxt)
+    //     .catch(ex => console.error(ex));
+}
+
 module.exports = {
     createFolder,
     createFileSync,
     sendMsg,
     sendHostsUpdateMsg,
+    sendArticleMsg,
     response: (success, data = null, message)=>{
         if(success) {
             message='执行成功';

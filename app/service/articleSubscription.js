@@ -1,5 +1,4 @@
 const Service = require('egg').Service
-const _ = require('lodash')
 
 class ArticleSubscriptionService extends Service {
     // 获取列表

@@ -1,5 +1,6 @@
 const Controller = require('egg').Controller;
 const _ = require('lodash');
+const { createTimedTask, cancelTimedTask } = require('../utils/timedTask')
 
 class ArticleSubscriptionController extends Controller {
     // 获取列表
@@ -34,8 +35,10 @@ class ArticleSubscriptionController extends Controller {
         if (_.isNil(time)) throw new Error('缺少必要参数 time');
         // 数据库插入数据
         const data = await ctx.service.articleSubscription.createSubscription({ groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status });
-        if (_.isNil(data)) throw new Error('创建失败');
-        ctx.body = app.utils.response(true, data);
+        const { id } = data
+        if (_.isNil(id)) throw new Error('创建失败');
+        createTimedTask(id, sendCron)
+        ctx.body = app.utils.response(true, id);
     }
 
     // 更新
@@ -49,9 +52,9 @@ class ArticleSubscriptionController extends Controller {
         if (_.isNil(siteNames)) throw new Error('缺少必要参数 siteNames');
         if (_.isNil(sendType)) throw new Error('缺少必要参数 sendType');
         if (_.isNil(sendCron)) throw new Error('缺少必要参数 sendCron');
-
-        const result = await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status, updated_at: new Date() })
-        ctx.body = app.utils.response(result);
+        await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status, updated_at: new Date() })
+        createTimedTask(id, sendCron)
+        ctx.body = app.utils.response(true, id);
     }
 
     // 删除
@@ -59,8 +62,9 @@ class ArticleSubscriptionController extends Controller {
         const { ctx, app } = this;
         const { id } = ctx.request.body;
         if (_.isNil(id)) throw new Error('缺少必要参数 id');
-        const result = await ctx.service.articleSubscription.updateSubscription(id, { is_delete: 1, updated_at: new Date() });
-        ctx.body = app.utils.response(result);
+        await ctx.service.articleSubscription.updateSubscription(id, { is_delete: 1, updated_at: new Date() });
+        cancelTimedTask(id)
+        ctx.body = app.utils.response(true, id);
     }
 
     // 获取详情
