@@ -144,22 +144,15 @@ const WebTerminal: React.FC = () => {
         setTerminal(terminal)
     }
 
-    const onMsg = (msg) => {
-        notification['info']({
-          message: msg.title,
-          description: msg.content,
-        })
-    }
-
     const initSocket = () => {
         socket.on('connect', () => {
-            console.log('----与服务端连接成功----')
+            console.log(' ======= 与服务端连接成功 ======= ')
         })
         socket.on('res', (res) => {
-            console.log('----服务端的消息----', res)
+            console.log(' ======= 服务端的消息 ======= ', res)
         })
         // 发送消息
-        socket.emit('chat', '111111111111')
+        socket.emit('getShellCommand', { title: 'name', content: 'zhuting' })
     }
 
     useEffect(() => {
@@ -169,12 +162,7 @@ const WebTerminal: React.FC = () => {
 
     useEffect(() => {
         if (terminal) { onKeyAction() }
-        // if (socket && socket.connected) {
-        //     socket.on('res', (res) => {
-        //         console.log('----与服务端连接成功----', res)
-        //     })
-        // }
-    }, [terminal, socket])
+    }, [terminal])
 
     return (
         <Loading>

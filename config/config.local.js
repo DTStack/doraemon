@@ -46,12 +46,12 @@ module.exports = () => {
 
     exports.security = { domainWhiteList };
 
-    exports.ssh =  {
-        host: '172.16.100.225',
-        port: '3306',
-        username:'root',
-        password:'Admin123!@#'
-    };
+    // exports.ssh =  {
+    //     host: '172.16.100.225',
+    //     port: '22',
+    //     username:'root',
+    //     password:'abc123'
+    // };
 
     return exports;
 };

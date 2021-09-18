@@ -80,5 +80,5 @@ module.exports = app => {
     app.post('/api/tags/update-tag', app.controller.tagManagement.editTag);
     app.post('/api/tags/delete-tag', app.controller.tagManagement.deleteTag);
 
-    io.route('/',  io.controller.home.getMessage)
+    io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
 };
