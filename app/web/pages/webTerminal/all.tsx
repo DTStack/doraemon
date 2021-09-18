@@ -3,15 +3,13 @@ import { Terminal } from 'xterm'
 import { FitAddon } from 'xterm-addon-fit'
 import { TERMINAL_INPUT_KEY } from './const'
 import Loading from '@/components/loading'
-import { Socket } from  '@/utils/socket'
-import { notification } from 'antd'
 
 import './style.scss';
 import 'xterm/css/xterm.css'
 
+
 const WebTerminal: React.FC = () => {
     const [terminal, setTerminal] = useState(null)
-    const [socket, setSocket] = useState(Socket)
     const prefix = 'admin $ '
     // const prefix = ''
 
@@ -38,8 +36,11 @@ const WebTerminal: React.FC = () => {
             inputTextList.push(inputText)
             currentIndex = inputTextList.length
         }
-        // socket 通信
-        socket.emit('chat', inputText)
+
+        // if ('WebSocket' in window) {
+
+        // }
+
         terminal.prompt()
     }
 
@@ -53,7 +54,7 @@ const WebTerminal: React.FC = () => {
             const printAble = !(altKey || altGraphKey || ctrlKey || metaKey) // 禁止相关按键
             const totalOffsetLength = inputText.length + prefix.length   // 总偏移量
             let currentOffsetLength = terminal._core.buffer.x     // 当前x偏移量
-            console.log('currentOffsetLength ========= ', currentOffsetLength)
+            console.log('currentOffsetLength ===== ', currentOffsetLength)
 
             switch(keyCode) {
             case TERMINAL_INPUT_KEY.ENTER:
@@ -102,7 +103,7 @@ const WebTerminal: React.FC = () => {
                 if (currentOffsetLength > prefix.length) {
                     terminal.write(key)
                 }
-                break
+                break;
 
             case TERMINAL_INPUT_KEY.RIGHT:
                 if (currentOffsetLength < totalOffsetLength) {
@@ -144,37 +145,11 @@ const WebTerminal: React.FC = () => {
         setTerminal(terminal)
     }
 
-    const onMsg = (msg) => {
-        notification['info']({
-          message: msg.title,
-          description: msg.content,
-        })
-    }
-
-    const initSocket = () => {
-        socket.on('connect', () => {
-            console.log('----与服务端连接成功----')
-        })
-        socket.on('res', (res) => {
-            console.log('----服务端的消息----', res)
-        })
-        // 发送消息
-        socket.emit('chat', '111111111111')
-    }
-
-    useEffect(() => {
-        initTerminal()
-        initSocket()
-    }, [])
+    useEffect(() => { initTerminal() }, [])
 
     useEffect(() => {
         if (terminal) { onKeyAction() }
-        // if (socket && socket.connected) {
-        //     socket.on('res', (res) => {
-        //         console.log('----与服务端连接成功----', res)
-        //     })
-        // }
-    }, [terminal, socket])
+    }, [terminal])
 
     return (
         <Loading>

@@ -56,5 +56,15 @@ module.exports = app => {
         mode: 'stream'
     }
 
+    exports.io = {
+        init: { }, // passed to engine.io
+        namespace: {
+            '/': {
+                connectionMiddleware: [ 'connection' ],
+                packetMiddleware: []
+            }
+        }
+    };
+
     return exports;
 };
