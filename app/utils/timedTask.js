@@ -24,7 +24,13 @@ const cancelTimedTask = (name) => {
 
 // 获取打开状态下的订阅列表
 const startSubscriptionTimedTask = async (app) => {
-    const list = await app.model.ArticleSubscription.findAll({
+    const topicAll = await app.model.ArticleTopic.findAll({
+        where: {
+            is_delete: 0
+        },
+        raw: true
+    })
+    let subscriptionList = await app.model.ArticleSubscription.findAll({
         where: {
             is_delete: 0,
             status: 1
@@ -32,7 +38,19 @@ const startSubscriptionTimedTask = async (app) => {
         order: [['created_at', 'DESC']],
         raw: true
     })
-    console.log(444, list)
+    subscriptionList = subscriptionList.map(item => {
+        const topicIdList = item.topicIds.split(',')
+        let topicList = []
+        for (let topic of topicAll) {
+            topicIdList.includes(`${ topic.id }`) && topicList.push(topic)
+        }
+        return {
+            ...item,
+            topicList
+        }
+    })
+
+    console.log(444, subscriptionList)
 }
 
 module.exports = {
