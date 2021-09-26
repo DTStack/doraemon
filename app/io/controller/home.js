@@ -5,7 +5,7 @@ module.exports = app => {
             const { ctx, logger, app } = this;
             const command = ctx.args[0];
             // const result = app.ssh.autoConnectExecCommand('cd /')
-            ctx.socket.emit('res', { title: 'name', content: 'shhh' });
+            ctx.socket.emit('res', { code: 1, content: 'Message received' });
             logger.info(' ======= command ======= ', command)
             // logger.info(' ======= result ======= ', result)
         }

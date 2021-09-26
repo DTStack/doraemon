@@ -838,9 +838,9 @@
     "@types/ssh2-streams" "*"
 
 "@types/node@*", "@types/node@>=10.0.0":
-  version "16.9.2"
-  resolved "http://registry.npm.dtstack.com/@types%2fnode/-/node-16.9.2.tgz#81f5a039d6ed1941f8cc57506c74e7c2b8fc64b9"
-  integrity sha1-gfWgOdbtGUH4zFdQbHTnwrj8ZLk=
+  version "16.9.6"
+  resolved "http://registry.npm.dtstack.com/@types%2fnode/-/node-16.9.6.tgz#040a64d7faf9e5d9e940357125f0963012e66f04"
+  integrity sha1-BApk1/r55dnpQDVxJfCWMBLmbwQ=
 
 "@types/node@^10.12.18":
   version "10.17.60"
@@ -912,9 +912,9 @@
     "@types/react-router" "*"
 
 "@types/react-router-dom@^5.1.7":
-  version "5.1.9"
-  resolved "http://registry.npm.dtstack.com/@types%2freact-router-dom/-/react-router-dom-5.1.9.tgz#e8a8f687351ecc8c68bb4161d7e4b9df4994416e"
-  integrity sha1-6Kj2hzUezIxou0Fh1+S530mUQW4=
+  version "5.3.0"
+  resolved "http://registry.npm.dtstack.com/@types%2freact-router-dom/-/react-router-dom-5.3.0.tgz#8c4e0aa0ccaf638ba965829ad29a10ac3cbe2212"
+  integrity sha1-jE4KoMyvY4upZYKa0poQrDy+IhI=
   dependencies:
     "@types/history" "*"
     "@types/react" "*"
@@ -936,9 +936,9 @@
     "@types/react" "*"
 
 "@types/react@*", "@types/react@^17.0.3":
-  version "17.0.21"
-  resolved "http://registry.npm.dtstack.com/@types%2freact/-/react-17.0.21.tgz#069c43177cd419afaab5ce26bb4e9056549f7ea6"
-  integrity sha1-BpxDF3zUGa+qtc4mu06QVlSffqY=
+  version "17.0.24"
+  resolved "http://registry.npm.dtstack.com/@types%2freact/-/react-17.0.24.tgz#7e1b3f78d0fc53782543f9bce6d949959a5880bd"
+  integrity sha1-fhs/eND8U3glQ/m85tlJlZpYgL0=
   dependencies:
     "@types/prop-types" "*"
     "@types/scheduler" "*"
@@ -973,20 +973,6 @@
   dependencies:
     "@types/mime" "^1"
     "@types/node" "*"
-
-"@types/socket.io-client@^3.0.0":
-  version "3.0.0"
-  resolved "http://registry.npm.dtstack.com/@types%2fsocket.io-client/-/socket.io-client-3.0.0.tgz#d0b8ea22121b7c1df68b6a923002f9c8e3cefb42"
-  integrity sha1-0LjqIhIbfB32i2qSMAL5yOPO+0I=
-  dependencies:
-    socket.io-client "*"
-
-"@types/socket.io@^3.0.2":
-  version "3.0.2"
-  resolved "http://registry.npm.dtstack.com/@types%2fsocket.io/-/socket.io-3.0.2.tgz#606c9639e3f93bb8454cba8f5f0a283d47917759"
-  integrity sha1-YGyWOeP5O7hFTLqPXwooPUeRd1k=
-  dependencies:
-    socket.io "*"
 
 "@types/ssh2-streams@*":
   version "0.1.9"
@@ -3338,7 +3324,7 @@ babylon@^6.17.0, babylon@^6.17.2, babylon@^6.18.0:
   resolved "http://registry.npm.dtstack.com/babylon/-/babylon-6.18.0.tgz#af2f3b88fa6f5c1e4c634d1a0f8eac4f55b395e3"
   integrity sha512-q/UEjfGJ2Cm3oKV71DJz9d25TPnq5rhBVL2Q4fA5wcC3jcrdn7+SssEybFIxwAvvP+YCsCYNKughoF33GxgycQ==
 
-backo2@1.0.2, backo2@~1.0.2:
+backo2@1.0.2:
   version "1.0.2"
   resolved "http://registry.npm.dtstack.com/backo2/-/backo2-1.0.2.tgz#31ab1ac8b129363463e35b3ebb69f4dfcfba7947"
   integrity sha1-MasayLEpNjRj41s+u2n038+6eUc=
@@ -4102,14 +4088,14 @@ caniuse-api@^3.0.0:
     lodash.uniq "^4.5.0"
 
 caniuse-db@^1.0.30000529, caniuse-db@^1.0.30000634, caniuse-db@^1.0.30000639:
-  version "1.0.30001258"
-  resolved "http://registry.npm.dtstack.com/caniuse-db/-/caniuse-db-1.0.30001258.tgz#a6de3ef3f89a5826bccdbf7674cbf5c081b86265"
-  integrity sha1-pt4+8/iaWCa8zb92dMv1wIG4YmU=
+  version "1.0.30001259"
+  resolved "http://registry.npm.dtstack.com/caniuse-db/-/caniuse-db-1.0.30001259.tgz#3e9dd631f9cc7c3d1134136390ad4442a8f93652"
+  integrity sha1-Pp3WMfnMfD0RNBNjkK1EQqj5NlI=
 
 caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000670, caniuse-lite@^1.0.30000792, caniuse-lite@^1.0.30000844, caniuse-lite@^1.0.30001109, caniuse-lite@^1.0.30001254:
-  version "1.0.30001258"
-  resolved "http://registry.npm.dtstack.com/caniuse-lite/-/caniuse-lite-1.0.30001258.tgz#b604eed80cc54a578e4bf5a02ae3ed49f869d252"
-  integrity sha1-tgTu2AzFSleOS/WgKuPtSfhp0lI=
+  version "1.0.30001259"
+  resolved "http://registry.npm.dtstack.com/caniuse-lite/-/caniuse-lite-1.0.30001259.tgz#ae21691d3da9c4be6144403ac40f71d9f6efd790"
+  integrity sha1-riFpHT2pxL5hREA6xA9x2fbv15A=
 
 capture-stack-trace@^1.0.0:
   version "1.0.1"
@@ -4575,9 +4561,9 @@ code-point-at@^1.0.0:
   integrity sha1-DQcLTQQ6W+ozovGkDi7bPZpMz3c=
 
 codemirror@^5.48.4:
-  version "5.62.3"
-  resolved "http://registry.npm.dtstack.com/codemirror/-/codemirror-5.62.3.tgz#5cfdee6931c8b2d1b39ae773aaaaec2cc6b5558e"
-  integrity sha1-XP3uaTHIstGzmudzqqrsLMa1VY4=
+  version "5.63.0"
+  resolved "http://registry.npm.dtstack.com/codemirror/-/codemirror-5.63.0.tgz#070a699108badd9c118b7261ac2e9793acdbb149"
+  integrity sha1-BwppkQi63ZwRi3JhrC6Xk6zbsUk=
 
 collection-visit@^1.0.0:
   version "1.0.0"
@@ -5323,9 +5309,9 @@ copy-webpack-plugin@^4.5.3:
     serialize-javascript "^1.4.0"
 
 core-js-pure@^3.16.0:
-  version "3.17.3"
-  resolved "http://registry.npm.dtstack.com/core-js-pure/-/core-js-pure-3.17.3.tgz#98ea3587188ab7ef4695db6518eeb71aec42604a"
-  integrity sha1-mOo1hxiKt+9GldtlGO63GuxCYEo=
+  version "3.18.0"
+  resolved "http://registry.npm.dtstack.com/core-js-pure/-/core-js-pure-3.18.0.tgz#e5187347bae66448c9e2d67c01c34c4df3261dc5"
+  integrity sha1-5RhzR7rmZEjJ4tZ8AcNMTfMmHcU=
 
 core-js@^1.0.0:
   version "1.2.7"
@@ -5338,9 +5324,9 @@ core-js@^2.0.0, core-js@^2.4.0, core-js@^2.5.0, core-js@^2.6.5:
   integrity sha512-Kb2wC0fvsWfQrgk8HU5lW6U/Lcs8+9aaYcy4ZFc6DDlo4nZ7n70dEgE5rtR0oG6ufKDUnrwfWL1mXR5ljDatrQ==
 
 core-js@^3.11.0:
-  version "3.17.3"
-  resolved "http://registry.npm.dtstack.com/core-js/-/core-js-3.17.3.tgz#8e8bd20e91df9951e903cabe91f9af4a0895bc1e"
-  integrity sha1-jovSDpHfmVHpA8q+kfmvSgiVvB4=
+  version "3.18.0"
+  resolved "http://registry.npm.dtstack.com/core-js/-/core-js-3.18.0.tgz#9af3f4a6df9ba3428a3fb1b171f1503b3f40cc49"
+  integrity sha1-mvP0pt+bo0KKP7GxcfFQOz9AzEk=
 
 core-util-is@1.0.2:
   version "1.0.2"
@@ -7137,9 +7123,9 @@ ejs@^2.6.1:
   integrity sha512-7vmuyh5+kuUyJKePhQfRQBhXV5Ce+RnaeeQArKu1EAMpL3WbgMt5WG6uQZpEVvYSSsxMXRKOewtDk9RaTKXRlA==
 
 electron-to-chromium@^1.2.7, electron-to-chromium@^1.3.30, electron-to-chromium@^1.3.47, electron-to-chromium@^1.3.830:
-  version "1.3.843"
-  resolved "http://registry.npm.dtstack.com/electron-to-chromium/-/electron-to-chromium-1.3.843.tgz#671489bd2f59fd49b76adddc1aa02c88cd38a5c0"
-  integrity sha1-ZxSJvS9Z/Um3at3cGqAsiM04pcA=
+  version "1.3.846"
+  resolved "http://registry.npm.dtstack.com/electron-to-chromium/-/electron-to-chromium-1.3.846.tgz#a55fd59613dbcaed609e965e3e88f42b08c401d3"
+  integrity sha1-pV/VlhPbyu1gnpZePoj0KwjEAdM=
 
 elliptic@^6.5.3:
   version "6.5.4"
@@ -7261,22 +7247,6 @@ engine.io-client@~3.5.0:
     xmlhttprequest-ssl "~1.6.2"
     yeast "0.1.2"
 
-engine.io-client@~5.2.0:
-  version "5.2.0"
-  resolved "http://registry.npm.dtstack.com/engine.io-client/-/engine.io-client-5.2.0.tgz#ae38c79a4af16258c0300e6819c0ea8ecc1597cd"
-  integrity sha1-rjjHmkrxYljAMA5oGcDqjswVl80=
-  dependencies:
-    base64-arraybuffer "0.1.4"
-    component-emitter "~1.3.0"
-    debug "~4.3.1"
-    engine.io-parser "~4.0.1"
-    has-cors "1.1.0"
-    parseqs "0.0.6"
-    parseuri "0.0.6"
-    ws "~7.4.2"
-    xmlhttprequest-ssl "~2.0.0"
-    yeast "0.1.2"
-
 engine.io-parser@1.3.1:
   version "1.3.1"
   resolved "http://registry.npm.dtstack.com/engine.io-parser/-/engine.io-parser-1.3.1.tgz#9554f1ae33107d6fbd170ca5466d2f833f6a07cf"
@@ -7300,7 +7270,7 @@ engine.io-parser@~2.2.0:
     blob "0.0.5"
     has-binary2 "~1.0.2"
 
-engine.io-parser@~4.0.0, engine.io-parser@~4.0.1:
+engine.io-parser@~4.0.0:
   version "4.0.3"
   resolved "http://registry.npm.dtstack.com/engine.io-parser/-/engine.io-parser-4.0.3.tgz#83d3a17acfd4226f19e721bb22a1ee8f7662d2f6"
   integrity sha1-g9Ohes/UIm8Z5yG7IqHuj3Zi0vY=
@@ -7395,7 +7365,7 @@ errorhandler@~1.4.2:
     accepts "~1.3.0"
     escape-html "~1.0.3"
 
-es-abstract@^1.17.2, es-abstract@^1.18.0-next.1, es-abstract@^1.18.0-next.2, es-abstract@^1.18.2:
+es-abstract@^1.17.2, es-abstract@^1.18.0-next.1, es-abstract@^1.18.0-next.2, es-abstract@^1.18.1, es-abstract@^1.18.2:
   version "1.18.6"
   resolved "http://registry.npm.dtstack.com/es-abstract/-/es-abstract-1.18.6.tgz#2c44e3ea7a6255039164d26559777a6d978cb456"
   integrity sha1-LETj6npiVQORZNJlWXd6bZeMtFY=
@@ -7742,22 +7712,23 @@ eslint-plugin-react@7.1.0:
     jsx-ast-utils "^1.4.1"
 
 eslint-plugin-react@^7.1.0, eslint-plugin-react@^7.11.1:
-  version "7.25.2"
-  resolved "http://registry.npm.dtstack.com/eslint-plugin-react/-/eslint-plugin-react-7.25.2.tgz#d567a217d306b76dd110561f28074e2328ae38f8"
-  integrity sha1-1WeiF9MGt23REFYfKAdOIyiuOPg=
+  version "7.26.0"
+  resolved "http://registry.npm.dtstack.com/eslint-plugin-react/-/eslint-plugin-react-7.26.0.tgz#3ae019a35d542b98e5af9e2f96b89c232c74b55b"
+  integrity sha1-OuAZo11UK5jlr54vlricIyx0tVs=
   dependencies:
     array-includes "^3.1.3"
     array.prototype.flatmap "^1.2.4"
     doctrine "^2.1.0"
     estraverse "^5.2.0"
-    has "^1.0.3"
     jsx-ast-utils "^2.4.1 || ^3.0.0"
     minimatch "^3.0.4"
     object.entries "^1.1.4"
     object.fromentries "^2.0.4"
+    object.hasown "^1.0.0"
     object.values "^1.1.4"
     prop-types "^15.7.2"
     resolve "^2.0.0-next.3"
+    semver "^6.3.0"
     string.prototype.matchall "^4.0.5"
 
 eslint-scope@3.7.1:
@@ -12212,9 +12183,9 @@ map-obj@^2.0.0:
   integrity sha1-plzSkIepJZi4eRJXpSPgISIqwfk=
 
 map-obj@^4.0.0:
-  version "4.2.1"
-  resolved "http://registry.npm.dtstack.com/map-obj/-/map-obj-4.2.1.tgz#e4ea399dbc979ae735c83c863dd31bdf364277b7"
-  integrity sha1-5Oo5nbyXmuc1yDyGPdMb3zZCd7c=
+  version "4.3.0"
+  resolved "http://registry.npm.dtstack.com/map-obj/-/map-obj-4.3.0.tgz#9304f906e93faae70880da102a9f1df0ea8bb05a"
+  integrity sha1-kwT5Buk/qucIgNoQKp8d8OqLsFo=
 
 map-stream@~0.1.0:
   version "0.1.0"
@@ -13110,9 +13081,9 @@ node-pre-gyp@^0.6.36:
     tar-pack "^3.4.0"
 
 node-releases@^1.1.75:
-  version "1.1.75"
-  resolved "http://registry.npm.dtstack.com/node-releases/-/node-releases-1.1.75.tgz#6dd8c876b9897a1b8e5a02de26afa79bb54ebbfe"
-  integrity sha1-bdjIdrmJehuOWgLeJq+nm7VOu/4=
+  version "1.1.76"
+  resolved "http://registry.npm.dtstack.com/node-releases/-/node-releases-1.1.76.tgz#df245b062b0cafbd5282ab6792f7dccc2d97f36e"
+  integrity sha1-3yRbBisMr71SgqtnkvfczC2X824=
 
 node-sass@4.14.1:
   version "4.14.1"
@@ -13478,6 +13449,14 @@ object.getownpropertydescriptors@^2.0.3, object.getownpropertydescriptors@^2.1.0
     call-bind "^1.0.2"
     define-properties "^1.1.3"
     es-abstract "^1.18.0-next.2"
+
+object.hasown@^1.0.0:
+  version "1.0.0"
+  resolved "http://registry.npm.dtstack.com/object.hasown/-/object.hasown-1.0.0.tgz#bdbade33cfacfb25d7f26ae2b6cb870bf99905c2"
+  integrity sha1-vbreM8+s+yXX8mritsuHC/mZBcI=
+  dependencies:
+    define-properties "^1.1.3"
+    es-abstract "^1.18.1"
 
 object.omit@^2.0.0:
   version "2.0.1"
@@ -17752,19 +17731,6 @@ socket.io-adapter@~2.3.2:
   resolved "http://registry.npm.dtstack.com/socket.io-adapter/-/socket.io-adapter-2.3.2.tgz#039cd7c71a52abad984a6d57da2c0b7ecdd3c289"
   integrity sha1-A5zXxxpSq62YSm1X2iwLfs3Twok=
 
-socket.io-client@*:
-  version "4.2.0"
-  resolved "http://registry.npm.dtstack.com/socket.io-client/-/socket.io-client-4.2.0.tgz#195feed3de40283b1ae3f7d02cf91d3eb2c905c1"
-  integrity sha1-GV/u095AKDsa4/fQLPkdPrLJBcE=
-  dependencies:
-    "@types/component-emitter" "^1.2.10"
-    backo2 "~1.0.2"
-    component-emitter "~1.3.0"
-    debug "~4.3.2"
-    engine.io-client "~5.2.0"
-    parseuri "0.0.6"
-    socket.io-parser "~4.0.4"
-
 socket.io-client@1.7.0:
   version "1.7.0"
   resolved "http://registry.npm.dtstack.com/socket.io-client/-/socket.io-client-1.7.0.tgz#d682bde6a83e2d01dd68b5a3696a88c640c4e897"
@@ -17847,7 +17813,19 @@ socket.io-redis@^5.2.0:
     socket.io-adapter "~1.1.0"
     uid2 "0.0.3"
 
-socket.io@*, socket.io@^4.1.0:
+socket.io@^2.1.1:
+  version "2.4.1"
+  resolved "http://registry.npm.dtstack.com/socket.io/-/socket.io-2.4.1.tgz#95ad861c9a52369d7f1a68acf0d4a1b16da451d2"
+  integrity sha1-la2GHJpSNp1/Gmis8NShsW2kUdI=
+  dependencies:
+    debug "~4.1.0"
+    engine.io "~3.5.0"
+    has-binary2 "~1.0.2"
+    socket.io-adapter "~1.1.0"
+    socket.io-client "2.4.0"
+    socket.io-parser "~3.4.0"
+
+socket.io@^4.1.0:
   version "4.2.0"
   resolved "http://registry.npm.dtstack.com/socket.io/-/socket.io-4.2.0.tgz#9e1c09d3ea647e24963a2e7ba8ea5c847778e2ed"
   integrity sha512-sjlGfMmnaWvTRVxGRGWyhd9ctpg4APxWAxu85O/SxekkxHhfxmePWZbaYCkeX5QQX0z1YEnKOlNt6w82E4Nzug==
@@ -17861,18 +17839,6 @@ socket.io@*, socket.io@^4.1.0:
     engine.io "~5.2.0"
     socket.io-adapter "~2.3.2"
     socket.io-parser "~4.0.4"
-
-socket.io@^2.1.1:
-  version "2.4.1"
-  resolved "http://registry.npm.dtstack.com/socket.io/-/socket.io-2.4.1.tgz#95ad861c9a52369d7f1a68acf0d4a1b16da451d2"
-  integrity sha1-la2GHJpSNp1/Gmis8NShsW2kUdI=
-  dependencies:
-    debug "~4.1.0"
-    engine.io "~3.5.0"
-    has-binary2 "~1.0.2"
-    socket.io-adapter "~1.1.0"
-    socket.io-client "2.4.0"
-    socket.io-parser "~3.4.0"
 
 sockjs-client@1.1.2:
   version "1.1.2"
@@ -20394,11 +20360,6 @@ xmlhttprequest-ssl@~1.6.2:
   version "1.6.3"
   resolved "http://registry.npm.dtstack.com/xmlhttprequest-ssl/-/xmlhttprequest-ssl-1.6.3.tgz#03b713873b01659dfa2c1c5d056065b27ddc2de6"
   integrity sha1-A7cThzsBZZ36LBxdBWBlsn3cLeY=
-
-xmlhttprequest-ssl@~2.0.0:
-  version "2.0.0"
-  resolved "http://registry.npm.dtstack.com/xmlhttprequest-ssl/-/xmlhttprequest-ssl-2.0.0.tgz#91360c86b914e67f44dce769180027c0da618c67"
-  integrity sha1-kTYMhrkU5n9E3OdpGAAnwNphjGc=
 
 xregexp@2.0.0:
   version "2.0.0"

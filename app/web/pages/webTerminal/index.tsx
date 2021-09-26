@@ -4,9 +4,8 @@ import { FitAddon } from 'xterm-addon-fit'
 import { TERMINAL_INPUT_KEY } from './const'
 import Loading from '@/components/loading'
 import { Socket } from  '@/utils/socket'
-import { notification } from 'antd'
 
-import './style.scss';
+import './style.scss'
 import 'xterm/css/xterm.css'
 
 const WebTerminal: React.FC = () => {
