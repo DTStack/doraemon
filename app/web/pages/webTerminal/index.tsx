@@ -11,8 +11,8 @@ import 'xterm/css/xterm.css'
 const WebTerminal: React.FC = () => {
     const [terminal, setTerminal] = useState(null)
     const [socket, setSocket] = useState(Socket)
-    const prefix = 'admin $ '
-    // const prefix = ''
+    // const prefix = 'admin $ '
+    const prefix = ''
 
     let inputText = ''
     let currentIndex = 0
@@ -38,7 +38,7 @@ const WebTerminal: React.FC = () => {
             currentIndex = inputTextList.length
         }
         // socket 通信
-        socket.emit('chat', inputText)
+        socket.emit('shellCommand', inputText + '\r')
         terminal.prompt()
     }
 
@@ -145,13 +145,15 @@ const WebTerminal: React.FC = () => {
 
     const initSocket = () => {
         socket.on('connect', () => {
-            console.log(' ======= 与服务端连接成功 ======= ')
+            console.log('*** SOCKET IO SERVER CONNECTION SUCCESS ***')
         })
-        socket.on('res', (res) => {
-            console.log(' ======= 服务端的消息 ======= ', res)
-        })
+
         // 发送消息
-        socket.emit('getShellCommand', { title: 'name', content: 'zhuting' })
+        // socket.send('*** CLIENT SEND MESSAGE ***')
+        // socket.emit('getShellCommand', { command: 'cd /' })
+
+        // 登录服务器
+        socket.emit('loginServer')
     }
 
     useEffect(() => {
@@ -160,7 +162,15 @@ const WebTerminal: React.FC = () => {
     }, [])
 
     useEffect(() => {
-        if (terminal) { onKeyAction() }
+        if (terminal) {
+            onKeyAction()
+
+            socket.on('serverMsg', (res: string) => {
+                console.log('*** SERVER MESSAGE ***', res)
+                if (res) terminal.write(res)
+            })
+
+        }
     }, [terminal])
 
     return (

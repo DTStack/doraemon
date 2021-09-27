@@ -2113,7 +2113,7 @@ asn1.js@^5.2.0:
     minimalistic-assert "^1.0.0"
     safer-buffer "^2.1.0"
 
-asn1@~0.2.0, asn1@~0.2.3:
+asn1@^0.2.4, asn1@~0.2.0, asn1@~0.2.3:
   version "0.2.4"
   resolved "http://registry.npm.dtstack.com/asn1/-/asn1-0.2.4.tgz#8d2475dfab553bb33e77b54e59e880bb8ce23136"
   integrity sha1-jSR136tVO7M+d7VOWeiAu4ziMTY=
@@ -5379,6 +5379,13 @@ cosmiconfig@^7.0.0:
     parse-json "^5.0.0"
     path-type "^4.0.0"
     yaml "^1.10.0"
+
+cpu-features@0.0.2:
+  version "0.0.2"
+  resolved "http://registry.npm.dtstack.com/cpu-features/-/cpu-features-0.0.2.tgz#9f636156f1155fd04bdbaa028bb3c2fbef3cea7a"
+  integrity sha1-n2NhVvEVX9BL26oCi7PC++886no=
+  dependencies:
+    nan "^2.14.1"
 
 crc32-stream@^2.0.0:
   version "2.0.0"
@@ -12861,7 +12868,7 @@ named-placeholders@^1.1.2:
   dependencies:
     lru-cache "^4.1.3"
 
-nan@^2.12.1, nan@^2.13.2, nan@^2.3.0:
+nan@^2.12.1, nan@^2.13.2, nan@^2.14.1, nan@^2.15.0, nan@^2.3.0:
   version "2.15.0"
   resolved "http://registry.npm.dtstack.com/nan/-/nan-2.15.0.tgz#3f34a473ff18e15c1b5626b62903b5ad6e665fee"
   integrity sha1-PzSkc/8Y4VwbVia2KQO1rW5mX+4=
@@ -18114,6 +18121,17 @@ ssh2@^0.8.2, ssh2@^0.8.9:
   dependencies:
     ssh2-streams "~0.4.10"
 
+ssh2@^1.4.0:
+  version "1.4.0"
+  resolved "http://registry.npm.dtstack.com/ssh2/-/ssh2-1.4.0.tgz#e32e8343394364c922bad915a5a7fecd67d0f5c5"
+  integrity sha1-4y6DQzlDZMkiutkVpaf+zWfQ9cU=
+  dependencies:
+    asn1 "^0.2.4"
+    bcrypt-pbkdf "^1.0.2"
+  optionalDependencies:
+    cpu-features "0.0.2"
+    nan "^2.15.0"
+
 sshpk@^1.7.0:
   version "1.16.1"
   resolved "http://registry.npm.dtstack.com/sshpk/-/sshpk-1.16.1.tgz#fb661c0bef29b39db40769ee39fa70093d6f6877"
@@ -19541,6 +19559,11 @@ user-home@^2.0.0:
   integrity sha1-nHC/2Babwdy/SGBODwS4tJzenp8=
   dependencies:
     os-homedir "^1.0.0"
+
+utf8@^3.0.0:
+  version "3.0.0"
+  resolved "http://registry.npm.dtstack.com/utf8/-/utf8-3.0.0.tgz#f052eed1364d696e769ef058b183df88c87f69d1"
+  integrity sha1-8FLu0TZNaW52nvBYsYPfiMh/adE=
 
 util-deprecate@^1.0.1, util-deprecate@^1.0.2, util-deprecate@~1.0.1:
   version "1.0.2"
