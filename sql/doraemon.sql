@@ -73,12 +73,12 @@ CREATE TABLE `article_topic` (
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT = '文章话题表';
 
-INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'TypeScript', 'front', 2);
-INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'JavaScript', 'front', 1);
-INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'Java', 'front', 3);
-INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'Any', 'front', 4);
-INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('掘金', '前端', 'front', 5);
-INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('掘金', '后端', 'back-end', 6);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'JavaScript', 'javascript', 1);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'TypeScript', 'typescript', 2);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'Java', 'java', 3);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'Any', 'any', 4);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('掘金', '前端', '6809637767543259144', 5);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('掘金', '后端', '6809637769959178254', 6);
 
 -- ----------------------------
 -- Table structure for config_management

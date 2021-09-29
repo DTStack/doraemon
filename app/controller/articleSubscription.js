@@ -37,7 +37,7 @@ class ArticleSubscriptionController extends Controller {
         const data = await ctx.service.articleSubscription.createSubscription({ groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status });
         const { id } = data
         if (_.isNil(id)) throw new Error('创建失败');
-        createTimedTask(id, sendCron)
+        createTimedTask(id, sendCron, app)
         ctx.body = app.utils.response(true, id);
     }
 
@@ -53,7 +53,7 @@ class ArticleSubscriptionController extends Controller {
         if (_.isNil(sendType)) throw new Error('缺少必要参数 sendType');
         if (_.isNil(sendCron)) throw new Error('缺少必要参数 sendCron');
         await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status, updated_at: new Date() })
-        createTimedTask(id, sendCron)
+        createTimedTask(id, sendCron, app)
         ctx.body = app.utils.response(true, id);
     }
 
