@@ -31,7 +31,7 @@ const createTimedTask = async (name, cron, app) => {
             const { siteName, topicName, topicUrl } = item
             siteName === 'Github' && getGithubTrending(topicName, topicUrl, webHook, app)
             siteName === '掘金' && getJueJinHot(topicName, topicUrl, webHook, app)
-            console.log(`${ name }、${ siteName }-${ topicName } -------- ${ moment().format("YYYY-MM-DD HH:mm:ss") }`)
+            console.log(`${ moment().format("YYYY-MM-DD HH:mm:ss") } --------- 订阅记录: ${ name }-${ siteName }-${ topicName }`)
         }
     })
 }
