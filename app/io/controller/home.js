@@ -11,10 +11,12 @@ module.exports = app => {
 
         async loginServer () {
             const { ctx } = this
+            const { host, username, password } = ctx.args[0]
+
             createNewServer({
-                host: '172.16.100.225',
-                username: 'root',
-                password: 'abc123'
+                host,
+                username,
+                password
             }, ctx)
         }
     }
