@@ -57,5 +57,10 @@ module.exports = app => {
         mode: 'stream'
     }
 
+    // 文章订阅每次多少条信息
+    exports.articleSubscription = {
+        pageSize: 5
+    };
+
     return exports;
 };

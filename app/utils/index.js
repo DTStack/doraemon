@@ -58,14 +58,11 @@ const sendHostsUpdateMsg = async (webhook_url, basicInfo, ip, address, operation
 }
 
 // 发送文章订阅消息
-const sendArticleMsg = async (title, webhook, basicInfo) => {
-    console.log(222222, title, webhook, basicInfo)
-    // const { filename, hostIp, hostName } = basicInfo
-    // const feChatRobot = new ChatBot({ webhook });
-    // let mdTxt = ''
-    // feChatRobot
-    //     .markdown(title, mdTxt)
-    //     .catch(ex => console.error(ex));
+const sendArticleMsg = async (title, text, webhook) => {
+    const feChatRobot = new ChatBot({ webhook })
+    feChatRobot
+        .markdown(title, text)
+        .catch(ex => console.error(ex))
 }
 
 module.exports = {

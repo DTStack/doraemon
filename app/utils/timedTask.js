@@ -50,7 +50,7 @@ const startSubscriptionTimedTask = async (app) => {
         }
     })
 
-    console.log(444, subscriptionList)
+    // console.log(444, subscriptionList)
 }
 
 module.exports = {

@@ -75,6 +75,7 @@ module.exports = app => {
      * 文章订阅
      */
     app.get('/api/article-subscription/github', app.controller.articleTimedTask.getGithubTrending);
+    app.get('/api/article-subscription/juejin', app.controller.articleTimedTask.getJueJinHot);
     app.post('/api/article-subscription/create-subscription', app.controller.articleSubscription.createSubscription);
     app.post('/api/article-subscription/delete-subscription', app.controller.articleSubscription.deleteSubscription);
     app.post('/api/article-subscription/update-subscription', app.controller.articleSubscription.updateSubscription);
