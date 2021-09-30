@@ -54,7 +54,7 @@ class ArticleSubscriptionController extends Controller {
         if (_.isNil(sendCron)) throw new Error('缺少必要参数 sendCron');
         await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status, updated_at: new Date() })
         cancelTimedTask(id)
-        createTimedTask(id, sendCron, app)
+        status === 1 && createTimedTask(id, sendCron, app)
         ctx.body = app.utils.response(true, id);
     }
 

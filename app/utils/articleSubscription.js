@@ -5,15 +5,15 @@ const RSSHub = require('rsshub')
 const axios = require('axios')
 const { sendArticleMsg } = require('./index')
 
-const init = () => {
+const rssInit = () => {
     RSSHub.init({
         // config
     })
 }
+rssInit()
 
 // github trending
 const getGithubTrending = async (topicName, topicUrl, webHook, app) => {
-    init()
     try {
         const res = await RSSHub.request(`/github/trending/daily/${ topicUrl }`)
         const { item = [] } = res
