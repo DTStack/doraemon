@@ -15,7 +15,9 @@ const timedTaskIsExist = (name) => {
 
 // 开始定时任务
 const createTimedTask = async (name, cron, app) => {
-    !timedTaskIsExist(name) && schedule.scheduleJob(`${ name }`, cron, async () => {
+    if (timedTaskIsExist(name)) return
+    log(`创建定时任务: ${ name }, Cron: ${ cron }`)
+    schedule.scheduleJob(`${ name }`, cron, async () => {
         const articleSubscription = await app.model.ArticleSubscription.findOne({
             where: {
                 id: name,
@@ -31,14 +33,16 @@ const createTimedTask = async (name, cron, app) => {
             const { siteName, topicName, topicUrl } = item
             siteName === 'Github' && getGithubTrending(topicName, topicUrl, webHook, app)
             siteName === '掘金' && getJueJinHot(topicName, topicUrl, webHook, app)
-            console.log(`${ moment().format("YYYY-MM-DD HH:mm:ss") } --------- 订阅记录: ${ name }-${ siteName }-${ topicName }`)
+            log(`执行定时任务: ${ name }, 订阅项: ${ siteName }-${ topicName }`)
         }
     })
 }
 
 // 取消指定定时任务
 const cancelTimedTask = (name) => {
-    timedTaskIsExist(name) && schedule.scheduledJobs[`${ name }`].cancel()
+    if (!timedTaskIsExist(name)) return
+    log(`取消定时任务: ${ name }`)
+    schedule.scheduledJobs[`${ name }`].cancel()
 }
 
 // 获取打开状态下的订阅列表
@@ -67,6 +71,11 @@ const getArticleTopicList = async (app) => {
         raw: true
     })
     return topicAll
+}
+
+// 打印定时任务信息
+const log = (msg) =>{
+    console.log(`${ moment().format("YYYY-MM-DD HH:mm:ss") } --------- ${ msg }`)
 }
 
 module.exports = {
