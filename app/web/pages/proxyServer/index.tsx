@@ -80,7 +80,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             }
         })
     }
-    getProxyServerList = () => {
+    getProxyServerList = (checked?: boolean) => {
         const { mainTableParams } = this.state;
         this.setState({
             mainTableLoading: true
@@ -93,6 +93,11 @@ class ProxyServer extends React.PureComponent<any, any> {
                     maintTableTotal: data.count,
                     mainTableLoading: false
                 });
+
+                // 点击选择某个常用项目时，只有一条记录，默认展开
+                if (checked === true && data.data.length === 1) {
+                    this.handleTableExpandChange(true, data.data[0])
+                }
             } else {
                 this.setState({
                     mainTableLoading: false
@@ -126,7 +131,7 @@ class ProxyServer extends React.PureComponent<any, any> {
         const { selectedTag } = this.state;
         const newTag = tag === selectedTag ? '' : tag
         this.setState({ selectedTag: newTag }, () => {
-            this.onSearchProject(newTag)
+            this.onSearchProject(newTag, checked)
         });
     }
     /**
@@ -325,7 +330,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             search: value
         })
     }
-    onSearchProject = (value: any) => {
+    onSearchProject = (value: any, checked?: boolean) => {
         const { mainTableParams, selectedTag, search } = this.state;
         this.setState({
             mainTableParams: Object.assign({}, mainTableParams, {
@@ -334,7 +339,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             }),
             selectedTag: search ? [] : selectedTag
         }, () => {
-            this.getProxyServerList();
+            this.getProxyServerList(checked);
         });
     }
     handleTableChange = (pagination: any) => {
