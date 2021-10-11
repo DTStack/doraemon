@@ -7,6 +7,7 @@
   "img/default.png": "/public/img/default.png",
   "img/duraemon.svg": "/public/img/duraemon.svg",
   "img/empty.png": "/public/img/empty.png",
+  "img/help-icon.png": "/public/img/help-icon.png",
   "img/iconfont.css": "/public/img/iconfont.svg",
   "img/logo.png": "/public/img/logo.png",
   "img/pic_404.png": "/public/img/pic_404.png",
@@ -25,7 +26,7 @@
   },
   "info": {
     "publicPath": "/public/",
-    "buildPath": "\\public",
+    "buildPath": "public",
     "mapped": true
   }
 }

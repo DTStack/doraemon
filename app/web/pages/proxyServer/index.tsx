@@ -7,6 +7,7 @@ import ProxyRuleModal from './components/proxyRuleModal';
 import Cookies from 'js-cookie';
 import { connect } from 'react-redux'
 const { Paragraph } = Typography;
+import helpIcon from '../../asset/images/help-icon.png';
 import './style.scss';
 
 const confirm = Modal.confirm;
@@ -124,6 +125,10 @@ class ProxyServer extends React.PureComponent<any, any> {
         this.setState({ selectedTag: newTag }, () => {
             this.onSearchProject(newTag)
         });
+    }
+    // 点击帮助文档
+    handleHelpIcon() {
+        window.open('https://dtstack.github.io/doraemon/docsify/#/zh-cn/guide/%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1')
     }
     /**
      * 代理服务
@@ -585,6 +590,9 @@ class ProxyServer extends React.PureComponent<any, any> {
                     </div>
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
                 </div>
+                
+                <img className="help-icon" src={helpIcon} onClick={this.handleHelpIcon} alt="帮助文档" />
+
                 <Table
                     rowKey={(row: any) => row.id}
                     loading={mainTableLoading}
