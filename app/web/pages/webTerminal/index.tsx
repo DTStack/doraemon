@@ -12,7 +12,7 @@ const WebTerminal: React.FC = () => {
     const [terminal, setTerminal] = useState(null)
     const [socket, setSocket] = useState(Socket)
     // const prefix = 'admin $ '
-    const prefix = ''
+    let prefix = ''
 
     let inputText = ''
     let currentIndex = 0
@@ -27,15 +27,14 @@ const WebTerminal: React.FC = () => {
     }
 
     const handleInputText = () => {
-        terminal.write('\r\n')
-        if (!inputText.trim()) {
-            terminal.prompt()
-            return
-        }
 
-        if (inputTextList.indexOf(inputText) === -1) {
-            inputTextList.push(inputText)
-            currentIndex = inputTextList.length
+        if (inputText.trim()) {
+            terminal.write('\r\n')
+
+            if (inputTextList.indexOf(inputText) === -1) {
+                inputTextList.push(inputText)
+                currentIndex = inputTextList.length
+            }
         }
         // socket 通信
         socket.emit('shellCommand', inputText + '\r')
@@ -167,7 +166,10 @@ const WebTerminal: React.FC = () => {
 
             socket.on('serverMsg', (res: string) => {
                 console.log('*** SERVER MESSAGE ***', res)
-                if (res) terminal.write(res)
+                if (res && !inputTextList.find((value) => res === (value + '\r\n'))) { 
+                    terminal.write(res)
+                    prefix = res
+                }
             })
 
         }
