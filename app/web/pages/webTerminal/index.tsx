@@ -132,6 +132,7 @@ const WebTerminal: React.FC = (props: any) => {
         terminal.open(document.getElementById('terminal-container'))
         terminal.loadAddon(fitAddon)    // terminal 的尺寸与父元素匹配
         fitAddon.fit()
+        terminal.focus()
 
         terminal.prompt = () => {
             terminal.write(prefix)
