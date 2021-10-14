@@ -8,7 +8,9 @@ import { Socket } from  '@/utils/socket'
 import './style.scss'
 import 'xterm/css/xterm.css'
 
-const WebTerminal: React.FC = () => {
+const WebTerminal: React.FC = (props: any) => {
+    const { host, username, password } = props
+
     const [terminal, setTerminal] = useState(null)
     const [socket, setSocket] = useState(Socket)
     // const prefix = 'admin $ '
@@ -124,9 +126,8 @@ const WebTerminal: React.FC = () => {
         })
     }
 
-    const initTerminal = () => {
+    const initTerminal = (terminal) => {
         const fitAddon = new FitAddon()
-        const terminal: any = new Terminal({ cursorBlink: true })
 
         terminal.open(document.getElementById('terminal-container'))
         terminal.loadAddon(fitAddon)    // terminal 的尺寸与父元素匹配
@@ -143,6 +144,10 @@ const WebTerminal: React.FC = () => {
     }
 
     const initSocket = () => {
+        if(socket.disconnected) {
+            socket.connect();
+        }
+
         socket.on('connect', () => {
             console.log('*** SOCKET IO SERVER CONNECTION SUCCESS ***')
         })
@@ -152,12 +157,17 @@ const WebTerminal: React.FC = () => {
         // socket.emit('getShellCommand', { command: 'cd /' })
 
         // 登录服务器
-        socket.emit('loginServer')
+        socket.emit('loginServer', { host, username, password })
     }
 
     useEffect(() => {
-        initTerminal()
+        const terminal: any = new Terminal({ cursorBlink: true })
+        initTerminal(terminal)
         initSocket()
+        return() => {
+            socket.close()
+            terminal.dispose()
+        }
     }, [])
 
     useEffect(() => {
