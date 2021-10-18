@@ -1,4 +1,7 @@
 .c-webTerminal__container {
-    width: 600px;
+    width: 100%;
     height: 350px;
+    .xterm-viewport {
+        width: 100% !important;
+    }
 }
