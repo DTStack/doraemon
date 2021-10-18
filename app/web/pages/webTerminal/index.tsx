@@ -35,9 +35,9 @@ const WebTerminal: React.FC = (props: any) => {
 
             if (inputTextList.indexOf(inputText) === -1) {
                 inputTextList.push(inputText)
-                currentIndex = inputTextList.length
             }
         }
+        currentIndex = inputTextList.length
         // socket 通信
         socket.emit('shellCommand', inputText + '\r')
         terminal.prompt()
@@ -56,6 +56,16 @@ const WebTerminal: React.FC = (props: any) => {
             console.log('currentOffsetLength ========= ', currentOffsetLength)
 
             switch(keyCode) {
+            case TERMINAL_INPUT_KEY.CHAR_C:
+                if(ctrlKey) { // ctrl+c事件
+                    terminal.write('\r\n')
+                    currentIndex = inputTextList.length
+                    socket.emit('shellCommand', '\u0003')
+                    inputText = ''
+                    terminal.prompt()
+                }
+                break;
+
             case TERMINAL_INPUT_KEY.ENTER:
                 handleInputText()
                 inputText = ''
@@ -179,7 +189,9 @@ const WebTerminal: React.FC = (props: any) => {
                 console.log('*** SERVER MESSAGE ***', res)
                 if (res && !inputTextList.find((value) => res === (value + '\r\n'))) { 
                     terminal.write(res)
-                    prefix = res
+                    // TODO: Temporarily solve the problem of message merging
+                    const arr = res?.split('\r\n')
+                    prefix = arr[arr?.length - 1] ?? res 
                 }
             })
 
