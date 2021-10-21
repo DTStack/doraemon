@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import Loadable from 'react-loadable';
 import { CheckOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import {
     Button,
@@ -21,11 +20,6 @@ import { API } from '@/api';
 import './style.scss';
 
 const { Title, Paragraph } = Typography;
-
-const WebTerminal = Loadable({
-    loader: () => import('@/pages/webTerminal'),
-    loading: Loading
-})
 
 const ConfigDetail = (props: any) => {
     const { match } = props;
@@ -164,7 +158,7 @@ const ConfigDetail = (props: any) => {
                                 editorDidMount={(editor: any, data: any, value: any) => { editor.setSize('auto', '460px') }}
                             />
                             <Title style={{ marginTop: 20 }} level={4}>Execute shell <Tooltip title="文件更新之后执行下面脚本" placement="right"><QuestionCircleOutlined /></Tooltip></Title>
-                            {/* <CodeMirror
+                            <CodeMirror
                                 ref={shellEditorRef}
                                 value={shell}
                                 options={{
@@ -178,8 +172,7 @@ const ConfigDetail = (props: any) => {
                                     console.log(value);
                                     setShell(value)
                                 }}
-                                onChange={(editor: any, data: any, value: any) => { }} /> */}
-                            <WebTerminal host={hostIp} username='root' password={password}/>
+                                onChange={(editor: any, data: any, value: any) => { }} />
                         </Col>
                         <Col span={6}>
                             <Card title="信息简介" className="card-form">
