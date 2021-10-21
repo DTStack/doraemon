@@ -43,6 +43,14 @@ const WebTerminal: React.FC = (props: any) => {
         terminal.prompt()
     }
 
+    const handleCtrlC = () => {
+        terminal.write('\r\n')
+        currentIndex = inputTextList.length
+        socket.emit('shellCommand', '\u0003')
+        inputText = ''
+        terminal.prompt()
+    }
+
     const onKeyAction = () => {
         terminal.onKey(e => {
             console.log('e.domEvent', e.domEvent, e.key)
@@ -56,16 +64,6 @@ const WebTerminal: React.FC = (props: any) => {
             console.log('currentOffsetLength ========= ', currentOffsetLength)
 
             switch(keyCode) {
-            case TERMINAL_INPUT_KEY.CHAR_C:
-                if(ctrlKey) { // ctrl+c事件
-                    terminal.write('\r\n')
-                    currentIndex = inputTextList.length
-                    socket.emit('shellCommand', '\u0003')
-                    inputText = ''
-                    terminal.prompt()
-                }
-                break;
-
             case TERMINAL_INPUT_KEY.ENTER:
                 handleInputText()
                 inputText = ''
@@ -121,6 +119,10 @@ const WebTerminal: React.FC = (props: any) => {
                 break
 
             default:
+                if(keyCode === TERMINAL_INPUT_KEY.CHAR_C && ctrlKey) {
+                    handleCtrlC()
+                    break
+                }
                 if (!printAble) break
                 if (totalOffsetLength >= terminal.cols)  break
                 if (currentOffsetLength >= totalOffsetLength) {
