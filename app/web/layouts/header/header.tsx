@@ -15,7 +15,7 @@ const navMenuList: any = [{
     name: '应用中心',
     path: '/page/toolbox',
     icon: <AppstoreOutlined />,
-    routers: ['toolbox', 'switch-hosts-list', 'switch-hosts-edit']
+    routers: ['toolbox', 'switch-hosts-list', 'switch-hosts-edit', 'article-subscription-list']
 }, {
     name: '代理服务',
     path: '/page/proxy-server',

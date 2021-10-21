@@ -18,6 +18,8 @@ import ConfigDetail from '@/pages/configDetail';
 import SwitchHostsList from '@/pages/switchHosts';
 // hosts编辑
 import SwitchHostsEdit from '@/pages/switchHosts/editHosts'
+// 文章订阅管理
+import ArticleSubscriptionList from '@/pages/articleSubscription'
 
 import TagsManagement from '@/pages/tagsManagement'
 
@@ -67,6 +69,10 @@ const routes: any = [
             {
                 path: `${urlPrefix}/switch-hosts-edit/:id/:type`,
                 component: SwitchHostsEdit
+            },
+            {
+                path: `${urlPrefix}/article-subscription-list`,
+                component: ArticleSubscriptionList
             },
             {
                 path: `${urlPrefix}/tags`,
