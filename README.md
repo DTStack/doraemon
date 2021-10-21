@@ -1,38 +1,74 @@
 # 哆啦 A 梦 (Doraemon)  Here, you can find everything you need
 
-一个帮你整理日常开发、配置、代理服务、主机等资源的管理工具。
+English | [简体中文](./README-zh_CN.md) 
 
-## 特性
+A management tool to help you organize your daily development, configuration, proxy services, host resources, etc.
 
-- 改变传统前后端联调方式，接口联调时，不再需要前后端重启本地服务。
+## Features
 
-- 支持收纳、分享常用、好用的的应用链接
+- Change the traditional front-end and back-end joint mode. There is no need for front-end and back-end restarts of local services during API tuning.
+- Support to receive, share commonly used, easy to use application links.
+- Support multi-environment Host account and password and other information maintenance.
+- Supports configuration file modifications on remote service hosts.
+- Support unified maintenance of local hosts files
 
-- 支持多环境的主机（Host）账号和密码等信息进行维护
-
-- 支持远程服务主机上的配置文件修改
-
-- 支持本地 Hosts 文件的统一维护
-
-## 环境支持
+## Environment Support
 
 - node >= 8.0.0
 
-## 快速开始
+## Quick Start
 
-具体安装启动命令，请参阅文档中的 [快速开始](https://dtstack.github.io/Doraemon/docsify/#/zh-cn/start/快速开始)
+### Install
 
-## 使用指南
 
-查看完整的 Doraemon 使用指南，请访问 [在线文档](https://dtstack.github.io/Doraemon/docsify/#/) 
+```bash
+git clone git@github.com:DTStack/doraemon.git
 
-## 如何贡献
+cd doraemon
+```
 
-欢迎大家参与贡献，在任何形式的参与前，请先阅读 [贡献者文档](https://dtstack.github.io/Doraemon/docsify/#/zh-cn/start/贡献者文档)。
+#### Installation dependencies
+We recommend using yarn for dependency installation.
+
+```bash
+yarn install
+```
+
+#### Import MySQL Database
+
+1. Please create the database under the service first.
+2. Find the `sql` folder in the directory and import the `doraemon.sql` file in the folder into the database created just now.
+3. Refer to Configure [MySQL](https://dtstack.github.io/doraemon/docsify/#/zh-cn/configuration/mysql), to configure the database connection.
+
+### Running
+
+#### Local development to start
+
+```bash
+yarn dev
+```
+
+visit: http://127.0.0.1:7001
+
+#### Publish mode to start
+
+```bash
+yarn start 
+
+yarn start:test // test environment publishing
+```
+
+## Documentation
+
+Visit [Doraemon Docs](https://dtstack.github.io/doraemon/docsify/#/) for the full Doraemon documentation.
+
+## Contributing
+
+We welcome all contributions. Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) first.
 
 ## ChangeLog
 
-每个版本的详细更改都记录在 [ChangeLog](https://dtstack.github.io/Doraemon/docsify/#/zh-cn/start/CHANGELOG)
+Detailed changes for each release are documented in the [ChangeLog.md](./CHANGELOG.md)
 
 ## License
 

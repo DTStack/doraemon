@@ -4,7 +4,7 @@
  Source Server         : doraemon
  Source Server Type    : MySQL
  Source Server Version : 80019
- Source Host           : 172.16.100.225:3306
+ Source Host           : 127.0.0.1:3306
  Source Schema         : doraemon
 
  Target Server Type    : MySQL
