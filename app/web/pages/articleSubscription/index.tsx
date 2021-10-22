@@ -4,6 +4,10 @@ import SubscriptionModal from './components/SubscriptionModal';
 import { Divider, Table, Button, Breadcrumb, Input, Modal, Switch, message as Message } from 'antd';
 import { SUBSCRIPTIONSENDTYPECN, SUBSCRIPTIONSTATUS } from './consts';
 import { API } from '@/api';
+import helpIcon from '../../asset/images/help-icon.png';
+import config from '../../../../env.json';
+
+import './style.scss'
 
 const { Search } = Input;
 
@@ -187,6 +191,11 @@ const ArticleSubscriptionList = (props: any) => {
         setEditData(null)
     }
 
+    // 点击帮助文档
+    const handleHelpIcon = () => {
+        window.open(config.articleHelpDocUrl)
+    }
+
     return (
         <div>
             <Breadcrumb>
@@ -202,6 +211,11 @@ const ArticleSubscriptionList = (props: any) => {
                 />
                 <Button className="fl-r" type="primary" icon={<PlusCircleOutlined />} onClick={handleAdd}>新增订阅</Button>
             </div>
+
+            {
+                config.articleHelpDocUrl && <img className="help-icon" src={helpIcon} onClick={handleHelpIcon} alt="帮助文档" />
+            }
+
             <Table
                 rowKey="id"
                 loading={tableLoading}
