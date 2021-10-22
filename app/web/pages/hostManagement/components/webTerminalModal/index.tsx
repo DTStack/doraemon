@@ -12,7 +12,8 @@ const WebTerminalModal = (props) => {
     const { visible, onCancel, value: { hostIp, password, username } } = props
     return (
         <Modal
-            title="webTerminal"
+            title="Web Terminal"
+            className="web-terminal__ant-modal"
             width={620}
             visible={visible}
             onCancel={onCancel}

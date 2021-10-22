@@ -58,7 +58,7 @@ export default (props: any) => {
             width: 200,
             render: (value: any, row: any) => {
                 return <span>
-                    <a onClick={handleOpenTerminal.bind(this, row)}>webTerminal</a>
+                    <a onClick={handleOpenTerminal.bind(this, row)}>终端</a>
                     <Divider type="vertical" />
                     <a onClick={handleTableRowEdit.bind(this, row)}>编辑</a>
                     <Divider type="vertical" />

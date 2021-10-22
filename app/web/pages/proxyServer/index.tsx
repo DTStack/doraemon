@@ -7,7 +7,7 @@ import ProxyRuleModal from './components/proxyRuleModal';
 import Cookies from 'js-cookie';
 import { connect } from 'react-redux'
 const { Paragraph } = Typography;
-import helpIcon from '../../asset/images/help-icon.png';
+import helpIcon from '@/asset/images/help-icon.png';
 import config from '../../../../env.json';
 import './style.scss';
 
