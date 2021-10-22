@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Select, TimePicker } from 'antd';
-import moment from 'antd/node_modules/moment';
+import moment from 'moment';
 import { SUBSCRIPTIONSENDTYPE, SUBSCRIPTIONSENDTYPECN } from '../../consts';
 
 const Option = Select.Option;
