@@ -49,6 +49,19 @@ dingBot 的通知模板的跳转路径，默认跳转到帮助文档，可自行
 }
 ```
 
+## proxyHelpDocUrl
+
+- 类型：String
+- 默认值：'https://dtstack.github.io/doraemon/docsify/#/zh-cn/guide/代理服务'
+
+点击帮助文档的悬浮 Icon 跳转帮助文档链接，默认跳转到 GitHub 文档，可自行配置
+
+```json
+{
+    "proxyHelpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/zh-cn/guide/代理服务"
+}
+```
+
 ## articleHelpDocUrl
 
 - 类型：String
