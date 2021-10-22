@@ -1,5 +1,5 @@
-
 module.exports = app => {
+    const { io } = app
     app.get('/', app.controller.home.index);
     app.get('/page/*', app.controller.home.index);
     app.get('/c', app.controller.home.client);
@@ -89,4 +89,7 @@ module.exports = app => {
     app.post('/api/tags/create-tag', app.controller.tagManagement.addTag);
     app.post('/api/tags/update-tag', app.controller.tagManagement.editTag);
     app.post('/api/tags/delete-tag', app.controller.tagManagement.deleteTag);
+
+    // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
+    io.of('/').route('loginServer',  io.controller.home.loginServer)
 };

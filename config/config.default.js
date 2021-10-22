@@ -57,6 +57,16 @@ module.exports = app => {
         mode: 'stream'
     }
 
+    exports.io = {
+        init: { }, // passed to engine.io
+        namespace: {
+            '/': {
+                connectionMiddleware: [ 'connection' ],
+                packetMiddleware: []
+            }
+        }
+    }
+    
     // 文章订阅每次多少条信息
     exports.articleSubscription = {
         pageSize: 5

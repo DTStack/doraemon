@@ -24,6 +24,7 @@ import ArticleSubscriptionList from '@/pages/articleSubscription'
 import TagsManagement from '@/pages/tagsManagement'
 
 import NotFound from '@/pages/exception/404';
+
 const urlPrefix = '/page'
 const routes: any = [
     {
