@@ -3,7 +3,7 @@ import { AppstoreOutlined, CloudOutlined, DesktopOutlined, TagOutlined, SettingO
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import logo from '../../asset/images/logo.png';
+import logo from '@/asset/images/logo.png';
 import config from '../../../../env.json';
 import './style.scss';
 

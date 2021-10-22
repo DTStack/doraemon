@@ -13,6 +13,8 @@
 
  Date: 01/06/2021 15:45:35
 */
+CREATE DATABASE IF NOT EXISTS `doraemon`;
+USE doraemon;
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -36,7 +38,8 @@ CREATE TABLE `app_centers` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- INSERT INTO app_centers (appName, appType, appDesc, appUrl, status) VALUES ('文章订阅', 0, '定时推送技术网站排行榜到钉钉群，每天都能学到新知识', '/page/article-subscription-list', 1);
+INSERT INTO app_centers (appName, appTags, appType, logoUrl, appDesc, appUrl, created_at, updated_at, status, clickCount) VALUES ('Remote Hosts', NULL, 0, NULL, '袋鼠云内部团队host集中管理系统', '/page/switch-hosts-list', NOW(), NOW(), 1, 0);
+INSERT INTO app_centers (appName, appTags, appType, logoUrl, appDesc, appUrl, created_at, updated_at, status, clickCount) VALUES ('文章订阅', NULL, 0, NULL, '定时推送技术网站排行榜到钉钉群，每天都能学到新知识', '/page/article-subscription-list', NOW(), NOW(), 1, 0);
 
 -- ----------------------------
 -- Table structure for article_subscription
