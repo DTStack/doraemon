@@ -4,7 +4,7 @@
  Source Server         : doraemon
  Source Server Type    : MySQL
  Source Server Version : 80019
- Source Host           : 172.16.100.225:3306
+ Source Host           : 127.0.0.1:3306
  Source Schema         : doraemon
 
  Target Server Type    : MySQL
@@ -35,6 +35,50 @@ CREATE TABLE `app_centers` (
   `clickCount` int DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- INSERT INTO app_centers (appName, appType, appDesc, appUrl, status) VALUES ('文章订阅', 0, '定时推送技术网站排行榜到钉钉群，每天都能学到新知识', '/page/article-subscription-list', 1);
+
+-- ----------------------------
+-- Table structure for article_subscription
+-- ----------------------------
+DROP TABLE IF EXISTS `article_subscription`;
+CREATE TABLE `article_subscription` (
+  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `groupName` varchar(64) NOT NULL COMMENT '钉钉群名称',
+  `webHook` varchar(500) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '钉钉机器人 webHook',
+  `remark` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL COMMENT '备注',
+  `topicIds` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '订阅主题的 id 集合',
+  `siteNames` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '订阅主题的名称集合',
+  `sendType` tinyint DEFAULT 1 COMMENT '推送时间 1-周一至周五 2-每天',
+  `sendCron` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '定时规则',
+  `time` varchar(255) NOT NULL COMMENT '推送时间点',
+  `status` tinyint DEFAULT 1 COMMENT '订阅状态 1-开启 2-关闭',
+  `is_delete` int DEFAULT 0 COMMENT '是否删除 1-已删除 0-未删除',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT = '文章订阅表';
+
+-- ----------------------------
+-- Table structure for article_topic
+-- ----------------------------
+DROP TABLE IF EXISTS `article_topic`;
+CREATE TABLE `article_topic` (
+  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `siteName` varchar(64) NOT NULL COMMENT '网站名称',
+  `topicName` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '订阅主题名称',
+  `topicUrl` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '订阅主题路径',
+  `sort` int COMMENT '序号',
+  `is_delete` int DEFAULT 0 COMMENT '是否删除 1-已删除 0-未删除',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT = '文章话题表';
+
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'JavaScript', 'javascript', 1);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'TypeScript', 'typescript', 2);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'Java', 'java', 3);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github', 'Any', 'any', 4);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('掘金', '前端', '6809637767543259144', 5);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('掘金', '后端', '6809637769959178254', 6);
 
 -- ----------------------------
 -- Table structure for config_management

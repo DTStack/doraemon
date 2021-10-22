@@ -4,18 +4,18 @@ import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import logo from '../../asset/images/logo.png';
+import config from '../../../../env.json';
 import './style.scss';
 
 const { SubMenu } = Menu;
 
 const { Header } = Layout;
 
-const HELP_DOC_URL = 'https://dtstack.github.io/Doraemon/docsify/#/';
 const navMenuList: any = [{
     name: '应用中心',
     path: '/page/toolbox',
     icon: <AppstoreOutlined />,
-    routers: ['toolbox', 'switch-hosts-list', 'switch-hosts-edit']
+    routers: ['toolbox', 'switch-hosts-list', 'switch-hosts-edit', 'article-subscription-list']
 }, {
     name: '代理服务',
     path: '/page/proxy-server',
@@ -76,7 +76,7 @@ const HeaderComponent = (props: any) => {
                     }
                 </Menu>
                 <div>
-                    <a href={HELP_DOC_URL} rel="noopener noreferrer" target='_blank'>
+                    <a href={config?.helpDocUrl || ''} rel="noopener noreferrer" target='_blank'>
                         <QuestionCircleOutlined className="help-link" />
                     </a>
                     <span className="local-ip ml-20">{`本机IP: ${localIp}`}</span>
