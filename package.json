@@ -82,6 +82,7 @@
     "commitizen": "^4.0.3",
     "commitlint": "^8.2.0",
     "conventional-changelog-cli": "^2.0.28",
+    "docsify-cli": "^4.4.3",
     "easywebpack-cli": "^4.3.5",
     "easywebpack-react": "^4.4.1",
     "egg-bin": "^4.5.0",
