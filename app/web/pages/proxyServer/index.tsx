@@ -601,7 +601,9 @@ class ProxyServer extends React.PureComponent<any, any> {
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
                 </div>
                 
-                <img className="help-icon" src={helpIcon} onClick={this.handleHelpIcon} alt="帮助文档" />
+                {
+                    config.proxyHelpDocUrl && <img className="help-icon" src={helpIcon} onClick={this.handleHelpIcon} alt="帮助文档" />
+                }
 
                 <Table
                     rowKey={(row: any) => row.id}
