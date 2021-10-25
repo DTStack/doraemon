@@ -2,6 +2,59 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.3.2...v1.4.0) (2021-10-22)
+
+
+### Features
+
+* add help docs icon in proxy server page ([2f4cf65](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2f4cf65389cd935c41573af1057a057d868a11ff))
+* add key action ([2f80e79](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2f80e797902428fabebfd08d348d3ed8ce7bf6a5))
+* add ssh for ternimal ([facb9f5](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/facb9f5fb9a1d398be53d8d625d8e4f9b5dd5a42))
+* add ssh2 to deal with command ([6a1740c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6a1740c80fb1df9df7bbe3fd0fe08239363a914b))
+* add terminal default focus ([0edc8ae](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0edc8ae2cb4fd27b2cdb4bf20858881e1bb9b86b))
+* add webTerminal ctrl + z and optimized input ([79b5a2d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/79b5a2d54b56db7781a5a46151f7f4d83cd5ffa5))
+* article help doc ([fd98ee7](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/fd98ee78c70be3d616edc9d176b783b6bc7a6b58))
+* article help icon ([2b8c9d9](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2b8c9d9b4d62df83f152a3c5c35dbcd7422e4010))
+* article subscription ([890a9c0](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/890a9c0dd66265a5d447f14ef1b7668a9e056418))
+* article subscription controller ([d36d454](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d36d454d4c174cf3135f48e13df856c2bfc6b108))
+* cancel and create timed task when update articleSubscription ([d7f1472](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d7f1472b31bf669115d024a43fd453a99cb47426))
+* change proxy-server collections stored, from cookie to localStorage ([31627dc](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/31627dc6343d5673500642a76414f7cb064ab0fb))
+* choose send time component ([bdb8233](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/bdb8233502d55cb6a1653ece64560c50881086bb))
+* configDetail introduce terminal component ([004eed3](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/004eed3c6ff6bf78251b30ec8ed356ddc660a378))
+* crud complete ([7bae31e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7bae31e0111158853f273478c0523083365bd6cb))
+* default expand collection record ([967c88f](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/967c88fa1f7ae54b825e0b68818ae740dc7e5048))
+* delete unnecessary webTerminal route ([ad6f5d7](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/ad6f5d7af1f5b6b7951a54197aaffa4457f10682))
+* delete unused file ([fe0961e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/fe0961e684777073c8e864f5ae86d037f95a6c35))
+* destroy terminal and socket after destroy terminnal ([e8af685](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e8af685213b0d193cdf09ba71f757e4778593f5b))
+* get topic list ([4988c0e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/4988c0e6263231b96ff69e801cf85e4534256c8f))
+* github trending test done ([8e15b3a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/8e15b3a5ab44ce831630d23af8433ddc7f8ba500))
+* host-management add webTerminal ([b223584](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b223584f9b57d14c4ad5e92e0c589e13b3f4c36b))
+* initail socket for terminal ([dc84854](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/dc8485487a1300338f8445d7652de95c6fb37795))
+* initail web terminal ([18ee09d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/18ee09dbfb4ab33f3eea30066d12db7ab4d163d9))
+* juejin and github can be sended ([614e7b3](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/614e7b3914d0e581ef133daabb695176a82cbcb1))
+* local database name ([ac96c0a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/ac96c0aa79083bbdbc9374b72e5c43c268065f76))
+* optimized terminal command display ([14dab38](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/14dab3802e8bca15d02308b361d779b0d695feaa))
+* optimized terminal crtl Z ([05f5543](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/05f554303f5c892cfcca83a7add1f38cd58f8055))
+* proxy help doc url ([7b50cba](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7b50cbaa05b5b0e83a328ff3e8646b5cef340b9c))
+* recover configDetail ([45d0b3e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/45d0b3ea639e29818d317998ee9b4b4a036037c6))
+* remove api useless ([e70ab17](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e70ab17530510f02003ebeb3b87ca9bd03652dea))
+* remove cheerio from yarn.lock ([7229306](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7229306d424a02da60411ec1149591a35270aca1))
+* remove timed task when articleSubscription status is close ([f899a92](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/f899a9287db9dd89d8e8cba53f37307f28170e34))
+* repalce message info ([1de98d4](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/1de98d4e8396a4417d89ecc356fa067c0862111b))
+* set loading component default props ([c45723d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c45723da6f05016bc9358754bfe532e005ebf727))
+* timed task ([977e0b7](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/977e0b78709003ba286475fbac44ddbeab47174f))
+* timed task done ([d70c2e8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d70c2e8006737aa9e3aef5b8402b2ef21e5eb9db))
+* timed task when start ([f557181](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/f5571819c3d206a12aaefaa2611346493052c2f1))
+* update sql ([ca00b91](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/ca00b91b3d8d6699cc46a383007e308f1b108c13))
+* use url from env.json ([0967709](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0967709444cb457e4fd4992b5c7b7521a50129f9))
+
+
+### Bug Fixes
+
+* delete sensitive information for server ([5feb2ff](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/5feb2ff1c404d2daf59d95512fb47bc4dc7b8d58))
+* moment and folder rename ([3cdd746](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/3cdd746780810e3ac72c1de40b31519dfdf5389a))
+* style and doc, some small changes ([1df0817](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/1df0817548c5ea984b6e6a5c79b7cbc14f55a44b))
+
 ### [1.3.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.3.1...v1.3.2) (2021-06-30)
 
 
