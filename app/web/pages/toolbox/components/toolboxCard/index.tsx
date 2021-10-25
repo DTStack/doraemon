@@ -83,11 +83,9 @@ const ToolBoxCard = (props: any) => {
                     {appName}
                     {appType === 0 && <i className="iconfont iconicon_star" />}
                 </p>
-                <p className="tool-desc text-ellipsis">
-                    <Tooltip title={appDesc} mouseEnterDelay={1} placement="rightTop">
-                        <span>{appDesc}</span>
-                    </Tooltip>
-                </p>
+                <Tooltip title={appDesc} mouseEnterDelay={1} placement="rightTop">
+                    <p className="tool-desc text-ellipsis">{appDesc}</p>
+                </Tooltip>
             </div>
             <div className="body-bottom">
                 <div className="tool-tags">
