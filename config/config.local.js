@@ -34,17 +34,24 @@ module.exports = () => {
             {
                 delegate: 'model',
                 baseDir: 'model',
-                database: 'doraemon',
+                database: 'doraemon_test',
                 dialect: 'mysql',
                 host: '127.0.0.1',
                 port: 3306,
-                username:'root',
-                password:''
+                username: 'root',
+                password: ''
             }
         ]
     };
 
     exports.security = { domainWhiteList };
+
+    // exports.ssh =  {
+    //     host: '172.16.100.225',
+    //     port: '22',
+    //     username:'root',
+    //     password:'abc123'
+    // };
 
     return exports;
 };

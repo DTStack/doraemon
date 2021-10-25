@@ -8,3 +8,17 @@
       justify-content: space-between;
   }
 }
+.web-terminal__ant-modal {
+  .ant-modal-header {
+    padding: 8px;
+  }
+  .ant-modal-close-x {
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+  }
+  .ant-modal-body {
+    padding: 8px;
+    background-color: black;
+  }
+}

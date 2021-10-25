@@ -3,7 +3,7 @@ import { AppstoreOutlined, CloudOutlined, DesktopOutlined, TagOutlined, SettingO
 import { Layout, Menu } from 'antd';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import logo from '../../asset/images/logo.png';
+import logo from '@/asset/images/logo.png';
 import config from '../../../../env.json';
 import './style.scss';
 
@@ -15,7 +15,7 @@ const navMenuList: any = [{
     name: '应用中心',
     path: '/page/toolbox',
     icon: <AppstoreOutlined />,
-    routers: ['toolbox', 'switch-hosts-list', 'switch-hosts-edit']
+    routers: ['toolbox', 'switch-hosts-list', 'switch-hosts-edit', 'article-subscription-list']
 }, {
     name: '代理服务',
     path: '/page/proxy-server',
