@@ -45,6 +45,11 @@ const cancelTimedTask = (name) => {
     schedule.scheduledJobs[`${ name }`].cancel()
 }
 
+// 定时任务列表
+const timedTaskList = () => {
+    return schedule.scheduledJobs
+}
+
 // 获取打开状态下的订阅列表
 const startSubscriptionTimedTask = async (app) => {
     topicAll = await getArticleTopicList(app)
@@ -81,5 +86,6 @@ const log = (msg) =>{
 module.exports = {
     createTimedTask,
     cancelTimedTask,
+    timedTaskList,
     startSubscriptionTimedTask
 }

@@ -1,6 +1,6 @@
 const Controller = require('egg').Controller;
 const _ = require('lodash');
-const { createTimedTask, cancelTimedTask } = require('../utils/timedTask')
+const { createTimedTask, cancelTimedTask, timedTaskList } = require('../utils/timedTask')
 
 class ArticleSubscriptionController extends Controller {
     // 获取列表
@@ -66,6 +66,12 @@ class ArticleSubscriptionController extends Controller {
         await ctx.service.articleSubscription.updateSubscription(id, { is_delete: 1, updated_at: new Date() });
         cancelTimedTask(id)
         ctx.body = app.utils.response(true, id);
+    }
+
+    // 定时任务列表
+    async getTimedTaskList() {
+        const { ctx, app } = this;
+        ctx.body = app.utils.response(true, Object.keys(timedTaskList()));
     }
 
     // 获取详情
