@@ -1,9 +1,6 @@
 
 const ip = require('ip');
 const EasyWebpack = require('easywebpack-react');
-const config = require('../env.json');
-const mysqlConfig = (config && config.mysql && config.mysql.prod) || {};
-const { database, host, port, username, password } = mysqlConfig;
 
 module.exports = () => {
     const exports = {};
@@ -38,12 +35,12 @@ module.exports = () => {
             {
                 delegate: 'model',
                 baseDir: 'model',
-                database: database || 'doraemon_test',
+                database: 'doraemon_test',
                 dialect: 'mysql',
-                host: host || '127.0.0.1',
-                port: port || 3306,
-                username: username || 'root',
-                password: password || ''
+                host: '127.0.0.1',
+                port: 3306,
+                username: 'root',
+                password: '123456'
             }
         ]
     };

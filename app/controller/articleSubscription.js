@@ -1,6 +1,6 @@
 const Controller = require('egg').Controller;
 const _ = require('lodash');
-const { createTimedTask, cancelTimedTask, timedTaskList } = require('../utils/timedTask')
+const { createTimedTask, changeTimedTask, cancelTimedTask, timedTaskList } = require('../utils/timedTask')
 
 class ArticleSubscriptionController extends Controller {
     // 获取列表
@@ -53,8 +53,7 @@ class ArticleSubscriptionController extends Controller {
         if (_.isNil(sendType)) throw new Error('缺少必要参数 sendType');
         if (_.isNil(sendCron)) throw new Error('缺少必要参数 sendCron');
         await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status, updated_at: new Date() })
-        cancelTimedTask(id)
-        status === 1 && createTimedTask(id, sendCron, app)
+        status === 1 ? changeTimedTask(id, sendCron, app) : cancelTimedTask(id)
         ctx.body = app.utils.response(true, id);
     }
 
@@ -71,7 +70,7 @@ class ArticleSubscriptionController extends Controller {
     // 定时任务列表
     async getTimedTaskList() {
         const { ctx, app } = this;
-        ctx.body = app.utils.response(true, Object.keys(timedTaskList()));
+        ctx.body = app.utils.response(true, timedTaskList());
     }
 
     // 获取详情

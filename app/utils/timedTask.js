@@ -38,6 +38,13 @@ const createTimedTask = async (name, cron, app) => {
     })
 }
 
+// 改变定时任务的时间规则
+const changeTimedTask = (name, cron, app) => {
+    if (!timedTaskIsExist(name)) return createTimedTask(name, cron, app)
+    schedule.rescheduleJob(schedule.scheduledJobs[`${ name }`], cron)
+    log(`编辑定时任务: ${ name }, Cron: ${ cron }`)
+}
+
 // 取消指定定时任务
 const cancelTimedTask = (name) => {
     if (!timedTaskIsExist(name)) return
@@ -47,7 +54,7 @@ const cancelTimedTask = (name) => {
 
 // 定时任务列表
 const timedTaskList = () => {
-    return schedule.scheduledJobs
+    return Object.keys(schedule.scheduledJobs)
 }
 
 // 获取打开状态下的订阅列表
@@ -85,6 +92,7 @@ const log = (msg) =>{
 
 module.exports = {
     createTimedTask,
+    changeTimedTask,
     cancelTimedTask,
     timedTaskList,
     startSubscriptionTimedTask
