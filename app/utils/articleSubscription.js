@@ -18,8 +18,8 @@ const getGithubTrending = async (topicName, topicUrl, webHook, app) => {
         msg += `[点击查看更多内容](https://github.com/trending/${ topicUrl }?since=daily)`
         sendArticleMsg('Github Trending 今日 Top5', msg, webHook)
     } catch (err) {
-        console.log('Github 网络原因', err)
-        throw new Error('Github 网络原因')
+        console.log('Github 网络不佳', err)
+        throw new Error('Github 网络不佳')
     }
 }
 

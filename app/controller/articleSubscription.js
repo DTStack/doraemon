@@ -53,7 +53,7 @@ class ArticleSubscriptionController extends Controller {
         if (_.isNil(sendType)) throw new Error('缺少必要参数 sendType');
         if (_.isNil(sendCron)) throw new Error('缺少必要参数 sendCron');
         await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status, updated_at: new Date() })
-        status === 1 ? changeTimedTask(id, sendCron, app) : cancelTimedTask(id)
+        status === 1 ? changeTimedTask(id, sendCron, app) : cancelTimedTask(id, app)
         ctx.body = app.utils.response(true, id);
     }
 
@@ -63,14 +63,14 @@ class ArticleSubscriptionController extends Controller {
         const { id } = ctx.request.body;
         if (_.isNil(id)) throw new Error('缺少必要参数 id');
         await ctx.service.articleSubscription.updateSubscription(id, { is_delete: 1, updated_at: new Date() });
-        cancelTimedTask(id)
+        cancelTimedTask(id, app)
         ctx.body = app.utils.response(true, id);
     }
 
     // 定时任务列表
     async getTimedTaskList() {
         const { ctx, app } = this;
-        ctx.body = app.utils.response(true, timedTaskList());
+        ctx.body = app.utils.response(true, timedTaskList(app));
     }
 
     // 获取详情
