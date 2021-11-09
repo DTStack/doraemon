@@ -1,12 +1,11 @@
-const { startSubscriptionTimedTask } = require('../utils/timedTask');
-
 module.exports = {
     schedule: {
         interval: '0 0 1 ? * SAT',
         type: 'worker',
-        immediate: true
+        immediate: true,
+        disable: true // 这个定时任务不会被启动
     },
     async task(ctx) {
-        await startSubscriptionTimedTask(ctx.app)
+        ctx.service.articleSubscription.startSubscriptionTimedTask()
     }
 }
