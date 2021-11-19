@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.1...v1.4.2) (2021-11-19)
+
+
+### Features
+
+* change timed task ([0b182c5](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0b182c58ecd9c8072f884691b912a05290e2c994))
+* config and remove rsshub ([7f439e1](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7f439e1598dfd973816f623f1fc434c56cab44b6))
+* egg schedule ([212557a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/212557a292aab0755360542d0a084ca4b88d84ed))
+* get timed task list ([391bb2e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/391bb2e19439957d2142bf6946687cc469a33c83))
+* get timedTask when app start ([40ba602](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/40ba60295332096e45ff2da79ab6f219b14d0968))
+* move timedTask to agent from worker ([6a03148](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6a03148132efa489527bbbaea8791fe6b9b6ce20))
+
 ### [1.4.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.0...v1.4.1) (2021-10-25)
 
 ## [1.4.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.3.2...v1.4.0) (2021-10-22)
