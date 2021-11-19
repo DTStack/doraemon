@@ -1,3 +1,7 @@
+const config = require('../env.json');
+const mysqlConfig = (config && config.mysql && config.mysql.prod) || {};
+const { database, host, port, username, password } = mysqlConfig;
+
 /**
  * 测试环境配置
  *
@@ -10,12 +14,12 @@ module.exports = () => {
             {
                 delegate: 'model',
                 baseDir: 'model',
-                database: 'doraemon_test',
+                database: database || 'doraemon_test',
                 dialect: 'mysql',
-                host: '127.0.0.1',
-                port: 3306,
-                username:'root',
-                password:''
+                host: host || '127.0.0.1',
+                port: port || 3306,
+                username: username || 'root',
+                password: password || '123456'
             }
         ]
     };

@@ -2,84 +2,53 @@
  * 定时任务
  */
 const schedule = require('node-schedule')
-const moment = require('moment')
-const _ = require('lodash')
-const { getGithubTrending, getJueJinHot } = require('./articleSubscription')
-
-let topicAll = []
 
 // 判断定时任务是否存在
-const timedTaskIsExist = (name) => {
-    return !_.isEmpty(schedule.scheduledJobs[`${ name }`])
+const timedTaskIsExist = (name, agent) => {
+    const timedTask = schedule.scheduledJobs[`${ name }`]
+    log(agent, `定时任务：${ name } ${ timedTask === undefined ? '不存在' : '存在' }`)
+    return timedTask !== undefined
 }
 
 // 开始定时任务
-const createTimedTask = async (name, cron, app) => {
-    if (timedTaskIsExist(name)) return
-    log(`创建定时任务: ${ name }, Cron: ${ cron }`)
-    schedule.scheduleJob(`${ name }`, cron, async () => {
-        const articleSubscription = await app.model.ArticleSubscription.findOne({
-            where: {
-                id: name,
-                is_delete: 0
-            },
-            raw: true
-        })
-        const { webHook } = articleSubscription
-        const topicIds = articleSubscription.topicIds.split(',')
-        const topicList = topicAll.filter(item => topicIds.includes(`${ item.id }`))
-
-        for (let item of topicList) {
-            const { siteName, topicName, topicUrl } = item
-            siteName === 'Github' && getGithubTrending(topicName, topicUrl, webHook, app)
-            siteName === '掘金' && getJueJinHot(topicName, topicUrl, webHook, app)
-            log(`执行定时任务: ${ name }, 订阅项: ${ siteName }-${ topicName }`)
-        }
+const createTimedTask = (name, cron, agent) => {
+    if (timedTaskIsExist(name, agent)) return
+    log(agent, `创建定时任务: ${ name }, Cron: ${ cron }`)
+    schedule.scheduleJob(`${ name }`, cron, () => {
+        // agent 进程随机给一个 app 进程发消息（由 master 来控制发送给谁）
+        agent.messenger.sendRandom('sendArticleSubscription', name)
     })
+}
+
+// 改变定时任务的时间规则
+const changeTimedTask = (name, cron, agent) => {
+    if (!timedTaskIsExist(name, agent)) return createTimedTask(name, cron, agent)
+    schedule.rescheduleJob(schedule.scheduledJobs[`${ name }`], cron)
+    log(agent, `编辑定时任务: ${ name }, Cron: ${ cron }`)
 }
 
 // 取消指定定时任务
-const cancelTimedTask = (name) => {
-    if (!timedTaskIsExist(name)) return
-    log(`取消定时任务: ${ name }`)
+const cancelTimedTask = (name, agent) => {
+    if (!timedTaskIsExist(name, agent)) return
+    log(agent, `取消定时任务: ${ name }`)
     schedule.scheduledJobs[`${ name }`].cancel()
 }
 
-// 获取打开状态下的订阅列表
-const startSubscriptionTimedTask = async (app) => {
-    topicAll = await getArticleTopicList(app)
-    const subscriptionList = await app.model.ArticleSubscription.findAll({
-        where: {
-            is_delete: 0,
-            status: 1
-        },
-        order: [['created_at', 'DESC']],
-        raw: true
-    })
-
-    for (let i of subscriptionList) {
-        createTimedTask(i.id, i.sendCron, app)
-    }
-}
-
-// 全量的订阅项
-const getArticleTopicList = async (app) => {
-    const topicAll = await app.model.ArticleTopic.findAll({
-        where: {
-            is_delete: 0
-        },
-        raw: true
-    })
-    return topicAll
+// 定时任务列表
+const timedTaskList = (agent) => {
+    const result = Object.keys(schedule.scheduledJobs)
+    log(agent, `定时任务列表: [${ result.join(',') }]`)
+    return result
 }
 
 // 打印定时任务信息
-const log = (msg) =>{
-    console.log(`${ moment().format("YYYY-MM-DD HH:mm:ss") } --------- ${ msg }`)
+const log = (agent, msg) => {
+    agent.logger.info(`${ msg }`)
 }
 
 module.exports = {
     createTimedTask,
+    changeTimedTask,
     cancelTimedTask,
-    startSubscriptionTimedTask
+    timedTaskList
 }
