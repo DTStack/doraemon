@@ -1,6 +1,7 @@
 
 const ip = require('ip');
 const EasyWebpack = require('easywebpack-react');
+
 module.exports = () => {
     const exports = {};
 
@@ -39,7 +40,7 @@ module.exports = () => {
                 host: '127.0.0.1',
                 port: 3306,
                 username: 'root',
-                password: ''
+                password: '123456'
             }
         ]
     };

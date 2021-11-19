@@ -1,6 +1,5 @@
 const Controller = require('egg').Controller;
 const _ = require('lodash');
-const { createTimedTask, cancelTimedTask } = require('../utils/timedTask')
 
 class ArticleSubscriptionController extends Controller {
     // 获取列表
@@ -37,7 +36,8 @@ class ArticleSubscriptionController extends Controller {
         const data = await ctx.service.articleSubscription.createSubscription({ groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status });
         const { id } = data
         if (_.isNil(id)) throw new Error('创建失败');
-        createTimedTask(id, sendCron, app)
+        // 向 agent 进程发消息
+        app.messenger.sendToAgent('createTimedTask', { id, sendCron })
         ctx.body = app.utils.response(true, id);
     }
 
@@ -53,8 +53,8 @@ class ArticleSubscriptionController extends Controller {
         if (_.isNil(sendType)) throw new Error('缺少必要参数 sendType');
         if (_.isNil(sendCron)) throw new Error('缺少必要参数 sendCron');
         await ctx.service.articleSubscription.updateSubscription(id, { groupName, webHook, remark, topicIds: topicIds.join(','), siteNames, sendType, sendCron, time, status, updated_at: new Date() })
-        cancelTimedTask(id)
-        status === 1 && createTimedTask(id, sendCron, app)
+        // 向 agent 进程发消息
+        app.messenger.sendToAgent(status === 1 ? 'changeTimedTask' : 'cancelTimedTask', { id, sendCron })
         ctx.body = app.utils.response(true, id);
     }
 
@@ -64,8 +64,17 @@ class ArticleSubscriptionController extends Controller {
         const { id } = ctx.request.body;
         if (_.isNil(id)) throw new Error('缺少必要参数 id');
         await ctx.service.articleSubscription.updateSubscription(id, { is_delete: 1, updated_at: new Date() });
-        cancelTimedTask(id)
+        // 向 agent 进程发消息
+        app.messenger.sendToAgent('cancelTimedTask', { id })
         ctx.body = app.utils.response(true, id);
+    }
+
+    // 定时任务列表
+    async getTimedTaskList() {
+        const { ctx, app } = this;
+        // 向 agent 进程发消息
+        app.messenger.sendToAgent('timedTaskList')
+        ctx.body = app.utils.response(true, '请前往服务器 /logs/egg-agent.log 查看');
     }
 
     // 获取详情

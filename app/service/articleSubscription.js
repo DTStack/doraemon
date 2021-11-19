@@ -1,4 +1,5 @@
 const Service = require('egg').Service
+const { getGithubTrending, getJueJinHot } = require('../utils/articleSubscription')
 
 class ArticleSubscriptionService extends Service {
     // 获取列表
@@ -28,6 +29,45 @@ class ArticleSubscriptionService extends Service {
         return this.ctx.model.ArticleSubscription.update(updateParams, {
             where: { id }
         })
+    }
+
+    // 通过订阅 id 查询需要发送的文章订阅消息
+    async sendArticleSubscription(id) {
+        const topicAll = await this.app.model.ArticleTopic.findAll({ where: { is_delete: 0 }, raw: true })
+        const articleSubscription = await this.app.model.ArticleSubscription.findOne({
+            where: {
+                id,
+                is_delete: 0
+            },
+            raw: true
+        })
+        const { webHook } = articleSubscription
+        const topicIds = articleSubscription.topicIds.split(',')
+        const topicList = topicAll.filter(item => topicIds.includes(`${ item.id }`))
+
+        for (let item of topicList) {
+            const { siteName, topicName, topicUrl } = item
+            siteName === 'Github' && getGithubTrending(topicName, topicUrl, webHook, this.app)
+            siteName === '掘金' && getJueJinHot(topicName, topicUrl, webHook, this.app)
+            this.app.logger.info(`执行定时任务: ${ id }, 订阅项: ${ siteName }-${ topicName }`)
+        }
+    }
+
+    // 获取打开状态下的订阅列表
+    async startSubscriptionTimedTask() {
+        const subscriptionList = await this.app.model.ArticleSubscription.findAll({
+            where: {
+                is_delete: 0,
+                status: 1
+            },
+            order: [['created_at', 'DESC']],
+            raw: true
+        })
+    
+        for (let i of subscriptionList) {
+            const { id, sendCron } = i
+            this.app.messenger.sendToAgent('createTimedTask', { id, sendCron })
+        }
     }
 
     // 获取详情 - 暂未使用
