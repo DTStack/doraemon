@@ -29,7 +29,7 @@ const getJueJinHot = async (topicName, topicUrl, webHook, app) => {
         const pageSize = app.config.articleSubscription.pageSize
         const params = {
             id_type: 2,
-            sort_type: 200,
+            sort_type: 3,
             cate_id: topicUrl,
             cursor: "0",
             limit: pageSize
