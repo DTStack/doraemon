@@ -3,7 +3,7 @@ const axios = require('axios')
 const { sendArticleMsg } = require('./index')
 
 // github trending
-const getGithubTrending = async (topicName, topicUrl, webHook, app) => {
+const getGithubTrending = async (topicName, topicUrl, webHook, app, logFunc) => {
     try {
         const pageSize = app.config.articleSubscription.pageSize
         const { data } = await axios.get(`https://github.com/trending/${ topicUrl }?since=daily`, { timeout: 30_000 })
@@ -17,14 +17,14 @@ const getGithubTrending = async (topicName, topicUrl, webHook, app) => {
         }
         msg += `[点击查看更多内容](https://github.com/trending/${ topicUrl }?since=daily)`
         sendArticleMsg('Github Trending 今日 Top5', msg, webHook)
+        logFunc('成功')
     } catch (err) {
-        console.log('Github 网络不佳', err)
-        throw new Error('Github 网络不佳')
+        logFunc('失败，Github 网络不佳')
     }
 }
 
 // 掘金热门
-const getJueJinHot = async (topicName, topicUrl, webHook, app) => {
+const getJueJinHot = async (topicName, topicUrl, webHook, app, logFunc) => {
     try {
         const pageSize = app.config.articleSubscription.pageSize
         const params = {
@@ -41,9 +41,10 @@ const getJueJinHot = async (topicName, topicUrl, webHook, app) => {
             msg += `${ i + 1 }、[${ data[i].article_info.title }](https://juejin.cn/post/${ data[i].article_id })\n\n`
         }
         sendArticleMsg('掘金热门 Top5', msg, webHook)
+        logFunc('成功')
     } catch (err) {
-        console.log('掘金请求出错', err)
-        throw new Error('掘金请求出错')
+        logFunc('失败')
+        logFunc('失败，Github 网络不佳')
     }
 }
 
