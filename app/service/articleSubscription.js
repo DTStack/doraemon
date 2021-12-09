@@ -45,11 +45,15 @@ class ArticleSubscriptionService extends Service {
         const topicIds = articleSubscription.topicIds.split(',')
         const topicList = topicAll.filter(item => topicIds.includes(`${ item.id }`))
 
+        // 打印定时任务结果
+        const logFunc = (result, siteName, topicName) => {
+            this.app.logger.info(`定时任务执行${ result }: ${ id }, 订阅项: ${ siteName }-${ topicName }`)
+        }
+
         for (let item of topicList) {
             const { siteName, topicName, topicUrl } = item
-            siteName === 'Github' && getGithubTrending(topicName, topicUrl, webHook, this.app)
-            siteName === '掘金' && getJueJinHot(topicName, topicUrl, webHook, this.app)
-            this.app.logger.info(`执行定时任务: ${ id }, 订阅项: ${ siteName }-${ topicName }`)
+            siteName === 'Github' && getGithubTrending(topicName, topicUrl, webHook, this.app, (result) => { logFunc(result, siteName, topicName) })
+            siteName === '掘金' && getJueJinHot(topicName, topicUrl, webHook, this.app, (result) => { logFunc(result, siteName, topicName) })
         }
     }
 
