@@ -69,7 +69,7 @@ class ArticleSubscriptionController extends Controller {
         ctx.body = app.utils.response(true, id);
     }
 
-    // 定时任务列表
+    // 文章订阅任务列表
     async getTimedTaskList() {
         const { ctx, app } = this;
         // 向 agent 进程发消息

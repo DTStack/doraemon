@@ -19,7 +19,7 @@ const getGithubTrending = async (topicName, topicUrl, webHook, app, logFunc) => 
         sendArticleMsg('Github Trending 今日 Top5', msg, webHook)
         logFunc('成功')
     } catch (err) {
-        logFunc('失败，Github 网络不佳')
+        logFunc(`失败，Github 网络不佳， ${ JSON.stringify(err) }`)
     }
 }
 
@@ -43,8 +43,7 @@ const getJueJinHot = async (topicName, topicUrl, webHook, app, logFunc) => {
         sendArticleMsg('掘金热门 Top5', msg, webHook)
         logFunc('成功')
     } catch (err) {
-        logFunc('失败')
-        logFunc('失败，Github 网络不佳')
+        logFunc(`失败，${ JSON.stringify(err) }`)
     }
 }
 
