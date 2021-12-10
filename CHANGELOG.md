@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.4](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.3...v1.4.4) (2021-12-10)
+
+
+### Features
+
+* improve timed task result log ([2964379](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/296437940d2648bd63e2a87973f0e27ca1ad0454))
+
 ### [1.4.3](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.2...v1.4.3) (2021-12-09)
 
 
