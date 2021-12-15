@@ -65,12 +65,19 @@ const sendArticleMsg = async (title, text, webhook) => {
         .catch(ex => console.error(ex))
 }
 
+// 文章订阅发送失败时，发出告警信息
+const sendAlarmMsg = async (content, webhook) => {
+    const feChatRobot = new ChatBot({ webhook })
+    feChatRobot.text(content)
+}
+
 module.exports = {
     createFolder,
     createFileSync,
     sendMsg,
     sendHostsUpdateMsg,
     sendArticleMsg,
+    sendAlarmMsg,
     response: (success, data = null, message)=>{
         if(success) {
             message='执行成功';

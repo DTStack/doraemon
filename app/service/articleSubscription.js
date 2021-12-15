@@ -41,21 +41,14 @@ class ArticleSubscriptionService extends Service {
             },
             raw: true
         })
-        const { webHook } = articleSubscription
+        const { webHook, groupName } = articleSubscription
         const topicIds = articleSubscription.topicIds.split(',')
         const topicList = topicAll.filter(item => topicIds.includes(`${ item.id }`))
 
-        // 打印文章订阅任务结果
-        const logFunc = (msg, siteName, topicName) => {
-            const result = `文章订阅任务执行${ msg }: ${ id }, 订阅项: ${ siteName }-${ topicName }`
-            // 向 agent 进程发消息
-            this.app.messenger.sendToAgent('timedTaskResult', { result })
-        }
-
         for (let item of topicList) {
             const { siteName, topicName, topicUrl } = item
-            siteName === 'Github' && getGithubTrending(topicName, topicUrl, webHook, this.app, (msg) => { logFunc(msg, siteName, topicName) })
-            siteName === '掘金' && getJueJinHot(topicName, topicUrl, webHook, this.app, (msg) => { logFunc(msg, siteName, topicName) })
+            siteName === 'Github' && getGithubTrending(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
+            siteName === '掘金' && getJueJinHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
         }
     }
 
