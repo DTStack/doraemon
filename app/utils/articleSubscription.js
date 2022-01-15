@@ -51,7 +51,7 @@ const getJueJinHot = async (id, groupName, siteName, topicName, topicUrl, webHoo
 
 // 打印文章订阅任务结果
 const logFunc = (app, id, groupName, siteName, topicName, msg, errMsg = '') => {
-    const result = `文章订阅任务: ${ id } 执行${ msg }, 钉钉群名称: ${ groupName }, 订阅项: ${ siteName }-${ topicName } ${ errMsg ? ', ' + errMsg : '' }`
+    const result = `文章订阅任务, id: ${ id } 执行${ msg }, 钉钉群名称: ${ groupName }, 订阅项: ${ siteName }-${ topicName } ${ errMsg ? ', ' + errMsg : '' }`
     // 向 agent 进程发消息
     app.messenger.sendToAgent('timedTaskResult', { result })
 
