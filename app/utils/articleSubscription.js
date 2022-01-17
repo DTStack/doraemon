@@ -4,7 +4,7 @@ const config = require('../../env.json')
 const { sendArticleMsg, sendAlarmMsg } = require('./index')
 const webhookUrls = config && config.webhookUrls ? config.webhookUrls : [] // 钉钉通知群
 
-// github trending
+// github trending from github
 const getGithubTrending = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
     try {
         const pageSize = app.config.articleSubscription.pageSize
@@ -16,6 +16,32 @@ const getGithubTrending = async (id, groupName, siteName, topicName, topicUrl, w
         for (let i = 0; i < pageSize; i++) {
             const result = items.eq(i).find('h1.lh-condensed').text().replace(/\n/g, '').replace(/\s*/g, '')
             msg += `${ i + 1 }、[${ result }](https://github.com/${ result })\n\n`
+        }
+        msg += `[点击查看更多内容](https://github.com/trending/${ topicUrl }?since=daily)`
+        sendArticleMsg('Github Trending 今日 Top5', msg, webHook)
+        logFunc(app, id, groupName, siteName, topicName, '成功')
+    } catch (err) {
+        logFunc(app, id, groupName, siteName, topicName, `失败`, `Github 网络不佳 ${ JSON.stringify(err) }`)
+    }
+}
+
+// github trending from 掘金 chrome 插件
+const getGithubTrendingFromJueJin = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
+    try {
+        const pageSize = app.config.articleSubscription.pageSize
+        const params = {
+            category: 'trending',
+            period: 'day',
+            lang: topicUrl,
+            offset: 0,
+            limit: pageSize
+        }
+        const res = await axios.post(`https://e.juejin.cn/resources/github`, params)
+        const { data } = res.data
+        let msg = `## Github Trending ${ topicName } 今日 Top5\n\n`
+
+        for (let i = 0; i < pageSize; i++) {
+            msg += `${ i + 1 }、[${ data[i].username } / ${ data[i].reponame }](${ data[i].url })\n\n`
         }
         msg += `[点击查看更多内容](https://github.com/trending/${ topicUrl }?since=daily)`
         sendArticleMsg('Github Trending 今日 Top5', msg, webHook)
@@ -66,5 +92,6 @@ const logFunc = (app, id, groupName, siteName, topicName, msg, errMsg = '') => {
 
 module.exports = {
     getGithubTrending,
+    getGithubTrendingFromJueJin,
     getJueJinHot
 }
