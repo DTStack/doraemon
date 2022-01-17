@@ -6,14 +6,14 @@ const schedule = require('node-schedule')
 // 判断文章订阅任务是否存在
 const timedTaskIsExist = (name, agent) => {
     const timedTask = schedule.scheduledJobs[`${ name }`]
-    log(agent, `文章订阅任务：${ name } ${ timedTask === undefined ? '不存在' : '存在' }`)
+    log(agent, `文章订阅任务, id：${ name } ${ timedTask === undefined ? '不存在' : '存在' }`)
     return timedTask !== undefined
 }
 
 // 开始文章订阅任务
 const createTimedTask = (name, cron, agent) => {
     if (timedTaskIsExist(name, agent)) return
-    log(agent, `创建文章订阅任务: ${ name }, Cron: ${ cron }`)
+    log(agent, `创建文章订阅任务, id: ${ name }, Cron: ${ cron }`)
     schedule.scheduleJob(`${ name }`, cron, () => {
         // agent 进程随机给一个 app 进程发消息（由 master 来控制发送给谁）
         agent.messenger.sendRandom('sendArticleSubscription', name)
@@ -24,13 +24,13 @@ const createTimedTask = (name, cron, agent) => {
 const changeTimedTask = (name, cron, agent) => {
     if (!timedTaskIsExist(name, agent)) return createTimedTask(name, cron, agent)
     schedule.rescheduleJob(schedule.scheduledJobs[`${ name }`], cron)
-    log(agent, `编辑文章订阅任务: ${ name }, Cron: ${ cron }`)
+    log(agent, `编辑文章订阅任务, id: ${ name }, Cron: ${ cron }`)
 }
 
 // 取消指定文章订阅任务
 const cancelTimedTask = (name, agent) => {
     if (!timedTaskIsExist(name, agent)) return
-    log(agent, `取消文章订阅任务: ${ name }`)
+    log(agent, `取消文章订阅任务, id: ${ name }`)
     schedule.scheduledJobs[`${ name }`].cancel()
 }
 
