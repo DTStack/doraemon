@@ -408,7 +408,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             width: 100,
             render: (value: any, row: any, index: any) => index + 1
         }, {
-            title: 'IP',
+            title: '用户IP',
             key: 'ip',
             dataIndex: 'ip',
             width: '15%',
