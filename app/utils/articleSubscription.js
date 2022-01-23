@@ -5,7 +5,7 @@ const { sendArticleMsg, sendAlarmMsg } = require('./index')
 const webhookUrls = config && config.webhookUrls ? config.webhookUrls : [] // 钉钉通知群
 
 // github trending from github
-const getGithubTrending = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
+const getGithubTrendingFromGithub = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
     try {
         const pageSize = app.config.articleSubscription.pageSize
         const { data } = await axios.get(`https://github.com/trending/${ topicUrl }?since=daily`, { timeout: 30_000 })
@@ -44,6 +44,25 @@ const getGithubTrendingFromJueJin = async (id, groupName, siteName, topicName, t
             msg += `${ i + 1 }、[${ data[i].username } / ${ data[i].reponame }](${ data[i].url })\n\n`
         }
         msg += `[点击查看更多内容](https://github.com/trending/${ topicUrl }?since=daily)`
+        sendArticleMsg('Github Trending 今日 Top5', msg, webHook)
+        logFunc(app, id, groupName, siteName, topicName, '成功')
+    } catch (err) {
+        logFunc(app, id, groupName, siteName, topicName, `失败`, `Github 网络不佳 ${ JSON.stringify(err) }`)
+    }
+}
+
+// github trending from Serverless
+const getGithubTrendingFromServerless = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
+    try {
+        const pageSize = app.config.articleSubscription.pageSize
+        const res = await axios.get(`http://github-trending-api.liuxianyu.cn/repository/list?language=${ topicName }?pageSize=${ pageSize }`, { timeout: 30_000 })
+        const { data } = res.data
+        let msg = `## Github Trending ${ topicName } 今日 Top5\n\n`
+
+        for (let i = 0; i < pageSize; i++) {
+            msg += `${ i + 1 }、[${ data.list[i].username } / ${ data.list[i].repositoryName }](${ data.list[i].url })\n\n`
+        }
+        msg += `[点击查看更多](https://github.com/trending/${ topicUrl }?since=daily)`
         sendArticleMsg('Github Trending 今日 Top5', msg, webHook)
         logFunc(app, id, groupName, siteName, topicName, '成功')
     } catch (err) {
@@ -91,7 +110,8 @@ const logFunc = (app, id, groupName, siteName, topicName, msg, errMsg = '') => {
 }
 
 module.exports = {
-    getGithubTrending,
+    getGithubTrendingFromGithub,
     getGithubTrendingFromJueJin,
+    getGithubTrendingFromServerless,
     getJueJinHot
 }
