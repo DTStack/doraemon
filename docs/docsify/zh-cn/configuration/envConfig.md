@@ -5,6 +5,7 @@
 ```json
 {
     "webhookUrls": [],
+    "articleResultWebhook": "",
     "msgSingleUrl": "https://dtstack.github.io/doraemon/docsify/#/",
     "helpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/"
 }
@@ -20,6 +21,19 @@ dingBot 的钉钉接收群 token 集合，默认为空，如果需要配置通�
 ```json
 {
     "webhookUrls": []
+}
+```
+
+## articleResultWebhook
+
+- 类型：String
+- 默认值：""
+
+文章订阅发送结果通知助手的 webhook，默认为空，如果需要配置钉钉通知机器人，请将对应 webhook 配置给 articleResultWebhook。
+
+```json
+{
+    "articleResultWebhook": ""
 }
 ```
 
