@@ -1,14 +1,15 @@
 const cheerio = require('cheerio')
 const axios = require('axios')
 const config = require('../../env.json')
-const { sendArticleMsg, sendAlarmMsg } = require('./index')
-const webhookUrls = config && config.webhookUrls ? config.webhookUrls : [] // 钉钉通知群
+const { sendArticleMsg, sendMsgAfterSendArticle } = require('./index')
+const articleResultWebhook = config.articleResultWebhook // 文章订阅结果通知机器人
+const timeout = 30_000
 
 // github trending from github
 const getGithubTrendingFromGithub = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
     try {
         const pageSize = app.config.articleSubscription.pageSize
-        const { data } = await axios.get(`https://github.com/trending/${ topicUrl }?since=daily`, { timeout: 30_000 })
+        const { data } = await axios.get(`https://github.com/trending/${ topicUrl }?since=daily`, { timeout })
         let msg = `## Github Trending ${ topicName } 今日 Top5\n\n`
 
         const $ = cheerio.load(data)
@@ -55,7 +56,7 @@ const getGithubTrendingFromJueJin = async (id, groupName, siteName, topicName, t
 const getGithubTrendingFromServerless = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
     try {
         const pageSize = app.config.articleSubscription.pageSize
-        const res = await axios.get(`http://github-trending-api.liuxianyu.cn/repository/list?language=${ topicName }?pageSize=${ pageSize }`, { timeout: 30_000 })
+        const res = await axios.get(`http://github-trending-api.liuxianyu.cn/repository/list?language=${ topicUrl }&pageSize=${ pageSize }`, { timeout })
         const { data } = res.data
         let msg = `## Github Trending ${ topicName } 今日 Top5\n\n`
 
@@ -96,17 +97,17 @@ const getJueJinHot = async (id, groupName, siteName, topicName, topicUrl, webHoo
 
 // 打印文章订阅任务结果
 const logFunc = (app, id, groupName, siteName, topicName, msg, errMsg = '') => {
+    if (!articleResultWebhook) return
     const result = `文章订阅任务, id: ${ id } 执行${ msg }, 钉钉群名称: ${ groupName }, 订阅项: ${ siteName }-${ topicName } ${ errMsg ? ', ' + errMsg : '' }`
     // 向 agent 进程发消息
     app.messenger.sendToAgent('timedTaskResult', { result })
 
-    // 文章订阅发送失败时，发出告警信息
-    if (msg === '失败') {
-        const msgText = `文章订阅结果：${ msg }\n钉钉群名称：${ groupName }\n订阅项：${ siteName }-${ topicName }\n\n请前往服务器查看对应日志！`
-        for (let webHook of webhookUrls) {
-            sendAlarmMsg(msgText, webHook)
-        }
-    }
+    // 文章订阅发送后，发出是否成功的通知
+    const text = `文章订阅结果：<font color=${ msg === '失败' ? '#ff0000' : '#007500'}>${ msg }</font>
+        \n\n钉钉群名称：${ groupName }
+        \n\n订阅项：${ siteName }-${ topicName }
+        ${ msg === '失败' ? '\n\n请前往服务器查看对应日志！' : '' }`
+    sendMsgAfterSendArticle(`发送${ msg }`, text, articleResultWebhook)
 }
 
 module.exports = {

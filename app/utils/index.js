@@ -1,4 +1,3 @@
-
 const path = require('path');
 const fs = require('fs');
 const ROOT_PATH = path.join(__dirname, '../../');
@@ -65,10 +64,12 @@ const sendArticleMsg = async (title, text, webhook) => {
         .catch(ex => console.error(ex))
 }
 
-// 文章订阅发送失败时，发出告警信息
-const sendAlarmMsg = async (content, webhook) => {
+// 文章订阅发送后，发出是否成功的通知
+const sendMsgAfterSendArticle = async (title, text, webhook) => {
     const feChatRobot = new ChatBot({ webhook })
-    feChatRobot.text(content)
+    feChatRobot
+        .markdown(title, text)
+        .catch(ex => console.error(ex))
 }
 
 module.exports = {
@@ -77,7 +78,7 @@ module.exports = {
     sendMsg,
     sendHostsUpdateMsg,
     sendArticleMsg,
-    sendAlarmMsg,
+    sendMsgAfterSendArticle,
     response: (success, data = null, message)=>{
         if(success) {
             message='执行成功';
