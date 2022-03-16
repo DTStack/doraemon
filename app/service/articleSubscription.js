@@ -1,5 +1,5 @@
 const Service = require('egg').Service
-const { getGithubTrendingFromJueJin, getJueJinHot } = require('../utils/articleSubscription')
+const { getGithubTrendingFromServerless, getJueJinHot } = require('../utils/articleSubscription')
 
 class ArticleSubscriptionService extends Service {
     // 获取列表
@@ -47,7 +47,7 @@ class ArticleSubscriptionService extends Service {
 
         for (let item of topicList) {
             const { siteName, topicName, topicUrl } = item
-            siteName === 'Github' && getGithubTrendingFromJueJin(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
+            siteName === 'Github' && getGithubTrendingFromServerless(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
             siteName === '掘金' && getJueJinHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
         }
     }
