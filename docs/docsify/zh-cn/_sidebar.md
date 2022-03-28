@@ -12,6 +12,7 @@
   + [配置中心](zh-cn/guide/配置中心)
   + [标签管理](zh-cn/guide/标签管理)
   + [Remote Hosts](zh-cn/guide/RemoteHosts)
+  + [文章订阅](zh-cn/guide/文章订阅)
   + [意见反馈](zh-cn/guide/意见反馈)
 + [贡献指南](zh-cn/other/贡献者文档)
 + [ChangeLog](zh-cn/other/CHANGELOG)

@@ -5,6 +5,7 @@ import { replace } from 'lodash';
 import { API } from '@/api';
 import HostModal from './components/hostModal';
 import PasswordModal from './components/passwordModal';
+import WebTerminalModal from './components/webTerminalModal'
 import DtTag from '@/components/dtTag';
 import './style.scss';
 const { Paragraph } = Typography;
@@ -13,6 +14,7 @@ export default (props: any) => {
     const [hostList, setHostList] = useState([]);
     const [hostModalVisible, setHostModalVisible] = useState(false);
     const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+    const [terminalVisible, setTerminalVisible] = useState(false);
     const [currentHost, setCurrentHost] = useState({});
     const [tagList, setTagList] = useState([])
     useEffect(() => {
@@ -53,9 +55,11 @@ export default (props: any) => {
         }, {
             title: '操作',
             key: 'operation',
-            width: 120,
+            width: 200,
             render: (value: any, row: any) => {
                 return <span>
+                    <a onClick={handleOpenTerminal.bind(this, row)}>终端</a>
+                    <Divider type="vertical" />
                     <a onClick={handleTableRowEdit.bind(this, row)}>编辑</a>
                     <Divider type="vertical" />
                     <Popconfirm title={`确认是否删除该主机「${row.hostName}」?`} onConfirm={handleTableRowDelete.bind(this, row)}>
@@ -95,6 +99,10 @@ export default (props: any) => {
             loadTableData();
         }
         setHostModalVisible(false);
+    }
+    const handleOpenTerminal = (row: any) => {
+        setTerminalVisible(true)
+        setCurrentHost(row)
     }
     //新增主机
     const handleHostAdd = () => {
@@ -175,6 +183,10 @@ export default (props: any) => {
                 visible={passwordModalVisible}
                 onOk={handlePasswordModalAction.bind(this, 'ok')}
                 onCancel={handlePasswordModalAction.bind(this, 'cancel')} />}
+            {terminalVisible&&<WebTerminalModal
+                value={currentHost}
+                visible={terminalVisible}
+                onCancel={() => setTerminalVisible(false)} />}
         </div>
     );
 }

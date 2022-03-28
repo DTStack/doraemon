@@ -1,6 +1,7 @@
 
 const ip = require('ip');
 const EasyWebpack = require('easywebpack-react');
+
 module.exports = () => {
     const exports = {};
 
@@ -34,17 +35,24 @@ module.exports = () => {
             {
                 delegate: 'model',
                 baseDir: 'model',
-                database: 'doraemon',
+                database: 'doraemon_test',
                 dialect: 'mysql',
                 host: '127.0.0.1',
                 port: 3306,
-                username:'root',
-                password:''
+                username: 'root',
+                password: '123456'
             }
         ]
     };
 
     exports.security = { domainWhiteList };
+
+    // exports.ssh =  {
+    //     host: '172.16.100.225',
+    //     port: '22',
+    //     username:'root',
+    //     password:'abc123'
+    // };
 
     return exports;
 };

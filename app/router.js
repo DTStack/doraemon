@@ -1,5 +1,5 @@
-
 module.exports = app => {
+    const { io } = app
     app.get('/', app.controller.home.index);
     app.get('/page/*', app.controller.home.index);
     app.get('/c', app.controller.home.client);
@@ -72,6 +72,17 @@ module.exports = app => {
     app.get('/api/switch-hosts/connect/:id', app.controller.switchHosts.getHostsConfig);
 
     /**
+     * 文章订阅
+     */
+    app.post('/api/article-subscription/create-subscription', app.controller.articleSubscription.createSubscription);
+    app.post('/api/article-subscription/delete-subscription', app.controller.articleSubscription.deleteSubscription);
+    app.post('/api/article-subscription/update-subscription', app.controller.articleSubscription.updateSubscription);
+    app.post('/api/article-subscription/get-subscription-list', app.controller.articleSubscription.getSubscriptionList);
+    app.get('/api/article-subscription/get-subscription-info', app.controller.articleSubscription.getSubscriptionInfo);
+    app.get('/api/article-subscription/get-timed-task-list', app.controller.articleSubscription.getTimedTaskList);
+    app.get('/api/article-topic/get-topic-list', app.controller.articleTopic.getTopicList);
+
+    /**
    * tag management 配置内容 增删改查
    */
     app.get('/api/tags/get-all-tag-list', app.controller.tagManagement.getAllTagsList);
@@ -79,4 +90,7 @@ module.exports = app => {
     app.post('/api/tags/create-tag', app.controller.tagManagement.addTag);
     app.post('/api/tags/update-tag', app.controller.tagManagement.editTag);
     app.post('/api/tags/delete-tag', app.controller.tagManagement.deleteTag);
+
+    // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
+    io.of('/').route('loginServer',  io.controller.home.loginServer)
 };

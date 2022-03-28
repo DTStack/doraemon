@@ -7,13 +7,14 @@ import ProxyRuleModal from './components/proxyRuleModal';
 import Cookies from 'js-cookie';
 import { connect } from 'react-redux'
 const { Paragraph } = Typography;
+import helpIcon from '@/asset/images/help-icon.png';
+import config from '../../../../env.json';
 import './style.scss';
 
 const confirm = Modal.confirm;
 const { Search } = Input;
 const { CheckableTag } = Tag;
 
-const commonTags = JSON.parse(Cookies.get('common-tags') || '[]') || [];
 class ProxyServer extends React.PureComponent<any, any> {
     state: any = {
         //代理服务
@@ -40,7 +41,7 @@ class ProxyServer extends React.PureComponent<any, any> {
         //子表格
         subTableData: [],
         subTableLoading: true,
-        commonTagList: commonTags,
+        commonTagList: [],
         selectedTag: ''
     }
     ProxyServerModal: any
@@ -51,7 +52,12 @@ class ProxyServer extends React.PureComponent<any, any> {
     //获取页面主要数据
     loadMainData = () => {
         this.getProxyServerList()
+        this.getCommonTagList()
         this.getLocalIp()
+    }
+    getCommonTagList = () => {
+        const commonTagList = JSON.parse(localStorage.getItem('common-tags') || '[]') || []
+        this.setState({ commonTagList })
     }
     getLocalIp = () => {
         API.getLocalIp().then((response: any) => {
@@ -76,7 +82,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             }
         })
     }
-    getProxyServerList = () => {
+    getProxyServerList = (checked?: boolean) => {
         const { mainTableParams } = this.state;
         this.setState({
             mainTableLoading: true
@@ -89,6 +95,11 @@ class ProxyServer extends React.PureComponent<any, any> {
                     maintTableTotal: data.count,
                     mainTableLoading: false
                 });
+
+                // 点击选择某个常用项目时，只有一条记录，默认展开
+                if (checked === true && data.data.length === 1) {
+                    this.handleTableExpandChange(true, data.data[0])
+                }
             } else {
                 this.setState({
                     mainTableLoading: false
@@ -122,8 +133,12 @@ class ProxyServer extends React.PureComponent<any, any> {
         const { selectedTag } = this.state;
         const newTag = tag === selectedTag ? '' : tag
         this.setState({ selectedTag: newTag }, () => {
-            this.onSearchProject(newTag)
+            this.onSearchProject(newTag, checked)
         });
+    }
+    // 点击帮助文档
+    handleHelpIcon() {
+        window.open(config.proxyHelpDocUrl)
     }
     /**
      * 代理服务
@@ -321,7 +336,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             search: value
         })
     }
-    onSearchProject = (value: any) => {
+    onSearchProject = (value: any, checked?: boolean) => {
         const { mainTableParams, selectedTag, search } = this.state;
         this.setState({
             mainTableParams: Object.assign({}, mainTableParams, {
@@ -330,7 +345,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             }),
             selectedTag: search ? [] : selectedTag
         }, () => {
-            this.getProxyServerList();
+            this.getProxyServerList(checked);
         });
     }
     handleTableChange = (pagination: any) => {
@@ -383,7 +398,7 @@ class ProxyServer extends React.PureComponent<any, any> {
         this.setState({
             commonTagList: newList
         });
-        Cookies.set('common-tags', JSON.stringify(newList));
+        localStorage.setItem('common-tags', JSON.stringify(newList));
     };
     tableExpandedRowRender = (mainTableRow: any) => {
         const { subTableLoading, subTableData, localIp } = this.state;
@@ -393,7 +408,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             width: 100,
             render: (value: any, row: any, index: any) => index + 1
         }, {
-            title: 'IP',
+            title: '用户IP',
             key: 'ip',
             dataIndex: 'ip',
             width: '15%',
@@ -585,6 +600,11 @@ class ProxyServer extends React.PureComponent<any, any> {
                     </div>
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
                 </div>
+                
+                {
+                    config.proxyHelpDocUrl && <img className="help-icon" src={helpIcon} onClick={this.handleHelpIcon} alt="帮助文档" />
+                }
+
                 <Table
                     rowKey={(row: any) => row.id}
                     loading={mainTableLoading}

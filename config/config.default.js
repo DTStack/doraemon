@@ -9,7 +9,8 @@ module.exports = app => {
     };
     exports.security = {
         csrf: {
-            ignore: /^\/proxy/
+            // ignore: /^\/proxy/
+            enable: false
         }
     };
     exports.cacheDirectory = path.join(__dirname,'../cache')
@@ -55,6 +56,21 @@ module.exports = app => {
         fileSize: '50mb',
         mode: 'stream'
     }
+
+    exports.io = {
+        init: { }, // passed to engine.io
+        namespace: {
+            '/': {
+                connectionMiddleware: [ 'connection' ],
+                packetMiddleware: []
+            }
+        }
+    }
+    
+    // 文章订阅每次多少条信息
+    exports.articleSubscription = {
+        pageSize: 5
+    };
 
     return exports;
 };
