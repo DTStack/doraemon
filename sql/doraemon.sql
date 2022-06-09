@@ -13,8 +13,8 @@
 
  Date: 01/06/2021 15:45:35
 */
-CREATE DATABASE IF NOT EXISTS `doraemon`;
-USE doraemon;
+CREATE DATABASE IF NOT EXISTS `doraemon_test`;
+USE doraemon_test;
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
