@@ -6,7 +6,6 @@ import ProxyServerModal from './components/proxyServerModal';
 import ProxyRuleModal from './components/proxyRuleModal';
 import Cookies from 'js-cookie';
 import { connect } from 'react-redux'
-const { Paragraph } = Typography;
 import helpIcon from '@/asset/images/help-icon.png';
 import config from '../../../../env.json';
 import './style.scss';
@@ -14,6 +13,7 @@ import './style.scss';
 const confirm = Modal.confirm;
 const { Search } = Input;
 const { CheckableTag } = Tag;
+const { Paragraph } = Typography;
 
 class ProxyServer extends React.PureComponent<any, any> {
     state: any = {
@@ -516,6 +516,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             selectedTag,
             search
         } = this.state;
+        const { pageNo, pageSize } = mainTableParams;
         const columns: any = [{
             title: '序号',
             key: 'index',
@@ -580,11 +581,12 @@ class ProxyServer extends React.PureComponent<any, any> {
                 <div className="title_wrap">
                     <div>
                         <Search
-                            placeholder="请输入项目名称搜索"
+                            placeholder="请输入项目名称或代理服务地址搜索"
                             value={search}
                             onChange={this.onChangeSearch}
-                            onSearch={this.onSearchProject}
-                            className="search dt-form-shadow-bg" />
+                            onSearch={(value: string) => this.onSearchProject(value)}
+                            className="search dt-form-shadow-bg"
+                        />
                         {
                             commonTagList.length ? (<span style={{ marginRight: 8, marginLeft: 20, lineHeight: '32px' }}>常用项目:</span>) : null
                         }
@@ -621,8 +623,8 @@ class ProxyServer extends React.PureComponent<any, any> {
                         size: 'small',
                         showSizeChanger: false,
                         total: maintTableTotal,
-                        current: mainTableParams.pageNo,
-                        pageSize: mainTableParams.pageSize,
+                        current: pageNo,
+                        pageSize,
                         showTotal: (total: any) => <span>共<span style={{ color: '#3F87FF' }}>{total}</span>条数据，每页显示{mainTableParams.pageSize}条</span>
                     }} />
 

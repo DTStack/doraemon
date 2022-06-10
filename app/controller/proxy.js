@@ -2,20 +2,22 @@ const Controller = require('egg').Controller;
 const _ = require('lodash');
 class ProxyServerController extends Controller{
     //获取服务列表
-    async list(){
-        const {pageSize,pageNo,search} = this.ctx.request.body
+    async list() {
+        const { pageSize, pageNo, search } = this.ctx.request.body;
         const result = await this.app.model.ProxyServer.findAndCountAll({
             attributes: ['id', 'name', 'proxy_server_address', 'api_doc_url', 'status', 'target', 'created_at', 'updated_at'],
-            where:{
-                name:{
-                    '$like':`%${search}%`
-                }
+            where: {
+                '$or': [
+                    { name: { '$like': `%${search}%` } },
+                    { proxy_server_address: { '$like': `%${search}%` } }
+                ]
+                
             },
-            limit:pageSize,
-            order:[['updated_at','DESC']],
-            offset:(pageNo-1)*pageSize
+            limit: pageSize,
+            order: [['updated_at', 'DESC']],
+            offset: (pageNo - 1) * pageSize
         });
-        this.ctx.body = this.app.utils.response(true,{data:result.rows,count:result.count});
+        this.ctx.body = this.app.utils.response(true, { data: result.rows, count: result.count });
     }
     //创建服务
     async add(){
