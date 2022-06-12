@@ -2,13 +2,22 @@ const _ = require('lodash');
 const Service = require('egg').Service;
 
 class HostManagementService extends Service {
-    async queryHosts(params){
-        const {ctx} = this;
-        const { tags='' } = params;
+    async queryHosts(params) {
+        const { ctx } = this;
+        const { tags = '', search = '' } = params;
         let hostReulst = await ctx.model.HostManagement.findAll({
-            attributes:['id','hostIp','hostName','remark','username','password','tags'],
+            attributes: ['id', 'hostIp', 'hostName', 'remark', 'username', 'password', 'tags'],
             where: {
-                status: 1
+                status: 1,
+                $or: [
+                    { 
+                        hostIp: { '$like': `%${search}%` }
+                    },
+                    {
+                        hostName: { '$like': `%${search}%` }
+                    }
+                ]
+               
             }
         });
         let tagsResult = await ctx.model.TagManagement.findAll();
@@ -18,9 +27,9 @@ class HostManagementService extends Service {
             let tagArrs = tagsResult.filter(ele => {
                 return tagids.includes(`${ele.get('id')}`)
             });
-            item.set('tags',tagArrs);
-            if (tags){
-                if (tags.split(',').some(ele=>tagids.includes(`${ele}`))){
+            item.set('tags', tagArrs);
+            if (tags) {
+                if (tags.split(',').some(ele => tagids.includes(`${ele}`))) {
                     result.push(item)
                 }
             } else {

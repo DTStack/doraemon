@@ -166,10 +166,7 @@ const TagsManagement = (props: any) => {
     }
     return (
         <div className="tagsManagement">
-            <Breadcrumb>
-                <Breadcrumb.Item>标签管理</Breadcrumb.Item>
-            </Breadcrumb>
-            <div className="clearfix mt-12 mb-12 title">
+            <div className="clearfix mb-12 title">
                 <Search
                     placeholder="请输入标签名称搜索"
                     style={{ width: 200, height: 32 }}
@@ -182,8 +179,8 @@ const TagsManagement = (props: any) => {
                 rowKey="id"
                 loading={tableLoading}
                 className="dt-table-fixed-base"
-                scroll={{ y: 'calc(100vh - 64px - 21px - 24px - 32px - 40px - 44px - 67px)' }}
-                style={{ height: 'calc(100vh - 64px - 21px - 24px - 32px - 40px)' }}
+                scroll={{ y: 'calc(100vh - 64px - 21px - 24px - 40px - 44px - 67px)' }}
+                style={{ height: 'calc(100vh - 64px - 21px - 24px - 40px)' }}
                 dataSource={tagList.data}
                 columns={initColumns()}
                 pagination={pagination}

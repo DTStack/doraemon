@@ -3,11 +3,11 @@ const _ = require('lodash');
 
 class HostManagementController extends Controller{
     //主机列表
-    async queryHosts(){
-        const {ctx,app} = this;
-        const { tags } = ctx.request.query;
-        const data =  await  ctx.service.hostManagement.queryHosts({tags});
-        ctx.body = app.utils.response(true,data);
+    async queryHosts() {
+        const { ctx, app } = this;
+        const { tags, search } = ctx.request.query;
+        const data = await ctx.service.hostManagement.queryHosts({ tags, search });
+        ctx.body = app.utils.response(true, data);
     }
     //新增主机
     async addHost(){

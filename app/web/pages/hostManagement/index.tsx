@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { Table, Popconfirm, Divider, Typography, Button, Row, Col, message as Message } from 'antd';
+import { Table, Popconfirm, Divider, Typography, Button, Row, Col, message as Message, Input } from 'antd';
 import { replace } from 'lodash';
 import { API } from '@/api';
 import HostModal from './components/hostModal';
@@ -9,6 +9,7 @@ import WebTerminalModal from './components/webTerminalModal'
 import DtTag from '@/components/dtTag';
 import './style.scss';
 const { Paragraph } = Typography;
+const { Search } = Input;
 export default (props: any) => {
     const [tableLoading, setTableLoading] = useState(false);
     const [hostList, setHostList] = useState([]);
@@ -152,13 +153,22 @@ export default (props: any) => {
     const onTableChange = (pagination: any, filters: any, sorter: any) => {
         loadTableData(filters)
     }
+    // 主机名或ip搜索
+    const handleHostSearch = (search: string) => {
+        loadTableData({ search });
+    }
     useEffect(() => {
         loadTableData()
     }, []);
     return (
         <div className="page-host-management">
             <div className="title_wrap">
-                <div className="title">主机管理</div>
+                <Search
+                    placeholder="请输入主机名或IP搜索"
+                    onSearch={handleHostSearch}
+                    className="dt-form-shadow-bg"
+                    style={{ width: 220 }}
+                />
                 <Button type="primary" icon={<PlusCircleOutlined />} onClick={handleHostAdd}>新增主机</Button>
             </div>
             <Table
