@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.5](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.4...v1.4.5) (2022-06-12)
+
+
+### Features
+
+* change api url ([c48fb14](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c48fb143101f3943828a93e12e6022ae6d7af7f7))
+* change github api url ([e59323f](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e59323fcedb7cccd58f7d7c0bbd0f8e1c5982945))
+* change text ([bea3dbd](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/bea3dbd2e91f7d877188981335a78aa21351359e))
+* **configcenter:** add filename and ip search ([3a50a8f](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/3a50a8f1740a4f39e6650fcc15a16b0e3f0a358b))
+* get github from serverless done ([2edec7d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2edec7d67a831ebe7d518de3b59125df42b8df82))
+* get github trending from juejin ([0cbd245](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0cbd24572d639675a7cd62168454e2e27e46e35a))
+* get github trendinng from serverless ([0775fad](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0775fad32656523c6975a0873c5f3cf176c8502c))
+* **hostmanagemant:** add name and ip search ([d826bd8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d826bd896a862dff0a3942a45d9376ec89ea2b81))
+* logs add id ([57f541d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/57f541dbb540e4fdac116885f01f4aa688f44396))
+* proxy add addr search ([3e26cef](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/3e26cef004fe7965887e893da8113345918d691b))
+* refresh local ip by user ([08d41f2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/08d41f2521ac275157f4f952ef3678f412560c8d))
+* send msg when failed ([bbe7d0a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/bbe7d0ab24db4f8205401ed85a55db5225401d43))
+
 ### [1.4.4](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.3...v1.4.4) (2021-12-10)
 
 

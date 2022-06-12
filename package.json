@@ -1,6 +1,6 @@
 {
   "name": "dt-doraemon",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "treasure box for programmer",
   "scripts": {
     "helpDoc": "docsify serve ./docs/docsify",
