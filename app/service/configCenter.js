@@ -5,33 +5,43 @@ class ConfigCenterService extends Service {
     queryConfigs({
         current,
         size,
-        tags
-    }){
-        const {ctx,app} = this;
+        tags,
+        search = ''
+    }) {
+        const { ctx, app } = this;
         let whereParams = {
-            status:1
+            status: 1
         }
-        if (tags&&tags.length){
-            whereParams['tag_ids'] ={
-                $in:tags
+        if (tags && tags.length) {
+            whereParams['tag_ids'] = {
+                $in: tags
             }
         }
+        if (search) {
+            whereParams['$or'] = [
+                { 
+                    filename: { '$like': `%${search}%` }
+                }, {
+                    '$host_management.host_ip$': { '$like': `%${search}%` }
+                }
+            ]
+        }
         let params = {
-            attributes:['id','filename','filePath','remark','hostId',[app.Sequelize.col('host_management.host_ip'),'hostIp'],'created_at','updated_at'],
-            where:whereParams,
+            attributes: ['id', 'filename', 'filePath', 'remark', 'hostId', [app.Sequelize.col('host_management.host_ip'), 'hostIp'], 'created_at', 'updated_at'],
+            where: whereParams,
             include: [{
                 model: ctx.model.HostManagement,
-                attributes:[]
+                attributes: []
             },
             {
                 model: ctx.model.TagManagement,
-                as:'tags',
-                attributes:['id','tagName','tagColor','tagDesc']
+                as: 'tags',
+                attributes: ['id', 'tagName', 'tagColor', 'tagDesc']
             }],
             // raw:true, // 这个属性表示开启原生查询，原生查询支持的功能更多，自定义更强
-            limit:size,
-            order:[['updated_at','DESC']],
-            offset:size*(current-1)
+            limit: size,
+            order: [['updated_at', 'DESC']],
+            offset: size * (current - 1)
         }
         return ctx.model.ConfigManagement.findAndCountAll(params)
     }

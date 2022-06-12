@@ -1,6 +1,6 @@
 import React, { Fragment, useState, useEffect } from 'react';
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { Button, Divider, Table, message as Message, Popconfirm } from 'antd';
+import { Button, Divider, Table, message as Message, Popconfirm, Input } from 'antd';
 import { isEmpty } from 'lodash';
 import { Link } from 'react-router-dom';
 import ConfigFileModal from './components/configFileModal';
@@ -8,6 +8,9 @@ import DtTag from '@/components/dtTag';
 import { API } from '@/api';
 import moment from 'moment';
 import './style.scss';
+
+const { Search } = Input;
+
 const ConfigCenter = () => {
     const [configList, setConfigList] = useState([]);
     const [currentConfigFile, setCurrentConfigFile] = useState({});
@@ -17,7 +20,8 @@ const ConfigCenter = () => {
         current: 1,
         pageSize: 20,
         total: 0,
-        tags: []
+        tags: [],
+        search: ''
     });
     const [tagList, setTagList] = useState([])
     const [loading, setTableLoading] = useState(false)
@@ -112,24 +116,25 @@ const ConfigCenter = () => {
             return {
                 ...preState,
                 current,
-                tags
+                tags: tags || []
             }
         });
     }
     const loadMainData = () => {
-        const { current, pageSize, tags } = tablePagination;
+        const { current, pageSize, tags, search } = tablePagination;
         setTableLoading(true)
         API.getConfigList({
             current,
             size: pageSize,
-            tags
+            tags,
+            search
         }).then((response: any) => {
             const { success, data } = response;
             if (success) {
                 setConfigList(data.data);
                 setTablePagination({
                     ...tablePagination,
-                    total: data.total
+                    total: data.count
                 })
             }
         }).finally(() => {
@@ -153,15 +158,26 @@ const ConfigCenter = () => {
             }
         }
     }
+    // 搜索
+    const handleConfigSearch = (search: string) => {
+        setTablePagination({
+            ...tablePagination,
+            current: 1,
+            search
+        });
+    }
     useEffect(() => {
         loadMainData();
-    }, [tablePagination.current, ...tablePagination.tags])
+    }, [tablePagination.search, tablePagination.current, tablePagination.tags])
     return (
         <div className="page-config-center">
             <div className="header_title">
-                <span className="title">
-                    配置中心
-                </span>
+                <Search
+                    placeholder="请输入文件名或主机IP搜索"
+                    onSearch={handleConfigSearch}
+                    className="dt-form-shadow-bg"
+                    style={{ width: 220 }}
+                />
                 <Button icon={<PlusCircleOutlined />} type="primary" onClick={handleConfigFileAdd}>新增配置</Button>
             </div>
             <div>
