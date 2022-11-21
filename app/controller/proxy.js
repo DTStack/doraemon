@@ -3,16 +3,19 @@ const _ = require('lodash');
 class ProxyServerController extends Controller{
     //获取服务列表
     async list() {
-        const { pageSize, pageNo, search } = this.ctx.request.body;
+        const { pageSize, pageNo, search, projectId } = this.ctx.request.body;
+        let whereParams = {
+            '$or': [
+                { name: { '$like': `%${search}%` } },
+                { proxy_server_address: { '$like': `%${search}%` } }
+            ]
+        }
+        if (projectId) {
+            whereParams.id = projectId
+        }
         const result = await this.app.model.ProxyServer.findAndCountAll({
             attributes: ['id', 'name', 'proxy_server_address', 'api_doc_url', 'status', 'target', 'created_at', 'updated_at'],
-            where: {
-                '$or': [
-                    { name: { '$like': `%${search}%` } },
-                    { proxy_server_address: { '$like': `%${search}%` } }
-                ]
-                
-            },
+            where: whereParams,
             limit: pageSize,
             order: [['updated_at', 'DESC']],
             offset: (pageNo - 1) * pageSize
