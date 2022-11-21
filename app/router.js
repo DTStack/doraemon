@@ -20,6 +20,7 @@ module.exports = app => {
     app.post('/api/proxy-server/update-rule', app.controller.proxy.updateRule);
     app.post('/api/proxy-server/update-rule-status', app.controller.proxy.updateRuleStatus);
     app.delete('/api/proxy-server/delete-rule', app.controller.proxy.deleteRule);
+    app.post('/api/proxy-server/get-project-list-by-user-ip', app.controller.proxy.projectListByUserIP);
     /**
    * 主机管理
    */

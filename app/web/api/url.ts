@@ -90,6 +90,11 @@ export default {
         method: 'delete',
         url: '/api/proxy-server/delete-rule'
     },
+    //根据用户IP查询所在的项目列表
+    getProjectListByUserIP: {
+        method: 'post',
+        url: '/api/proxy-server/get-project-list-by-user-ip'
+    },
     /**
      * 主机管理
      */
