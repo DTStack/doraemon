@@ -3,16 +3,19 @@ const _ = require('lodash');
 class ProxyServerController extends Controller{
     //获取服务列表
     async list() {
-        const { pageSize, pageNo, search } = this.ctx.request.body;
+        const { pageSize, pageNo, search, projectId } = this.ctx.request.body;
+        let where = {
+            '$or': [
+                { name: { '$like': `%${search}%` } },
+                { proxy_server_address: { '$like': `%${search}%` } }
+            ]
+        }
+        if (projectId) {
+            where.id = projectId
+        }
         const result = await this.app.model.ProxyServer.findAndCountAll({
             attributes: ['id', 'name', 'proxy_server_address', 'api_doc_url', 'status', 'target', 'created_at', 'updated_at'],
-            where: {
-                '$or': [
-                    { name: { '$like': `%${search}%` } },
-                    { proxy_server_address: { '$like': `%${search}%` } }
-                ]
-                
-            },
+            where,
             limit: pageSize,
             order: [['updated_at', 'DESC']],
             offset: (pageNo - 1) * pageSize
@@ -27,7 +30,7 @@ class ProxyServerController extends Controller{
         const { id } = result;
         // 存储目标地址信息
         await this.ctx.service.proxyServerAddrs.create(targetAddrs, id);
-        this.ctx.body = this.app.utils.response(true, null); 
+        this.ctx.body = this.app.utils.response(true, null);
     }
 
     // 获取目标服务地址列表
