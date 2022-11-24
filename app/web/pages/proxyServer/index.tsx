@@ -43,12 +43,19 @@ class ProxyServer extends React.PureComponent<any, any> {
         subTableLoading: true,
         collectTagList: [],
         selectedTagId: '',
-        collectMax: 6 // 最多收藏6个常用项目
+        collectMax: 6, // 最多收藏6个常用项目
+        projectId: undefined
     }
     ProxyServerModal: any
     ProxyRuleModal: any
     componentDidMount() {
-        this.loadMainData();
+        const projectId = new URLSearchParams(this.props?.location?.search).get('projectId');
+        this.setState((prevState) => ({
+            mainTableParams: {
+                ...prevState.mainTableParams,
+                projectId: projectId ? +projectId : undefined
+            }
+        }), this.loadMainData)
     }
     //获取页面主要数据
     loadMainData = () => {
@@ -103,15 +110,15 @@ class ProxyServer extends React.PureComponent<any, any> {
                     mainTableLoading: false
                 });
 
-                // 点击选择某个常用项目时，只有一条记录，默认展开
-                if (checked === true && data.data.length === 1) {
+                // 点击选择某个常用项目时或者url中存在projectId时，默认展开
+                if (data?.data?.length === 1 && mainTableParams?.projectId) {
                     this.handleTableExpandChange(true, data.data[0])
                 }
-            } else {
-                this.setState({
-                    mainTableLoading: false
-                });
             }
+        }).finally(() => {
+            this.setState({
+                mainTableLoading: false
+            });
         });
     }
     //获取子表格数据
@@ -136,12 +143,18 @@ class ProxyServer extends React.PureComponent<any, any> {
             }
         });
     }
-    handleChange(tag: any, checked: any) {
-        const { selectedTagId } = this.state;
-        const newTagId = tag.id == selectedTagId ? '' : tag.id
-        this.setState({ selectedTagId: newTagId }, () => {
-            this.onSearchProject(newTagId, checked)
-        });
+    handleTagChange(id: number, checked: boolean) {
+        const { selectedTagId, mainTableParams } = this.state;
+        const newTagId = id == selectedTagId ? '' : id;
+
+        this.setState({
+            selectedTagId: newTagId,
+            mainTableParams: {
+                ...mainTableParams,
+                pageNo: 1,
+                projectId: checked ? id : undefined
+            }
+        }, this.getProxyServerList);
     }
     // 点击帮助文档
     handleHelpIcon() {
@@ -343,17 +356,16 @@ class ProxyServer extends React.PureComponent<any, any> {
             search: value
         })
     }
-    onSearchProject = (value: any, checked?: boolean) => {
+    onSearchProject = (value: any) => {
         const { mainTableParams, selectedTagId, search } = this.state;
         this.setState({
             mainTableParams: Object.assign({}, mainTableParams, {
                 pageNo: 1,
-                search: value
+                search: value,
+                projectId: undefined
             }),
             selectedTagId: search ? [] : selectedTagId
-        }, () => {
-            this.getProxyServerList(checked);
-        });
+        }, this.getProxyServerList);
     }
     handleTableChange = (pagination: any) => {
         const { current, pageSize } = pagination;
@@ -600,7 +612,7 @@ class ProxyServer extends React.PureComponent<any, any> {
                             <CheckableTag
                                 key={tag.id}
                                 checked={tag.id == selectedTagId}
-                                onChange={(checked: any) => this.handleChange(tag, checked)}
+                                onChange={(checked: any) => this.handleTagChange(tag.id, checked)}
                             >
                                 <Tooltip title={tag.name}>
                                     <div className="collect-tag-name">{tag.name}</div>
