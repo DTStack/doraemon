@@ -35,16 +35,15 @@ class ProxyServer extends React.PureComponent<any, any> {
         mainTableParams: {
             search: '',
             pageNo: 1,
-            pageSize: 20
+            pageSize: 20,
+            projectId: undefined
         },
         expandedRowKeys: [],
         //子表格
         subTableData: [],
         subTableLoading: true,
         collectTagList: [],
-        selectedTagId: '',
-        collectMax: 6, // 最多收藏6个常用项目
-        projectId: undefined
+        collectMax: 6 // 最多收藏6个常用项目
     }
     ProxyServerModal: any
     ProxyRuleModal: any
@@ -111,7 +110,7 @@ class ProxyServer extends React.PureComponent<any, any> {
                 });
 
                 // 点击选择某个常用项目时或者url中存在projectId时，默认展开
-                if (data?.data?.length === 1 && mainTableParams?.projectId) {
+                if (data?.data?.length === 1) {
                     this.handleTableExpandChange(true, data.data[0])
                 }
             }
@@ -144,11 +143,8 @@ class ProxyServer extends React.PureComponent<any, any> {
         });
     }
     handleTagChange(id: number, checked: boolean) {
-        const { selectedTagId, mainTableParams } = this.state;
-        const newTagId = id == selectedTagId ? '' : id;
-
+        const { mainTableParams } = this.state;
         this.setState({
-            selectedTagId: newTagId,
             mainTableParams: {
                 ...mainTableParams,
                 pageNo: 1,
@@ -357,14 +353,13 @@ class ProxyServer extends React.PureComponent<any, any> {
         })
     }
     onSearchProject = (value: any) => {
-        const { mainTableParams, selectedTagId, search } = this.state;
+        const { mainTableParams } = this.state;
         this.setState({
             mainTableParams: Object.assign({}, mainTableParams, {
                 pageNo: 1,
                 search: value,
                 projectId: undefined
-            }),
-            selectedTagId: search ? [] : selectedTagId
+            })
         }, this.getProxyServerList);
     }
     handleTableChange = (pagination: any) => {
@@ -535,11 +530,9 @@ class ProxyServer extends React.PureComponent<any, any> {
             proxyRuleModalVisible,
             proxyRuleModalConfirmLoading,
             collectTagList,
-            selectedTagId,
-            search,
-            collectMax
+            search
         } = this.state;
-        const { pageNo, pageSize } = mainTableParams;
+        const { pageNo, pageSize, projectId } = mainTableParams;
         const columns: any = [{
             title: '序号',
             key: 'index',
@@ -611,7 +604,7 @@ class ProxyServer extends React.PureComponent<any, any> {
                         {collectTagList.map((tag: any) => (
                             <CheckableTag
                                 key={tag.id}
-                                checked={tag.id == selectedTagId}
+                                checked={tag.id == projectId}
                                 onChange={(checked: any) => this.handleTagChange(tag.id, checked)}
                             >
                                 <Tooltip title={tag.name}>
