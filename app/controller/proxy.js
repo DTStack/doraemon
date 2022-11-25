@@ -142,5 +142,40 @@ class ProxyServerController extends Controller{
         });
         this.ctx.body = this.app.utils.response(result,null);
     }
+    //根据用户IP查询所在的项目列表
+    async projectListByUserIP() {
+        const { userIP } = this.ctx.request.body;
+        this.app.model.ProxyRule.belongsTo(this.app.model.ProxyServer,{ foreignKey: 'proxy_server_id', targetKey: 'id'});
+        const result = await this.app.model.ProxyRule.findAndCountAll({
+            attributes:['id','status','ip','target','remark'],
+            where:{
+                is_delete:0,
+                ip: userIP
+            },
+            include: [{
+                model: this.app.model.ProxyServer,
+                attributes:[['id', 'serverId'], ['name', 'serverName'], ['proxy_server_address', 'address'], 'target']
+            }]
+        });
+        let dataObj = {};
+        result.rows.forEach(item => {
+            const { proxy_server = {}, id, ip, status, target, remark } = item || {};
+            const rule = { id, ip, status, target, remark };
+            const { serverId, serverName, address } = proxy_server.dataValues || {};
+            if(dataObj.hasOwnProperty(serverId)) {
+                dataObj[serverId].rules.push(rule);
+            } else {
+                dataObj[serverId] = {
+                    serverName,
+                    address,
+                    rules: [
+                        rule
+                    ]
+                }
+            }
+        });
+        const data = Object.keys(dataObj).map((key) => Object.assign({}, { serverId: key }, dataObj[key]))
+        this.ctx.body = this.app.utils.response(true, data);
+    }
 }
 module.exports = ProxyServerController;
