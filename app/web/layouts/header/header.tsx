@@ -86,7 +86,7 @@ const HeaderComponent = (props: any) => {
                     <span className="local-ip ml-20">{`本机IP: ${localIp}`}</span>
 
                     {/* 主动更新本地IP */}
-                    <SyncOutlined className='refresh-cion' onClick={changeLocalIp} />
+                    <SyncOutlined className='refresh-cion' onClick={() => changeLocalIp(true)} />
                 </div>
             </div>
         </Header>
