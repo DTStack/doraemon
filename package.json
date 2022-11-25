@@ -94,6 +94,7 @@
     "commitizen": "^4.0.3",
     "commitlint": "^8.2.0",
     "conventional-changelog-cli": "^2.0.28",
+    "cz-conventional-changelog": "^3.3.0",
     "docsify-cli": "^4.4.3",
     "easywebpack-cli": "^4.3.5",
     "easywebpack-react": "^4.4.1",
@@ -119,11 +120,6 @@
     "vue-cli-plugin-commitlint": "^1.0.4",
     "webpack": "^4.30.0"
   },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/vue-cli-plugin-commitlint/lib/cz"
-    }
-  },
   "husky": {
     "hooks": {
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
@@ -141,5 +137,10 @@
   },
   "author": "hubcarl@126.com",
   "license": "MIT",
-  "homepage": "https://github.com/easy-team/egg-react-webpack-boilerplate"
+  "homepage": "https://github.com/easy-team/egg-react-webpack-boilerplate",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
 }
