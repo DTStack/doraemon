@@ -1,4 +1,11 @@
 .page-proxy-server {
+  .all-ip-switch {
+    margin-left: 15px;
+    background-color: #3fad09;
+    &.ant-switch-checked {
+      background-color: #3F87FF;
+    }
+  }
   .title_wrap {
     display: flex;
     justify-content: space-between;

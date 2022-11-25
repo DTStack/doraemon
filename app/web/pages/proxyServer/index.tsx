@@ -40,6 +40,7 @@ class ProxyServer extends React.PureComponent<any, any> {
         expandedRowKeys: [],
         //子表格
         subTableData: [],
+        allIPChecked: true, // 查看全部IP的开关是否打开
         subTableLoading: true,
         commonTagList: [],
         selectedTag: ''
@@ -109,8 +110,11 @@ class ProxyServer extends React.PureComponent<any, any> {
     }
     //获取子表格数据
     loadSubTableData(row: any) {
+        const { localIp } = this.state;
         const { id } = row;
+        const allIPChecked = localStorage.getItem(`${ localIp }-${ id }-all-ip-checked`) !== 'no'
         this.setState({
+            allIPChecked,
             subTableLoading: true
         });
         API.getProxyRuleList({
@@ -401,7 +405,7 @@ class ProxyServer extends React.PureComponent<any, any> {
         localStorage.setItem('common-tags', JSON.stringify(newList));
     };
     tableExpandedRowRender = (mainTableRow: any) => {
-        const { subTableLoading, subTableData, localIp } = this.state;
+        const { subTableLoading, subTableData, localIp, allIPChecked } = this.state;
         const columns: any = [{
             title: '序号',
             key: 'index',
@@ -462,13 +466,16 @@ class ProxyServer extends React.PureComponent<any, any> {
         }]
         return (
             <div style={{ padding: '0 10px' }}>
-                <div className="text-right marginBottom12"><Button icon={<PlusOutlined />} size="small" type="primary" onClick={this.handleAddRule}>添加规则</Button></div>
+                <div className="text-right marginBottom12">
+                    <Button icon={<PlusOutlined />} size="small" type="primary" onClick={this.handleAddRule}>添加规则</Button>
+                    <Switch className='all-ip-switch' checkedChildren="全部" unCheckedChildren="我的" checked={allIPChecked} onChange={(checked) => { this.handleIPFilter(checked, mainTableRow) }} />
+                </div>
                 <Table
                     size="small"
                     rowKey={(row: any) => row.id}
                     loading={subTableLoading}
                     columns={columns}
-                    dataSource={subTableData}
+                    dataSource={allIPChecked ? subTableData : subTableData.filter(item => item.ip === localIp)}
                     pagination={false} />
             </div>
         );
@@ -486,6 +493,16 @@ class ProxyServer extends React.PureComponent<any, any> {
                 })
             }
         );
+    }
+
+    // 只看我的 IP (false)或者全部(true)
+    handleIPFilter = (allIPChecked, mainTableRow) => {
+        const { localIp } = this.state;
+        localStorage.setItem(`${ localIp }-${ mainTableRow.id }-all-ip-checked`, allIPChecked ? 'yes' : 'no')
+        Message.success(`${ allIPChecked ? '查看全部' : '只看我的IP' }`)
+        this.setState({
+            allIPChecked
+        })
     }
 
     // 获取已有目标服务列表
