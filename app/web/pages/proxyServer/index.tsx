@@ -41,23 +41,37 @@ class ProxyServer extends React.PureComponent<any, any> {
         //子表格
         subTableData: [],
         subTableLoading: true,
-        commonTagList: [],
-        selectedTag: ''
+        collectTagList: [],
+        selectedTagId: '',
+        collectMax: 6, // 最多收藏6个常用项目
+        projectId: undefined
     }
     ProxyServerModal: any
     ProxyRuleModal: any
     componentDidMount() {
-        this.loadMainData();
+        const projectId = new URLSearchParams(this.props?.location?.search).get('projectId');
+        this.setState((prevState) => ({
+            mainTableParams: {
+                ...prevState.mainTableParams,
+                projectId: projectId ? +projectId : undefined
+            }
+        }), this.loadMainData)
     }
     //获取页面主要数据
     loadMainData = () => {
         this.getProxyServerList()
-        this.getCommonTagList()
+        this.getCollectTagList()
         this.getLocalIp()
     }
-    getCommonTagList = () => {
-        const commonTagList = JSON.parse(localStorage.getItem('common-tags') || '[]') || []
-        this.setState({ commonTagList })
+    getCollectTagList = () => {
+        let collectTagList = []
+        try {
+            collectTagList = JSON.parse(localStorage.getItem('collection-tags') || '[]')
+        } catch {
+            collectTagList = []
+            localStorage.removeItem('collection-tags')
+        }
+        this.setState({ collectTagList })
     }
     getLocalIp = () => {
         API.getLocalIp().then((response: any) => {
@@ -96,15 +110,15 @@ class ProxyServer extends React.PureComponent<any, any> {
                     mainTableLoading: false
                 });
 
-                // 点击选择某个常用项目时，只有一条记录，默认展开
-                if (checked === true && data.data.length === 1) {
+                // 点击选择某个常用项目时或者url中存在projectId时，默认展开
+                if (data?.data?.length === 1 && mainTableParams?.projectId) {
                     this.handleTableExpandChange(true, data.data[0])
                 }
-            } else {
-                this.setState({
-                    mainTableLoading: false
-                });
             }
+        }).finally(() => {
+            this.setState({
+                mainTableLoading: false
+            });
         });
     }
     //获取子表格数据
@@ -129,12 +143,18 @@ class ProxyServer extends React.PureComponent<any, any> {
             }
         });
     }
-    handleChange(tag: any, checked: any) {
-        const { selectedTag } = this.state;
-        const newTag = tag === selectedTag ? '' : tag
-        this.setState({ selectedTag: newTag }, () => {
-            this.onSearchProject(newTag, checked)
-        });
+    handleTagChange(id: number, checked: boolean) {
+        const { selectedTagId, mainTableParams } = this.state;
+        const newTagId = id == selectedTagId ? '' : id;
+
+        this.setState({
+            selectedTagId: newTagId,
+            mainTableParams: {
+                ...mainTableParams,
+                pageNo: 1,
+                projectId: checked ? id : undefined
+            }
+        }, this.getProxyServerList);
     }
     // 点击帮助文档
     handleHelpIcon() {
@@ -336,17 +356,16 @@ class ProxyServer extends React.PureComponent<any, any> {
             search: value
         })
     }
-    onSearchProject = (value: any, checked?: boolean) => {
-        const { mainTableParams, selectedTag, search } = this.state;
+    onSearchProject = (value: any) => {
+        const { mainTableParams, selectedTagId, search } = this.state;
         this.setState({
             mainTableParams: Object.assign({}, mainTableParams, {
                 pageNo: 1,
-                search: value
+                search: value,
+                projectId: undefined
             }),
-            selectedTag: search ? [] : selectedTag
-        }, () => {
-            this.getProxyServerList(checked);
-        });
+            selectedTagId: search ? [] : selectedTagId
+        }, this.getProxyServerList);
     }
     handleTableChange = (pagination: any) => {
         const { current, pageSize } = pagination;
@@ -386,19 +405,22 @@ class ProxyServer extends React.PureComponent<any, any> {
             }
         })
     }
-    setCommonTag = (row: any, isCommon: any) => {
-        const { name } = row;
-        const { commonTagList } = this.state;
+    setCollectTag = (row: any, collected: any) => {
+        const { id, name } = row;
+        const { collectTagList, collectMax } = this.state;
         let newList: any = [];
-        if (isCommon) {
-            newList = commonTagList.filter((item: any) => item != name);
+        if (collected) {
+            newList = collectTagList.filter((item: any) => item?.id != id);
         } else {
-            newList = Array.from(new Set([name, ...commonTagList])).splice(0, 4);
+            // 超过 collectMax 就留下数组后面的 collectMax 个收藏项目
+            collectTagList.push({ id, name })
+            const start = collectTagList.length > collectMax ? (collectTagList.length - collectMax) : 0
+            newList = collectTagList.slice(start);
         }
         this.setState({
-            commonTagList: newList
+            collectTagList: newList
         });
-        localStorage.setItem('common-tags', JSON.stringify(newList));
+        localStorage.setItem('collection-tags', JSON.stringify(newList));
     };
     tableExpandedRowRender = (mainTableRow: any) => {
         const { subTableLoading, subTableData, localIp } = this.state;
@@ -512,9 +534,10 @@ class ProxyServer extends React.PureComponent<any, any> {
             currentProxyRule,
             proxyRuleModalVisible,
             proxyRuleModalConfirmLoading,
-            commonTagList,
-            selectedTag,
-            search
+            collectTagList,
+            selectedTagId,
+            search,
+            collectMax
         } = this.state;
         const { pageNo, pageSize } = mainTableParams;
         const columns: any = [{
@@ -555,8 +578,8 @@ class ProxyServer extends React.PureComponent<any, any> {
             key: 'actions',
             width: 200,
             render: (value: any, row: any) => {
-                const { status, name } = row;
-                const isCommon = commonTagList.includes(name);
+                const { id, name, status } = row;
+                const collected = collectTagList.some(item => item?.id == id);
                 return (<React.Fragment>
                     <a onClick={this.handleProxyServerEdit.bind(this, row)}>编辑</a>
                     <Divider type="vertical" />
@@ -564,13 +587,8 @@ class ProxyServer extends React.PureComponent<any, any> {
                     {/* <Divider type="vertical" />
           <a onClick={this.handleProxyServerStatusChange.bind(this, row)}>{Boolean(status) ? '禁用' : '重启'}</a> */}
                     <Divider type="vertical" />
-                    <Tooltip placement="topLeft" title={
-                        <div>
-                            <div>设置为常用项目</div>
-                            <div>最多可设置4个常用项目</div>
-                        </div>
-                    }>
-                        <a onClick={() => this.setCommonTag(row, isCommon)}>{isCommon ? '取消收藏' : '收藏'}</a>
+                    <Tooltip title="设置为常用项目">
+                        <a onClick={() => this.setCollectTag(row, collected)}>{collected ? '取消收藏' : '收藏'}</a>
                     </Tooltip>
                 </React.Fragment>)
             }
@@ -579,7 +597,7 @@ class ProxyServer extends React.PureComponent<any, any> {
         return (
             <div className="page-proxy-server">
                 <div className="title_wrap">
-                    <div>
+                    <div className="title-left">
                         <Search
                             placeholder="请输入项目名称或代理服务地址搜索"
                             value={search}
@@ -588,21 +606,23 @@ class ProxyServer extends React.PureComponent<any, any> {
                             className="search dt-form-shadow-bg"
                         />
                         {
-                            commonTagList.length ? (<span style={{ marginRight: 8, marginLeft: 20, lineHeight: '32px' }}>常用项目:</span>) : null
+                            collectTagList.length ? (<span style={{ marginRight: 8, marginLeft: 20, lineHeight: '32px' }}>常用项目:</span>) : null
                         }
-                        {commonTagList.map((tag: any) => (
+                        {collectTagList.map((tag: any) => (
                             <CheckableTag
-                                key={tag}
-                                checked={tag == selectedTag}
-                                onChange={(checked: any) => this.handleChange(tag, checked)}
+                                key={tag.id}
+                                checked={tag.id == selectedTagId}
+                                onChange={(checked: any) => this.handleTagChange(tag.id, checked)}
                             >
-                                {tag}
+                                <Tooltip title={tag.name}>
+                                    <div className="collect-tag-name">{tag.name}</div>
+                                </Tooltip>
                             </CheckableTag>
                         ))}
                     </div>
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => { this.setState({ proxyServerModalVisible: true }) }}>添加服务</Button>
                 </div>
-                
+
                 {
                     config.proxyHelpDocUrl && <img className="help-icon" src={helpIcon} onClick={this.handleHelpIcon} alt="帮助文档" />
                 }
