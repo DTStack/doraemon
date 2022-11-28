@@ -11,9 +11,21 @@
     justify-content: space-between;
     align-self: center;
     margin-bottom: 12px;
-    .search {
-      width: 260px;
-      height: 32px;
+    .title-left {
+      display: flex;
+      align-items: center;
+      .search {
+        width: 260px;
+        height: 32px;
+      }
+      .ant-tag {
+        .collect-tag-name {
+          max-width: 120px;
+          overflow: hidden; // 超出的文本隐藏
+          white-space: nowrap;
+          text-overflow: ellipsis; // 溢出用省略号显示
+        }
+      }
     }
   }
   .ant-tag-checkable {
