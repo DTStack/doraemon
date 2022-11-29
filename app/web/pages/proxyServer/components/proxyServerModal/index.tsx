@@ -86,7 +86,7 @@ class ProxyServerModal extends React.PureComponent<any, any> {
                     callback('请输入目标服务地址');
                 }
                 if (!urlReg.test(target)) {
-                    callback('请输入正确格式的目标服务地址');
+                    callback('请输入正确格式的目标服务地址，以 http(s):// 开头');
                 }
             }
         }
@@ -148,7 +148,7 @@ class ProxyServerModal extends React.PureComponent<any, any> {
                     label="默认目标服务地址"
                     name="target"
                     rules={[{
-                        required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址'
+                        required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址，以 http(s):// 开头'
                     }]}
                 >
                     <Input placeholder="请通过下表选择默认目标服务地址" disabled />

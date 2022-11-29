@@ -114,9 +114,9 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
                                     <Form.Item
                                         label="目标服务地址"
                                         name="target"
-                                        rules={[{ required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址' }]}
+                                        rules={[{ required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址，以 http(s):// 开头' }]}
                                     >
-                                        <Input placeholder="请输入正确格式的目标服务地址" />
+                                        <Input placeholder="请输入正确格式的目标服务地址，以 http(s):// 开头" />
                                     </Form.Item>
                                     <Tooltip placement="topLeft" title={`快速填写默认目标地址默认为：http://${ip || localIp}:8080`}>
                                         <Button shape="circle" className="retweet" size="small" onClick={this.onClickQuickInput} icon={<RetweetOutlined />} />
@@ -126,7 +126,7 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
                                 <Form.Item
                                     label="目标服务地址"
                                     name="target"
-                                    rules={[{ required: true, message: '请输入正确格式的目标服务地址' }]}
+                                    rules={[{ required: true, message: '请输入正确格式的目标服务地址，以 http(s):// 开头' }]}
                                 >
                                     <Select placeholder="请输入目标服务地址">
                                         {
