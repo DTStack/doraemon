@@ -152,7 +152,8 @@ class ProxyServer extends React.PureComponent<any, any> {
             mainTableParams: {
                 ...mainTableParams,
                 pageNo: 1,
-                projectId: checked ? id : undefined
+                projectId: checked ? id : undefined,
+                search: ''
             }
         }, this.getProxyServerList);
     }
