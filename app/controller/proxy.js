@@ -154,6 +154,9 @@ class ProxyServerController extends Controller{
             },
             include: [{
                 model: this.app.model.ProxyServer,
+                where: {
+                    is_delete:0
+                },
                 attributes:[['id', 'serverId'], ['name', 'serverName'], ['proxy_server_address', 'address'], 'target']
             }]
         });
@@ -161,7 +164,7 @@ class ProxyServerController extends Controller{
         result.rows.forEach(item => {
             const { proxy_server = {}, id, ip, status, target, remark } = item || {};
             const rule = { id, ip, status, target, remark };
-            const { serverId, serverName, address } = proxy_server.dataValues || {};
+            const { serverId, serverName, address } = proxy_server?.dataValues || {};
             if(dataObj.hasOwnProperty(serverId)) {
                 dataObj[serverId].rules.push(rule);
             } else {
