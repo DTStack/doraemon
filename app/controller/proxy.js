@@ -8,7 +8,8 @@ class ProxyServerController extends Controller{
             '$or': [
                 { name: { '$like': `%${search}%` } },
                 { proxy_server_address: { '$like': `%${search}%` } }
-            ]
+            ],
+            is_delete: 0
         }
         if (projectId) {
             where.id = projectId
@@ -56,12 +57,23 @@ class ProxyServerController extends Controller{
     //删除服务
     async delete(){
         const {id} = this.ctx.request.query;
-        const result = await this.app.model.ProxyServer.destroy({
-            where:{
+        // 逻辑删除代理服务下的项目
+        await this.app.model.ProxyServer.update({
+            is_delete: 1
+        }, {
+            where: {
                 id
             }
         });
-        this.ctx.body = this.app.utils.response(true,result);
+        // 逻辑删除代理服务下的项目下的代理服务
+        await this.app.model.ProxyRule.update({
+            is_delete: 1
+        }, {
+            where: {
+                proxy_server_id: id
+            }
+        });
+        this.ctx.body = this.app.utils.response(true, null);
     }
     //改变状态
     async changeStatus(){
@@ -154,6 +166,9 @@ class ProxyServerController extends Controller{
             },
             include: [{
                 model: this.app.model.ProxyServer,
+                where: {
+                    is_delete:0
+                },
                 attributes:[['id', 'serverId'], ['name', 'serverName'], ['proxy_server_address', 'address'], 'target']
             }]
         });
@@ -161,7 +176,7 @@ class ProxyServerController extends Controller{
         result.rows.forEach(item => {
             const { proxy_server = {}, id, ip, status, target, remark } = item || {};
             const rule = { id, ip, status, target, remark };
-            const { serverId, serverName, address } = proxy_server.dataValues || {};
+            const { serverId, serverName, address } = proxy_server?.dataValues || {};
             if(dataObj.hasOwnProperty(serverId)) {
                 dataObj[serverId].rules.push(rule);
             } else {
