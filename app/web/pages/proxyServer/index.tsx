@@ -152,7 +152,8 @@ class ProxyServer extends React.PureComponent<any, any> {
             mainTableParams: {
                 ...mainTableParams,
                 pageNo: 1,
-                projectId: checked ? id : undefined
+                projectId: checked ? id : undefined,
+                search: ''
             }
         }, this.getProxyServerList);
     }
@@ -624,7 +625,7 @@ class ProxyServer extends React.PureComponent<any, any> {
                                 checked={tag.id == projectId}
                                 onChange={(checked: any) => this.handleTagChange(tag.id, checked)}
                             >
-                                <Tooltip title={tag.name}>
+                                <Tooltip placement="bottom" title={tag.name}>
                                     <div className="collect-tag-name">{tag.name}</div>
                                 </Tooltip>
                             </CheckableTag>
