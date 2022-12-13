@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.5...v1.5.0) (2022-12-13)
+
+
+### Features
+
+* add get projectList by user IP api ([#42](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/42)) ([b9f9a96](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b9f9a96023130c0d571a5ece0a3b713793b4df78))
+* collect use Object and max is 6 ([6954dec](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6954dec5c5319e3596de004d86ae3d74f1e096bc))
+* collect use Object and max is 6 ([#44](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/44)) ([5ea62a0](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/5ea62a061b65ecce20b6d0d441d22e03ea7d5fd7))
+* form error msg ([c857eda](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c857eda5375955c6a25428271ca2c3d8610c35ae))
+* node-sass@6 for node v16 ([57299d8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/57299d80163d9d0598c281f34ce7936d2fe6c606))
+* proxy changeOrigin ([c749949](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c7499495dcd132dd3ed8c50b736d8f43de32f283))
+* proxy list with projectId ([7f633c6](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7f633c627cb995e71299f7cef1a6400ff39511c7))
+* remove selectedTagId ([62f4c30](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/62f4c3067aedd59c0821a18079e17a60e7918da3))
+* with projectId ([4308cc2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/4308cc24bfe8e81e97a6a1dbdb6657838194e70c))
+
 ### [1.4.5](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.4...v1.4.5) (2022-06-12)
 
 
