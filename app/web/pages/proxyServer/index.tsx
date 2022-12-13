@@ -152,7 +152,8 @@ class ProxyServer extends React.PureComponent<any, any> {
             mainTableParams: {
                 ...mainTableParams,
                 pageNo: 1,
-                projectId: checked ? id : undefined
+                projectId: checked ? id : undefined,
+                search: ''
             }
         }, this.getProxyServerList);
     }
@@ -553,22 +554,25 @@ class ProxyServer extends React.PureComponent<any, any> {
         const columns: any = [{
             title: '序号',
             key: 'index',
+            ellipsis: true,
+            width: '10%',
             render: (value: any, row: any, index: any) => index + 1,
-            width: 80
         }, {
             title: '项目名称',
             key: 'name',
             dataIndex: 'name',
-            width: 200
+            width: '15%'
         }, {
             title: '代理服务地址',
             key: 'proxy_server_address',
             dataIndex: 'proxy_server_address',
+            width: '25%',
             render: (value: any) => <Paragraph copyable>{value}</Paragraph>
         }, {
             title: '默认代理目标',
             key: 'target',
             dataIndex: 'target',
+            width: '25%',
             render: (value: any, record: any) => (
                 <span>
                     {value}
@@ -579,7 +583,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             title: '状态',
             key: 'status',
             dataIndex: 'status',
-            width: 140,
+            width: '15%',
             render: (value: any, row: any) => {
                 return <React.Fragment><Badge status={Boolean(value) ? 'success' : 'error'} text={Boolean(value) ? '已开启' : '已禁用'} /></React.Fragment>
             }
@@ -624,7 +628,7 @@ class ProxyServer extends React.PureComponent<any, any> {
                                 checked={tag.id == projectId}
                                 onChange={(checked: any) => this.handleTagChange(tag.id, checked)}
                             >
-                                <Tooltip title={tag.name}>
+                                <Tooltip placement="bottom" title={tag.name}>
                                     <div className="collect-tag-name">{tag.name}</div>
                                 </Tooltip>
                             </CheckableTag>
