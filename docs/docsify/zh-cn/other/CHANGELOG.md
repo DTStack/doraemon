@@ -2,6 +2,70 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.5.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.5.0...v1.5.1) (2022-12-14)
+
+## [1.5.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.5...v1.5.0) (2022-12-13)
+
+
+### Features
+
+* add get projectList by user IP api ([#42](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/42)) ([b9f9a96](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b9f9a96023130c0d571a5ece0a3b713793b4df78))
+* collect use Object and max is 6 ([6954dec](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6954dec5c5319e3596de004d86ae3d74f1e096bc))
+* collect use Object and max is 6 ([#44](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/44)) ([5ea62a0](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/5ea62a061b65ecce20b6d0d441d22e03ea7d5fd7))
+* form error msg ([c857eda](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c857eda5375955c6a25428271ca2c3d8610c35ae))
+* node-sass@6 for node v16 ([57299d8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/57299d80163d9d0598c281f34ce7936d2fe6c606))
+* proxy changeOrigin ([c749949](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c7499495dcd132dd3ed8c50b736d8f43de32f283))
+* proxy list with projectId ([7f633c6](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7f633c627cb995e71299f7cef1a6400ff39511c7))
+* remove selectedTagId ([62f4c30](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/62f4c3067aedd59c0821a18079e17a60e7918da3))
+* with projectId ([4308cc2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/4308cc24bfe8e81e97a6a1dbdb6657838194e70c))
+
+### [1.4.5](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.4...v1.4.5) (2022-06-12)
+
+
+### Features
+
+* change api url ([c48fb14](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/c48fb143101f3943828a93e12e6022ae6d7af7f7))
+* change github api url ([e59323f](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e59323fcedb7cccd58f7d7c0bbd0f8e1c5982945))
+* change text ([bea3dbd](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/bea3dbd2e91f7d877188981335a78aa21351359e))
+* **configcenter:** add filename and ip search ([3a50a8f](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/3a50a8f1740a4f39e6650fcc15a16b0e3f0a358b))
+* get github from serverless done ([2edec7d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2edec7d67a831ebe7d518de3b59125df42b8df82))
+* get github trending from juejin ([0cbd245](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0cbd24572d639675a7cd62168454e2e27e46e35a))
+* get github trendinng from serverless ([0775fad](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0775fad32656523c6975a0873c5f3cf176c8502c))
+* **hostmanagemant:** add name and ip search ([d826bd8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/d826bd896a862dff0a3942a45d9376ec89ea2b81))
+* logs add id ([57f541d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/57f541dbb540e4fdac116885f01f4aa688f44396))
+* proxy add addr search ([3e26cef](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/3e26cef004fe7965887e893da8113345918d691b))
+* refresh local ip by user ([08d41f2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/08d41f2521ac275157f4f952ef3678f412560c8d))
+* send msg when failed ([bbe7d0a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/bbe7d0ab24db4f8205401ed85a55db5225401d43))
+
+### [1.4.4](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.3...v1.4.4) (2021-12-10)
+
+
+### Features
+
+* improve timed task result log ([2964379](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/296437940d2648bd63e2a87973f0e27ca1ad0454))
+
+### [1.4.3](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.2...v1.4.3) (2021-12-09)
+
+
+### Features
+
+* change log text ([ec5be56](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/ec5be56ba1d1dd55294ac3be2895270fb5c001aa))
+* juejin type ([42db48d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/42db48d3e6ca657e7bf44a0fed97a9b85f238edd))
+
+### [1.4.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.1...v1.4.2) (2021-11-19)
+
+
+### Features
+
+* change timed task ([0b182c5](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0b182c58ecd9c8072f884691b912a05290e2c994))
+* config and remove rsshub ([7f439e1](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7f439e1598dfd973816f623f1fc434c56cab44b6))
+* egg schedule ([212557a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/212557a292aab0755360542d0a084ca4b88d84ed))
+* get timed task list ([391bb2e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/391bb2e19439957d2142bf6946687cc469a33c83))
+* get timedTask when app start ([40ba602](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/40ba60295332096e45ff2da79ab6f219b14d0968))
+* move timedTask to agent from worker ([6a03148](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6a03148132efa489527bbbaea8791fe6b9b6ce20))
+
+### [1.4.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.0...v1.4.1) (2021-10-25)
+
 ## [1.4.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.3.2...v1.4.0) (2021-10-22)
 
 
