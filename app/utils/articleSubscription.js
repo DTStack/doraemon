@@ -60,7 +60,7 @@ const getGithubTrendingFromJueJin = async (id, groupName, siteName, topicName, t
 const getGithubTrendingFromServerless = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
     try {
         const pageSize = app.config.articleSubscription.pageSize
-        const res = await axios.get(`https://service-00pk9163-1257766134.sh.apigw.tencentcs.com/release/repository/list?language=${ topicUrl }&pageSize=${ pageSize }`, { timeout })
+        const res = await axios.get(`http://github-trending-api.liuxianyu.cn/repository/list?language=${ topicUrl }&pageSize=${ pageSize }`, { timeout })
         const { data } = res.data
         let msg = `## Github Trending ${ topicName } 今日 Top5\n\n`
 

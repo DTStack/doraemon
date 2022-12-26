@@ -42,7 +42,7 @@ module.exports = async function httpproxy(ctx, next) {
                 pathRewrite:{
                     [`^/proxy/${serverId}`]:''
                 },
-                changeOrigin: false
+                changeOrigin: true
             }))(ctx,next)
         }
     }

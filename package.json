@@ -1,6 +1,6 @@
 {
   "name": "dt-doraemon",
-  "version": "1.4.4",
+  "version": "1.5.0",
   "description": "treasure box for programmer",
   "scripts": {
     "helpDoc": "docsify serve ./docs/docsify",
@@ -96,6 +96,7 @@
     "commitizen": "^4.0.3",
     "commitlint": "^8.2.0",
     "conventional-changelog-cli": "^2.0.28",
+    "cz-conventional-changelog": "^3.3.0",
     "docsify-cli": "^4.4.3",
     "easywebpack-cli": "^4.3.5",
     "easywebpack-react": "^4.4.1",
@@ -109,22 +110,17 @@
     "ip": "^1.1.5",
     "less": "3.9.0",
     "less-loader": "^4.0.0",
-    "node-sass": "4.14.1",
+    "node-sass": "6.0.1",
     "react-scripts": "1.0.10",
     "redux-devtools-extension": "^2.13.8",
     "request": "^2.88.2",
-    "sass-loader": "^7.1.0",
+    "sass-loader": "10.2.0",
     "sequelize-cli": "^5.4.0",
     "standard-version": "^9.0.0",
     "ts-loader": "^8.0.17",
     "url-loader": "^1.1.2",
     "vue-cli-plugin-commitlint": "^1.0.4",
     "webpack": "^4.30.0"
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/vue-cli-plugin-commitlint/lib/cz"
-    }
   },
   "husky": {
     "hooks": {
@@ -143,5 +139,10 @@
   },
   "author": "hubcarl@126.com",
   "license": "MIT",
-  "homepage": "https://github.com/easy-team/egg-react-webpack-boilerplate"
+  "homepage": "https://github.com/easy-team/egg-react-webpack-boilerplate",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
 }

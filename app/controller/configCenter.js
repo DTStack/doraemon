@@ -3,17 +3,18 @@ const _ = require('lodash');
 
 
 class ConfigCenter extends Controller{
-    async getConfigList(){
-        const {ctx,app} = this;
-        const {current,size,tags} = ctx.request.body;
-        const data =  await ctx.service.configCenter.queryConfigs({
+    async getConfigList() {
+        const { ctx, app } = this;
+        const { current, size, tags, search } = ctx.request.body;
+        const data = await ctx.service.configCenter.queryConfigs({
             current,
             size,
-            tags
+            tags,
+            search
         });
-        ctx.body = app.utils.response(true,{
-            data:data.rows,
-            count:data.count
+        ctx.body = app.utils.response(true, {
+            data: data.rows,
+            count: data.count
         });
     }
     async addConfig(){
