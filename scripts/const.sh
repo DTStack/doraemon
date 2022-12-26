@@ -1,8 +1,8 @@
-export image_mysql=/doraemon_mysql
+export image_mysql=172.16.84.121/dtstack-dev/doraemon_mysql
 
-export image_web=/doraemon_web
+export image_web=172.16.84.121/dtstack-dev/doraemon_web
 
-export version=0.0.1
+export version=0.0.2
 
 export mysql_pwd=123456
 

@@ -13,8 +13,8 @@
 
  Date: 01/06/2021 15:45:35
 */
-CREATE DATABASE IF NOT EXISTS `doraemon_test`;
-USE doraemon_test;
+CREATE DATABASE IF NOT EXISTS `doraemon`;
+USE doraemon;
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -36,7 +36,7 @@ CREATE TABLE `app_centers` (
   `status` int DEFAULT '1',
   `clickCount` int DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 INSERT INTO app_centers (appName, appTags, appType, logoUrl, appDesc, appUrl, created_at, updated_at, status, clickCount) VALUES ('Remote Hosts', NULL, 0, NULL, '袋鼠云内部团队host集中管理系统', '/page/switch-hosts-list', NOW(), NOW(), 1, 0);
 INSERT INTO app_centers (appName, appTags, appType, logoUrl, appDesc, appUrl, created_at, updated_at, status, clickCount) VALUES ('文章订阅', NULL, 0, NULL, '定时推送技术网站排行榜到钉钉群，每天都能学到新知识', '/page/article-subscription-list', NOW(), NOW(), 1, 0);
@@ -100,7 +100,7 @@ CREATE TABLE `config_management` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `findHostId` (`host_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 -- ----------------------------
 -- Table structure for config_notice_url
@@ -114,7 +114,7 @@ CREATE TABLE `config_notice_url` (
   `webHook` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `is_delete` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=74 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 -- ----------------------------
 -- Table structure for config_tag_rel
@@ -128,7 +128,7 @@ CREATE TABLE `config_tag_rel` (
   `update_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '修改时间',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除,1删除，0未删除',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------
 -- Table structure for host_management
@@ -146,7 +146,7 @@ CREATE TABLE `host_management` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `tag_ids` varchar(10000) COLLATE utf8_bin NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 -- ----------------------------
 -- Table structure for proxy_rule
@@ -164,7 +164,7 @@ CREATE TABLE `proxy_rule` (
   `status` int NOT NULL DEFAULT '1',
   `mode` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1389 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 -- ----------------------------
 -- Table structure for proxy_server
@@ -181,7 +181,7 @@ CREATE TABLE `proxy_server` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=96 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 -- ----------------------------
 -- Table structure for proxy_server_addrs
@@ -196,7 +196,7 @@ CREATE TABLE `proxy_server_addrs` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 -- ----------------------------
 -- Table structure for switch_hosts
@@ -215,7 +215,7 @@ CREATE TABLE `switch_hosts` (
   `is_close` tinyint NOT NULL DEFAULT '0' COMMENT '是否关闭 1关闭',
   `is_delete` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除 1删除',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 -- ----------------------------
 -- Table structure for tag_management
@@ -232,6 +232,6 @@ CREATE TABLE `tag_management` (
   `is_close` int DEFAULT '0',
   `is_admin` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

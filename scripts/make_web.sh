@@ -1,3 +1,7 @@
-docker build -t 172.16.8.120:5443/dtstack-dev/doraemon_web:0.0.1 ../
+source ./const.sh
 
-docker push 172.16.8.120:5443/dtstack-dev/doraemon_web:0.0.1
+imageName=$image_mysql:$version
+
+docker build -t $imageName ../
+
+docker push $imageName

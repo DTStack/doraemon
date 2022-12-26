@@ -32,27 +32,26 @@ reRunContainer() {
 
     # 启动
     if [[ $imageName =~ $image_web ]]; then
-        # docker run -d \
-        # -p 7002:7002 \
-        # --network alpine-net \
-        # $imageName
-        
         docker run --rm -d --net=host $imageName
     else
         mkdir -p $v_path
         docker run -d \
-        --name="doraemon_mysql" \
-        -v $v_path:/var/lib/mysql \
-        -e MYSQL_ROOT_HOST=% \
-        -e MYSQL_ROOT_PASSWORD=$mysql_pwd \
-        -p 3302:3306 \
-        $imageName
+            --name="doraemon_mysql" \
+            -v $v_path:/var/lib/mysql \
+            -e MYSQL_ROOT_HOST=% \
+            -e MYSQL_ROOT_PASSWORD=$mysql_pwd \
+            -p 3302:3306 \
+            $imageName
 
-        
         sleep 11
-        soucreSql
+        if [[ $2 == '-f' ]]; then
+            soucreSql
+        fi
     fi
 }
 
-# reRunContainer $image_mysql
-reRunContainer $image_web
+if [[ $1 == 'web' ]]; then
+    reRunContainer $image_web
+elif [[ $1 == 'mysql' ]]; then
+    reRunContainer $image_mysql $2
+fi
