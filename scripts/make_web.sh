@@ -1,6 +1,6 @@
 source ./const.sh
 
-imageName=$image_mysql:$version
+imageName=$image_web:$version
 
 docker build -t $imageName ../
 

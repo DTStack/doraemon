@@ -234,4 +234,7 @@ CREATE TABLE `tag_management` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+INSERT INTO doraemon.tag_management (tagName,tagDesc,tagColor,created_at,updated_at,is_delete,is_close,is_admin) VALUES ('前端','前端标签','#3fa7ff','2020-11-28 02:17:23','2020-12-31 08:16:16',0,0,1);
+INSERT INTO doraemon.tag_management (tagName,tagDesc,tagColor,created_at,updated_at,is_delete,is_close,is_admin) VALUES ('后端','后端标签','#5c84ff','2020-11-28 03:06:48','2020-12-31 08:16:29',0,0,1);
+
 SET FOREIGN_KEY_CHECKS = 1;

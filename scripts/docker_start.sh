@@ -34,7 +34,6 @@ reRunContainer() {
     if [[ $imageName =~ $image_web ]]; then
         docker run --rm -d --net=host $imageName
     else
-        mkdir -p $v_path
         docker run -d \
             --name="doraemon_mysql" \
             -v $v_path:/var/lib/mysql \
@@ -44,7 +43,8 @@ reRunContainer() {
             $imageName
 
         sleep 11
-        if [[ $2 == '-f' ]]; then
+        if [[ $2 == '-volume' ]]; then
+            mkdir -p $v_path
             soucreSql
         fi
     fi
