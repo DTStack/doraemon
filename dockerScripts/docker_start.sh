@@ -1,3 +1,4 @@
+#!/bin/bash
 source ./const.sh
 
 # 导入 sql 文件

@@ -1,3 +1,4 @@
+#!/bin/bash
 source ./const.sh
 
 imageName=$image_web:$version
