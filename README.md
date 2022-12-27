@@ -62,26 +62,15 @@ yarn start:test // test environment publishing
 
 #### Images build(If the image is already in the Docker Hub, skip this step)
 
-1. Modify the `mysql` configuration in the root `env.json` file. This configuration item needs to be consistent with the startup command configuration of the mysql image in `./dockerScripts/docker_start.sh`
-   ```json
-   "mysql": {
-       "prod": {
-           "database": "doraemon",
-           "host": "0.0.0.0",
-           "port": "3302",
-           "password": "******"
-       }
-   }
-   ```
-2. `cd ./dockerScripts`, configure the image information in the `const.sh`(such as `image_mysql`, `image_web`, `version` and so on）
+1. Modify the configure of the image information in the `./dockerScripts/const.sh`(such as `image_mysql`, `image_web`, `version` and so on）
 
-3. image build
+2. Image build
 
    ```bash
    $ yarn build:docker
    ```
 
-4. After the build is complete and pushed to the repository, log in to the deployment server, pull the image and start the container
+3. After the build is complete and pushed to the repository, log in to the deployment server, pull the image and start the container
 
 #### Container run
 

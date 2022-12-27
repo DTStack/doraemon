@@ -23,7 +23,7 @@
        -p 3302:3306 \
        $imageName
    ```
-2. 进到 `dockerScripts` 文件夹下，在 `const.sh` 配置镜像信息（`image_mysql`, `image_web`, `version` 等）
+2. 修改 `./dockerScripts/const.sh` 文件配置的镜像信息（`image_mysql`, `image_web`, `version` 等）
 
 3. 执行 build 命令
 

@@ -63,27 +63,15 @@ yarn start:test // 测试环境发布
 ## 使用 Docker 部署（仅支持 Linux）
 
 #### 构建镜像（如果镜像已在 Docker Hub 中，可跳过此步）
+1. 修改 `./dockerScripts/const.sh` 文件配置的镜像信息（`image_mysql`, `image_web`, `version` 等）
 
-1. 修改根目录的 `env.json` 文件中的 `mysql` 配置，该配置项需要和 `./dockerScripts/docker_start.sh` 中 mysql 镜像的启动命令配置保持一致，默认配置如下
-   ```json
-   "mysql": {
-       "prod": {
-           "database": "doraemon",
-           "host": "0.0.0.0",
-           "port": "3302",
-           "password": "******"
-       }
-   }
-   ```
-2. 进到 `dockerScripts` 文件夹下，在 `const.sh` 配置镜像信息（`image_mysql`, `image_web`, `version` 等）
-
-3. 执行 build 命令
+2. 执行 build 命令
 
    ```bash
    $ yarn build:docker
    ```
 
-4. 待构建完成并推到仓库后，登入部署服务器，拉取镜像并启动容器
+3. 待构建完成并推到仓库后，登入部署服务器，拉取镜像并启动容器
 
 #### 启动镜像
 
