@@ -1,4 +1,4 @@
-# 哆啦 A 梦 (Doraemon)  Here, you can find everything you need
+# 哆啦 A 梦 (Doraemon) Here, you can find everything you need
 
 [English](./README.md) | 简体中文
 
@@ -14,7 +14,7 @@
 
 ## 环境支持
 
-- node >= 8.0.0
+- node >= 16.0.0
 
 ## 快速开始
 
@@ -29,6 +29,7 @@ cd doraemon
 ```
 
 #### 安装依赖
+
 我们推荐使用 yarn 进行依赖安装。
 
 ```bash
@@ -54,15 +55,64 @@ yarn dev
 #### 发布模式启动应用
 
 ```bash
-yarn start 
+yarn start
 
 yarn start:test // 测试环境发布
 ```
 
+## 使用 Docker 部署（仅支持 Linux）
+
+#### 构建镜像（如果镜像已在 Docker Hub 中，可跳过此步）
+
+1. 修改根目录的 `env.json` 文件中的 `mysql` 配置，该配置项需要和 `./dockerScripts/docker_start.sh` 中 mysql 镜像的启动命令配置保持一致，默认配置如下
+   ```json
+   "mysql": {
+       "prod": {
+           "database": "doraemon",
+           "host": "0.0.0.0",
+           "port": "3302",
+           "password": "******"
+       }
+   }
+   ```
+2. 进到 `dockerScripts` 文件夹下，在 `const.sh` 配置镜像信息（`image_mysql`, `image_web`, `version` 等）
+
+3. 执行 build 命令
+
+   ```bash
+   $ yarn build:docker
+   ```
+
+4. 待构建完成并推到仓库后，登入部署服务器，拉取镜像并启动容器
+
+#### 启动镜像
+
+1. 登入部署服务器，进到 `dockerScripts` 文件夹下，修改 `const.sh` 文件中 `v_path` (数据卷的存储路径)
+
+2. 启动容器
+   回到根目录下，执行启动命令，拉取最新镜像，并启动
+
+   ```bash
+   $ yarn start:docker
+   ```
+
+   如果是第一次启动，尚未初始化库表结构，请执行 `-volume` 命令（历史数据需手动迁移）
+
+   ```bash
+   $ yarn start:docker -volume
+   ```
+
+3. 上述操作会删除原有容器和镜像，拉取最新镜像，如果只是重启停止的容器，仅需要 start 即可
+
+   ```bash
+   $ docker start <containerId>
+   ```
+
+访问: http://127.0.0.1:7002
 
 ## 使用指南
 
-查看完整的 Doraemon 功能使用指南，请访问 [在线文档](https://dtstack.github.io/doraemon/docsify/#/) 
+查看完整的 Doraemon 功能使用指南，请访问 [在线文档](https://dtstack.github.io/doraemon/docsify/#/)
 
 ## 如何贡献
 

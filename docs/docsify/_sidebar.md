@@ -2,6 +2,7 @@
 
 + [快速开始](zh-cn/start/快速开始)
 + [开发者使用](zh-cn/start/开发者使用)
++ [Docker 部署](zh-cn/start/Docker部署)
 * 配置
   + [配置项](zh-cn/configuration/envConfig)
   + [MySQL](zh-cn/configuration/mysql)
