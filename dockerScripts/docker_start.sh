@@ -4,6 +4,7 @@ source ./const.sh
 # 导入 sql 文件
 soucreSql() {
     containerId=$(docker ps -a | grep $image_mysql | awk '{print $1}')
+    mysql_path=/app/doraemon/doraemon.sql
     docker exec -i $containerId mysql -uroot -p$mysql_pwd <<EOF
     source $mysql_path;
     ALTER USER 'root' IDENTIFIED WITH mysql_native_password BY '$mysql_pwd';
