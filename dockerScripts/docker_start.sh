@@ -1,5 +1,6 @@
 #!/bin/bash
 source ./const.sh
+source ./utils.sh
 
 # 导入 sql 文件
 soucreSql() {
@@ -16,18 +17,8 @@ EOF
 reRunContainer() {
     imageName=$1:$version
 
-    # 停止容器并删除
-    containerId=$(docker ps -a | grep $imageName | awk '{print $1}')
-    if [[ $containerId ]]; then
-        docker stop $containerId
-        docker rm $containerId
-    fi
-
-    # 删除老镜像
-    imageId=$(docker images | grep $1 | awk '{print $3}')
-    if [[ $imageId ]]; then
-        docker rmi $imageId
-    fi
+    # 停止并删除原有容器和镜像
+    rmContainer $1 $version
 
     # 拉取镜像
     docker image pull $imageName
