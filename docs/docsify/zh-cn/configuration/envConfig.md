@@ -94,18 +94,22 @@ dingBot 的通知模板的跳转路径，默认跳转到帮助文档，可自行
 - 类型：Object
 - 默认值：无
 
-数据库连接配置，目前仅提供 config.prod.js 生产下的数据库连接配置
+数据库连接配置，提供不同环境下的数据库连接配置
+- test => config.test.js
+- prod/docker => config.prod.js (其中，mysql.docker 配置仅在 Docker 部署的情况下生效)
 
 ```json
 {
     "mysql": {
+        "test": {},
         "prod": {
             "database": "doraemon",
             "host": "127.0.0.1",
             "port": 3306,
             "username": "root",
             "password": "******"
-        }
+        },
+        "docker": {}
     }
 }
 ```

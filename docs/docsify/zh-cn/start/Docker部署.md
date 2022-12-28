@@ -5,7 +5,7 @@
 1. 修改根目录的 `env.json` 文件中的 `mysql` 配置，该配置项需要和 `./dockerScripts/docker_start.sh` 中 mysql 镜像的启动命令配置保持一致，默认配置如下
    ```json
    "mysql": {
-       "prod": {
+       "docker": {
            "database": "doraemon",
            "host": "0.0.0.0",
            "port": "3302",
