@@ -24,6 +24,11 @@
        $imageName
    ```
 2. 修改 `./dockerScripts/const.sh` 文件配置的镜像信息（`image_mysql`, `image_web`, `version` 等）
+    ```bash
+    export image_mysql=<hub>/doraemon_mysql
+    export image_web=<hub>/doraemon_web
+    export version=<version>
+    ```
 
 3. 执行 build 命令
 
@@ -36,6 +41,9 @@
 ## 启动镜像
 
 1. 登入部署服务器，进到 `dockerScripts` 文件夹下，修改 `const.sh` 文件中 `v_path` (数据卷的存储路径)
+    ```bash
+    export v_path=/home/app/doraemon_docker/data
+    ```
 
 2. 启动容器
    回到根目录下，执行启动命令，拉取最新镜像，并启动
