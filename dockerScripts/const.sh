@@ -1,7 +1,7 @@
 #!/bin/bash
-export image_mysql=172.16.84.121/dtstack-dev/doraemon_mysql
+export image_mysql=doraemon/doraemon_mysql
 
-export image_web=172.16.84.121/dtstack-dev/doraemon_web
+export image_web=doraemon/doraemon_web
 
 export version=0.0.2
 

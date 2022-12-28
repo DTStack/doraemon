@@ -36,7 +36,7 @@ CREATE TABLE `app_centers` (
   `status` int DEFAULT '1',
   `clickCount` int DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 INSERT INTO app_centers (appName, appTags, appType, logoUrl, appDesc, appUrl, created_at, updated_at, status, clickCount) VALUES ('Remote Hosts', NULL, 0, NULL, 'host集中管理系统', '/page/switch-hosts-list', NOW(), NOW(), 1, 0);
 INSERT INTO app_centers (appName, appTags, appType, logoUrl, appDesc, appUrl, created_at, updated_at, status, clickCount) VALUES ('文章订阅', NULL, 0, NULL, '定时推送技术网站排行榜到钉钉群，每天都能学到新知识', '/page/article-subscription-list', NOW(), NOW(), 1, 0);
