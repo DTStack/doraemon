@@ -1,5 +1,5 @@
 rmContainer () {
-    $imageName=$1:$2
+    imageName=$1:$2
     # 停止容器并删除
     containerId=$(docker ps -a | grep $imageName | awk '{print $1}')
     if [[ $containerId ]]; then
