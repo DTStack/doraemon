@@ -115,6 +115,7 @@ class ProxyServer extends React.PureComponent<any, any> {
                     this.handleTableExpandChange(true, data.data[0])
                 }
 
+                // TODO 后续需要兼容的历史数据不多后可以删除以下代码，暂定两个月后
                 // 项目被删除，但是收藏还在，这种历史数据的兼容处理。再次点击收藏的项目时去除该收藏的项目
                 if (!data?.data?.length && mainTableParams.projectId !== undefined) {
                     localStorage.setItem('collection-tags', JSON.stringify(collectTagList.filter(item => item.id !== mainTableParams.projectId)));
