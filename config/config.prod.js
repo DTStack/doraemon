@@ -1,5 +1,11 @@
 const config = require('../env.json');
-const mysqlConfig = (config && config.mysql && config.mysql.prod) || {};
+const mysqlConfig = (config
+    && config.mysql
+    && (
+        process.env.DEPLOY_ENV === 'docker'
+            ? config.mysql.docker
+            : config.mysql.prod
+    )) || {};
 const { database, host, port, username, password } = mysqlConfig;
 
 /**

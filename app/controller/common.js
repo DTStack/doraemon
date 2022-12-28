@@ -12,11 +12,12 @@ class CommonController extends Controller {
     }
     async getLocalIp() {
         const { app, ctx } = this;
-        const localIp = ctx.header['x-real-ip']||ctx.ip;
+        const localIp = ctx.header['x-real-ip'] || ctx.ip;
         ctx.body = app.utils.response(true, {
             localIp,
             host: ctx.host,
-            protocol: ctx.protocol
+            protocol: ctx.protocol,
+            ips: ctx.ips
         });
     }
 }
