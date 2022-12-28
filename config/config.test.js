@@ -1,5 +1,5 @@
 const config = require('../env.json');
-const mysqlConfig = (config && config.mysql && config.mysql.prod) || {};
+const mysqlConfig = (config && config.mysql && config.mysql.test) || {};
 const { database, host, port, username, password } = mysqlConfig;
 
 /**
