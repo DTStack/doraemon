@@ -34,7 +34,7 @@ reRunContainer() {
 
     # 启动
     if [[ $imageName =~ $image_web ]]; then
-        docker run --rm -d --net=host $imageName
+        docker run -d --net=host $imageName
     else
         docker run -d \
             --name="doraemon_mysql" \
