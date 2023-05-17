@@ -93,5 +93,6 @@ module.exports = app => {
     app.post('/api/tags/delete-tag', app.controller.tagManagement.deleteTag);
 
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
-    io.of('/').route('loginServer',  io.controller.home.loginServer)
+    // 暂时close Terminal相关功能
+    // io.of('/').route('loginServer',  io.controller.home.loginServer)
 };
