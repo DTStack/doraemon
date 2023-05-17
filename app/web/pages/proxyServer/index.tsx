@@ -97,7 +97,7 @@ class ProxyServer extends React.PureComponent<any, any> {
         })
     }
     getProxyServerList = (checked?: boolean) => {
-        const { mainTableParams } = this.state;
+        const { mainTableParams, collectTagList } = this.state;
         this.setState({
             mainTableLoading: true
         });
@@ -113,6 +113,18 @@ class ProxyServer extends React.PureComponent<any, any> {
                 // 点击选择某个常用项目时或者url中存在projectId时，默认展开
                 if (data?.data?.length === 1) {
                     this.handleTableExpandChange(true, data.data[0])
+                }
+
+                // 项目被删除，但是收藏还在，这种历史数据的兼容处理。再次点击收藏的项目时去除该收藏的项目
+                if (!data?.data?.length && mainTableParams.projectId !== undefined) {
+                    localStorage.setItem('collection-tags', JSON.stringify(collectTagList.filter(item => item.id !== mainTableParams.projectId)));
+                    this.getCollectTagList();
+                    this.setState({
+                        mainTableParams: {
+                            ...mainTableParams,
+                            projectId: undefined
+                        }
+                    }, this.getProxyServerList);
                 }
             }
         }).finally(() => {
@@ -239,6 +251,7 @@ class ProxyServer extends React.PureComponent<any, any> {
         });
     }
     handleProxyServerDelete = (row: any) => {
+        const { collectTagList } = this.state;
         const { id, name } = row;
         confirm({
             title: '确认',
@@ -250,6 +263,8 @@ class ProxyServer extends React.PureComponent<any, any> {
                     const { success } = response;
                     if (success) {
                         Message.success('代理服务删除成功');
+                        localStorage.setItem('collection-tags', JSON.stringify(collectTagList.filter(item => item.id !== id)));
+                        this.getCollectTagList();
                         this.getProxyServerList();
                     }
                 });
