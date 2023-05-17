@@ -1,5 +1,5 @@
 const c2k = require('koa-connect');
-const proxy = require('http-proxy-middleware');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 module.exports = async function httpproxy(ctx, next) {
     await next();
     const {app} = ctx;
@@ -37,7 +37,7 @@ module.exports = async function httpproxy(ctx, next) {
             target=proxyServer.target.trim();
         }
         if (target){
-            await c2k(proxy({
+            await c2k(createProxyMiddleware({
                 target,
                 pathRewrite:{
                     [`^/proxy/${serverId}`]:''
