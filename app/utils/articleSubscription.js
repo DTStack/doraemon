@@ -56,7 +56,7 @@ const getGithubTrendingFromJueJin = async (id, groupName, siteName, topicName, t
     }
 }
 
-// github trending from Serverless
+// github trending from Serverless，目前使用的是该方法
 const getGithubTrendingFromServerless = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
     try {
         const pageSize = app.config.articleSubscription.pageSize
