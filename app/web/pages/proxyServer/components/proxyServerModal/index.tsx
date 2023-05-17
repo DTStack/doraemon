@@ -86,7 +86,7 @@ class ProxyServerModal extends React.PureComponent<any, any> {
                     callback('请输入目标服务地址');
                 }
                 if (target?.includes('doraemon')) {
-                    callback('请检查是否配置了portalfront-doraemon地址，在devops中会导致死循环');
+                    callback('请使用 portalfront 地址，请勿使用 portalfront-doraemon 地址');
                 }
                 if (!urlReg.test(target)) {
                     callback('请输入正确格式的目标服务地址，以 http(s):// 开头');
