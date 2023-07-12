@@ -56,6 +56,12 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
             target: undefined
         })
     }
+    addressValidator = (rules: any, value: any, callback: any) => {
+        if (value?.includes('doraemon')) {
+            return callback('请使用 portalfront 地址，请勿使用 portalfront-doraemon 地址');
+        }
+        return callback();
+    }
     render() {
         const { visible, editable, proxyServer, confirmLoading, targetAddrs, localIp } = this.props;
         const { ip, target, remark, mode } = proxyServer;
@@ -114,7 +120,11 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
                                     <Form.Item
                                         label="目标服务地址"
                                         name="target"
-                                        rules={[{ required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址，以 http(s):// 开头' }]}
+                                        validateFirst
+                                        rules={[
+                                            { required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址，以 http(s):// 开头' },
+                                            { validator: this.addressValidator }
+                                        ]}
                                     >
                                         <Input placeholder="请输入正确格式的目标服务地址，以 http(s):// 开头" />
                                     </Form.Item>

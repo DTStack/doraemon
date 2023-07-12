@@ -59,8 +59,9 @@ export default (props: any) => {
             width: 200,
             render: (value: any, row: any) => {
                 return <span>
-                    <a onClick={handleOpenTerminal.bind(this, row)}>终端</a>
-                    <Divider type="vertical" />
+                    {/** 暂时close Terminal相关功能 */}
+                    {/* <a onClick={handleOpenTerminal.bind(this, row)}>终端</a>
+                    <Divider type="vertical" /> */}
                     <a onClick={handleTableRowEdit.bind(this, row)}>编辑</a>
                     <Divider type="vertical" />
                     <Popconfirm title={`确认是否删除该主机「${row.hostName}」?`} onConfirm={handleTableRowDelete.bind(this, row)}>
