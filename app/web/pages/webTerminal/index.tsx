@@ -133,7 +133,7 @@ const WebTerminal: React.FC = (props: any) => {
                 const cursorOffSetLength = getCursorOffsetLength(totalOffsetLength - currentOffsetLength, '\x1b[D')
                 terminal.write( '\x1b[?K' + `${key}${inputText.slice(currentOffsetLength - prefix.length)}`) // 在当前的坐标写上 key 和坐标后面的字符
                 terminal.write(cursorOffSetLength)  // 移动停留在当前位置的光标
-                inputText = inputText.slice(0, currentOffsetLength) + key + inputText.slice(totalOffsetLength - currentOffsetLength)
+                inputText = inputText.slice(0, currentOffsetLength - prefix.length) + key + inputText.slice(currentOffsetLength - prefix.length)
             }
         })
     }

@@ -42,6 +42,8 @@ module.exports = async function httpproxy(ctx, next) {
                 pathRewrite:{
                     [`^/proxy/${serverId}`]:''
                 },
+                timeout: 33000,
+                proxyTimeout: 36000,
                 changeOrigin: true
             }))(ctx,next)
         }
