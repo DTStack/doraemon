@@ -14,10 +14,12 @@ import 'ant-design-dtinsight-theme/theme/dt-theme/index.less';
 declare var window: any;
 
 const App = () => {
-    const { changeLocalIp } = bindActionCreators(actions, useDispatch());
+    const { fetchLocalIp } = bindActionCreators(actions, useDispatch());
+
     useEffect(() => {
-        changeLocalIp();
+        fetchLocalIp();
     }, [])
+
     return (
         <div style={{ height: '100%' }}>
             <ConfigProvider locale={zhCN}>
