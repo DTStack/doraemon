@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, Select, message as Message, Form } from 'antd';
+import { Modal, Input, Select, message as Message, Form, Radio, Switch } from 'antd';
 import ChooseSendTime from '../ChooseSendTime';
 import { SUBSCRIPTIONSENDTYPE } from '../../consts';
 import { isFunction } from 'lodash';
@@ -19,19 +19,24 @@ const SubscriptionModal = (props: any) => {
     useEffect(() => {
         visible && form.resetFields()
         if (visible && data) {
-            const { groupName = '', webHook = '', remark = '', topicIds = [], siteNames = '', sendType = SUBSCRIPTIONSENDTYPE.WORKDAY, time = '' } = data
-            setSiteNames(siteNames)
+            const { groupName = '', webHook = '', remark = '', topicIds = [], siteNames = '', sendType = SUBSCRIPTIONSENDTYPE.WORKDAY, time = '', messageTitle = '', message = '', isAtAll = false } = data;
+            const radio = siteNames === '自定义消息' && !!message ? 'custom-message' : 'article-subscription';
+            setSiteNames(siteNames);
             form.setFieldsValue({
                 groupName,
                 webHook,
+                radio,
+                messageTitle,
+                message,
+                isAtAll,
                 remark,
                 topicIds,
                 sendTime: {
                     sendType,
                     time
                 }
-            })
-            form.validateFields()
+            });
+            form.validateFields();
         }
     }, [visible])
 
@@ -75,6 +80,8 @@ const SubscriptionModal = (props: any) => {
             cron = `0 ${ minute } ${ hour } ? * MON-FRI`
         } else if (type === SUBSCRIPTIONSENDTYPE.EVERYDAY) {
             cron = `0 ${ minute } ${ hour } ? * *`
+        } else if (type === SUBSCRIPTIONSENDTYPE.FRIDAY) {
+            cron = `0 ${ minute } ${ hour } ? * FRI`
         }
         return cron
     }
@@ -83,6 +90,11 @@ const SubscriptionModal = (props: any) => {
         isFunction(onCancel) && onCancel()
     }
 
+    const handleRadioChange = (e) => {
+        if (e?.target?.value === 'custom-message') {
+            setSiteNames('自定义消息')
+        }
+    }
     const handleTopicChange = (value, option) => {
         setSiteNames(Array.from(new Set(option.map(item => item.children.split(' - ')[0]))).join('、'))
     }
@@ -103,7 +115,7 @@ const SubscriptionModal = (props: any) => {
                         { max: 64, message: '长度不超过64个字符' }
                     ]}
                 >
-                    <Input placeholder="请输入钉钉群名称" />
+                    <Input placeholder="请输入钉钉群名称" maxLength={64} />
                 </FormItem>
                 <FormItem
                     label="webHook"
@@ -116,40 +128,88 @@ const SubscriptionModal = (props: any) => {
                     <Input placeholder="请输入webHook" />
                 </FormItem>
                 <FormItem
-                    label="订阅项"
-                    name="topicIds"
-                    rules={[
-                        { required: true, message: '请选择订阅项，最多三个' },
-                        {
-                            validator: (rule, value = [], callback) => {
-                                if (value?.length > 3) {
-                                    callback('最多选择三个订阅项')
-                                }
-                                callback()
-                            }
-                        }
-                    ]}
+                    label="订阅类型"
+                    name="radio"
+                    required
+                    initialValue="article-subscription"
                 >
-                    <Select
-                        showSearch
-                        mode="multiple"
-                        onChange={handleTopicChange}
-                        placeholder="请选择订阅项，最多三个"
-                    >
-                        {
-                            topicList.map(site => {
+                    <Radio.Group onChange={handleRadioChange}>
+                        <Radio value="article-subscription">文章订阅</Radio>
+                        <Radio value="custom-message">自定义消息</Radio>
+                    </Radio.Group>
+                </FormItem>
+                <FormItem noStyle dependencies={['radio']}>
+                        {({ getFieldValue }) => {
+                            const radio = getFieldValue('radio');
+                            if (radio === 'article-subscription') {
                                 return (
-                                    <OptGroup key={site.name} label={site.name}>
-                                        {
-                                            site?.children?.map(item => {
-                                                return <Option key={item.id} value={item.id}>{item.name}</Option>
-                                            })
-                                        }
-                                    </OptGroup>
-                                )
-                            })
-                        }
-                    </Select>
+                                    <FormItem
+                                        label="订阅项"
+                                        name="topicIds"
+                                        rules={[
+                                            { required: true, message: '请选择订阅项，最多三个' },
+                                            {
+                                                validator: (rule, value = [], callback) => {
+                                                    if (value?.length > 3) {
+                                                        callback('最多选择三个订阅项')
+                                                    }
+                                                    callback()
+                                                }
+                                            }
+                                        ]}
+                                    >
+                                        <Select
+                                            showSearch
+                                            mode="multiple"
+                                            onChange={handleTopicChange}
+                                            placeholder="请选择订阅项，最多三个"
+                                        >
+                                            {
+                                                topicList.map(site => {
+                                                    return (
+                                                        <OptGroup key={site.name} label={site.name}>
+                                                            {
+                                                                site?.children?.map(item => {
+                                                                    return <Option key={item.id} value={item.id}>{item.name}</Option>
+                                                                })
+                                                            }
+                                                        </OptGroup>
+                                                    )
+                                                })
+                                            }
+                                        </Select>
+                                    </FormItem>
+                                );
+                            } else if (radio === 'custom-message') {
+                                return (
+                                    <>
+                                        <FormItem
+                                            label="消息标题"
+                                            name="messageTitle"
+                                            rules={[
+                                                { required: true, message: '请输入消息标题' },
+                                                { max: 64, message: '长度不超过64个字符' }
+                                            ]}
+                                            initialValue="定时提醒"
+                                        >
+                                            <Input placeholder="请输入消息标题" maxLength={64} />
+                                        </FormItem>
+                                        <FormItem
+                                            label="消息内容"
+                                            name="message"
+                                            rules={[
+                                                { required: true, message: '请输入消息内容' },
+                                                { max: 2000, message: '长度不超过2000个字符' }
+                                            ]}
+                                        >
+                                            <TextArea placeholder="请输入消息内容" rows={5} maxLength={2000} />
+                                        </FormItem>
+                                    </>
+                                );
+                            } else {
+                                return null;
+                            }
+                        }}
                 </FormItem>
                 <FormItem
                     label="推送时间"
@@ -158,6 +218,9 @@ const SubscriptionModal = (props: any) => {
                 >
                     <ChooseSendTime />
                 </FormItem>
+                <Form.Item label="@所有人" name="isAtAll" valuePropName="checked">
+                    <Switch />
+                </Form.Item>
                 <FormItem
                     label="备注"
                     name="remark"

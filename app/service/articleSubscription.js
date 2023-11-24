@@ -1,5 +1,5 @@
 const Service = require('egg').Service
-const { getGithubTrendingFromServerless, getJueJinHot } = require('../utils/articleSubscription')
+const { getGithubTrendingFromServerless, getJueJinHot, customMessage } = require('../utils/articleSubscription')
 
 class ArticleSubscriptionService extends Service {
     // 获取列表
@@ -33,7 +33,6 @@ class ArticleSubscriptionService extends Service {
 
     // 通过订阅 id 查询需要发送的文章订阅消息
     async sendArticleSubscription(id) {
-        const topicAll = await this.app.model.ArticleTopic.findAll({ where: { is_delete: 0 }, raw: true })
         const articleSubscription = await this.app.model.ArticleSubscription.findOne({
             where: {
                 id,
@@ -41,14 +40,19 @@ class ArticleSubscriptionService extends Service {
             },
             raw: true
         })
-        const { webHook, groupName } = articleSubscription
-        const topicIds = articleSubscription.topicIds.split(',')
-        const topicList = topicAll.filter(item => topicIds.includes(`${ item.id }`))
+        const { webHook, groupName, siteNames, messageTitle, message, isAtAll } = articleSubscription
+        if (siteNames === '自定义消息') {
+            customMessage(id, groupName, siteNames, messageTitle, message, isAtAll, webHook, this.app)
+        } else {
+            const topicAll = await this.app.model.ArticleTopic.findAll({ where: { is_delete: 0 }, raw: true });
+            const topicIds = articleSubscription.topicIds?.split(',') || [];
+            const topicList = topicAll.filter(item => topicIds.includes(`${ item.id }`))
 
-        for (let item of topicList) {
-            const { siteName, topicName, topicUrl } = item
-            siteName === 'Github' && getGithubTrendingFromServerless(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
-            siteName === '掘金' && getJueJinHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
+            for (let item of topicList) {
+                const { siteName, topicName, topicUrl } = item
+                siteName === 'Github' && getGithubTrendingFromServerless(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
+                siteName === '掘金' && getJueJinHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
+            }
         }
     }
 

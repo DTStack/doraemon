@@ -99,6 +99,16 @@ const getJueJinHot = async (id, groupName, siteName, topicName, topicUrl, webHoo
     }
 }
 
+// 自定义消息
+const customMessage = async (id, groupName, siteName, messageTitle, message, isAtAll, webHook, app) => {
+    try {
+        sendArticleMsg(messageTitle, message?.replace(/\\n/g, '\n')?.replace(/\\r/g, '\r'), webHook, { isAtAll })
+        logFunc(app, id, groupName, siteName, messageTitle, '成功')
+    } catch (err) {
+        logFunc(app, id, groupName, siteName, messageTitle, `失败`, `${ JSON.stringify(err) }`)
+    }
+}
+
 // 打印文章订阅任务结果
 const logFunc = (app, id, groupName, siteName, topicName, msg, errMsg = '') => {
     if (!articleResultWebhook) return
@@ -118,5 +128,6 @@ module.exports = {
     getGithubTrendingFromGithub,
     getGithubTrendingFromJueJin,
     getGithubTrendingFromServerless,
-    getJueJinHot
+    getJueJinHot,
+    customMessage
 }
