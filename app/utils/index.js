@@ -57,10 +57,10 @@ const sendHostsUpdateMsg = async (webhook_url, basicInfo, ip, address, operation
 }
 
 // 发送文章订阅消息
-const sendArticleMsg = async (title, text, webhook) => {
+const sendArticleMsg = async (title, text, webhook, at = {}) => {
     const feChatRobot = new ChatBot({ webhook })
     feChatRobot
-        .markdown(title, text)
+        .markdown(title, text, at)
         .catch(ex => console.error(ex))
 }
 

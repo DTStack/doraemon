@@ -6,12 +6,14 @@ export enum SUBSCRIPTIONSTATUS {
 
 // 订阅的推送时间方式 1 周一至周五 2 每天
 export enum SUBSCRIPTIONSENDTYPE {
+    FRIDAY = 0,
     WORKDAY = 1,
     EVERYDAY = 2
 }
 
 // 订阅的推送时间方式 1 周一至周五 2 每天
 export const SUBSCRIPTIONSENDTYPECN = {
+    [SUBSCRIPTIONSENDTYPE.FRIDAY]: '每周五',
     [SUBSCRIPTIONSENDTYPE.WORKDAY]: '周一至周五',
     [SUBSCRIPTIONSENDTYPE.EVERYDAY]: '每天'
 }

@@ -13,7 +13,10 @@ module.exports = app => {
         status: { type: INTEGER(2), defaultValue: 1 },
         is_delete: { type: INTEGER(2), defaultValue: 0 },
         created_at: DATE,
-        updated_at: DATE
+        updated_at: DATE,
+        messageTitle: STRING(64),
+        message: STRING(2000),
+        isAtAll: { type: INTEGER(2), defaultValue: 0 }
     },{
         freezeTableName: true
     });
