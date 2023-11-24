@@ -102,7 +102,7 @@ const getJueJinHot = async (id, groupName, siteName, topicName, topicUrl, webHoo
 // 自定义消息
 const customMessage = async (id, groupName, siteName, messageTitle, message, isAtAll, webHook, app) => {
     try {
-        sendArticleMsg(messageTitle, message, webHook, { isAtAll })
+        sendArticleMsg(messageTitle, message?.replace(/\\n/g, '\n')?.replace(/\\r/g, '\r'), webHook, { isAtAll })
         logFunc(app, id, groupName, siteName, messageTitle, '成功')
     } catch (err) {
         logFunc(app, id, groupName, siteName, messageTitle, `失败`, `${ JSON.stringify(err) }`)
