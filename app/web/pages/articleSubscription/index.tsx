@@ -55,13 +55,16 @@ const ArticleSubscriptionList = (props: any) => {
                 dataIndex: 'siteNames',
                 key: 'siteNames',
                 render: (siteNames, record) => {
-                    return siteNames === '自定义消息' && !!message ? '自定义消息' : ' 文章订阅';
+                    return siteNames === '自定义消息' && !!record?.message ? '自定义消息' : '文章订阅';
                 }
             },
             {
                 title: '订阅项',
                 dataIndex: 'siteNames',
-                key: 'siteNames'
+                key: 'siteNames',
+                render: (siteNames, record) => {
+                    return siteNames === '自定义消息' && !!record?.message ? record?.messageTitle : siteNames;
+                }
             },
             {
                 title: '备注',
