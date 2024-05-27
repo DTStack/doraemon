@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.5.1...v1.6.0) (2024-05-27)
+
+
+### Features
+
+* [#55](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/55) delete project and collect ([3a999c6](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/3a999c6f8eb8fe07315bea2d643ee8fed6dd370e))
+* [#60](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/60) ([6c3c347](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6c3c347cf6cd261d278b5fc3fdab9a6f83704645))
+* add sequelize pool ([e131c4a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e131c4a5d4b16526692053fbda859993c5032696))
+* add target address valid ([7af22b0](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7af22b0a7cefac24a2b18c5cb9fcaff17acd6d20))
+* hide terminal ([340f407](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/340f40751202c0838533a973da4bc7489b259d34))
+* send custom message to dingtalk rebot ([#69](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/69)) ([7b3765c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7b3765cb45e979d8a5f687d9fd387119d30373e9))
+
+
+### Bug Fixes
+
+* [#32](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/32) web terminal prefix ([0775ff5](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0775ff573bf01c4829c76785800faa2fba57efee))
+* [#60](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/60) add service address keyword check ([71a7933](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/71a79338e0f5f25e4ed35083b2b5f117c2374942))
+* mysql pool ([a814b1d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a814b1dfefdfcf05bb7ec412b24d639acdf94471))
+
 ### [1.5.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.5.0...v1.5.1) (2022-12-14)
 
 ## [1.5.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.4.5...v1.5.0) (2022-12-13)
