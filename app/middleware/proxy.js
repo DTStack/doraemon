@@ -44,7 +44,10 @@ module.exports = async function httpproxy(ctx, next) {
                 },
                 timeout: 5 * 60 * 1000, // 五分钟
                 proxyTimeout: 5 * 60 * 1000, // 五分钟
-                changeOrigin: true
+                changeOrigin: true,
+                onError: (err, req, res, target) => {
+                    app.logger.info('http-proxy-middleware error', err, target);
+                }
             }))(ctx,next)
         }
     }
