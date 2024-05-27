@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.6.0...v1.6.1) (2024-05-27)
+
+
+### Features
+
+* log proxy error content ([#71](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/71)) ([0e327a2](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0e327a2c314787914bc25960d99159ce78fc7391))
+
 ## [1.6.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.5.1...v1.6.0) (2024-05-27)
 
 
