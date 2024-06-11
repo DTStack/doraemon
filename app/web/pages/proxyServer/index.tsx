@@ -4,7 +4,6 @@ import { Input, Button, Typography, Tag, Table, message as Message, Divider, Mod
 import { API } from '@/api';
 import ProxyServerModal from './components/proxyServerModal';
 import ProxyRuleModal from './components/proxyRuleModal';
-import Cookies from 'js-cookie';
 import { connect } from 'react-redux'
 import helpIcon from '@/asset/images/help-icon.png';
 import config from '../../../../env.json';
@@ -17,8 +16,6 @@ const { Paragraph } = Typography;
 
 class ProxyServer extends React.PureComponent<any, any> {
     state: any = {
-        //代理服务
-        localIp: '',
         currentProxyServer: {},
         proxyServerModalVisible: false,
         proxyServerModalConfirmLoading: false,
@@ -61,8 +58,8 @@ class ProxyServer extends React.PureComponent<any, any> {
     loadMainData = () => {
         this.getProxyServerList()
         this.getCollectTagList()
-        this.getLocalIp()
     }
+
     getCollectTagList = () => {
         let collectTagList = []
         try {
@@ -72,29 +69,6 @@ class ProxyServer extends React.PureComponent<any, any> {
             localStorage.removeItem('collection-tags')
         }
         this.setState({ collectTagList })
-    }
-    getLocalIp = () => {
-        API.getLocalIp().then((response: any) => {
-            const { success, data, message } = response;
-            if (success) {
-                const localIp = data.localIp;
-                const rememberIp = Cookies.get('rememberIp') || ''
-                if (rememberIp && rememberIp !== localIp) {
-                    notification.warning({
-                        message: 'IP地址变更',
-                        description: '您的IP地址【较上次登录时】已发生变更、请留意代理服务配置！',
-                        duration: 30,
-                        onClose: () => {
-                            Cookies.set('rememberIp', localIp)
-                        }
-                    });
-                }
-
-                this.setState({
-                    localIp
-                })
-            }
-        })
     }
     getProxyServerList = (checked?: boolean) => {
         const { mainTableParams, collectTagList } = this.state;
@@ -135,7 +109,7 @@ class ProxyServer extends React.PureComponent<any, any> {
     }
     //获取子表格数据
     loadSubTableData(row: any) {
-        const { localIp } = this.state;
+        const { localIp } = this.props;
         const { id } = row;
         const allIPChecked = localStorage.getItem(`${ localIp }-${ id }-all-ip-checked`) !== 'no'
         this.setState({
@@ -438,7 +412,8 @@ class ProxyServer extends React.PureComponent<any, any> {
         localStorage.setItem('collection-tags', JSON.stringify(newList));
     };
     tableExpandedRowRender = (mainTableRow: any) => {
-        const { subTableLoading, subTableData, localIp, allIPChecked } = this.state;
+        const { subTableLoading, subTableData, allIPChecked } = this.state;
+        const { localIp } = this.props;
         const columns: any = [{
             title: '序号',
             key: 'index',
@@ -530,7 +505,7 @@ class ProxyServer extends React.PureComponent<any, any> {
 
     // 只看我的 IP (false)或者全部(true)
     handleIPFilter = (allIPChecked, mainTableRow) => {
-        const { localIp } = this.state;
+        const { localIp } = this.props;
         localStorage.setItem(`${ localIp }-${ mainTableRow.id }-all-ip-checked`, allIPChecked ? 'yes' : 'no')
         Message.success(`${ allIPChecked ? '查看全部' : '只看我的IP' }`)
         this.setState({
@@ -549,8 +524,8 @@ class ProxyServer extends React.PureComponent<any, any> {
         })
     }
     render() {
+        const { localIp } = this.props;
         const {
-            localIp,
             maintTableList,
             mainTableParams,
             maintTableTotal,

@@ -1,4 +1,3 @@
-import { CHANGE_LOCAL_IP } from './constant';
 const initialState: any = {
     localIp: '',
     serverInfo: {
@@ -9,8 +8,9 @@ const initialState: any = {
 export default (state = initialState, action: any) => {
     const { type, payload } = action;
     switch (type) {
-        case CHANGE_LOCAL_IP:
+        case 'CHANGE_LOCAL_IP':
             const { localIp, protocol, host } = payload;
+            localStorage.setItem('localIp', localIp);
             return {
                 ...state,
                 localIp,
