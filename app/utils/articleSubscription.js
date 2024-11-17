@@ -101,7 +101,6 @@ const getJueJinHot = async (id, groupName, siteName, topicName, topicUrl, webHoo
 
 // https://dev.to/t/architecture/top/week
 const getDevArchitectureHot = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
-    debugger
     try {
         const pageSize = app.config.articleSubscription.pageSize
         const res = await axios.get(`https://dev.to/search/feed_content?per_page=5&page=0&tag=architecture&sort_by=public_reactions_count&sort_direction=desc&tag_names%5B%5D=architecture&approved=&class_name=Article&published_at%5Bgte%5D=2024-11-10T02%3A43%3A45Z`, { timeout })

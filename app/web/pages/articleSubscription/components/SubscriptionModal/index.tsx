@@ -82,6 +82,8 @@ const SubscriptionModal = (props: any) => {
             cron = `0 ${ minute } ${ hour } ? * *`
         } else if (type === SUBSCRIPTIONSENDTYPE.FRIDAY) {
             cron = `0 ${ minute } ${ hour } ? * FRI`
+        } else if (type === SUBSCRIPTIONSENDTYPE.MONDAY) {
+            cron = `0 ${ minute } ${ hour } ? * MON`
         }
         return cron
     }

@@ -50,6 +50,7 @@ class ChooseSendTime extends React.Component<IProps, IState> {
         return (
             <div className="send-time">
                 <Select style={{ width: 120 }} value={sendType} onChange={(val) => { this.handleChange('sendType', val) }}>
+                    <Option value={SUBSCRIPTIONSENDTYPE.MONDAY}>{SUBSCRIPTIONSENDTYPECN[SUBSCRIPTIONSENDTYPE.MONDAY]}</Option>
                     <Option value={SUBSCRIPTIONSENDTYPE.FRIDAY}>{SUBSCRIPTIONSENDTYPECN[SUBSCRIPTIONSENDTYPE.FRIDAY]}</Option>
                     <Option value={SUBSCRIPTIONSENDTYPE.WORKDAY}>{SUBSCRIPTIONSENDTYPECN[SUBSCRIPTIONSENDTYPE.WORKDAY]}</Option>
                     <Option value={SUBSCRIPTIONSENDTYPE.EVERYDAY}>{SUBSCRIPTIONSENDTYPECN[SUBSCRIPTIONSENDTYPE.EVERYDAY]}</Option>
