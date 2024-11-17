@@ -1,5 +1,5 @@
 const Service = require('egg').Service
-const { getGithubTrendingFromServerless, getJueJinHot, getDevArchitectureHot, customMessage } = require('../utils/articleSubscription')
+const { getGithubTrendingFromServerless, getJueJinHot, getDevArchitectureHot, getReactStatusHot, customMessage } = require('../utils/articleSubscription')
 
 class ArticleSubscriptionService extends Service {
     // 获取列表
@@ -53,6 +53,7 @@ class ArticleSubscriptionService extends Service {
                 siteName === 'Github' && getGithubTrendingFromServerless(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
                 siteName === '掘金' && getJueJinHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
                 topicName === 'DEV Architecture' && getDevArchitectureHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
+                topicName === 'React Status' && getReactStatusHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
             }
         }
     }

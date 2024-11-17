@@ -119,6 +119,28 @@ const getDevArchitectureHot = async (id, groupName, siteName, topicName, topicUr
     }
 }
 
+// https://react.statuscode.com/latest
+const getReactStatusHot = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
+    try {
+        const pageSize = app.config.articleSubscription.pageSize
+        const { data } = await axios.get(`https://react.statuscode.com/latest`, { timeout })
+        let msg = `## React Status\n\n`
+
+        const $ = cheerio.load(data)
+        const items = $('table.el-item').find('span.mainlink')
+        for (let i = 0; i < pageSize; i++) {
+            const name = items.eq(i).text()
+            const url = items.eq(i).find('a').attr('href')
+            msg += `${ i + 1 }、[${ name }](${ url })\n\n`
+        }
+        msg += `[点击查看更多内容](https://react.statuscode.com/latest)`
+        sendArticleMsg('React Status', msg, webHook)
+        logFunc(app, id, groupName, siteName, topicName, '成功')
+    } catch (err) {
+        logFunc(app, id, groupName, siteName, topicName, `失败`, `Github 网络不佳 ${ JSON.stringify(err) }`)
+    }
+}
+
 // 自定义消息
 const customMessage = async (id, groupName, siteName, messageTitle, message, isAtAll, webHook, app) => {
     try {
@@ -150,5 +172,6 @@ module.exports = {
     getGithubTrendingFromServerless,
     getJueJinHot,
     getDevArchitectureHot,
+    getReactStatusHot,
     customMessage
 }
