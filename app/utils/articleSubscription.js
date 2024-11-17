@@ -99,6 +99,26 @@ const getJueJinHot = async (id, groupName, siteName, topicName, topicUrl, webHoo
     }
 }
 
+// https://dev.to/t/architecture/top/week
+const getDevArchitectureHot = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
+    debugger
+    try {
+        const pageSize = app.config.articleSubscription.pageSize
+        const res = await axios.get(`https://dev.to/search/feed_content?per_page=5&page=0&tag=architecture&sort_by=public_reactions_count&sort_direction=desc&tag_names%5B%5D=architecture&approved=&class_name=Article&published_at%5Bgte%5D=2024-11-10T02%3A43%3A45Z`, { timeout })
+        let msg = `## DEV Architecture 每周 Top5\n\n`
+
+        const data = res?.data?.result || []
+        for (let i = 0; i < pageSize; i++) {
+            msg += `${ i + 1 }、[${ data[i].title }](https://dev.to${ data[i].path })\n\n`
+        }
+        msg += `[点击查看更多内容](https://dev.to/t/architecture/top/week)`
+        sendArticleMsg('DEV Architecture 每周 Top5', msg, webHook)
+        logFunc(app, id, groupName, siteName, topicName, '成功')
+    } catch (err) {
+        logFunc(app, id, groupName, siteName, topicName, `失败`, `${ JSON.stringify(err) }`)
+    }
+}
+
 // 自定义消息
 const customMessage = async (id, groupName, siteName, messageTitle, message, isAtAll, webHook, app) => {
     try {
@@ -129,5 +149,6 @@ module.exports = {
     getGithubTrendingFromJueJin,
     getGithubTrendingFromServerless,
     getJueJinHot,
+    getDevArchitectureHot,
     customMessage
 }
