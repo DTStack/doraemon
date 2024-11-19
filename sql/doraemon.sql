@@ -83,6 +83,9 @@ INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('Github'
 INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('掘金', '前端', '6809637767543259144', 5);
 INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('掘金', '后端', '6809637769959178254', 6);
 
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('英文', 'DEV Architecture', '', 7);
+INSERT INTO article_topic (siteName, topicName, topicUrl, sort) VALUES ('英文', 'React Status', '', 8);
+
 -- ----------------------------
 -- Table structure for config_management
 -- ----------------------------
