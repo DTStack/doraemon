@@ -9,6 +9,7 @@
   + [应用中心](zh-cn/guide/应用中心)
   + [代理服务](zh-cn/guide/代理服务)
   + [主机管理](zh-cn/guide/主机管理)
+  + [环境管理](zh-cn/guide/环境管理)
   + [配置中心](zh-cn/guide/配置中心)
   + [标签管理](zh-cn/guide/标签管理)
   + [Remote Hosts](zh-cn/guide/RemoteHosts)

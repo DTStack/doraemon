@@ -129,6 +129,16 @@ location /api/v1  {
 ![image.png](https://cdn.nlark.com/yuque/0/2020/png/188521/1606984357812-25a9b477-040b-4398-abd8-929b38c82411.png#align=left&display=inline&height=104&margin=%5Bobject%20Object%5D&name=image.png&originHeight=182&originWidth=1308&size=62228&status=done&style=none&width=746#align=left&display=inline&height=182&margin=%5Bobject%20Object%5D&originHeight=182&originWidth=1308&status=done&style=none&width=1308)
 
 
+## 环境管理
+![image.png](https://github.com/DTStack/doraemon/blob/master/docs/docsify/imgs/env_management.png?raw=true)
+
+
+提供环境管理功能，管理各类开发环境，用于快速访问某个环境。
+
+
+![image.png](https://github.com/DTStack/doraemon/blob/master/docs/docsify/imgs/add_env.png?raw=true)
+
+
 ## 配置中心
 
 

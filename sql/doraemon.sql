@@ -149,6 +149,23 @@ CREATE TABLE `host_management` (
 ) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 -- ----------------------------
+-- Table structure for env_management
+-- ----------------------------
+DROP TABLE IF EXISTS `env_management`;
+CREATE TABLE `env_management` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `env_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `host_ip` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `url` varchar(2048) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `status` tinyint NOT NULL DEFAULT '1',
+  `remark` varchar(2048) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `tag_ids` varchar(10000) COLLATE utf8_bin NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- ----------------------------
 -- Table structure for proxy_rule
 -- ----------------------------
 DROP TABLE IF EXISTS `proxy_rule`;

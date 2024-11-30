@@ -10,6 +10,8 @@ import Toolbox from '@/pages/toolbox';
 import MailSign from '@/pages/mailSign';
 //主机管理
 import HostManagement from '@/pages/hostManagement';
+// 环境管理
+import EnvManagement from '@/pages/envManagement';
 //配置中心
 import ConfigCenter from '@/pages/configCenter';
 //配置详情
@@ -54,6 +56,10 @@ const routes: any = [
             {
                 path: `${urlPrefix}/host-management`,
                 component: HostManagement
+            },
+            {
+                path: `${urlPrefix}/env-management`,
+                component: EnvManagement
             },
             {
                 path: `${urlPrefix}/config-center`,

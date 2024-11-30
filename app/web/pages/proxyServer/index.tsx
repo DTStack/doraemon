@@ -571,7 +571,7 @@ class ProxyServer extends React.PureComponent<any, any> {
             key: 'index',
             ellipsis: true,
             width: '10%',
-            render: (value: any, row: any, index: any) => index + 1,
+            render: (value: any, row: any, index: any) => index + 1
         }, {
             title: '项目名称',
             key: 'name',
