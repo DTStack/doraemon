@@ -75,13 +75,13 @@ const getGithubTrendingFromServerless = async (id, groupName, siteName, topicNam
     }
 }
 
-// 掘金热门
+// 掘金热门 https://juejin.cn/frontend
 const getJueJinHot = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
     try {
         const pageSize = app.config.articleSubscription.pageSize
         const params = {
             id_type: 2,
-            sort_type: 3,
+            sort_type: 200,
             cate_id: topicUrl,
             cursor: "0",
             limit: pageSize
