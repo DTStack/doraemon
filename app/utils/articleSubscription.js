@@ -75,13 +75,13 @@ const getGithubTrendingFromServerless = async (id, groupName, siteName, topicNam
     }
 }
 
-// 掘金热门
+// 掘金热门 https://juejin.cn/frontend
 const getJueJinHot = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
     try {
         const pageSize = app.config.articleSubscription.pageSize
         const params = {
             id_type: 2,
-            sort_type: 3,
+            sort_type: 200,
             cate_id: topicUrl,
             cursor: "0",
             limit: pageSize
@@ -96,6 +96,47 @@ const getJueJinHot = async (id, groupName, siteName, topicName, topicUrl, webHoo
         logFunc(app, id, groupName, siteName, topicName, '成功')
     } catch (err) {
         logFunc(app, id, groupName, siteName, topicName, `失败`, `${ JSON.stringify(err) }`)
+    }
+}
+
+// https://dev.to/t/architecture/top/week
+const getDevArchitectureHot = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
+    try {
+        const pageSize = app.config.articleSubscription.pageSize
+        const res = await axios.get(`https://dev.to/search/feed_content?per_page=5&page=0&tag=architecture&sort_by=public_reactions_count&sort_direction=desc&tag_names%5B%5D=architecture&approved=&class_name=Article&published_at%5Bgte%5D=2024-11-10T02%3A43%3A45Z`, { timeout })
+        let msg = `## DEV Architecture 每周 Top5\n\n`
+
+        const data = res?.data?.result || []
+        for (let i = 0; i < pageSize; i++) {
+            msg += `${ i + 1 }、[${ data[i].title }](https://dev.to${ data[i].path })\n\n`
+        }
+        msg += `[点击查看更多内容](https://dev.to/t/architecture/top/week)`
+        sendArticleMsg('DEV Architecture 每周 Top5', msg, webHook)
+        logFunc(app, id, groupName, siteName, topicName, '成功')
+    } catch (err) {
+        logFunc(app, id, groupName, siteName, topicName, `失败`, `${ JSON.stringify(err) }`)
+    }
+}
+
+// https://react.statuscode.com/latest
+const getReactStatusHot = async (id, groupName, siteName, topicName, topicUrl, webHook, app) => {
+    try {
+        const pageSize = app.config.articleSubscription.pageSize
+        const { data } = await axios.get(`https://react.statuscode.com/latest`, { timeout })
+        let msg = `## React Status\n\n`
+
+        const $ = cheerio.load(data)
+        const items = $('table.el-item').find('span.mainlink')
+        for (let i = 0; i < pageSize; i++) {
+            const name = items.eq(i).text()
+            const url = items.eq(i).find('a').attr('href')
+            msg += `${ i + 1 }、[${ name }](${ url })\n\n`
+        }
+        msg += `[点击查看更多内容](https://react.statuscode.com/latest)`
+        sendArticleMsg('React Status', msg, webHook)
+        logFunc(app, id, groupName, siteName, topicName, '成功')
+    } catch (err) {
+        logFunc(app, id, groupName, siteName, topicName, `失败`, `Github 网络不佳 ${ JSON.stringify(err) }`)
     }
 }
 
@@ -129,5 +170,7 @@ module.exports = {
     getGithubTrendingFromJueJin,
     getGithubTrendingFromServerless,
     getJueJinHot,
+    getDevArchitectureHot,
+    getReactStatusHot,
     customMessage
 }

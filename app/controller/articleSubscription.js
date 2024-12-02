@@ -84,6 +84,14 @@ class ArticleSubscriptionController extends Controller {
         if (_.isNil(data)) throw new Error('找不到该 id 下的相关信息');
         ctx.body = app.utils.response(true, data);
     }
+
+    // 用于 Postman 调试文章订阅源
+    async testArticle() {
+        const { ctx, app } = this;
+        const { id } = ctx.query;
+        const data = await ctx.service.articleSubscription.sendArticleSubscription(id);
+        ctx.body = app.utils.response(true, data);
+    }
 }
 
 module.exports = ArticleSubscriptionController;

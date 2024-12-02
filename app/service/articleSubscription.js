@@ -1,5 +1,6 @@
 const Service = require('egg').Service
-const { getGithubTrendingFromServerless, getJueJinHot, customMessage } = require('../utils/articleSubscription')
+const { SITE_NAME, TOPIC_NAME } = require('../consts')
+const { getGithubTrendingFromServerless, getJueJinHot, getDevArchitectureHot, getReactStatusHot, customMessage } = require('../utils/articleSubscription')
 
 class ArticleSubscriptionService extends Service {
     // 获取列表
@@ -50,8 +51,10 @@ class ArticleSubscriptionService extends Service {
 
             for (let item of topicList) {
                 const { siteName, topicName, topicUrl } = item
-                siteName === 'Github' && getGithubTrendingFromServerless(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
-                siteName === '掘金' && getJueJinHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
+                siteName === SITE_NAME.GITHUB && getGithubTrendingFromServerless(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
+                siteName === SITE_NAME.JUEJIN && getJueJinHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
+                topicName === TOPIC_NAME.DEV_ARCHITECTURE && getDevArchitectureHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
+                topicName === TOPIC_NAME.REACT_STATUS && getReactStatusHot(id, groupName, siteName, topicName, topicUrl, webHook, this.app)
             }
         }
     }
@@ -66,7 +69,7 @@ class ArticleSubscriptionService extends Service {
             order: [['created_at', 'DESC']],
             raw: true
         })
-    
+
         for (let i of subscriptionList) {
             const { id, sendCron } = i
             this.app.messenger.sendToAgent('createTimedTask', { id, sendCron })

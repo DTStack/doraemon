@@ -75,6 +75,7 @@ module.exports = app => {
     /**
      * 文章订阅
      */
+    app.get('/api/article-subscription/test-article', app.controller.articleSubscription.testArticle);
     app.post('/api/article-subscription/create-subscription', app.controller.articleSubscription.createSubscription);
     app.post('/api/article-subscription/delete-subscription', app.controller.articleSubscription.deleteSubscription);
     app.post('/api/article-subscription/update-subscription', app.controller.articleSubscription.updateSubscription);
