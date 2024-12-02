@@ -11,10 +11,10 @@ export default class Layout extends React.Component<any, any> {
                     <meta name="description" content={this.props.description}></meta>
                     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"></link>
                     <link></link>
-                    <link href="https://cdn.bootcss.com/codemirror/5.48.4/codemirror.min.css" rel="stylesheet"></link>
-                    <link href="https://cdn.bootcss.com/codemirror/5.48.4/theme/dracula.min.css" rel="stylesheet"></link>
-                    <script src="https://cdn.bootcss.com/codemirror/5.48.4/codemirror.min.js"></script>
-                    <script src="https://cdn.bootcss.com/codemirror/5.48.4/mode/nginx/nginx.min.js"></script>
+                    <link href="https://cdn.jsdelivr.net/npm/codemirror@5.48.4/lib/codemirror.min.css" rel="stylesheet"></link>
+                    <link href="https://cdn.jsdelivr.net/npm/codemirror@5.48.4/theme/dracula.min.css" rel="stylesheet"></link>
+                    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.48.4/lib/codemirror.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.48.4/mode/nginx/nginx.min.js"></script>
                 </head>
                 <body><div id="app">{this.props.children}</div></body>
             </html>;

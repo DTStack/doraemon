@@ -15,6 +15,8 @@ declare var window: any;
 
 const App = () => {
     const { changeLocalIp } = bindActionCreators(actions, useDispatch());
+
+    // 需要挂 VPN 使用
     const hotJar = () => {
         (function (h: any, o: any, t: any, j: any, a?: any, r?: any) {
             h.hj = h.hj || function () { (h.hj.q = h.hj.q || []).push(arguments) };
