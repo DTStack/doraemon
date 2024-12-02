@@ -14,7 +14,7 @@ A management tool to help you organize your daily development, configuration, pr
 
 ## Environment Support
 
-- node >= 8.0.0
+- node >= 14
 
 ## Quick Start
 
