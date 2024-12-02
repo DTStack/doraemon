@@ -29,6 +29,13 @@ module.exports = app => {
     app.post('/api/host-management/edit-host', app.controller.hostManagement.editHost);
     app.delete('/api/host-management/delete-host', app.controller.hostManagement.deleteHost);
     /**
+   * 环境管理
+   */
+    app.get('/api/env-management/env-list', app.controller.envManagement.queryEnvs);
+    app.post('/api/env-management/add-env', app.controller.envManagement.addEnv);
+    app.post('/api/env-management/edit-env', app.controller.envManagement.editEnv);
+    app.delete('/api/env-management/delete-env', app.controller.envManagement.deleteEnv);
+    /**
    * 配置中心
    */
     app.post('/api/config-center/config-list', app.controller.configCenter.getConfigList);

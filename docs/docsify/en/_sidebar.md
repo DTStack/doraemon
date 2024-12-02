@@ -10,6 +10,7 @@
   + [应用中心](guide/应用中心)
   + [代理服务](guide/代理服务)
   + [主机管理](guide/主机管理)
+  + [环境管理](guide/环境管理)
   + [配置中心](guide/配置中心)
   + [标签管理](guide/标签管理)
   + [Remote Hosts](guide/RemoteHosts)

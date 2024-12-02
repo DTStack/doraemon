@@ -114,6 +114,29 @@ export default {
         url: '/api/host-management/delete-host'
     },
     /**
+     * 环境管理
+     */
+    //获取环境列表
+    getEnvList: {
+        method: 'get',
+        url: '/api/env-management/env-list'
+    },
+    //新增环境
+    addEnv: {
+        method: 'post',
+        url: '/api/env-management/add-env'
+    },
+    //编辑环境
+    editEnv: {
+        method: 'post',
+        url: '/api/env-management/edit-env'
+    },
+    //删除环境
+    deleteEnv: {
+        method: 'delete',
+        url: '/api/env-management/delete-env'
+    },
+    /**
      * 配置中心
      */
     getConfigList: {

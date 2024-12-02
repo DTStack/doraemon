@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppstoreOutlined, CloudOutlined, DesktopOutlined, TagOutlined, SettingOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, CloudOutlined, CloudServerOutlined, DesktopOutlined, TagOutlined, SettingOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import { SyncOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
@@ -27,8 +27,13 @@ const navMenuList: any = [{
 }, {
     name: '主机管理',
     path: '/page/host-management',
-    icon: <DesktopOutlined />,
+    icon: <CloudServerOutlined />,
     routers: ['host-management']
+}, {
+    name: '环境管理',
+    path: '/page/env-management',
+    icon: <DesktopOutlined />,
+    routers: ['env-management']
 }, {
     name: '配置中心',
     path: '/page/config-center',
