@@ -37,7 +37,7 @@ export function authBeforeRes(response: any) {
             a.click();
             window.URL.revokeObjectURL(downUrl);
         });
-        return data;
+        return response;
     } else {
         switch (response.status) {
         case 200:

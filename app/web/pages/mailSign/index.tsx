@@ -30,6 +30,7 @@ export default class MainSign extends React.PureComponent<any, any>  {
     }
 
     clear() {
+        // @ts-ignore
         this.refs.file.value = null
         this.setState({
             previewUrl: null,
@@ -125,7 +126,7 @@ export default class MainSign extends React.PureComponent<any, any>  {
     createImg() {
         html2canvas(this.el, {
             allowTaint: true,
-            timeout: 1000
+            imageTimeout: 1000
         }).then((canvas: any) => {
             let copy: any;
             try {

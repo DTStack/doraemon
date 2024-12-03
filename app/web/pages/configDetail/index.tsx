@@ -34,26 +34,6 @@ const ConfigDetail = (props: any) => {
     const [errorMessage, setErrorMessage] = useState('');
     const [shell, setShell] = useState('#!/bin/bash\n');
     const { filename, filePath, hostIp, hostName, username, password, remark }: any = basicInfo;
-    const getTableColumns = ()=>{
-        return [
-          {
-            title: 'url',
-            key: 'url',
-            dataIndex: 'url',
-            render: (text) => (<div style={{width: 200}}>{text}</div>)
-          },
-          {
-            title: '操作',
-            key: 'id',
-            dataIndex: 'id',
-            render: (value) => {
-              return <Popconfirm title='确认是否删除？' onConfirm={() => {delUrl(value)}}>
-              <a >删除</a>
-            </Popconfirm>
-            }
-          }
-        ]
-      }
     const loadBasicInfoData = useCallback(() => {
         return API.getConfigDetail({
             id

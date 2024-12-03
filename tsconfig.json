@@ -2,6 +2,7 @@
     "compilerOptions": {
         "noEmit": true,
         "baseUrl": ".",
+        "resolveJsonModule": true,
         "experimentalDecorators": true,
         "noImplicitAny": false,
         "esModuleInterop": true,
