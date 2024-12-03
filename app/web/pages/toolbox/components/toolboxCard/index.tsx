@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { Dropdown, Menu, Tooltip } from 'antd';
-import { builtInApp } from './constant';
-import UploadLogo from '../uplodadLogo';
+
 import DtTag from '@/components/dtTag';
+import UploadLogo from '../uplodadLogo';
+import { builtInApp } from './constant';
 import './style.scss';
 
 const ToolBoxCard = (props: any) => {
@@ -15,7 +16,7 @@ const ToolBoxCard = (props: any) => {
     function getHelpUrl() {
         if (appType === 0) {
             const app = builtInApp.find((item: any) => item.appName === appName);
-            return app ? app.helpUrl : ''
+            return app ? app.helpUrl : '';
         }
         return '';
     }
@@ -24,23 +25,26 @@ const ToolBoxCard = (props: any) => {
     const handleMenuClick = ({ key, domEvent }: any) => {
         domEvent.stopPropagation();
         switch (key) {
-        case 'edit':
-            props.onEdit(tool);
-            return;
-        case 'delete':
-            props.onDelete(id);
-            return;
-        default:
-            return;
+            case 'edit':
+                props.onEdit(tool);
+                return;
+            case 'delete':
+                props.onDelete(id);
         }
-    }
+    };
 
     const menu = (
         <Menu className="tool-acitons-menu" onClick={handleMenuClick}>
-            <Menu.Item key="edit"><i className="iconfont iconicon_edit" />编辑应用</Menu.Item>
-            <Menu.Item key="delete"><i className="iconfont iconicon_delete" />删除应用</Menu.Item>
-        </Menu >
-    )
+            <Menu.Item key="edit">
+                <i className="iconfont iconicon_edit" />
+                编辑应用
+            </Menu.Item>
+            <Menu.Item key="delete">
+                <i className="iconfont iconicon_delete" />
+                删除应用
+            </Menu.Item>
+        </Menu>
+    );
 
     return (
         <div className="c-toolbox__ant-card-body">
@@ -49,34 +53,37 @@ const ToolBoxCard = (props: any) => {
                     <i className="iconfont iconicon_view" />
                     {clickCount}
                 </div>
-                {
-                    appType === 0
-                        ? (
-                            helpUrl && (
-                                <Tooltip title={`${appName}帮助文档`}>
-                                    <QuestionCircleOutlined
-                                        onClick={(e: any) => {
-                                            e.preventDefault(); // 阻止页面跳转
-                                            e.stopPropagation(); // 阻止事件冒泡（点击浏览量）
-                                            const otherWindow: any = window.open(helpUrl, '_blank');
-                                            otherWindow.opener = null;
-                                        }} />
-                                </Tooltip>
-                            )
-                        ) : (
-                            <Dropdown trigger={['click']} placement="bottomRight" overlay={menu}>
-                                <span className="ant-dropdown-link" onClick={(e: any) => e.stopPropagation()}>
-                                    <i className="iconfont iconicon_more2" />
-                                </span>
-                            </Dropdown>
-                        )
-                }
+                {appType === 0 ? (
+                    helpUrl && (
+                        <Tooltip title={`${appName}帮助文档`}>
+                            <QuestionCircleOutlined
+                                onClick={(e: any) => {
+                                    e.preventDefault(); // 阻止页面跳转
+                                    e.stopPropagation(); // 阻止事件冒泡（点击浏览量）
+                                    const otherWindow: any = window.open(helpUrl, '_blank');
+                                    otherWindow.opener = null;
+                                }}
+                            />
+                        </Tooltip>
+                    )
+                ) : (
+                    <Dropdown trigger={['click']} placement="bottomRight" overlay={menu}>
+                        <span
+                            className="ant-dropdown-link"
+                            onClick={(e: any) => e.stopPropagation()}
+                        >
+                            <i className="iconfont iconicon_more2" />
+                        </span>
+                    </Dropdown>
+                )}
             </div>
             <div className="body-content">
-                <span onClick={(e: any) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }}>
+                <span
+                    onClick={(e: any) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
+                >
                     <UploadLogo tool={tool} />
                 </span>
                 <p className="tool-title">
@@ -89,12 +96,15 @@ const ToolBoxCard = (props: any) => {
             </div>
             <div className="body-bottom">
                 <div className="tool-tags">
-                    {Array.isArray(appTags) && appTags.map((item: any) =>
-                        <DtTag key={item.id} color={item.tagColor}>{item.tagName}</DtTag>
-                    )}
+                    {Array.isArray(appTags) &&
+                        appTags.map((item: any) => (
+                            <DtTag key={item.id} color={item.tagColor}>
+                                {item.tagName}
+                            </DtTag>
+                        ))}
                 </div>
             </div>
         </div>
     );
-}
+};
 export default ToolBoxCard;

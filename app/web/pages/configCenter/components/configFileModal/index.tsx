@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Form, Input, message as Message, Modal, Select, Spin } from 'antd';
 import { isEmpty, isFunction, isNull } from 'lodash';
-import { Modal, Input, Select, Spin, message as Message, Form } from 'antd';
+
 import { API } from '@/api';
 const FormItem = Form.Item;
 const { TextArea } = Input;
 const { Option } = Select;
-
 
 const ConfigForm = (props) => {
     const [hostList, setHostList] = useState([]);
@@ -18,47 +18,51 @@ const ConfigForm = (props) => {
             if (success) {
                 setHostList(data);
             }
-        })
-    }
+        });
+    };
     useEffect(() => {
         loadHostsData();
-    }, [])
+    }, []);
     return (
         <Form
             labelCol={{ span: 5 }}
             wrapperCol={{ span: 17 }}
             ref={forwardRef}
             initialValues={{
-                hostId: hostId,
-                filename: filename,
-                filePath: filePath,
+                hostId,
+                filename,
+                filePath,
                 tagIds: id || undefined,
-                remark: remark
+                remark,
             }}
         >
             <FormItem
                 label="主机"
                 name="hostId"
-                rules={[{
-                    required: true, message: '请选择主机'
-                }]}
+                rules={[
+                    {
+                        required: true,
+                        message: '请选择主机',
+                    },
+                ]}
                 hasFeedback
             >
                 <Select placeholder="请选择主机">
-                    {
-                        hostList.map((host) => {
-                            const { id, hostIp, hostName } = host;
-                            return <Option key={id} value={id}>{`${hostIp}-${hostName}`}</Option>
-                        })
-                    }
+                    {hostList.map((host) => {
+                        const { id, hostIp, hostName } = host;
+                        return <Option key={id} value={id}>{`${hostIp}-${hostName}`}</Option>;
+                    })}
                 </Select>
             </FormItem>
             <FormItem
                 label="文件名"
                 name="filename"
-                rules={[{
-                    required: true, message: '请输入文件名'
-                }]}
+                rules={[
+                    {
+                        required: true,
+                        message: '请输入文件名',
+                    },
+                ]}
                 hasFeedback
             >
                 <Input placeholder="请输入文件名" />
@@ -66,9 +70,12 @@ const ConfigForm = (props) => {
             <FormItem
                 label="文件路径"
                 name="filePath"
-                rules={[{
-                    required: true, message: '请输入文件路径'
-                }]}
+                rules={[
+                    {
+                        required: true,
+                        message: '请输入文件路径',
+                    },
+                ]}
                 hasFeedback
             >
                 <Input placeholder="请输入文件路径" />
@@ -76,27 +83,32 @@ const ConfigForm = (props) => {
             <FormItem
                 label="标签"
                 name="tagIds"
-                rules={[{
-                    required: true, message: '请选择标签'
-                }]}
+                rules={[
+                    {
+                        required: true,
+                        message: '请选择标签',
+                    },
+                ]}
                 hasFeedback
             >
                 <Select placeholder="请选择标签">
-                    {
-                        tagList.map((item: any) => <Option key={item.id} value={item.id}>{item.tagName}</Option>)
-                    }
+                    {tagList.map((item: any) => (
+                        <Option key={item.id} value={item.id}>
+                            {item.tagName}
+                        </Option>
+                    ))}
                 </Select>
             </FormItem>
             <FormItem label="备注" name="remark" hasFeedback>
                 <TextArea placeholder="请输入备注" rows={4} />
             </FormItem>
         </Form>
-    )
-}
+    );
+};
 
 const ConfigFormRef = React.forwardRef((props: any, ref: any) => {
-    return <ConfigForm {...props} forwardRef={ref} />
-})
+    return <ConfigForm {...props} forwardRef={ref} />;
+});
 
 const ConfigModal = (props: any) => {
     const { value, visible, onOk, onCancel, tagList } = props;
@@ -106,40 +118,42 @@ const ConfigModal = (props: any) => {
     const { id, filename } = value;
     const handleModalOk = () => {
         if (!isNull(configFormRef.current)) {
-            configFormRef.current.validateFields()
-                .then((values: any) => {
-                    setConfirmLoading(true);
-                    API[isAdd ? 'addConfig' : 'editConfig']({
-                        id: isAdd ? undefined : id,
-                        ...values
-                    }).then((response: any) => {
-                        setConfirmLoading(false);
-                        const { success, message } = response;
-                        if (success) {
-                            Message.success(isAdd ? '配置新增成功' : `配置「${filename}」编辑成功`);
-                            isFunction(onOk) && onOk(values);
-                        }
-                    })
-                })
+            configFormRef.current.validateFields().then((values: any) => {
+                setConfirmLoading(true);
+                API[isAdd ? 'addConfig' : 'editConfig']({
+                    id: isAdd ? undefined : id,
+                    ...values,
+                }).then((response: any) => {
+                    setConfirmLoading(false);
+                    const { success } = response;
+                    if (success) {
+                        Message.success(isAdd ? '配置新增成功' : `配置「${filename}」编辑成功`);
+                        isFunction(onOk) && onOk(values);
+                    }
+                });
+            });
         }
-    }
+    };
     const handleModalCancel = () => {
         isFunction(onCancel) && onCancel();
-    }
+    };
     useEffect(() => {
         if (!visible) {
             setConfirmLoading(false);
         }
-    }, [props.visible])
-    return <Modal
-        title={isAdd ? '新增配置' : '编辑配置'}
-        visible={visible}
-        confirmLoading={confirmLoading}
-        onOk={handleModalOk}
-        onCancel={handleModalCancel}>
-        <Spin spinning={confirmLoading}>
-            {visible && <ConfigFormRef tagList={tagList} value={value} ref={configFormRef} />}
-        </Spin>
-    </Modal>
-}
+    }, [props.visible]);
+    return (
+        <Modal
+            title={isAdd ? '新增配置' : '编辑配置'}
+            visible={visible}
+            confirmLoading={confirmLoading}
+            onOk={handleModalOk}
+            onCancel={handleModalCancel}
+        >
+            <Spin spinning={confirmLoading}>
+                {visible && <ConfigFormRef tagList={tagList} value={value} ref={configFormRef} />}
+            </Spin>
+        </Modal>
+    );
+};
 export default ConfigModal;

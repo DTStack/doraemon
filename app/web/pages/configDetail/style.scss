@@ -1,13 +1,13 @@
-.page-config-detail{
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  .page-content{
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-  .CodeMirror-linenumber{
-    cursor: pointer;
-  }
+.page-config-detail {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    .page-content {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .CodeMirror-linenumber {
+        cursor: pointer;
+    }
 }

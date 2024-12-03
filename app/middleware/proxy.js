@@ -2,53 +2,55 @@ const c2k = require('koa-connect');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 module.exports = async function httpproxy(ctx, next) {
     await next();
-    const {app} = ctx;
-    //获取代理服务id
+    const { app } = ctx;
+    // 获取代理服务id
     const serverId = ctx.params.id;
-    //获取真实访问者ip
+    // 获取真实访问者ip
     const realIp = ctx.header['x-real-ip'];
-    //根据代理服务id查询代理服务
+    // 根据代理服务id查询代理服务
     const proxyServer = await app.model.ProxyServer.findOne({
-        attributes:['target','status'],
-        where:{
-            is_delete:0,
-            id:serverId
-        }
+        attributes: ['target', 'status'],
+        where: {
+            is_delete: 0,
+            id: serverId,
+        },
     });
-    //判断代理服务是否被禁用
-    if (proxyServer.status===0){
-        ctx.body = app.utils.response(false,null,'该代理服务已关闭');
+    // 判断代理服务是否被禁用
+    if (proxyServer.status === 0) {
+        ctx.body = app.utils.response(false, null, '该代理服务已关闭');
     } else {
         let target = '';
-        //根据代理服务id和真实访问者ip查询代理规则
+        // 根据代理服务id和真实访问者ip查询代理规则
         const proxyRule = await app.model.ProxyRule.findOne({
-            attributes:['target'],
-            where:{
-                is_delete:0,
-                status:1,
-                ip:realIp,
-                proxy_server_id:serverId
-            }
+            attributes: ['target'],
+            where: {
+                is_delete: 0,
+                status: 1,
+                ip: realIp,
+                proxy_server_id: serverId,
+            },
         });
-        //判断代理服务id和真实访问者ip是否有对应的代理规则
-        if (proxyRule){
-            target=proxyRule.target.trim();
+        // 判断代理服务id和真实访问者ip是否有对应的代理规则
+        if (proxyRule) {
+            target = proxyRule.target.trim();
         } else {
-            target=proxyServer.target.trim();
+            target = proxyServer.target.trim();
         }
-        if (target){
-            await c2k(createProxyMiddleware({
-                target,
-                pathRewrite:{
-                    [`^/proxy/${serverId}`]:''
-                },
-                timeout: 5 * 60 * 1000, // 五分钟
-                proxyTimeout: 5 * 60 * 1000, // 五分钟
-                changeOrigin: true,
-                onError: (err, req, res, target) => {
-                    app.logger.info('http-proxy-middleware error', err, target);
-                }
-            }))(ctx,next)
+        if (target) {
+            await c2k(
+                createProxyMiddleware({
+                    target,
+                    pathRewrite: {
+                        [`^/proxy/${serverId}`]: '',
+                    },
+                    timeout: 5 * 60 * 1000, // 五分钟
+                    proxyTimeout: 5 * 60 * 1000, // 五分钟
+                    changeOrigin: true,
+                    onError: (err, req, res, target) => {
+                        app.logger.info('http-proxy-middleware error', err, target);
+                    },
+                })
+            )(ctx, next);
         }
     }
 };

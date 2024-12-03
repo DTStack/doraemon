@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Row, Col, Button, Card, Input, Select, Modal, Spin, Empty, message } from 'antd';
-import { API } from '@/api';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Button, Card, Col, Empty, Input, message, Modal, Row, Select, Spin } from 'antd';
+
+import { API } from '@/api';
+import emptyImg from '@/asset/images/empty.png';
 import CreateApp from './components/CreateApp';
 import ToolBoxCard from './components/toolboxCard';
-import emptyImg from '@/asset/images/empty.png';
 import './style.scss';
 const { Search } = Input;
 const { Option } = Select;
@@ -13,7 +14,7 @@ const Toolbox = () => {
     const [tagList, setTagList] = useState([]);
     const [reqParams, setReqParams] = useState({
         appName: '',
-        appTags: []
+        appTags: [],
     });
     const [toolList, setToolList] = useState([]);
     const [appInfo, setAppInfo] = useState({});
@@ -29,14 +30,14 @@ const Toolbox = () => {
                 setToolList(data.data);
             }
         });
-    }
+    };
 
     // 获取标签列表
     const getTagList = () => {
         API.getTagList({
             current: 1,
             size: 10000,
-            searchText: ''
+            searchText: '',
         }).then((res: any) => {
             const { success, data, msg } = res;
             if (success) {
@@ -44,8 +45,8 @@ const Toolbox = () => {
             } else {
                 message.error(msg);
             }
-        })
-    }
+        });
+    };
 
     useEffect(() => {
         getTagList();
@@ -59,38 +60,38 @@ const Toolbox = () => {
     const handleNameSearch = (appName: any) => {
         setReqParams({
             ...reqParams,
-            appName
-        })
-    }
+            appName,
+        });
+    };
 
     // 标签筛选
     const handleTagSearch = (appTags: any) => {
         setReqParams({
             ...reqParams,
-            appTags
-        })
-    }
+            appTags,
+        });
+    };
 
     // 添加 | 编辑
     const updateApplication = (params: any) => {
-        const { appName, appUrl, appDesc, appTags, id } = params
-        setConfirmLoading(true)
+        const { appName, appUrl, appDesc, appTags, id } = params;
+        setConfirmLoading(true);
         API.updateApplication({
             appName,
             appUrl,
             appDesc,
             appTags,
-            id
+            id,
         }).then((response: any) => {
-            const { success } = response
+            const { success } = response;
             if (success) {
-                setConfirmLoading(false)
-                onHandleAddApp()
-                setAppInfo({})
-                loadMainData()
+                setConfirmLoading(false);
+                onHandleAddApp();
+                setAppInfo({});
+                loadMainData();
             }
         });
-    }
+    };
 
     const deleteApplication = (id: any) => {
         Modal.confirm({
@@ -102,28 +103,28 @@ const Toolbox = () => {
                 API.deleteApplication({ id }).then((response: any) => {
                     const { success } = response;
                     if (success) {
-                        loadMainData()
+                        loadMainData();
                     }
-                })
-            }
-        })
-    }
+                });
+            },
+        });
+    };
 
     const onHandleAddApp = () => {
-        setVisbile(!visible)
-        setAppInfo({})
-    }
+        setVisbile(!visible);
+        setAppInfo({});
+    };
 
     // 获取appInfo
     const onHandleEditApp = (id: any) => {
         API.getApplicationById({ id }).then((response: any) => {
-            const { success, data } = response
+            const { success, data } = response;
             if (success) {
-                setAppInfo(data)
+                setAppInfo(data);
             }
-            setVisbile(!visible)
+            setVisbile(!visible);
         });
-    }
+    };
 
     const onHandleClickApp = (params: any) => {
         API.clickApplication({ params });
@@ -132,54 +133,44 @@ const Toolbox = () => {
         const toolIdx = newToolList.findIndex((item: any) => item.id === params.id);
         const tool: any = {
             ...params,
-            clickCount: params.clickCount + 1
+            clickCount: params.clickCount + 1,
         };
         newToolList.splice(toolIdx, 1, tool);
         setToolList(newToolList);
-    }
+    };
 
     const handleEdit = (tool: any) => {
         onHandleEditApp(tool.id);
         onHandleClickApp(tool);
-    }
+    };
 
-    const renderCard = (list: any) => list.map((tool: any, index: any) => {
-        const { id, appName, appUrl, appType } = tool;
-        const componentContent = (
-            <ToolBoxCard
-                tool={tool}
-                onEdit={handleEdit}
-                onDelete={deleteApplication}
-            />
-        )
-        return (
-            <Col className="navigation-item-wrapper" key={id || appName} span={6}>
-                <Card bordered={false} onClick={() => onHandleClickApp(tool)}>
-                    {
-                        appType
-                            ? (
-                                <a
-                                    href={appUrl}
-                                    rel="noopener noreferrer"
-                                    target='_blank'
-                                    className="navigation-item"
-                                >
-                                    {componentContent}
-                                </a>
-                            )
-                            : (
-                                <Link
-                                    to={appUrl}
-                                    className="navigation-item"
-                                >
-                                    {componentContent}
-                                </Link>
-                            )
-                    }
-                </Card>
-            </Col>
-        )
-    })
+    const renderCard = (list: any) =>
+        list.map((tool: any) => {
+            const { id, appName, appUrl, appType } = tool;
+            const componentContent = (
+                <ToolBoxCard tool={tool} onEdit={handleEdit} onDelete={deleteApplication} />
+            );
+            return (
+                <Col className="navigation-item-wrapper" key={id || appName} span={6}>
+                    <Card bordered={false} onClick={() => onHandleClickApp(tool)}>
+                        {appType ? (
+                            <a
+                                href={appUrl}
+                                rel="noopener noreferrer"
+                                target="_blank"
+                                className="navigation-item"
+                            >
+                                {componentContent}
+                            </a>
+                        ) : (
+                            <Link to={appUrl} className="navigation-item">
+                                {componentContent}
+                            </Link>
+                        )}
+                    </Card>
+                </Col>
+            );
+        });
     return (
         <div className="page-toolbox">
             <div className="toolbox-header mb-12">
@@ -200,34 +191,43 @@ const Toolbox = () => {
                             mode="multiple"
                             onChange={handleTagSearch}
                         >
-                            {tagList.map((item: any) => <Option key={item.id} value={item.id}>{item.tagName}</Option>)}
+                            {tagList.map((item: any) => (
+                                <Option key={item.id} value={item.id}>
+                                    {item.tagName}
+                                </Option>
+                            ))}
                         </Select>
                     </span>
-                    <Button className="ml-20" type="primary" onClick={onHandleAddApp}>添加应用</Button>
+                    <Button className="ml-20" type="primary" onClick={onHandleAddApp}>
+                        添加应用
+                    </Button>
                 </div>
             </div>
             <Spin wrapperClassName="tool-list__ant-spin" spinning={loading}>
-                {
-                    Array(toolList) && toolList.length
-                        ? (
-                            <Row className="tool-list" gutter={20}>
-                                {
-                                    renderCard(toolList)
-                                }
-                            </Row>
-                        ) : <Empty className="tool-empty" image={emptyImg} imageStyle={{ height: 200 }} description="无符合条件的应用" />
-                }
-
+                {Array(toolList) && toolList.length ? (
+                    <Row className="tool-list" gutter={20}>
+                        {renderCard(toolList)}
+                    </Row>
+                ) : (
+                    <Empty
+                        className="tool-empty"
+                        image={emptyImg}
+                        imageStyle={{ height: 200 }}
+                        description="无符合条件的应用"
+                    />
+                )}
             </Spin>
-            {visible && <CreateApp
-                visible={visible}
-                appInfo={appInfo}
-                tagList={tagList}
-                confirmLoading={confirmLoading}
-                onOk={updateApplication}
-                onCancel={onHandleAddApp}
-            />}
+            {visible && (
+                <CreateApp
+                    visible={visible}
+                    appInfo={appInfo}
+                    tagList={tagList}
+                    confirmLoading={confirmLoading}
+                    onOk={updateApplication}
+                    onCancel={onHandleAddApp}
+                />
+            )}
         </div>
-    )
-}
+    );
+};
 export default Toolbox;

@@ -3,9 +3,9 @@ const initialState: any = {
     localIp: '',
     serverInfo: {
         protocol: '',
-        host: ''
-    }
-}
+        host: '',
+    },
+};
 export default (state = initialState, action: any) => {
     const { type, payload } = action;
     switch (type) {
@@ -16,9 +16,10 @@ export default (state = initialState, action: any) => {
                 localIp,
                 serverInfo: {
                     protocol,
-                    host
-                }
-            }
-        default: return state;
+                    host,
+                },
+            };
+        default:
+            return state;
     }
-}
+};

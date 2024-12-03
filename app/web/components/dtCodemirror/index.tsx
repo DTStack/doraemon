@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import { Select } from 'antd';
+
 import './style.scss';
 const { Option } = Select;
 const themes: any = [
@@ -66,46 +67,49 @@ const themes: any = [
     'xq-light.css',
     'yeti.css',
     'yonce.css',
-    'zenburn.css'
+    'zenburn.css',
 ];
 function DtCodemirror(props: any) {
     const { fileType = 'nginx' } = props;
-    const defaultTheme = 'ayu-dark.css'
-    const [theme, setThemes] = useState(defaultTheme)
+    const defaultTheme = 'ayu-dark.css';
+    const [theme, setThemes] = useState(defaultTheme);
     const onChange = (value: any) => {
         setThemes(value);
         try {
             require(`codemirror/theme/${value}`);
         } catch (error) {
-            console.log(error)
+            console.log(error);
         }
-    }
+    };
     useEffect(() => {
         try {
             require('codemirror/theme/ayu-dark.css');
             require(`codemirror/mode/${fileType}/${fileType}.js`);
         } catch (error) {
-            console.log(error)
+            console.log(error);
         }
-
-    }, [])
-    return (<div className="dt-codemirror">
-        <CodeMirror {...props} />
-        <Select
-            showSearch
-            value={theme}
-            className="dt-codemirror-select-themes"
-            placeholder="选择主题"
-            optionFilterProp="children"
-            onChange={onChange}
-            filterOption={(input: any, option: any) =>
-                option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-            }
-        >
-            {
-                themes.map((item: any) => <Option value={item}>{item}</Option>)
-            }
-        </Select>
-    </div>)
+    }, []);
+    return (
+        <div className="dt-codemirror">
+            <CodeMirror {...props} />
+            <Select
+                showSearch
+                value={theme}
+                className="dt-codemirror-select-themes"
+                placeholder="选择主题"
+                optionFilterProp="children"
+                onChange={onChange}
+                filterOption={(input: any, option: any) =>
+                    option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                }
+            >
+                {themes.map((item: any) => (
+                    <Option value={item} key={item}>
+                        {item}
+                    </Option>
+                ))}
+            </Select>
+        </div>
+    );
 }
-export default DtCodemirror
+export default DtCodemirror;

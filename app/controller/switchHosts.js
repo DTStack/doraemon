@@ -1,5 +1,4 @@
 const Controller = require('egg').Controller;
-const path = require('path');
 const fs = require('fs');
 const _ = require('lodash');
 // const { createWS } = require('../utils/ws');
@@ -14,11 +13,11 @@ class SwitchHostsController extends Controller {
         const data = await ctx.service.switchHosts.getHostsList({
             size,
             current,
-            searchText
+            searchText,
         });
         ctx.body = app.utils.response(true, {
             data: data.rows,
-            count: data.count
+            count: data.count,
         });
     }
 
@@ -31,13 +30,13 @@ class SwitchHostsController extends Controller {
         const data = await ctx.service.switchHosts.createHosts({
             groupName,
             groupDesc,
-            is_push
+            is_push,
         });
         if (_.isNil(data)) throw new Error('创建失败');
         // 创建对应hosts文件
         const fileName = 'hosts_' + data.id;
         const paths = ['resources', 'hosts'];
-        const filePath = app.utils.createFileSync(paths,fileName,hosts);
+        const filePath = app.utils.createFileSync(paths, fileName, hosts);
         // 创建websocket连接
         // createWS(8080, '/websocket_' + data.id);
         // 更新数据
@@ -45,7 +44,7 @@ class SwitchHostsController extends Controller {
         const result = await ctx.service.switchHosts.updateHosts(data.id, {
             groupApi,
             // groupId,
-            groupAddr:filePath
+            groupAddr: filePath,
         });
         data.dataValues.groupAddr = filePath;
         data.dataValues.groupApi = groupApi;
@@ -57,7 +56,6 @@ class SwitchHostsController extends Controller {
         const { ctx, app } = this;
         const { hosts, id, groupName, groupDesc, is_push } = ctx.request.body;
         const { origin, referer } = ctx.request.header;
-        const type = 'switch-hosts';
         if (_.isNil(id)) throw new Error('缺少必要参数id');
         if (_.isNil(groupName)) throw new Error('缺少必要参数groupName');
         // 更新hosts
@@ -72,13 +70,13 @@ class SwitchHostsController extends Controller {
             groupName,
             groupDesc,
             is_push,
-            updated_at: new Date()
-        })
+            updated_at: new Date(),
+        });
         const { dataValues } = await ctx.service.switchHosts.getHostsInfo(id);
-        const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'switch-hosts')
-        noticeUrlList.forEach(({webHook}) => {
-            app.utils.sendHostsUpdateMsg(webHook,dataValues,origin,referer,'已更新')
-        })
+        const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id, 'switch-hosts');
+        noticeUrlList.forEach(({ webHook }) => {
+            app.utils.sendHostsUpdateMsg(webHook, dataValues, origin, referer, '已更新');
+        });
         ctx.body = app.utils.response(result);
     }
     // 推送
@@ -88,7 +86,7 @@ class SwitchHostsController extends Controller {
         if (_.isNil(id)) throw new Error('缺少必要参数id');
         const result = await ctx.service.switchHosts.updateHosts(id, {
             is_push: 1,
-            updated_at: new Date()
+            updated_at: new Date(),
         });
         ctx.body = app.utils.response(result);
     }
@@ -102,15 +100,15 @@ class SwitchHostsController extends Controller {
         if (_.isNil(id)) throw new Error('缺少必要参数id');
         const result = await ctx.service.switchHosts.updateHosts(id, {
             is_delete: 1,
-            updated_at: new Date()
+            updated_at: new Date(),
         });
         const { dataValues } = await ctx.service.switchHosts.getHostsInfo(id);
-        const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id,'switch-hosts')
-        noticeUrlList.forEach(({webHook}) => {
-            app.utils.sendHostsUpdateMsg(webHook,dataValues,origin,referer,'已删除')
-        })
-        await ctx.service.configDetail.updateNoticeAllUrl(id,type,{
-            is_delete: 1
+        const noticeUrlList = await ctx.service.configDetail.getNoticeListById(id, 'switch-hosts');
+        noticeUrlList.forEach(({ webHook }) => {
+            app.utils.sendHostsUpdateMsg(webHook, dataValues, origin, referer, '已删除');
+        });
+        await ctx.service.configDetail.updateNoticeAllUrl(id, type, {
+            is_delete: 1,
         });
         ctx.body = app.utils.response(result);
     }
@@ -119,7 +117,7 @@ class SwitchHostsController extends Controller {
     async getHostsInfo() {
         const { ctx, app } = this;
         const { id } = ctx.query;
-        if (_.isNil(id)) throw new Error('缺少必要参数id')
+        if (_.isNil(id)) throw new Error('缺少必要参数id');
         const data = await ctx.service.switchHosts.getHostsInfo(id);
         if (_.isNil(data)) throw new Error('找不到该id下的相关信息');
         await this.readHostsConfig(id, data.groupAddr, (hosts) => {
@@ -130,9 +128,9 @@ class SwitchHostsController extends Controller {
 
     // 获取该id下的hosts内容
     async getHostsConfig() {
-        const { ctx, app } = this;
+        const { ctx } = this;
         const id = ctx.params.id;
-        if (_.isNil(id)) throw new Error('缺少必要参数id')
+        if (_.isNil(id)) throw new Error('缺少必要参数id');
         const groupAddr = await this.ctx.service.switchHosts.getGroupAddr(id);
         await this.readHostsConfig(id, groupAddr, (hosts) => {
             ctx.body = hosts;

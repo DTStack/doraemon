@@ -1,62 +1,60 @@
 .text-center {
-  text-align: center;
+    text-align: center;
 }
 
 .text-right {
-  text-align: right;
+    text-align: right;
 }
 
 // 卡片下表单
 .card-form {
-  .info-item {
-    margin-top: 20px;
-
-    .label {
-      text-align: right;
+    .info-item {
+        margin-top: 20px;
+        .label {
+            text-align: right;
+        }
     }
-  }
 }
 
 .fl-l {
-  float: left;
+    float: left;
 }
 
 .fl-r {
-  float: right;
+    float: right;
 }
 
 .clearfix {
-  zoom: 1;
-
-  &:after {
-    content: " ";
-    visibility: hidden;
-    display: block;
-    height: 0;
-    clear: both;
-  }
+    zoom: 1;
+    &::after {
+        content: " ";
+        visibility: hidden;
+        display: block;
+        height: 0;
+        clear: both;
+    }
 }
 
 .mt-10 {
-  margin-top: 10px;
+    margin-top: 10px;
 }
 
 .mt-12 {
-  margin-top: 12px;
+    margin-top: 12px;
 }
 
 .mb-12 {
-  margin-bottom: 12px;
+    margin-bottom: 12px;
 }
 
 .ml-20 {
-  margin-left: 20px;
+    margin-left: 20px;
 }
 
 .ml-10 {
-  margin-left: 10px;
+    margin-left: 10px;
 }
 
 .flex {
-  display: flex;
+    display: flex;
 }

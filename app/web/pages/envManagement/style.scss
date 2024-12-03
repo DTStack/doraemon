@@ -1,19 +1,19 @@
-.page-env-management{
-  .title_wrap{
-      margin-bottom: 12px;
-      font-size: 14px;
-      color: #333333;
-      font-weight: 500;
-      display: flex;
-      justify-content: space-between;
-  }
+.page-env-management {
+    .title_wrap {
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+        display: flex;
+        justify-content: space-between;
+    }
 }
 
-.remark-content{
-  // white-space: normal;
-  overflow: hidden; // 超出的文本隐藏
-  text-overflow: ellipsis;    // 溢出用省略号显示
-  display: -webkit-box; // 将对象作为弹性伸缩盒子模型显示。
-  -webkit-box-orient: vertical; // 从上到下垂直排列子元素（设置伸缩盒子的子元素排列方式）
-  -webkit-line-clamp: 3; // 这个属性不是css的规范属性，需要组合上面两个属性，表示显示的行数。
+.remark-content {
+    // white-space: normal;
+    overflow: hidden; // 超出的文本隐藏
+    text-overflow: ellipsis;    // 溢出用省略号显示
+    display: -webkit-box; // 将对象作为弹性伸缩盒子模型显示。
+    -webkit-box-orient: vertical; // 从上到下垂直排列子元素（设置伸缩盒子的子元素排列方式）
+    -webkit-line-clamp: 3; // 这个属性不是css的规范属性，需要组合上面两个属性，表示显示的行数。
 }

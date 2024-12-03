@@ -1,14 +1,14 @@
 exports.cors = {
     enable: true,
-    package: 'egg-cors'
+    package: 'egg-cors',
 };
 
 exports.webpack = {
     enable: true,
-    package: 'egg-webpack'
+    package: 'egg-webpack',
 };
 
 exports.webpackreact = {
     enable: true,
-    package: 'egg-webpack-react'
+    package: 'egg-webpack-react',
 };

@@ -1,6 +1,6 @@
 const { createNewServer } = require('../../utils/createServer');
 
-module.exports = app => {
+module.exports = (app) => {
     return class Controller extends app.Controller {
         // async getShellCommand () {
         //     const { ctx, logger, app } = this;
@@ -9,15 +9,18 @@ module.exports = app => {
         //     logger.info(' ======= command ======= ', command)
         // }
 
-        async loginServer () {
-            const { ctx } = this
-            const { host, username, password } = ctx.args[0]
+        async loginServer() {
+            const { ctx } = this;
+            const { host, username, password } = ctx.args[0];
 
-            createNewServer({
-                host,
-                username,
-                password
-            }, ctx)
+            createNewServer(
+                {
+                    host,
+                    username,
+                    password,
+                },
+                ctx
+            );
         }
-    }
-}
+    };
+};

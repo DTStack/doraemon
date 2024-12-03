@@ -1,23 +1,23 @@
-.header_component{
-    .menu_content{
+.header_component {
+    .menu_content {
         flex: 1;
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 0 20px;
-        .ant-menu{
+        .ant-menu {
             overflow: hidden;
             font-size: 14px;
         }
     }
     .help-link {
-        color: #fff;
+        color: #FFF;
         font-size: 18px;
         vertical-align: sub;
         cursor: pointer;
     }
     .refresh-cion {
-        color: #fff;
+        color: #FFF;
         font-size: 16px;
         margin-left: 10px;
     }

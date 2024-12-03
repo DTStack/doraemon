@@ -1,23 +1,23 @@
 import * as React from 'react';
 import { RetweetOutlined } from '@ant-design/icons';
-import { Modal, Input, Tooltip, Button, message as Message, Select, Radio, Form, FormInstance } from 'antd';
+import { Button, Form, FormInstance, Input, Modal, Radio, Select, Tooltip } from 'antd';
 import PropsTypes from 'prop-types';
+
 import { urlReg } from '@/utils/reg';
-import { API } from '@/api'
 import './style.scss';
 const { TextArea } = Input;
 const { Option } = Select;
 
-class ProxyRuleModal extends React.PureComponent<any, any>{
+class ProxyRuleModal extends React.PureComponent<any, any> {
     static defaultProps = {
         visible: false,
         localIp: '',
-        onOk: () => { },
-        onCancel: () => { },
+        onOk: () => {},
+        onCancel: () => {},
         proxyServer: {},
         targetAddrs: [],
-        confirmLoading: false
-    }
+        confirmLoading: false,
+    };
     static propsTypes = {
         localIp: PropsTypes.string,
         visible: PropsTypes.bool,
@@ -25,8 +25,8 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
         onCancel: PropsTypes.func,
         proxyServer: PropsTypes.object,
         targetAddrs: PropsTypes.array,
-        confirmLoading: PropsTypes.bool
-    }
+        confirmLoading: PropsTypes.bool,
+    };
 
     formRef: FormInstance<any> = null;
 
@@ -39,39 +39,39 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
                 onOk(values);
             }
         });
-    }
+    };
     handleModalCancel = () => {
         const { onCancel } = this.props;
         onCancel();
-    }
+    };
     onClickQuickInput = () => {
         const { proxyServer, localIp } = this.props;
         const { ip } = proxyServer;
         this.formRef.setFieldsValue({
-            target: `http://${ip || localIp}:8080`
-        })
-    }
+            target: `http://${ip || localIp}:8080`,
+        });
+    };
     onChangeRadio = () => {
         this.formRef.setFieldsValue({
-            target: undefined
-        })
-    }
+            target: undefined,
+        });
+    };
     addressValidator = (rules: any, value: any, callback: any) => {
         if (value?.includes('doraemon')) {
             return callback('请使用 portalfront 地址，请勿使用 portalfront-doraemon 地址');
         }
         return callback();
-    }
+    };
     render() {
         const { visible, editable, proxyServer, confirmLoading, targetAddrs, localIp } = this.props;
         const { ip, target, remark, mode } = proxyServer;
         const formItemLayout: any = {
             labelCol: {
-                span: 5
+                span: 5,
             },
             wrapperCol: {
-                span: 18
-            }
+                span: 18,
+            },
         };
         return (
             <Modal
@@ -84,14 +84,14 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
             >
                 <Form
                     {...formItemLayout}
-                    ref={(form) => this.formRef = form}
+                    ref={(form) => (this.formRef = form)}
                     initialValues={{
                         ip: ip || localIp,
                         mode: mode === undefined ? '0' : mode,
                         target: target || undefined,
-                        remark: remark
+                        remark,
                     }}
-                    scrollToFirstError={true}
+                    scrollToFirstError
                 >
                     <Form.Item
                         label="IP"
@@ -112,7 +112,9 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
                     </Form.Item>
                     <Form.Item
                         noStyle
-                        shouldUpdate={(prevValues: any, currentValues: any) => prevValues.mode !== currentValues.mode}
+                        shouldUpdate={(prevValues: any, currentValues: any) =>
+                            prevValues.mode !== currentValues.mode
+                        }
                     >
                         {({ getFieldValue }) =>
                             getFieldValue('mode') === '0' ? (
@@ -122,26 +124,50 @@ class ProxyRuleModal extends React.PureComponent<any, any>{
                                         name="target"
                                         validateFirst
                                         rules={[
-                                            { required: true, pattern: urlReg, message: '请输入正确格式的目标服务地址，以 http(s):// 开头' },
-                                            { validator: this.addressValidator }
+                                            {
+                                                required: true,
+                                                pattern: urlReg,
+                                                message:
+                                                    '请输入正确格式的目标服务地址，以 http(s):// 开头',
+                                            },
+                                            { validator: this.addressValidator },
                                         ]}
                                     >
                                         <Input placeholder="请输入正确格式的目标服务地址，以 http(s):// 开头" />
                                     </Form.Item>
-                                    <Tooltip placement="topLeft" title={`快速填写默认目标地址默认为：http://${ip || localIp}:8080`}>
-                                        <Button shape="circle" className="retweet" size="small" onClick={this.onClickQuickInput} icon={<RetweetOutlined />} />
+                                    <Tooltip
+                                        placement="topLeft"
+                                        title={`快速填写默认目标地址默认为：http://${
+                                            ip || localIp
+                                        }:8080`}
+                                    >
+                                        <Button
+                                            shape="circle"
+                                            className="retweet"
+                                            size="small"
+                                            onClick={this.onClickQuickInput}
+                                            icon={<RetweetOutlined />}
+                                        />
                                     </Tooltip>
                                 </div>
                             ) : (
                                 <Form.Item
                                     label="目标服务地址"
                                     name="target"
-                                    rules={[{ required: true, message: '请输入正确格式的目标服务地址，以 http(s):// 开头' }]}
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                '请输入正确格式的目标服务地址，以 http(s):// 开头',
+                                        },
+                                    ]}
                                 >
                                     <Select placeholder="请输入目标服务地址">
-                                        {
-                                            targetAddrs.map((item: any) => <Option key={item.id} value={item.target}>{item.remark}（{item.target}）</Option>)
-                                        }
+                                        {targetAddrs.map((item: any) => (
+                                            <Option key={item.id} value={item.target}>
+                                                {item.remark}（{item.target}）
+                                            </Option>
+                                        ))}
                                     </Select>
                                 </Form.Item>
                             )

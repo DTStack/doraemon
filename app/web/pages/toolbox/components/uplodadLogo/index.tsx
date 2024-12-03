@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { PlusOutlined, LoadingOutlined } from '@ant-design/icons';
-import { Upload, message } from 'antd';
+import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
+import { message, Upload } from 'antd';
 import Cookies from 'js-cookie';
-import defaultLogo from '@/asset/images/default.png'
+
+import defaultLogo from '@/asset/images/default.png';
 import './style.scss';
 
 // 读取图片
@@ -18,6 +19,7 @@ const UploadLogo = (props: any) => {
     const [loading, setLoading] = useState(false);
 
     // 上传按钮
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const uploadButton = (
         <div>
             {loading ? <LoadingOutlined /> : <PlusOutlined />}
@@ -35,7 +37,7 @@ const UploadLogo = (props: any) => {
     // 上传前校验下文件大小
     const beforeUpload = (file: any) => {
         return maxSizeValidator(file);
-    }
+    };
 
     // 文件大小校验
     const maxSizeValidator = (file: any) => {
@@ -44,7 +46,7 @@ const UploadLogo = (props: any) => {
             message.error('图片最大2MB!');
         }
         return maxSize;
-    }
+    };
 
     // 上传图片的回调
     const handleChange = (info: any) => {
@@ -68,18 +70,16 @@ const UploadLogo = (props: any) => {
             showUploadList={false}
             action={`/api/appCenters/upload-logo/${id}`}
             headers={{
-                'x-csrf-token': Cookies.get('csrfToken')
+                'x-csrf-token': Cookies.get('csrfToken'),
             }}
             beforeUpload={beforeUpload}
             onChange={handleChange}
         >
-            {
-                imageUrl
-                    ? logoImage
-                    : <img src={defaultLogo} alt="default" width={60} />
-            }
-            <span className="upload-actions"><PlusOutlined /></span>
+            {imageUrl ? logoImage : <img src={defaultLogo} alt="default" width={60} />}
+            <span className="upload-actions">
+                <PlusOutlined />
+            </span>
         </Upload>
     );
-}
+};
 export default UploadLogo;

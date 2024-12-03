@@ -7,7 +7,7 @@ body,
 // table 滚动状态下的样式, small table
 .ant-table {
     &.ant-table-ping-right:not(.ant-table-has-fix-right) .ant-table-container::after,
-    &.ant-table-ping-left:not(.ant-table-has-fix-left) .ant-table-container:before {
+    &.ant-table-ping-left:not(.ant-table-has-fix-left) .ant-table-container::before {
         box-shadow: none;
     }
     .ant-table-small,
@@ -49,34 +49,15 @@ body,
     }
 }
 
-// 可展开表格的bug
-.dt-table-fixed-base {
-    .ant-table {
-        .ant-table-expanded-row {
-            .ant-table-wrapper .ant-spin-nested-loading .ant-spin-container .ant-table-content .ant-table-placeholder {
-                position: relative;
-                top: unset;
-            }
-        }
-    }
-    .ant-spin-container > .ant-table-pagination {
-        line-height: 67px;
-        height: 67px;
-        background-color: #fff;
-        &.ant-pagination.mini {
-            align-items: center;
-        }
-    }
-}
-
 // 固定表格高度(自带分页）
+// 可展开表格的bug
 .dt-table-fixed-base {
     &.ant-table-wrapper,
     .ant-table-wrapper {
         height: 100%;
-        background: #fff;
+        background: #FFF;
         padding: 0 !important;
-        box-shadow: 0px 2px 8px 0px rgba(6, 14, 26, 0.08);
+        box-shadow: 0 2px 8px 0 rgba(6, 14, 26, 0.08);
         .ant-spin-nested-loading {
             height: 100%;
             .ant-spin-container {
@@ -110,13 +91,29 @@ body,
                             position: absolute;
                             top: 45px;
                             width: 100%;
-                            color: #bfbfbf;
+                            color: #BFBFBF;
                             text-align: center;
                             border: none;
                         }
                     }
                 }
             }
+        }
+    }
+    .ant-table {
+        .ant-table-expanded-row {
+            .ant-table-wrapper .ant-spin-nested-loading .ant-spin-container .ant-table-content .ant-table-placeholder {
+                position: relative;
+                top: unset;
+            }
+        }
+    }
+    .ant-spin-container > .ant-table-pagination {
+        line-height: 67px;
+        height: 67px;
+        background-color: #FFF;
+        &.ant-pagination.mini {
+            align-items: center;
         }
     }
 }
@@ -137,7 +134,7 @@ body,
     }
     &.dt-form-shadow-bg {
         .ant-input-wrapper {
-            box-shadow: 0px 2px 8px 0px rgba(6, 14, 26, 0.08);
+            box-shadow: 0 2px 8px 0 rgba(6, 14, 26, 0.08);
         }
         .ant-input,
         .ant-btn-icon-only {
@@ -151,13 +148,12 @@ body,
     &.ant-select {
         .ant-select-selector {
             border-color: transparent;
-            box-shadow: 0px 2px 8px 0px rgba(6, 14, 26, 0.08);
+            box-shadow: 0 2px 8px 0 rgba(6, 14, 26, 0.08);
             &:hover {
-                border-color: #3f87ff;
+                border-color: #3F87FF;
             }
         }
-        &.ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input)
-            .ant-select-selector {
+        &.ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
             box-shadow: none;
             outline: 0;
         }
@@ -169,7 +165,7 @@ body,
     .ant-select-item {
         font-size: 12px;
         &.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
-            background-color: #f0f8ff;
+            background-color: #F0F8FF;
         }
     }
 }
@@ -195,9 +191,9 @@ body,
 .ant-btn {
     &.ant-btn-dangerous.ant-btn-primary:hover,
     &.ant-btn-dangerous.ant-btn-primary:focus {
-        color: #fff;
-        background: #ff7875;
-        border-color: #ff7875;
+        color: #FFF;
+        background: #FF7875;
+        border-color: #FF7875;
     }
 }
 
@@ -205,6 +201,7 @@ body,
 .dt-layout-header .ant-menu-horizontal > .ant-menu-item {
     top: 0;
 }
+
 .ant-menu-dark.ant-menu-horizontal > .ant-menu-item:hover {
     background-color: transparent;
 }
