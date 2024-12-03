@@ -205,3 +205,11 @@ body,
 .ant-menu-dark.ant-menu-horizontal > .ant-menu-item:hover {
     background-color: transparent;
 }
+
+.ant-radio {
+    top: 0.1em;
+    .ant-radio-inner::after {
+        margin-top: 0;
+        margin-left: 0;
+    }
+}
