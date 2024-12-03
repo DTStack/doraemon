@@ -1,22 +1,22 @@
-.page-internal-url-navigation{
-  .navigation-item-wrapper{
-    margin-bottom: 10px;
-    .navigation-item{
-      display: flex;
-      position: relative;
-      flex-direction: column;
-      justify-content: center;
-      color: #fff;
-      height: 140px;
-      text-align: center;
-      .icon{
-        position: absolute;
-        top:10px;
-        right: 10px;
-      }
-      .title{
-        font-size: 22px;
-      }
+.page-internal-url-navigation {
+    .navigation-item-wrapper {
+        margin-bottom: 10px;
+        .navigation-item {
+            display: flex;
+            position: relative;
+            flex-direction: column;
+            justify-content: center;
+            color: #FFF;
+            height: 140px;
+            text-align: center;
+            .icon {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+            .title {
+                font-size: 22px;
+            }
+        }
     }
-  }
 }

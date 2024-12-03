@@ -1,13 +1,14 @@
 import React, { createElement } from 'react';
-import classNames from 'classnames';
 import { Button } from 'antd';
+import classNames from 'classnames';
+
 import config from './typeConfig';
 import './style.scss';
 
 class Exception extends React.PureComponent<any, any> {
     static defaultProps = {
         backText: '返回首页',
-        redirect: '/'
+        redirect: '/',
     };
 
     constructor(props: any) {
@@ -47,7 +48,7 @@ class Exception extends React.PureComponent<any, any> {
                                 linkElement,
                                 {
                                     to: redirect,
-                                    href: redirect
+                                    href: redirect,
                                 },
                                 <Button type="primary">{backText}</Button>
                             )}

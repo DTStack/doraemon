@@ -1,9 +1,11 @@
-.ant-menu.ant-menu-dark .ant-menu-item-selected, .ant-menu-submenu-popup.ant-menu-dark .ant-menu-item-selected{
+.ant-menu.ant-menu-dark .ant-menu-item-selected, .ant-menu-submenu-popup.ant-menu-dark .ant-menu-item-selected {
     background-color: rgba(40, 123, 247, 0.157);
 }
-.ant-table-filter-dropdown .ant-dropdown-menu{
+
+.ant-table-filter-dropdown .ant-dropdown-menu {
     max-height: calc(30vh) !important;
 }
-.ant-table-wrapper{
-    background: #ffffff;
+
+.ant-table-wrapper {
+    background: #FFF;
 }

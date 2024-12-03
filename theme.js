@@ -1,3 +1,3 @@
-module.exports = { // AntD Theme Customize
-
-}
+module.exports = {
+    // AntD Theme Customize
+};

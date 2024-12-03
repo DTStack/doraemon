@@ -2,7 +2,7 @@ const path = require('path');
 const util = require('util');
 
 module.exports = () => {
-    const skipExt = [ '.png', '.jpeg', '.jpg', '.ico', '.gif' ];
+    const skipExt = ['.png', '.jpeg', '.jpg', '.ico', '.gif'];
     return function* (next) {
         const start = new Date().getTime();
 
@@ -26,10 +26,21 @@ module.exports = () => {
             const referrer = this.get('referrer') || '-';
             const ua = this.get('user-agent') || '-';
             const serverTime = this.response.get('X-Server-Response-Time') || '-';
-            const message = util.format('[access] %s:%s - %s %s %s/%s %s %s %s %s %s',
-                ip, port, method, url, protocol, status, length, referrer, rs, serverTime, ua);
+            const message = util.format(
+                '[access] %s:%s - %s %s %s/%s %s %s %s %s %s',
+                ip,
+                port,
+                method,
+                url,
+                protocol,
+                status,
+                length,
+                referrer,
+                rs,
+                serverTime,
+                ua
+            );
             this.logger.info(message);
         }
     };
 };
-

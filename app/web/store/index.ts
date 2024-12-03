@@ -5,15 +5,15 @@ import global from './reducer';
 import { API } from '@/api';
 
 const appReducer: any = {
-    global
+    global,
 };
 const middlewares: any = [thunk.withExtraArgument({ API })];
 
 export const create = (initalState: any) => {
     return createStore(
         combineReducers({ ...appReducer }),
-        EASY_ENV_IS_DEV ? composeWithDevTools(applyMiddleware(...middlewares)) : applyMiddleware(...middlewares)
-    )
+        EASY_ENV_IS_DEV
+            ? composeWithDevTools(applyMiddleware(...middlewares))
+            : applyMiddleware(...middlewares)
+    );
 };
-
-

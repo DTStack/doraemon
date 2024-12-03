@@ -1,104 +1,108 @@
-body{
-  font-family: sans-serif;
-  background: #f2f7fa;
+body {
+    font-family: sans-serif;
+    background: #F2F7FA;
 }
 
 .App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
+    animation: App-logo-spin infinite 20s linear;
+    height: 80px;
 }
 
 .App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
+    background-color: #222;
+    height: 150px;
+    padding: 20px;
+    color: white;
 }
 
 .App-intro {
-  font-size: large;
+    font-size: large;
 }
 
 @keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-.m-box{
-  width: 845px;
-  height: 214px;
-  background: url('./bg.png') 0 0 no-repeat;
+.m-box {
+    width: 845px;
+    height: 214px;
+    background: url("./bg.png") 0 0 no-repeat;
 }
 
-hr{
-  margin: 5px 0;
-  background: #ccc;
-  border: 1px solid #ccc;
-}
-h3{
-  margin-top: 10px;
+hr {
+    margin: 5px 0;
+    background: #CCC;
+    border: 1px solid #CCC;
 }
 
-input[type=text]{
-  position: relative;
-  display: inline-block;
-  padding: 4px 11px;
-  width: 100%;
-  height: 32px;
-  cursor: text;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #333333;
-  background-color: #fff;
-  background-image: none;
-  border: 1px solid #dddddd;
-  border-radius: 2px;
-  transition: all .3s;
-}
-button, input[type=file]{
-  display: inline-block;
-  margin-bottom: 0;
-  font-weight: 500;
-  text-align: center;
-  touch-action: manipulation;
-  cursor: pointer;
-  background-image: none;
-  border: 1px solid transparent;
-  white-space: nowrap;
-  line-height: 1;
-  padding: 0 15px;
-  font-size: 12px;
-  border-radius: 2px;
-  height: 32px;
-  user-select: none;
-  transition: all .3s cubic-bezier(.645, .045, .355, 1);
-  position: relative;
-  color: #333333;
-  background-color: #fff;
-  border-color: #dddddd;
+h3 {
+    margin-top: 10px;
 }
 
-button{
-  margin: 5px 5px 10px 0;
+input[type="text"] {
+    position: relative;
+    display: inline-block;
+    padding: 4px 11px;
+    width: 100%;
+    height: 32px;
+    cursor: text;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #333;
+    background-color: #FFF;
+    background-image: none;
+    border: 1px solid #DDD;
+    border-radius: 2px;
+    transition: all 0.3s;
 }
-input[type=file]{
-  width: 100%;
-  padding: 4px 11px;
-  text-indent: -9999px;
+
+button, input[type="file"] {
+    display: inline-block;
+    margin-bottom: 0;
+    font-weight: 500;
+    text-align: center;
+    touch-action: manipulation;
+    cursor: pointer;
+    background-image: none;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    line-height: 1;
+    padding: 0 15px;
+    font-size: 12px;
+    border-radius: 2px;
+    height: 32px;
+    user-select: none;
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+    position: relative;
+    color: #333;
+    background-color: #FFF;
+    border-color: #DDD;
+}
+
+button {
+    margin: 5px 5px 10px 0;
+}
+
+input[type="file"] {
+    width: 100%;
+    padding: 4px 11px;
+    text-indent: -9999px;
 }
 
 .mail-sign {
-  padding: 15px 20px;
-  background-color: #fff;
+    padding: 15px 20px;
+    background-color: #FFF;
 }
 
 .form-item {
-  display: flex;
-  align-items: center;
-  width: 500px;
-  margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    width: 500px;
+    margin-bottom: 20px;
 }
+
 .form-item span {
-  display: block;
-  width: 60px;
+    display: block;
+    width: 60px;
 }

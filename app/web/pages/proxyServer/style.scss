@@ -1,62 +1,61 @@
 .page-proxy-server {
-  .all-ip-switch {
-    margin-left: 15px;
-    background-color: #3fad09;
-    &.ant-switch-checked {
-      background-color: #3F87FF;
-    }
-  }
-  .title_wrap {
-    display: flex;
-    justify-content: space-between;
-    align-self: center;
-    margin-bottom: 12px;
-    .title-left {
-      display: flex;
-      align-items: center;
-      .search {
-        width: 260px;
-        height: 32px;
-      }
-      .ant-tag {
-        .collect-tag-name {
-          max-width: 120px;
-          overflow: hidden; // 超出的文本隐藏
-          white-space: nowrap;
-          text-overflow: ellipsis; // 溢出用省略号显示
+    .all-ip-switch {
+        margin-left: 15px;
+        background-color: #3FAD09;
+        &.ant-switch-checked {
+            background-color: #3F87FF;
         }
-      }
     }
-  }
-  .ant-tag-checkable {
-    cursor: pointer;
-  }
-  .marginBottom12 {
-    margin-bottom: 12px;
-  }
-  .ip-wrap {
-    position: relative;
-    cursor: pointer;
-    .iconicon_star {
-      position: absolute;
-      left: -16px;
-      color: #ffc240;
-      font-size: 12px;
-      vertical-align: top;
+    .title_wrap {
+        display: flex;
+        justify-content: space-between;
+        align-self: center;
+        margin-bottom: 12px;
+        .title-left {
+            display: flex;
+            align-items: center;
+            .search {
+                width: 260px;
+                height: 32px;
+            }
+            .ant-tag {
+                .collect-tag-name {
+                    max-width: 120px;
+                    overflow: hidden; // 超出的文本隐藏
+                    white-space: nowrap;
+                    text-overflow: ellipsis; // 溢出用省略号显示
+                }
+            }
+        }
     }
-  }
-
-  .help-icon {
-    width: 60px;
-    height: 60px;
-    padding: 12px;
-    border-radius: 50%;
-    background-color: #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.28);
-    cursor: pointer;
-    position: fixed;
-    bottom: 120px;
-    right: 60px;
-    z-index: 1;
-  }
+    .ant-tag-checkable {
+        cursor: pointer;
+    }
+    .marginBottom12 {
+        margin-bottom: 12px;
+    }
+    .ip-wrap {
+        position: relative;
+        cursor: pointer;
+        .iconicon_star {
+            position: absolute;
+            left: -16px;
+            color: #FFC240;
+            font-size: 12px;
+            vertical-align: top;
+        }
+    }
+    .help-icon {
+        width: 60px;
+        height: 60px;
+        padding: 12px;
+        border-radius: 50%;
+        background-color: #FFF;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.28);
+        cursor: pointer;
+        position: fixed;
+        bottom: 120px;
+        right: 60px;
+        z-index: 1;
+    }
 }

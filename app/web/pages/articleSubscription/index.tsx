@@ -1,34 +1,39 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { PlusCircleOutlined } from '@ant-design/icons';
-import SubscriptionModal from './components/SubscriptionModal';
-import { Divider, Table, Button, Breadcrumb, Input, Modal, Switch, message as Message, message } from 'antd';
-import { SUBSCRIPTIONSENDTYPECN, SUBSCRIPTIONSTATUS } from './consts';
-import { API } from '@/api';
-import helpIcon from '../../asset/images/help-icon.png';
-import config from '../../../../env.json';
+import { Breadcrumb, Button, Divider, Input, message as Message, Modal, Switch, Table } from 'antd';
 
-import './style.scss'
+import { API } from '@/api';
+import config from '../../../../env.json';
+import helpIcon from '../../asset/images/help-icon.png';
+import SubscriptionModal from './components/SubscriptionModal';
+import { SUBSCRIPTIONSENDTYPECN, SUBSCRIPTIONSTATUS } from './consts';
+import './style.scss';
 
 const { Search } = Input;
 
-const ArticleSubscriptionList = (props: any) => {
+const ArticleSubscriptionList = (_props: any) => {
     const [subscriptionList, setSubscriptionList] = useState({
         data: [],
-        totalElement: 0
+        totalElement: 0,
     });
     const [reqParams, setReqParams] = useState({
         current: 1,
         size: 20,
-        searchText: ''
-    })
+        searchText: '',
+    });
     const pagination: any = {
         size: 'small',
         showSizeChanger: false,
         current: reqParams.current,
         pageSize: reqParams.size,
         total: subscriptionList.totalElement,
-        showTotal: (total: any) => <span>共<span style={{ color: '#3F87FF' }}>{subscriptionList.totalElement}</span>条数据，每页显示{reqParams.size}条</span>
-    }
+        showTotal: (_total: any) => (
+            <span>
+                共<span style={{ color: '#3F87FF' }}>{subscriptionList.totalElement}</span>
+                条数据，每页显示{reqParams.size}条
+            </span>
+        ),
+    };
     const [tableLoading, setTableLoading] = useState(false);
     const [visible, setVisible] = useState(false);
     const [editData, setEditData] = useState(null);
@@ -48,45 +53,56 @@ const ArticleSubscriptionList = (props: any) => {
             {
                 title: '钉钉群名称',
                 dataIndex: 'groupName',
-                key: 'groupName'
+                key: 'groupName',
             },
             {
                 title: '订阅类型',
                 dataIndex: 'siteNames',
                 key: 'siteNames',
                 render: (siteNames, record) => {
-                    return siteNames === '自定义消息' && !!record?.message ? '自定义消息' : '文章订阅';
-                }
+                    return siteNames === '自定义消息' && !!record?.message
+                        ? '自定义消息'
+                        : '文章订阅';
+                },
             },
             {
                 title: '订阅项',
                 dataIndex: 'siteNames',
                 key: 'siteNames',
                 render: (siteNames, record) => {
-                    return siteNames === '自定义消息' && !!record?.message ? record?.messageTitle : siteNames;
-                }
+                    return siteNames === '自定义消息' && !!record?.message
+                        ? record?.messageTitle
+                        : siteNames;
+                },
             },
             {
                 title: '备注',
                 dataIndex: 'remark',
                 key: 'remark',
-                render: (text: any) => text || '-'
+                render: (text: any) => text || '-',
             },
             {
                 title: '推送时间',
                 dataIndex: 'sendType',
                 key: 'sendType',
                 render: (text: any, record: any) => {
-                    return `${ SUBSCRIPTIONSENDTYPECN[text] } ${ record.time }`
-                }
+                    return `${SUBSCRIPTIONSENDTYPECN[text]} ${record.time}`;
+                },
             },
             {
                 title: '状态',
                 key: 'status',
                 dataIndex: 'status',
                 render: (text: any, record: any) => {
-                    return <Switch defaultChecked={text === SUBSCRIPTIONSTATUS.OPEN} checkedChildren="开" unCheckedChildren="关" onChange={(e: any) => handleChangeStatus(e, record)} />
-                }
+                    return (
+                        <Switch
+                            defaultChecked={text === SUBSCRIPTIONSTATUS.OPEN}
+                            checkedChildren="开"
+                            unCheckedChildren="关"
+                            onChange={(e: any) => handleChangeStatus(e, record)}
+                        />
+                    );
+                },
             },
             {
                 title: '操作',
@@ -94,7 +110,6 @@ const ArticleSubscriptionList = (props: any) => {
                 key: 'actions',
                 width: 200,
                 render: (text: any, record: any) => {
-                    const { id } = record
                     return (
                         <Fragment>
                             <a onClick={() => handleEdit(record)}>编辑</a>
@@ -103,19 +118,19 @@ const ArticleSubscriptionList = (props: any) => {
                                 <a onClick={() => handleDelete(record)}>删除</a>
                             </Fragment>
                         </Fragment>
-                    )
-                }
-            }
+                    );
+                },
+            },
         ];
         return columns;
-    }
+    };
 
     // 获取订阅项列表
     const getTopicList = () => {
         API.getTopicList().then(({ success, data, msg }) => {
-            success ? setTopicList(data) : Message.error(msg)
-        })
-    }
+            success ? setTopicList(data) : Message.error(msg);
+        });
+    };
 
     // 获取列表
     const getSubscriptionList = () => {
@@ -124,88 +139,91 @@ const ArticleSubscriptionList = (props: any) => {
             if (success) {
                 setSubscriptionList({
                     data: data.data || [],
-                    totalElement: data.count || 0
+                    totalElement: data.count || 0,
                 });
             } else {
                 Message.error(msg);
             }
             setTableLoading(false);
-        })
-    }
+        });
+    };
 
     // 改变订阅状态
     const handleChangeStatus = (check: any, record: any) => {
-        const status = check ? SUBSCRIPTIONSTATUS.OPEN : SUBSCRIPTIONSTATUS.CLOSE
-        API.updateSubscription({ ...record, status }).then(({ success }) => {
-            success && Message.success(check ? '订阅已开启' : '订阅已关闭')
-        }).finally(() => {
-            getSubscriptionList()
-        })
-    }
+        const status = check ? SUBSCRIPTIONSTATUS.OPEN : SUBSCRIPTIONSTATUS.CLOSE;
+        API.updateSubscription({ ...record, status })
+            .then(({ success }) => {
+                success && Message.success(check ? '订阅已开启' : '订阅已关闭');
+            })
+            .finally(() => {
+                getSubscriptionList();
+            });
+    };
 
     // 编辑
     const handleEdit = (record: any) => {
-        setVisible(true)
-        setEditData(record)
-    }
+        setVisible(true);
+        setEditData(record);
+    };
 
     // 删除
     const handleDelete = (record: any) => {
-        const { id, status } = record
-        if (status === SUBSCRIPTIONSTATUS.OPEN) return Message.warning('请先将订阅关闭！')
+        const { id, status } = record;
+        if (status === SUBSCRIPTIONSTATUS.OPEN) return Message.warning('请先将订阅关闭！');
         Modal.confirm({
             title: '删除后将不再给该钉钉群推送该订阅，是否要删除？',
             okButtonProps: { danger: true },
             okText: '删除',
             cancelText: '取消',
             onOk: () => {
-                API.deleteSubscription({ id }).then(({ success }) => {
-                    success && Message.success('删除成功')
-                }).finally(() => {
-                    getSubscriptionList()
-                })
-            }
-        })
-
-    }
+                API.deleteSubscription({ id })
+                    .then(({ success }) => {
+                        success && Message.success('删除成功');
+                    })
+                    .finally(() => {
+                        getSubscriptionList();
+                    });
+            },
+        });
+    };
 
     // 新增
     const handleAdd = () => {
-        setVisible(true)
-    }
+        setVisible(true);
+    };
 
     // 表格分页
-    const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    const handleTableChange = (pagination: any, _filters: any, _sorter: any) => {
         setReqParams({
             ...reqParams,
-            current: pagination.current
-        })
-    }
+            current: pagination.current,
+        });
+    };
 
     // 搜索
     const handleSearchGroup = (value: any) => {
         setReqParams({
             ...reqParams,
             current: 1,
-            searchText: value
-        })
-    }
+            searchText: value,
+        });
+    };
 
     const onHandleOkModal = () => {
-        setVisible(false)
-        setEditData(null)
-        getSubscriptionList()
-    }
+        setVisible(false);
+        setEditData(null);
+        getSubscriptionList();
+    };
 
     const onHandleCancelModal = () => {
-        setVisible(false)
-        setEditData(null)
-    }
+        setVisible(false);
+        setEditData(null);
+    };
 
     // 点击帮助文档
     const handleHelpIcon = () => {
-        window.open(config.articleHelpDocUrl)
-    }
+        window.open(config.articleHelpDocUrl);
+    };
 
     return (
         <div>
@@ -220,12 +238,19 @@ const ArticleSubscriptionList = (props: any) => {
                     className="dt-form-shadow-bg"
                     onSearch={handleSearchGroup}
                 />
-                <Button className="fl-r" type="primary" icon={<PlusCircleOutlined />} onClick={handleAdd}>新增订阅</Button>
+                <Button
+                    className="fl-r"
+                    type="primary"
+                    icon={<PlusCircleOutlined />}
+                    onClick={handleAdd}
+                >
+                    新增订阅
+                </Button>
             </div>
 
-            {
-                config.articleHelpDocUrl && <img className="help-icon" src={helpIcon} onClick={handleHelpIcon} alt="帮助文档" />
-            }
+            {config.articleHelpDocUrl && (
+                <img className="help-icon" src={helpIcon} onClick={handleHelpIcon} alt="帮助文档" />
+            )}
 
             <Table
                 rowKey="id"
@@ -248,5 +273,5 @@ const ArticleSubscriptionList = (props: any) => {
             />
         </div>
     );
-}
+};
 export default ArticleSubscriptionList;

@@ -1,22 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { CheckOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import {
-    Button,
-    Row,
-    Col,
-    Card,
-    Breadcrumb,
-    Tooltip,
-    message as Message,
-    Typography, 
-    Popconfirm
-} from 'antd';
-import { Link } from 'react-router-dom';
-import { isEmpty, replace } from 'lodash';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Controlled as CodeMirror } from 'react-codemirror2';
-import Loading from '@/components/loading';
-import DTDingConfig from '@/components/dtDingconfig'
+import { Link } from 'react-router-dom';
+import { CheckOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Breadcrumb, Button, Card, Col, message as Message, Row, Tooltip, Typography } from 'antd';
+import { isEmpty, replace } from 'lodash';
+
 import { API } from '@/api';
+import DTDingConfig from '@/components/dtDingconfig';
+import Loading from '@/components/loading';
 import './style.scss';
 
 const { Title, Paragraph } = Typography;
@@ -26,7 +17,7 @@ const ConfigDetail = (props: any) => {
     const { params } = match;
     const { id } = params;
     const codeEditorRef: any = useRef(null);
-    const shellEditorRef = useRef(null);;
+    const shellEditorRef = useRef(null);
     const [config, setConfig] = useState();
     const [basicInfo, setBasicInfo] = useState({});
     const [loading, setLoading] = useState(true);
@@ -34,57 +25,37 @@ const ConfigDetail = (props: any) => {
     const [errorMessage, setErrorMessage] = useState('');
     const [shell, setShell] = useState('#!/bin/bash\n');
     const { filename, filePath, hostIp, hostName, username, password, remark }: any = basicInfo;
-    const getTableColumns = ()=>{
-        return [
-          {
-            title: 'url',
-            key: 'url',
-            dataIndex: 'url',
-            render: (text) => (<div style={{width: 200}}>{text}</div>)
-          },
-          {
-            title: '操作',
-            key: 'id',
-            dataIndex: 'id',
-            render: (value) => {
-              return <Popconfirm title='确认是否删除？' onConfirm={() => {delUrl(value)}}>
-              <a >删除</a>
-            </Popconfirm>
-            }
-          }
-        ]
-      }
     const loadBasicInfoData = useCallback(() => {
         return API.getConfigDetail({
-            id
+            id,
         }).then((response: any) => {
-            const { success, data, message } = response;
+            const { success, data } = response;
             if (success) {
                 setBasicInfo(data);
                 setShell(isEmpty(data.updateShell) ? '#!/bin/bash\n' : data.updateShell);
             }
-        })
-    }, [id]);  
+        });
+    }, [id]);
     const loadRemoteConfigInfo = useCallback(() => {
         return API.getRemoteConfig({
-            id
+            id,
         }).then((response: any) => {
             const { success, data } = response;
             if (success) {
                 setConfig(data);
             }
-        })
-    }, [id]);   
+        });
+    }, [id]);
     const handleConfigSave = () => {
         setUpdating(true);
         API.saveConfig({
             id,
             config,
             shell,
-            basicInfo
+            basicInfo,
         }).then((response: any) => {
             setUpdating(false);
-            const { success, data, message } = response;
+            const { success, message } = response;
             if (success) {
                 Message.success('配置保存成功');
                 setErrorMessage('');
@@ -93,50 +64,61 @@ const ConfigDetail = (props: any) => {
             } else {
                 setErrorMessage(message);
             }
-        })
-    }
-    const onGutterClick = (cm: any, n: any, gutter: any, event: any) => {
-        let info = cm.lineInfo(n)
-        let ln = info.text
-        if (/^\s*$/.test(ln)) return
+        });
+    };
+    const onGutterClick = (cm: any, n: any, _gutter: any, _event: any) => {
+        const info = cm.lineInfo(n);
+        const ln = info.text;
+        if (/^\s*$/.test(ln)) return;
 
-        let new_ln: any
+        let new_ln: any;
         if (/^#/.test(ln)) {
-            new_ln = ln.replace(/^#\s*/, '')
+            new_ln = ln.replace(/^#\s*/, '');
         } else {
-            new_ln = '# ' + ln
+            new_ln = '# ' + ln;
         }
-        codeEditorRef.current.editor.getDoc()
-            .replaceRange(new_ln, { line: info.line, ch: 0 }, {
+        codeEditorRef.current.editor.getDoc().replaceRange(
+            new_ln,
+            { line: info.line, ch: 0 },
+            {
                 line: info.line,
-                ch: ln.length
-            })
-    }
+                ch: ln.length,
+            }
+        );
+    };
     useEffect(() => {
         try {
             require('codemirror/mode/nginx/nginx');
             require('codemirror/mode/shell/shell');
             require('codemirror/theme/material-darker.css');
         } catch (err) {
-            console.log(err)
+            console.log(err);
         }
-        Promise.all([loadBasicInfoData(),loadRemoteConfigInfo()]).then(()=>{
+        Promise.all([loadBasicInfoData(), loadRemoteConfigInfo()]).then(() => {
             setLoading(false);
         });
-
-    }, [])
+    }, []);
     return (
         <div className="page-config-detail">
             <Loading loading={loading}>
                 <Row className="mb-12">
                     <Col span={18}>
                         <Breadcrumb>
-                            <Breadcrumb.Item><Link to="/page/config-center">配置中心</Link></Breadcrumb.Item>
+                            <Breadcrumb.Item>
+                                <Link to="/page/config-center">配置中心</Link>
+                            </Breadcrumb.Item>
                             <Breadcrumb.Item>配置详情</Breadcrumb.Item>
                         </Breadcrumb>
                     </Col>
                     <Col span={6} style={{ textAlign: 'right' }}>
-                        <Button type="primary" loading={updating} icon={<CheckOutlined />} onClick={handleConfigSave}>应用</Button>
+                        <Button
+                            type="primary"
+                            loading={updating}
+                            icon={<CheckOutlined />}
+                            onClick={handleConfigSave}
+                        >
+                            应用
+                        </Button>
                     </Col>
                 </Row>
                 <div className="page-content">
@@ -149,15 +131,22 @@ const ConfigDetail = (props: any) => {
                                     mode: 'nginx',
                                     tabSize: 2,
                                     theme: 'dracula',
-                                    lineNumbers: true
+                                    lineNumbers: true,
                                 }}
                                 onGutterClick={onGutterClick}
                                 onBeforeChange={(editor: any, data: any, value: any) => {
-                                    setConfig(value)
+                                    setConfig(value);
                                 }}
-                                editorDidMount={(editor: any, data: any, value: any) => { editor.setSize('auto', '460px') }}
+                                editorDidMount={(editor: any, _data: any, _value: any) => {
+                                    editor.setSize('auto', '460px');
+                                }}
                             />
-                            <Title style={{ marginTop: 20 }} level={4}>Execute shell <Tooltip title="文件更新之后执行下面脚本" placement="right"><QuestionCircleOutlined /></Tooltip></Title>
+                            <Title style={{ marginTop: 20 }} level={4}>
+                                Execute shell{' '}
+                                <Tooltip title="文件更新之后执行下面脚本" placement="right">
+                                    <QuestionCircleOutlined />
+                                </Tooltip>
+                            </Title>
                             <CodeMirror
                                 ref={shellEditorRef}
                                 value={shell}
@@ -166,57 +155,83 @@ const ConfigDetail = (props: any) => {
                                     tabSize: 2,
                                     theme: 'dracula',
                                     lineNumbers: true,
-                                    height: 300
+                                    height: 300,
                                 }}
                                 onBeforeChange={(editor: any, data: any, value: any) => {
                                     console.log(value);
-                                    setShell(value)
+                                    setShell(value);
                                 }}
-                                onChange={(editor: any, data: any, value: any) => { }} />
+                                onChange={(_editor: any, _data: any, _value: any) => {}}
+                            />
                         </Col>
                         <Col span={6}>
                             <Card title="信息简介" className="card-form">
                                 <Row gutter={8} className="info-item">
-                                    <Col span={6} className="label">文件名：</Col>
+                                    <Col span={6} className="label">
+                                        文件名：
+                                    </Col>
                                     <Col span={18}>{filename}</Col>
                                 </Row>
                                 <Row gutter={8} className="info-item">
-                                    <Col span={6} className="label">文件路径：</Col>
+                                    <Col span={6} className="label">
+                                        文件路径：
+                                    </Col>
                                     <Col span={18}>{filePath}</Col>
                                 </Row>
                                 <Row gutter={8} className="info-item">
-                                    <Col span={6} className="label">主机IP：</Col>
+                                    <Col span={6} className="label">
+                                        主机IP：
+                                    </Col>
                                     <Col span={18}>{hostIp}</Col>
                                 </Row>
                                 <Row gutter={8} className="info-item">
-                                    <Col span={6} className="label">主机名：</Col>
+                                    <Col span={6} className="label">
+                                        主机名：
+                                    </Col>
                                     <Col span={18}>{hostName}</Col>
                                 </Row>
                                 <Row gutter={8} className="info-item">
-                                    <Col span={6} className="label">SSH连接：</Col>
-                                    <Col span={18}><Paragraph style={{ marginBottom: 0 }} copyable>{`ssh ${username}@${hostIp}`}</Paragraph></Col>
+                                    <Col span={6} className="label">
+                                        SSH连接：
+                                    </Col>
+                                    <Col span={18}>
+                                        <Paragraph
+                                            style={{ marginBottom: 0 }}
+                                            copyable
+                                        >{`ssh ${username}@${hostIp}`}</Paragraph>
+                                    </Col>
                                 </Row>
                                 <Row gutter={8} className="info-item">
-                                    <Col span={6} className="label">密码：</Col>
-                                    <Col span={18}><Paragraph style={{ marginBottom: 0 }} copyable={{ text: password }}>{replace(password, /./g, '*')}</Paragraph></Col>
+                                    <Col span={6} className="label">
+                                        密码：
+                                    </Col>
+                                    <Col span={18}>
+                                        <Paragraph
+                                            style={{ marginBottom: 0 }}
+                                            copyable={{ text: password }}
+                                        >
+                                            {replace(password, /./g, '*')}
+                                        </Paragraph>
+                                    </Col>
                                 </Row>
                                 <Row gutter={8} className="info-item">
-                                    <Col span={6} className="label">备注：</Col>
+                                    <Col span={6} className="label">
+                                        备注：
+                                    </Col>
                                     <Col span={18}>{remark}</Col>
                                 </Row>
                             </Card>
-                            {!isEmpty(errorMessage) && <Card title="错误信息" style={{ marginTop: 20 }}>
-                                <div style={{ color: 'red' }}>{errorMessage}</div>
-                            </Card>}
-                            <DTDingConfig 
-                                id={id}
-                                type='config-center'
-                                />
+                            {!isEmpty(errorMessage) && (
+                                <Card title="错误信息" style={{ marginTop: 20 }}>
+                                    <div style={{ color: 'red' }}>{errorMessage}</div>
+                                </Card>
+                            )}
+                            <DTDingConfig id={id} type="config-center" />
                         </Col>
                     </Row>
                 </div>
             </Loading>
         </div>
     );
-}
+};
 export default ConfigDetail;

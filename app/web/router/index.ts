@@ -1,33 +1,31 @@
 import BasicLayout from '@/layouts/basicLayout';
-import Home from '@/pages/home';
-//代理服务
-import ProxyServer from '@/pages/proxyServer';
-//内部网址导航
-import InnerUrlNavigation from '@/pages/innerUrlNavigation';
-//工具箱
-import Toolbox from '@/pages/toolbox';
-//邮件签名生成
-import MailSign from '@/pages/mailSign';
-//主机管理
-import HostManagement from '@/pages/hostManagement';
+// 文章订阅管理
+import ArticleSubscriptionList from '@/pages/articleSubscription';
+// 配置中心
+import ConfigCenter from '@/pages/configCenter';
+// 配置详情
+import ConfigDetail from '@/pages/configDetail';
 // 环境管理
 import EnvManagement from '@/pages/envManagement';
-//配置中心
-import ConfigCenter from '@/pages/configCenter';
-//配置详情
-import ConfigDetail from '@/pages/configDetail';
+import NotFound from '@/pages/exception/404';
+import Home from '@/pages/home';
+// 主机管理
+import HostManagement from '@/pages/hostManagement';
+// 内部网址导航
+import InnerUrlNavigation from '@/pages/innerUrlNavigation';
+// 邮件签名生成
+import MailSign from '@/pages/mailSign';
+// 代理服务
+import ProxyServer from '@/pages/proxyServer';
 // hosts列表
 import SwitchHostsList from '@/pages/switchHosts';
 // hosts编辑
-import SwitchHostsEdit from '@/pages/switchHosts/editHosts'
-// 文章订阅管理
-import ArticleSubscriptionList from '@/pages/articleSubscription'
+import SwitchHostsEdit from '@/pages/switchHosts/editHosts';
+import TagsManagement from '@/pages/tagsManagement';
+// 工具箱
+import Toolbox from '@/pages/toolbox';
 
-import TagsManagement from '@/pages/tagsManagement'
-
-import NotFound from '@/pages/exception/404';
-
-const urlPrefix = '/page'
+const urlPrefix = '/page';
 const routes: any = [
     {
         path: '/',
@@ -35,62 +33,62 @@ const routes: any = [
         routes: [
             {
                 path: `${urlPrefix}/toolbox`,
-                component: Toolbox
+                component: Toolbox,
             },
             {
                 path: `${urlPrefix}/home`,
-                component: Home
+                component: Home,
             },
             {
                 path: `${urlPrefix}/internal-url-navigation`,
-                component: InnerUrlNavigation
+                component: InnerUrlNavigation,
             },
             {
                 path: `${urlPrefix}/proxy-server`,
-                component: ProxyServer
+                component: ProxyServer,
             },
             {
                 path: `${urlPrefix}/mail-sign`,
-                component: MailSign
+                component: MailSign,
             },
             {
                 path: `${urlPrefix}/host-management`,
-                component: HostManagement
+                component: HostManagement,
             },
             {
                 path: `${urlPrefix}/env-management`,
-                component: EnvManagement
+                component: EnvManagement,
             },
             {
                 path: `${urlPrefix}/config-center`,
-                component: ConfigCenter
+                component: ConfigCenter,
             },
             {
                 path: `${urlPrefix}/config-detail/:id`,
-                component: ConfigDetail
+                component: ConfigDetail,
             },
             {
                 path: `${urlPrefix}/switch-hosts-list`,
-                component: SwitchHostsList
+                component: SwitchHostsList,
             },
             {
                 path: `${urlPrefix}/switch-hosts-edit/:id/:type`,
-                component: SwitchHostsEdit
+                component: SwitchHostsEdit,
             },
             {
                 path: `${urlPrefix}/article-subscription-list`,
-                component: ArticleSubscriptionList
+                component: ArticleSubscriptionList,
             },
             {
                 path: `${urlPrefix}/tags`,
-                component: TagsManagement
+                component: TagsManagement,
             },
             {
                 path: '*',
-                component: NotFound
-            }
-        ]
-    }
+                component: NotFound,
+            },
+        ],
+    },
 ];
 
 export default routes;

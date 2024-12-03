@@ -2,6 +2,7 @@
     "compilerOptions": {
         "noEmit": true,
         "baseUrl": ".",
+        "resolveJsonModule": true,
         "experimentalDecorators": true,
         "noImplicitAny": false,
         "esModuleInterop": true,
@@ -9,25 +10,14 @@
         "skipLibCheck": true,
         "module": "commonjs",
         "target": "es5",
-        "lib": [ "es6","es2016","dom" ],
+        "lib": ["es6", "es2016", "dom"],
         "jsx": "react",
         "allowSyntheticDefaultImports": true,
         "paths": {
-            "@/*": [
-                "./app/web/*"
-            ]
+            "@/*": ["./app/web/*"]
         },
-        "typeRoots": [
-            "node",
-            "node_modules/@types",
-            "./app/web/typeings"
-        ]
+        "typeRoots": ["node", "node_modules/@types", "./app/web/typeings"]
     },
-    "exclude": [
-        "node_modules",
-        "app/web/view/*"
-    ],
-    "include": [
-        "./app/web/**/*"
-    ],
+    "exclude": ["node_modules", "app/web/view/*"],
+    "include": ["./app/web/**/*"]
 }

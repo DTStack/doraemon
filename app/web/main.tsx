@@ -1,31 +1,43 @@
-import * as React from 'react'
-import * as ReactDOM from 'react-dom'
-import { Provider } from 'react-redux'
-import { BrowserRouter, StaticRouter } from 'react-router-dom';
-import { matchRoutes } from 'react-router-config';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
-import Layout from '@/view/layout';
+import { Provider } from 'react-redux';
+import { matchRoutes } from 'react-router-config';
+import { BrowserRouter, StaticRouter } from 'react-router-dom';
+
 import App from '@/app';
+import Layout from '@/view/layout';
 import { create } from './store/index';
 import routes from './router';
 import '@/scss/index.scss';
 import '@/asset/font/iconfont.css';
-declare var window: any;
-declare var module: any;
+declare let window: any;
+declare let module: any;
 
 const clientRender = () => {
     const store = create(window.__INITIAL_STATE__);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const url = store.getState().url;
-    const Entry = () => (<div style={{ height: '100%' }}>
-        <Provider store={store}>
-            <BrowserRouter>
-                <App />
-            </BrowserRouter>
-        </Provider>
-    </div>
+    const Entry = () => (
+        <div style={{ height: '100%' }}>
+            <Provider store={store}>
+                <BrowserRouter>
+                    <App />
+                </BrowserRouter>
+            </Provider>
+        </div>
     );
     const render = (Page: any) => {
-        ReactDOM.hydrate(EASY_ENV_IS_DEV ? <AppContainer><Page /></AppContainer> : <Page />, document.getElementById('app'));
+        ReactDOM.hydrate(
+            EASY_ENV_IS_DEV ? (
+                <AppContainer>
+                    <Page />
+                </AppContainer>
+            ) : (
+                <Page />
+            ),
+            document.getElementById('app')
+        );
     };
     if (EASY_ENV_IS_DEV && module.hot) {
         module.hot.accept();
@@ -33,12 +45,12 @@ const clientRender = () => {
     render(Entry);
 };
 
-const serverRender = (context: any, options: any) => {
+const serverRender = (context: any, _options: any) => {
     const url = context.state.url;
     const branch = matchRoutes(routes, url);
     const promises = branch.map(({ route }: any) => {
         const fetch = route.component && route.component.fetch;
-        return fetch instanceof Function ? fetch() : Promise.resolve(null)
+        return fetch instanceof Function ? fetch() : Promise.resolve(null);
     });
     return Promise.all(promises).then((data: any) => {
         const initState = context.state;
@@ -57,7 +69,7 @@ const serverRender = (context: any, options: any) => {
                     </Provider>
                 </div>
             </Layout>
-        )
+        );
     });
 };
 export default EASY_ENV_IS_NODE ? serverRender : clientRender();

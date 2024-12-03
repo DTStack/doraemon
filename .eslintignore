@@ -14,3 +14,5 @@ plugins/
 app/web/asset/
 app/view/
 test.js
+
+config/manifest.json

@@ -7,15 +7,15 @@ class SwitchHostsService extends Service {
         const { size, current, searchText } = reqParams;
         return this.ctx.model.SwitchHosts.findAndCountAll({
             where: {
-                groupName:{
-                    '$like':`%${searchText}%`
+                groupName: {
+                    $like: `%${searchText}%`,
                 },
-                is_delete: 0
+                is_delete: 0,
             },
             limit: size,
             order: [['updated_at', 'DESC']],
-            offset: size * (current - 1)
-        })
+            offset: size * (current - 1),
+        });
     }
 
     // 创建
@@ -28,8 +28,8 @@ class SwitchHostsService extends Service {
             groupId: '',
             groupAddr: '',
             created_at: new Date(),
-            updated_at: new Date()
-        }
+            updated_at: new Date(),
+        };
         return this.ctx.model.SwitchHosts.create(hostsParams);
     }
 
@@ -37,15 +37,15 @@ class SwitchHostsService extends Service {
     updateHosts(id, updateParams) {
         const { ctx } = this;
         return ctx.model.SwitchHosts.update(updateParams, {
-            where: { id }
-        })
+            where: { id },
+        });
     }
 
     // 获取hosts详细信息
     getHostsInfo(id) {
         const { ctx } = this;
         return ctx.model.SwitchHosts.findOne({
-            where: { id }
+            where: { id },
         });
     }
 
@@ -53,7 +53,7 @@ class SwitchHostsService extends Service {
     async getGroupAddr(id) {
         const data = await this.ctx.model.SwitchHosts.findOne({
             attributes: ['groupAddr'],
-            where: { id }
+            where: { id },
         });
         if (_.isNil(data)) throw new Error('获取不到该分组下存储的hosts文件');
         return data.groupAddr;
