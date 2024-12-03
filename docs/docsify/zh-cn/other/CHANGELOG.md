@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.6.1...v1.7.0) (2024-12-03)
+
+
+### Features
+
+* env management ([#76](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/76)) ([f1eed82](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/f1eed82cc6bb6fa05263dba777d186838540ca51))
+* env management support location params ([#78](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/78)) ([e0af28a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e0af28a3b51c184bb2b9cf7f8636d9af6174963a))
+* new article sub scriptions ([#73](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/73)) ([0bbe5ef](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/0bbe5ef426fc89a5a8a8cfdf6c46cc19278682c2))
+* optimize mysql pool config ([#72](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/72)) ([94662df](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/94662dfe1fb31e42184e04dad9d41af091c06e1e))
+* show chrome tool ([#77](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/77)) ([790d64c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/790d64c52e4b5903f8506bb824cb761eb45c5846))
+* use CommonJS ([a1eb06d](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/a1eb06ddb03688ac56485a93fbe35f6424faa9e9))
+
+
+### Bug Fixes
+
+* [#74](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/74) use other cdn link ([#75](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/75)) ([8f838a5](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/8f838a582d2e82363e4a9c05e611d060bce67c8a))
+
 ### [1.6.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.6.0...v1.6.1) (2024-05-27)
 
 
