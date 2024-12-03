@@ -8,6 +8,7 @@ import { bindActionCreators } from 'redux';
 
 import routes from '@/router';
 import * as actions from '@/store/actions';
+import { version } from '../../package.json';
 import 'antd/dist/antd.less';
 import 'ant-design-dtinsight-theme/theme/dt-theme/reset.less';
 import 'ant-design-dtinsight-theme/theme/dt-theme/index.less';
@@ -33,10 +34,20 @@ const App = () => {
             a.appendChild(r);
         })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
     };
+
+    const logVersion = () => {
+        window.console.log(
+            `%cApp current version: v${version}`,
+            'font-family: Cabin, Helvetica, Arial, sans-serif;text-align: left;font-size:32px;color:#B21212;'
+        );
+    };
+
     useEffect(() => {
+        logVersion();
         hotJar();
         changeLocalIp();
     }, []);
+
     return (
         <div style={{ height: '100%' }}>
             <ConfigProvider locale={zhCN}>
