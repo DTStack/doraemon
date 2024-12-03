@@ -15,7 +15,12 @@ function getBase64(img: any, callback: any) {
 
 const UploadLogo = (props: any) => {
     const { id, logoUrl } = props.tool;
-    const [imageUrl, setImageUrl] = useState(logoUrl ? '/' + logoUrl : undefined);
+    const [imageUrl, setImageUrl] = useState(
+        logoUrl
+            ? (process.env.NODE_ENV !== 'production' ? `http://172.16.100.225:7001/` : '/') +
+                  logoUrl
+            : undefined
+    );
     const [loading, setLoading] = useState(false);
 
     // 上传按钮
