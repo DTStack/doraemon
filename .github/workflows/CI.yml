@@ -1,0 +1,39 @@
+name: CI
+
+on:
+    push:
+        branches:
+          - 'master'
+    pull_request:
+        branches:
+          - '*'
+
+jobs:
+    setup:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Setup node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 14
+
+            - name: Install dependencies
+              run: yarn
+
+            - name: Run Prettier
+              run: yarn prettier
+
+            - name: Run Eslint
+              run: yarn eslint
+
+            - name: Run Stylelint
+              run: yarn stylelint
+
+            - name: Run check-types
+              run: yarn check-types
+
+            - name: Run build
+              run: yarn build
