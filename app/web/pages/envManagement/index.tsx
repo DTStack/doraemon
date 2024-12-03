@@ -9,24 +9,41 @@ const { Search } = Input;
 const { Paragraph } = Typography;
 
 export default (props: any) => {
+    const [searchStr, setSearchStr] = useState('');
     const [tableLoading, setTableLoading] = useState(false);
     const [envList, setEnvList] = useState([]);
     const [envModalVisible, setEnvModalVisible] = useState(false);
     const [currentEnv, setCurrentEnv] = useState({});
     const [tagList, setTagList] = useState([])
+
     useEffect(() => {
+        const searchStr = new URLSearchParams(props?.location?.search).get('envName');
+
+        if (searchStr) {
+            setSearchStr(searchStr)
+            loadTableData({ search: searchStr })
+        } else {
+            loadTableData()
+        }
+    }, []);
+
+    useEffect(() => {
+        getTagList()
+    }, [])
+
+    const getTagList = () => {
         API.getAllTagList().then((response: any) => {
             const { success, data } = response;
             if (success) {
                 setTagList(data.data)
             }
         })
-    }, [])
+    }
 
     const handleOpenUrl = (url) => {
         window.open(url);
     }
-    
+
     const getColumns = () => {
         const columns: any = [{
             title: '环境名称',
@@ -129,19 +146,15 @@ export default (props: any) => {
     const onTableChange = (pagination: any, filters: any, sorter: any) => {
         loadTableData(filters)
     }
-    // 环境名称或ip搜索
-    const handleEnvSearch = (search: string) => {
-        loadTableData({ search });
-    }
-    useEffect(() => {
-        loadTableData()
-    }, []);
+
     return (
         <div className="page-env-management">
             <div className="title_wrap">
                 <Search
                     placeholder="请输入环境名称或IP搜索"
-                    onSearch={handleEnvSearch}
+                    value={searchStr}
+                    onChange={(e) => setSearchStr(e.target.value)}
+                    onSearch={() => loadTableData({ search: searchStr })}
                     className="dt-form-shadow-bg"
                     style={{ width: 220 }}
                 />
