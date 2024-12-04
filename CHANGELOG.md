@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.7.1...v1.7.2) (2024-12-04)
+
+
+### Features
+
+* optimize env ([#80](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/80)) ([8a36438](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/8a36438df8d5bfa046c14703de3e9c9f200edae0))
+
+
+### Bug Fixes
+
+* use remote img when dev ([4aafa57](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/4aafa57b298b302451304bb562132768e6c36d14))
+
 ### [1.7.1](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.7.0...v1.7.1) (2024-12-03)
 
 ## [1.7.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.6.1...v1.7.0) (2024-12-03)
