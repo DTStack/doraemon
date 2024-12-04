@@ -159,6 +159,8 @@ CREATE TABLE `env_management` (
   `id` int NOT NULL AUTO_INCREMENT,
   `env_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `host_ip` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `uic_username` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin,
+  `uic_passwd` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin,
   `url` varchar(2048) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `status` tinyint NOT NULL DEFAULT '1',
   `remark` varchar(2048) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL,

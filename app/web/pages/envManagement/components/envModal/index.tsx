@@ -3,13 +3,14 @@ import { Form, Input, message as Message, Modal, Select, Spin } from 'antd';
 import { isEmpty, isFunction, isNull } from 'lodash';
 
 import { API } from '@/api';
+import { urlReg } from '@/utils/reg';
 const FormItem = Form.Item;
 const { TextArea } = Input;
 const { Option } = Select;
 
 const EnvForm = (props: any) => {
     const { value, tagList = [], forwardRef } = props;
-    const { envName, hostIp, url, remark, tags = [] } = value;
+    const { envName, hostIp, uicUsername, uicPasswd, url, remark, tags = [] } = value;
     const tagIds = tags.map((item: any) => Number(item.id));
     return (
         <Form
@@ -19,6 +20,8 @@ const EnvForm = (props: any) => {
             initialValues={{
                 envName,
                 hostIp,
+                uicUsername,
+                uicPasswd,
                 url,
                 tagIds,
                 remark,
@@ -30,7 +33,7 @@ const EnvForm = (props: any) => {
                 rules={[{ required: true, message: '请输入环境名称' }]}
                 hasFeedback
             >
-                <Input placeholder="请输入环境名称" />
+                <Input placeholder="请输入环境名称" maxLength={255} />
             </FormItem>
             <FormItem
                 label="主机IP"
@@ -38,16 +41,29 @@ const EnvForm = (props: any) => {
                 rules={[{ required: true, message: '请输入主机IP' }]}
                 hasFeedback
             >
-                <Input placeholder="请输入主机IP" />
+                <Input placeholder="请输入主机IP" maxLength={255} />
+            </FormItem>
+            <FormItem label="UIC用户名" name="uicUsername" hasFeedback>
+                <Input placeholder="请输入UIC用户名" maxLength={255} />
+            </FormItem>
+            <FormItem label="UIC密码" name="uicPasswd" hasFeedback>
+                <Input type="password" placeholder="请输入UIC密码" maxLength={255} />
             </FormItem>
             <Fragment>
                 <FormItem
                     label="访问地址"
                     name="url"
-                    rules={[{ required: true, message: '请输入访问地址' }]}
+                    rules={[
+                        { required: true, message: '请输入访问地址' },
+                        {
+                            required: true,
+                            pattern: urlReg,
+                            message: '请输入正确格式的访问地址，以 http(s):// 开头',
+                        },
+                    ]}
                     hasFeedback
                 >
-                    <TextArea placeholder="请输入访问地址" rows={2} maxLength={2000} />
+                    <Input placeholder="请输入访问地址" maxLength={2000} />
                 </FormItem>
             </Fragment>
             <FormItem
@@ -58,6 +74,14 @@ const EnvForm = (props: any) => {
                         type: 'array',
                         required: true,
                         message: '请选择标签',
+                    },
+                    {
+                        validator: (rule, value = [], callback) => {
+                            if (value?.length > 3) {
+                                callback('最多选择三个标签');
+                            }
+                            callback();
+                        },
                     },
                 ]}
                 hasFeedback

@@ -12,12 +12,14 @@ class EnvManagementController extends Controller {
     // 新增环境
     async addEnv() {
         const { ctx, app } = this;
-        const { envName, hostIp, url, remark, tagIds } = ctx.request.body;
+        const { envName, hostIp, uicUsername, uicPasswd, url, remark, tagIds } = ctx.request.body;
         if (_.isNil(envName)) throw new Error('缺少必要参数 envName');
         if (_.isNil(url)) throw new Error('缺少必要参数 url');
         const result = await ctx.service.envManagement.addEnv({
             envName,
             hostIp,
+            uicUsername,
+            uicPasswd,
             url,
             remark,
             tags: tagIds.join(','),
@@ -32,11 +34,14 @@ class EnvManagementController extends Controller {
     // 编辑环境
     async editEnv() {
         const { ctx, app } = this;
-        const { id, envName, hostIp, url, remark, tagIds } = ctx.request.body;
+        const { id, envName, hostIp, uicUsername, uicPasswd, url, remark, tagIds } =
+            ctx.request.body;
         if (_.isNil(id)) throw new Error('缺少必要参数id');
         await ctx.service.envManagement.editEnv({
             id,
             envName,
+            uicUsername,
+            uicPasswd,
             hostIp,
             url,
             remark,
