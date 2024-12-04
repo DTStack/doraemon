@@ -42,6 +42,7 @@ const ConfigCenter = () => {
                 dataIndex: 'filename',
                 width: 200,
                 render: (value: any, row: any) => (
+                    // @ts-ignore
                     <Link to={`/page/config-detail/${row.id}`}>{value}</Link>
                 ),
             },

@@ -97,6 +97,7 @@ const EditHosts = (props: any) => {
                 <Col span={18}>
                     <Breadcrumb>
                         <Breadcrumb.Item>
+                            {/* @ts-ignore */}
                             <Link to="/page/switch-hosts-list">hosts管理</Link>
                         </Breadcrumb.Item>
                         <Breadcrumb.Item>{isCreate ? '创建' : '编辑'}hosts</Breadcrumb.Item>
@@ -124,6 +125,7 @@ const EditHosts = (props: any) => {
             <div style={{ flex: 1 }}>
                 <Row gutter={16}>
                     <Col span={16}>
+                        {/* @ts-ignore */}
                         <CodeMirror
                             value={hosts}
                             options={{

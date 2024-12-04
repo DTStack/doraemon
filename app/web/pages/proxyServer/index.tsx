@@ -845,4 +845,5 @@ function mapStateToProps(state: any) {
         localIp: state.global.localIp,
     };
 }
+// @ts-ignore
 export default connect(mapStateToProps)(ProxyServer);

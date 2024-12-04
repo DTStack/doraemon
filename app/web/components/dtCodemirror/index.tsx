@@ -91,6 +91,7 @@ function DtCodemirror(props: any) {
     }, []);
     return (
         <div className="dt-codemirror">
+            {/* @ts-ignore */}
             <CodeMirror {...props} />
             <Select
                 showSearch

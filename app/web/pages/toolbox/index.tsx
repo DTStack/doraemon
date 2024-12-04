@@ -163,6 +163,7 @@ const Toolbox = () => {
                                 {componentContent}
                             </a>
                         ) : (
+                            // @ts-ignore
                             <Link to={appUrl} className="navigation-item">
                                 {componentContent}
                             </Link>

@@ -67,6 +67,7 @@ const SiderComponent = (props: any) => {
                             >
                                 {children.map((navChild) => (
                                     <Menu.Item key={navChild.path}>
+                                        {/* @ts-ignore */}
                                         <Link to={navChild.path}>
                                             {navChild.icon}
                                             <span>{navChild.name}</span>
@@ -78,6 +79,7 @@ const SiderComponent = (props: any) => {
                     } else {
                         return (
                             <Menu.Item key={path}>
+                                {/* @ts-ignore */}
                                 <Link to={path}>
                                     {icon}
                                     <span>{name}</span>

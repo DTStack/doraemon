@@ -80,6 +80,7 @@ const HeaderComponent = (props: any) => {
     return (
         <Header className="dt-layout-header header_component">
             <div className="dt-header-log-wrapper logo">
+                {/* @ts-ignore */}
                 <Link to="/page/toolbox">
                     <img className="logo_img" src={logo} />
                     <span className="system-title">Doraemon</span>
@@ -107,6 +108,7 @@ const HeaderComponent = (props: any) => {
                                 >
                                     {children.map((navChild: any) => (
                                         <Menu.Item key={navChild.path}>
+                                            {/* @ts-ignore */}
                                             <Link to={navChild.path}>
                                                 {navChild.icon}
                                                 <span>{navChild.name}</span>
@@ -118,6 +120,7 @@ const HeaderComponent = (props: any) => {
                         } else {
                             return (
                                 <Menu.Item key={path}>
+                                    {/* @ts-ignore */}
                                     <Link to={path}>
                                         {icon}
                                         <span>{name}</span>

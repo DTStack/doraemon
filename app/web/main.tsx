@@ -30,6 +30,7 @@ const clientRender = () => {
     const render = (Page: any) => {
         ReactDOM.hydrate(
             EASY_ENV_IS_DEV ? (
+                // @ts-ignore
                 <AppContainer>
                     <Page />
                 </AppContainer>
