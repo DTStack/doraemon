@@ -105,6 +105,7 @@ const ConfigDetail = (props: any) => {
                     <Col span={18}>
                         <Breadcrumb>
                             <Breadcrumb.Item>
+                                {/* @ts-ignore */}
                                 <Link to="/page/config-center">配置中心</Link>
                             </Breadcrumb.Item>
                             <Breadcrumb.Item>配置详情</Breadcrumb.Item>
@@ -124,6 +125,7 @@ const ConfigDetail = (props: any) => {
                 <div className="page-content">
                     <Row gutter={16}>
                         <Col span={18}>
+                            {/* @ts-ignore */}
                             <CodeMirror
                                 ref={codeEditorRef}
                                 value={config}
@@ -147,6 +149,7 @@ const ConfigDetail = (props: any) => {
                                     <QuestionCircleOutlined />
                                 </Tooltip>
                             </Title>
+                            {/* @ts-ignore */}
                             <CodeMirror
                                 ref={shellEditorRef}
                                 value={shell}

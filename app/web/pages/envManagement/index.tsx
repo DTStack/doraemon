@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { Button, Divider, Input, message as Message, Popconfirm, Table, Typography } from 'antd';
+import {
+    Button,
+    Divider,
+    Input,
+    message as Message,
+    Popconfirm,
+    Table,
+    Tooltip,
+    Typography,
+} from 'antd';
 
 import { API } from '@/api';
 import DtTag from '@/components/dtTag';
@@ -50,14 +59,41 @@ export default (props: any) => {
             {
                 title: '环境名称',
                 key: 'envName',
-                width: 220,
                 dataIndex: 'envName',
             },
             {
                 title: '主机IP',
                 key: 'hostIp',
-                width: 160,
                 dataIndex: 'hostIp',
+            },
+            {
+                title: 'UIC用户名密码',
+                key: 'hostIp',
+                dataIndex: 'hostIp',
+                ellipsis: true,
+                render: (value: any, record: any) => {
+                    const { uicUsername, uicPasswd } = record;
+                    return !uicUsername && !uicPasswd ? (
+                        '--'
+                    ) : (
+                        <>
+                            {uicUsername ? (
+                                <Paragraph copyable ellipsis>
+                                    {uicUsername}
+                                </Paragraph>
+                            ) : (
+                                '--'
+                            )}
+                            {uicPasswd ? (
+                                <Paragraph copyable ellipsis>
+                                    {uicPasswd}
+                                </Paragraph>
+                            ) : (
+                                '--'
+                            )}
+                        </>
+                    );
+                },
             },
             {
                 title: '访问地址',
@@ -81,7 +117,6 @@ export default (props: any) => {
                 title: '标签',
                 key: 'tags',
                 dataIndex: 'tags',
-                width: 160,
                 filterMultiple: true,
                 filters: tagList.map((item: any) => {
                     return {
@@ -102,7 +137,11 @@ export default (props: any) => {
                 key: 'remark',
                 dataIndex: 'remark',
                 ellipsis: true,
-                render: (text) => <pre className="remark-content">{text || '--'}</pre>,
+                render: (text) => (
+                    <Tooltip title={text} placement="top">
+                        <pre className="remark-content">{text || '--'}</pre>
+                    </Tooltip>
+                ),
             },
             {
                 title: '操作',
@@ -179,7 +218,7 @@ export default (props: any) => {
         <div className="page-env-management">
             <div className="title_wrap">
                 <Search
-                    placeholder="请输入环境名称或IP搜索"
+                    placeholder="请输入环境名称或主机IP搜索"
                     value={searchStr}
                     onChange={(e) => setSearchStr(e.target.value)}
                     onSearch={() => loadTableData({ search: searchStr })}
@@ -192,6 +231,7 @@ export default (props: any) => {
             </div>
             <Table
                 rowKey="id"
+                size="middle"
                 columns={getColumns()}
                 className="dt-table-fixed-base"
                 scroll={{ y: 'calc(100vh - 64px - 40px - 44px - 44px)' }}

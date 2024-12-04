@@ -6,7 +6,16 @@ class EnvManagementService extends Service {
         const { ctx } = this;
         const { tags = '', search = '' } = params;
         const envResult = await ctx.model.EnvManagement.findAll({
-            attributes: ['id', 'envName', 'hostIp', 'url', 'remark', 'tags'],
+            attributes: [
+                'id',
+                'envName',
+                'hostIp',
+                'uicUsername',
+                'uicPasswd',
+                'url',
+                'remark',
+                'tags',
+            ],
             where: {
                 status: 1,
                 $or: [
@@ -43,10 +52,12 @@ class EnvManagementService extends Service {
     }
     editEnv(env) {
         const { ctx } = this;
-        const { id, envName, hostIp, url, remark, tags } = env;
+        const { id, envName, hostIp, uicUsername, uicPasswd, url, remark, tags } = env;
         const newEnv = {};
         if (!_.isNil(envName)) newEnv.envName = envName;
         if (!_.isNil(hostIp)) newEnv.hostIp = hostIp;
+        if (!_.isNil(uicUsername)) newEnv.uicUsername = uicUsername;
+        if (!_.isNil(uicPasswd)) newEnv.uicPasswd = uicPasswd;
         if (!_.isNil(url)) newEnv.url = url;
         if (!_.isNil(remark)) newEnv.remark = remark;
         if (!_.isNil(tags)) newEnv.tags = tags;
