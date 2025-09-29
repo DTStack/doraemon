@@ -124,6 +124,49 @@ module.exports = (app) => {
     app.post('/api/tags/update-tag', app.controller.tagManagement.editTag);
     app.post('/api/tags/delete-tag', app.controller.tagManagement.deleteTag);
 
+    /**
+     * MCP服务器注册中心路由
+     */
+    app.get('/api/mcp-servers/list', app.controller.mcp.getMCPServerList);
+    app.get('/api/mcp-servers/detail', app.controller.mcp.getMCPServerDetail);
+    app.post('/api/mcp-servers/register', app.controller.mcp.registerMCPServer);
+    app.put('/api/mcp-servers/update', app.controller.mcp.updateMCPServer);
+    app.delete('/api/mcp-servers/delete', app.controller.mcp.deleteMCPServer);
+    app.post('/api/mcp-servers/use', app.controller.mcp.incrementUseCount);
+    app.get('/api/mcp-servers/tags/popular', app.controller.mcp.getPopularTags);
+    app.get('/api/mcp-servers/health', app.controller.mcp.checkMCPServerHealth);
+    app.post('/api/mcp-servers/cleanup-file', app.controller.mcp.cleanupFile);
+    
+    // MCP服务器生命周期管理
+    app.post('/api/mcp-servers/start', app.controller.mcp.startMCPServer);
+    app.post('/api/mcp-servers/stop', app.controller.mcp.stopMCPServer);
+    app.post('/api/mcp-servers/restart', app.controller.mcp.restartMCPServer);
+    app.get('/api/mcp-servers/status', app.controller.mcp.getMCPServerStatus);
+    app.get('/api/mcp-servers/status/all', app.controller.mcp.getAllMCPServerStatus);
+    app.post('/api/mcp-servers/sync-info', app.controller.mcp.syncMCPServerInfo);
+    
+    // MCP服务器健康检查路由
+    app.post('/api/mcp-servers/health/:serverId', app.controller.mcp.checkMCPServerHealth);
+    app.post('/api/mcp-servers/health/all', app.controller.mcp.checkAllMCPServersHealth);
+    app.get('/api/mcp-servers/status/stats', app.controller.mcp.getMCPServerStatusStats);
+    
+    // MCP服务器状态切换路由
+
+    /**
+     * MCP代理端点
+     */
+    app.post('/mcp-endpoint/:serverId/mcp', app.controller.mcp.handleMCPEndpointPost);
+    app.get('/mcp-endpoint/:serverId/mcp', app.controller.mcp.handleMCPEndpointGet);
+    app.delete('/mcp-endpoint/:serverId/mcp', app.controller.mcp.handleMCPEndpointDelete);
+
+
+    app.post('/mcp-endpoint/:serverId/messages', app.controller.mcp.handleMCPEndpointPost);
+    app.get('/mcp-endpoint/:serverId/sse', app.controller.mcp.handleMCPEndpointGet);
+
+    // app.post('/mcp/:serverId/mcp', app.controller.mcp.handleMCPEndpointPost);
+    // app.get('/mcp/:serverId/mcp', app.controller.mcp.handleMCPEndpointGet);
+    // app.delete('/mcp/:serverId/mcp', app.controller.mcp.handleMCPEndpointDelete);
+
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
     // 暂时close Terminal相关功能
     // io.of('/').route('loginServer',  io.controller.home.loginServer)

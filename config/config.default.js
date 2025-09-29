@@ -16,6 +16,7 @@ module.exports = (app) => {
     exports.cacheDirectory = path.join(__dirname, '../cache');
     exports.bodyParser = {
         ignore: [/^\/proxy/],
+        enableTypes: ['json', 'form', 'text'], 
     };
     exports.logger = {
         consoleLevel: 'DEBUG',
@@ -55,9 +56,23 @@ module.exports = (app) => {
 
     exports.multipart = {
         // 文件上传
-        fileSize: '50mb',
-        mode: 'stream',
+        fileSize: '100mb',
+        mode: 'file', // 使用文件模式，直接保存到临时文件
+        fileExtensions: ['.zip', '.tar', '.gz', '.tgz'], // 允许的文件扩展名
+        tmpdir: path.join(app.baseDir, 'cache/uploads'), // 临时文件目录
+        cleanSchedule: {
+            // 清理上传的临时文件
+            cron: '0 30 4 * * *', // 每天4:30清理
+        },
+        whitelist: [
+            // 允许的文件类型
+            '.zip',
+            '.tar',
+            '.gz',
+            '.tgz'
+        ]
     };
+
 
     exports.io = {
         init: {}, // passed to engine.io

@@ -260,3 +260,36 @@ CREATE TABLE `tag_management` (
 ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+CREATE TABLE IF NOT EXISTS `mcp_servers` (
+    `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+    `server_id` varchar(64) NOT NULL COMMENT '服务器唯一标识/名称',
+    `title` varchar(200)  NOT NULL COMMENT '显示标题',
+    `description` text  COMMENT '服务器描述(支持Markdown)',
+    `author` varchar(100)  NOT NULL COMMENT '创建者',
+    `version` varchar(20)  NOT NULL COMMENT '版本号',
+    `tags` json COMMENT '标签数组',
+    `transport` enum('stdio', 'sse', 'streamable-http')  NOT NULL DEFAULT 'stdio' COMMENT '传输协议类型',
+    `command` varchar(255)  COMMENT '启动命令(stdio类型)',
+    `args` json COMMENT '命令参数数组(stdio类型)',
+    `env` json COMMENT '环境变量对象(stdio类型)',
+    `http_url` varchar(500)  COMMENT 'HTTP访问地址(http类型)',
+    `sse_url` varchar(500)  COMMENT 'SSE访问地址(sse类型)',
+    `git_url` varchar(500)  COMMENT 'Git源码地址',
+    `deploy_path` varchar(500)  COMMENT '托管部署路径',
+    `status` tinyint NOT NULL DEFAULT '1' COMMENT '服务器状态 1-启用 0-禁用',
+    `is_delete` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除 1-已删除 0-未删除',
+    `use_count` int NOT NULL DEFAULT '0' COMMENT '使用次数',
+    `tools` json COMMENT '可用工具列表',
+    `prompts` json COMMENT '可用提示词列表',
+    `resources` json COMMENT '可用资源列表',
+    `capabilities` json COMMENT '服务器能力信息',
+    `last_sync_at` datetime COMMENT '最后同步时间',
+    `runtime_status` enum('running', 'stopped', 'error', 'unknown') NOT NULL DEFAULT 'unknown' COMMENT '运行时状态 running-运行中 stopped-已停止 error-错误 unknown-未知',
+    `last_ping_at` datetime COMMENT '最后ping检查时间',
+    `ping_error` text COMMENT '最后ping检查错误信息',
+    `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_server_id` (`server_id`),
+  ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8 COLLATE = utf8_bin
