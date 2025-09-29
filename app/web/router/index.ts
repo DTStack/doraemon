@@ -25,6 +25,13 @@ import TagsManagement from '@/pages/tagsManagement';
 // 工具箱
 import Toolbox from '@/pages/toolbox';
 
+import McpServerMarket from '@/pages/mcpServer/mcpMarket';
+import McpServerRegistryCenter from '@/pages/mcpServer/registryCenter';
+import McpServerDetail from '@/pages/mcpServer/detail';
+import McpServerInspector from '@/pages/mcpServer/inspector';
+import McpServerManagement from '@/pages/mcpServer/management';
+
+
 const urlPrefix = '/page';
 const routes: any = [
     {
@@ -82,6 +89,26 @@ const routes: any = [
             {
                 path: `${urlPrefix}/tags`,
                 component: TagsManagement,
+            },
+            {
+                path: `${urlPrefix}/mcp-server-market`,
+                component: McpServerMarket,
+            },
+            {
+                path: `${urlPrefix}/mcp-server-registry`,
+                component: McpServerRegistryCenter,
+            },
+            {
+                path: `${urlPrefix}/mcp-server-detail/:serverId`,
+                component: McpServerDetail,
+            },
+            {
+                path: `${urlPrefix}/mcp-server-debug/:serverId`,
+                component: McpServerInspector,
+            },
+            {
+                path: `${urlPrefix}/mcp-server-management`,
+                component: McpServerManagement,
             },
             {
                 path: '*',

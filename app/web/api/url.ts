@@ -273,4 +273,83 @@ export default {
         method: 'get',
         url: '/api/article-topic/get-topic-list',
     },
+    
+    /**
+     * MCP服务器管理
+     */
+    // 获取MCP服务器列表
+    getMCPServerList: {
+        method: 'get',
+        url: '/api/mcp-servers/list',
+    },
+    // 获取MCP服务器详情
+    getMCPServerDetail: {
+        method: 'get',
+        url: '/api/mcp-servers/detail',
+    },
+    // 注册MCP服务器
+    registerMCPServer: {
+        method: 'post',
+        url: '/api/mcp-servers/register',
+    },
+    // 更新MCP服务器
+    updateMCPServer: {
+        method: 'put',
+        url: '/api/mcp-servers/update',
+    },
+    // 删除MCP服务器
+    deleteMCPServer: {
+        method: 'delete',
+        url: '/api/mcp-servers/delete',
+    },
+    // 增加使用统计
+    incrementUseCount: {
+        method: 'post',
+        url: '/api/mcp-servers/use',
+    },
+    // 获取MCP服务器健康状态
+    checkMCPServerHealth: {
+        method: 'get',
+        url: '/api/mcp-servers/health',
+    },
+    // 清理文件
+    cleanupFile: {
+        method: 'post',
+        url: '/api/mcp-servers/cleanup-file',
+    },
+    // 启动MCP服务器
+    startMCPServer: {
+        method: 'post',
+        url: '/api/mcp-servers/start',
+    },
+    // 停止MCP服务器
+    stopMCPServer: {
+        method: 'post',
+        url: '/api/mcp-servers/stop',
+    },
+    // 重启MCP服务器
+    restartMCPServer: {
+        method: 'post',
+        url: '/api/mcp-servers/restart',
+    },
+    // 获取MCP服务器状态
+    getMCPServerStatus: {
+        method: 'get',
+        url: '/api/mcp-servers/status',
+    },
+    // 获取所有MCP服务器状态
+    getAllMCPServerStatus: {
+        method: 'get',
+        url: '/api/mcp-servers/status/all',
+    },
+    // 获取热门标签
+    getMCPPopularTags: {
+        method: 'get',
+        url: '/api/mcp-servers/tags/popular',
+    },
+    // 同步MCP服务器信息
+    syncMCPServerInfo: {
+        method: 'post',
+        url: '/api/mcp-servers/sync-info',
+    },
 };

@@ -37,6 +37,18 @@ const navMenuList: any = [
         routers: ['proxy-server'],
     },
     {
+        name: 'MCP',
+        path: '/page/mcp-server-market',
+        icon: <CloudServerOutlined />,
+        routers: [
+            'mcp-server-market',
+            'mcp-server-registry',
+            'mcp-server-detail',
+            'mcp-server-debug',
+        ],
+    },
+
+    {
         name: '主机管理',
         path: '/page/host-management',
         icon: <CloudServerOutlined />,

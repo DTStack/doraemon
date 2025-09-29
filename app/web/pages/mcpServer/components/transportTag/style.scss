@@ -1,0 +1,39 @@
+.transport-tag {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.3s ease;
+
+    .anticon {
+        font-size: 10px;
+        opacity: 0.9;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+}
+
+// 移动端优化
+@media (max-width: 768px) {
+    .transport-tag {
+        font-size: 10px;
+        padding: 3px 8px;
+        
+        .anticon {
+            font-size: 9px;
+        }
+    }
+}

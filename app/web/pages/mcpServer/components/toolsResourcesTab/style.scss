@@ -1,0 +1,94 @@
+.tools-resources-tab {
+    .tools-section,
+    .prompts-section,
+    .resources-section {
+        margin-bottom: 0;
+
+        .ant-card-head {
+            .ant-card-extra {
+                .ant-space {
+                    align-items: center;
+                }
+            }
+        }
+    }
+
+    .json-view {
+        .ant-collapse {
+            .json-header {
+                .json-description {
+                    margin-top: 4px;
+                    margin-left: 0;
+                }
+            }
+        }
+
+        .json-content {
+            background-color: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-all;
+
+            code {
+                color: #24292e;
+                background: transparent;
+                padding: 0;
+                border: none;
+                font-family: inherit;
+            }
+        }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+    }
+
+    .tools-collapse {
+        .tool-header {
+            .tool-description {
+                margin-top: 8px;
+                margin-left: 0;
+            }
+        }
+
+        .tool-content {
+            .input-schema-section,
+            .annotations-section {
+                .ant-table {
+                    .ant-table-thead > tr > th {
+                        background-color: #fafafa;
+                        font-weight: 600;
+                    }
+                }
+            }
+        }
+    }
+
+    .prompts-section,
+    .resources-section {
+        .ant-table {
+            .ant-table-thead > tr > th {
+                background-color: #fafafa;
+                font-weight: 600;
+            }
+
+            .ant-table-tbody > tr > td {
+                vertical-align: top;
+            }
+        }
+    }
+
+    .ant-divider {
+        margin: 24px 0;
+    }
+}

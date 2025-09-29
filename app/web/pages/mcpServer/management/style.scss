@@ -1,0 +1,59 @@
+.mcp-server-management {
+    padding: 24px;
+    
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        
+        h2 {
+            margin: 0;
+        }
+    }
+    
+    .ant-table {
+        .ant-table-tbody > tr > td {
+            vertical-align: top;
+        }
+    }
+    
+    .env-vars-display {
+        .env-var-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            
+            .env-separator {
+                margin: 0 8px;
+                color: #999;
+            }
+        }
+    }
+    
+    // 响应式处理
+    @media (max-width: 768px) {
+        padding: 16px;
+        
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+    }
+}
+
+// 弹窗内容样式
+.ant-modal {
+    .ant-form {
+        .ant-form-item {
+            margin-bottom: 16px;
+        }
+        
+        .ant-upload {
+            .ant-upload-list {
+                margin-top: 8px;
+            }
+        }
+    }
+}

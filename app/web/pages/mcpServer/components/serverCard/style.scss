@@ -1,0 +1,244 @@
+.server-card {
+    // 基础布局
+    height: 100%;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    // 悬停效果
+    &:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+    }
+
+    .ant-card-body {
+        padding: 0;
+        height: 100%;
+    }
+
+    // 主要内容区域
+    .card-content {
+        padding: 20px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+
+        // 顶部区域：标题、作者、transport标签
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f3f4f6;
+
+            .header-left {
+                flex: 1;
+                min-width: 0; // 防止文本溢出
+
+                .server-title {
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #1f2937;
+                    margin: 0 0 8px 0;
+                    line-height: 1.4;
+                    cursor: pointer;
+                    transition: color 0.2s ease;
+
+                    // 文本截断
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+
+                    &:hover {
+                        color: #2563eb;
+                    }
+                }
+
+                .author-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    font-size: 14px;
+                    color: #84878d;
+
+                    .author-name {
+                        font-weight: 400;
+                        max-width: 140px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+                }
+            }
+
+            .header-right {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-end;
+                flex-shrink: 0;
+            }
+        }
+
+        // 中间区域：描述和ID
+        .description-section {
+            flex: 1;
+            margin-bottom: 16px;
+
+            .description {
+                font-size: 14px;
+                color: #4b5563;
+                line-height: 1.6;
+                margin: 0 0 12px 0;
+                
+                // 限制行数
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                min-height: 40px;
+            }
+
+            .server-id {
+                margin-top: auto;
+
+                .server-id-code {
+                    display: inline-flex;
+                    align-items: center;
+                    font-family: 'SF Mono', 'Monaco', monospace;
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #1e40af;
+                    background: #eff6ff;
+                    border: 1px solid #bfdbfe;
+                    border-radius: 8px;
+                    padding: 6px 10px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    user-select: all;
+
+                    &:hover {
+                        background: #1e40af;
+                        color: white;
+                        border-color: #1e40af;
+                        transform: translateY(-1px);
+                        box-shadow: 0 4px 8px rgba(30, 64, 175, 0.2);
+                    }
+
+                    &:active {
+                        transform: scale(0.98);
+                    }
+                }
+            }
+        }
+
+        // 底部区域：日期和标签
+        .card-footer {
+            margin-top: auto;
+
+            .footer-date {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                margin-bottom: 12px;
+                padding-top: 12px;
+                border-top: 1px solid #f3f4f6;
+
+                .date-label {
+                    font-size: 12px;
+                    color: #4b5563;
+                    font-weight: 500;
+                }
+
+                .create-time {
+                    font-size: 12px;
+                    color: #1f2937;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+
+                    &::before {
+                        content: '📅';
+                        font-size: 11px;
+                    }
+                }
+            }
+
+            .tags-section {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                align-items: center;
+
+                .server-tag {
+                    font-size: 11px;
+                    font-weight: 600;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    background: #e5e7eb;
+                    color: #1f2937;
+                    border: 1px solid #d1d5db;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+
+                    &:hover {
+                        background: #2563eb;
+                        color: white;
+                        border-color: #2563eb;
+                        transform: translateY(-1px);
+                        box-shadow: 0 3px 8px rgba(37, 99, 235, 0.3);
+                    }
+                }
+
+                .more-tags {
+                    font-size: 11px;
+                    font-weight: 600;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    background: #fef3c7;
+                    color: #92400e;
+                    border: 1px solid #fbbf24;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+
+                    &:hover {
+                        background: #f59e0b;
+                        color: white;
+                        border-color: #f59e0b;
+                        transform: translateY(-1px);
+                        box-shadow: 0 3px 8px rgba(245, 158, 11, 0.3);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 入场动画
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.server-card {
+    animation: fadeInUp 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+// 加载状态
+.server-card.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
