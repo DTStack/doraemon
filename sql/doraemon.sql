@@ -265,6 +265,7 @@ CREATE TABLE IF NOT EXISTS `mcp_servers` (
     `id` int NOT NULL AUTO_INCREMENT COMMENT '自增主键',
     `server_id` varchar(64) NOT NULL COMMENT '服务器唯一标识/名称',
     `title` varchar(200)  NOT NULL COMMENT '显示标题',
+    `short_description` varchar(500) COMMENT '简短描述，用于卡片展示',
     `description` text  COMMENT '服务器描述(支持Markdown)',
     `author` varchar(100)  NOT NULL COMMENT '创建者',
     `version` varchar(20)  NOT NULL COMMENT '版本号',
