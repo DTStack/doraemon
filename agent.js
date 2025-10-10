@@ -5,6 +5,7 @@ const {
     timedTaskList,
     timedTaskResult,
 } = require('./app/utils/timedTask');
+const { startMcpInspector } = require('./app/utils/mcpInspector');
 
 // 接收 app 发送来的消息并作出反应
 module.exports = (agent) => {
@@ -32,4 +33,7 @@ module.exports = (agent) => {
     agent.messenger.on('timedTaskResult', ({ result }) => {
         timedTaskResult(result, agent);
     });
+
+    // 启动MCP Inspector
+    startMcpInspector(agent)
 };
