@@ -37,6 +37,7 @@ module.exports = {
     },
     alias: {
         '@': resolve('app/web'),
+        '@env': resolve('./env.json'),
     },
     plugins: {
         imagemini: false,

@@ -56,10 +56,11 @@ module.exports = (app) => {
 
     exports.multipart = {
         // 文件上传
-        fileSize: '100mb',
+        fileSize: '200mb',
         mode: 'file', // 使用文件模式，直接保存到临时文件
         fileExtensions: ['.zip', '.tar', '.gz', '.tgz'], // 允许的文件扩展名
         tmpdir: path.join(app.baseDir, 'cache/uploads'), // 临时文件目录
+        fields: 100, // 允许的最多字段数量
         cleanSchedule: {
             // 清理上传的临时文件
             cron: '0 30 4 * * *', // 每天4:30清理
