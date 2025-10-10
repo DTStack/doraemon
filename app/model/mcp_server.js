@@ -25,6 +25,10 @@ module.exports = (app) => {
                 type: TEXT,
                 comment: '服务器描述(支持Markdown)',
             },
+            short_description: {
+                type: STRING(500),
+                comment: '简短描述，用于卡片展示',
+            },
             author: {
                 type: STRING(100),
                 allowNull: false,

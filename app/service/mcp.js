@@ -7,6 +7,7 @@ const tar = require('tar');
 const env = require('../../env.json');
 const { MCPProxy } = require('../mcp/mcpProxy');
 const { MCPClient } = require('../mcp/mcpClient');
+const { convertKeysToSnakeCase } = require('../utils');
 
 class MCPService extends Service {
     /**
@@ -105,6 +106,7 @@ class MCPService extends Service {
             serverId,
             title,
             description,
+            shortDescription,
             author,
             version,
             tags,
@@ -183,6 +185,7 @@ class MCPService extends Service {
             server_id: serverId,
             title,
             description,
+            short_description: shortDescription,
             author,
             version,
             tags: Array.isArray(tags) ? tags : [],
@@ -331,8 +334,7 @@ class MCPService extends Service {
             }
         }
 
-        const oldStatus = server.status;
-        await server.update(updateData);
+        await server.update(convertKeysToSnakeCase(updateData));
 
         // 重新获取更新后的服务器信息
         await server.reload();
@@ -641,23 +643,6 @@ class MCPService extends Service {
     }
 
     /**
-     * 获取MCP服务器状态
-     * @param {String} serverId - 服务器ID
-     */
-    getMCPServerStatus(serverId) {
-        const mcpProxy = MCPProxy.getInstance(this.ctx.logger);
-        return mcpProxy.getProxyStatus(serverId);
-    }
-
-    /**
-     * 获取所有MCP服务器状态
-     */
-    getAllMCPServerStatus() {
-        const mcpProxy = MCPProxy.getInstance(this.ctx.logger);
-        return mcpProxy.getAllProxyStatus();
-    }
-
-    /**
      * 构建MCP配置对象（从app.js中复制的逻辑）
      * @param {Object} server - 数据库中的服务器记录
      * @returns {Object} MCP配置对象
@@ -696,7 +681,7 @@ class MCPService extends Service {
         const { healthy } = await this.pingMCPServer(server);
         await server.update({
             status: healthy ? 'running' : 'error',
-        })
+        });
 
         const mcpClient = new MCPClient(this.ctx.logger);
 
@@ -754,7 +739,7 @@ class MCPService extends Service {
         } catch (error) {
             // 确保连接关闭
             await mcpClient.close();
-            return { healthy: false, error: '无法创建MCP客户端连接: ' + error.message }
+            return { healthy: false, error: '无法创建MCP客户端连接: ' + error.message };
         }
     }
 

@@ -121,40 +121,12 @@ class MCPProxy {
         }
 
         try {
-            console.log(`转发请求到服务器 [${serverId}]:`, {
-                method: request.body.method,
-                id: request.body.id,
-                hasParams: !!request.body.params,
-            });
-
+            console.log(`转发请求到服务器 [${serverId}]:`, JSON.stringify(request.body));
             await handler.forward(serverId, request, response);
         } catch (error) {
             console.error(`请求转发失败 [${serverId}]:`, error);
             throw error;
         }
-    }
-
-    getProxyStatus(serverId) {
-        const handler = this.transportHandlers.get(serverId);
-        const connections = this.connections.get(serverId)?.size || 0;
-
-        const status = {
-            serverId,
-            status: handler?.isRunning(serverId) ? 'running' : 'stopped',
-            connections,
-        };
-
-        return status;
-    }
-
-    getAllProxyStatus() {
-        const statuses = {};
-
-        for (const serverId of this.transportHandlers.keys()) {
-            statuses[serverId] = this.getProxyStatus(serverId);
-        }
-
-        return statuses;
     }
 
     /**
@@ -220,7 +192,6 @@ class MCPProxy {
         const serverIds = Array.from(this.transportHandlers.keys());
         await Promise.all(serverIds.map((serverId) => this.stopProxy(serverId)));
 
-        // 清理底层管理器
         await this.processManager.cleanup();
 
         console.log('MCP代理清理完成');

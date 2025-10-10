@@ -83,6 +83,39 @@ const sendMsgAfterSendArticle = async (title, text, webhook) => {
     feChatRobot.markdown(title, text).catch((ex) => console.error(ex));
 };
 
+/**
+ * 将驼峰命名转换为下划线命名
+ * @param {string} str - 驼峰命名的字符串
+ * @returns {string} 下划线命名的字符串
+ */
+const camelToSnake = (str) => {
+    return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+};
+
+/**
+ * 将对象的驼峰命名键转换为下划线命名
+ * @param {Object} obj - 需要转换的对象
+ * @param {Array} excludeKeys - 需要排除不转换的键名数组
+ * @returns {Object} 转换后的对象
+ */
+const convertKeysToSnakeCase = (obj, excludeKeys = []) => {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+        return obj;
+    }
+
+    const result = {};
+    Object.keys(obj).forEach((key) => {
+        if (excludeKeys.includes(key)) {
+            result[key] = obj[key];
+        } else {
+            const snakeKey = camelToSnake(key);
+            result[snakeKey] = obj[key];
+        }
+    });
+
+    return result;
+};
+
 module.exports = {
     createFolder,
     createFileSync,
@@ -90,6 +123,8 @@ module.exports = {
     sendHostsUpdateMsg,
     sendArticleMsg,
     sendMsgAfterSendArticle,
+    camelToSnake,
+    convertKeysToSnakeCase,
     response: (success, data = null, message) => {
         if (success) {
             message = '执行成功';

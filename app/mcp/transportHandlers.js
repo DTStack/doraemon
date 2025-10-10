@@ -1,6 +1,11 @@
-const fetch = require('node-fetch');
 const { SSEClientTransport } = require('@modelcontextprotocol/sdk/client/sse.js');
 const { SSEServerTransport } = require('@modelcontextprotocol/sdk/server/sse.js');
+const {
+    StreamableHTTPClientTransport,
+} = require('@modelcontextprotocol/sdk/client/streamableHttp.js');
+const {
+    StreamableHTTPServerTransport,
+} = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 
 const MESSAGE_RESPONSE_TIMEOUT = 30000;
 
@@ -21,7 +26,7 @@ class BaseTransportHandler {
     }
 
     /**
-     * 启动传输
+     * 启动服务，记录传输配置
      * @param {string} serverId - 服务器ID
      * @param {object} config - 配置
      */
@@ -38,13 +43,34 @@ class BaseTransportHandler {
     }
 
     /**
-     * 通用请求路由方法
+     * 请求路由入口
      * @param {string} serverId - 服务器ID
      * @param {any} req - 请求对象
      * @param {object} res - 响应对象
      */
     forward(serverId, req, res) {
         throw new Error('Forward Method Not Implemented');
+    }
+
+    /**
+     * 返回405 Method Not Allowed
+     * @param {object} res - 响应对象
+     */
+    endWithMethodNotAllowed(res) {
+        res.status = 405;
+        res.set({
+            'content-type': 'application/json',
+        });
+        res.res.end(
+            JSON.stringify({
+                jsonrpc: '2.0',
+                error: {
+                    code: -32000,
+                    message: 'Method not allowed.',
+                },
+                id: null,
+            })
+        );
     }
 }
 
@@ -67,10 +93,7 @@ class StdioTransportHandler extends BaseTransportHandler {
         this.requestManager.initializeServerQueue(serverId);
 
         // 创建进程
-        const transport = await this.processManager.createStdioProcess(
-            serverId,
-            config,
-        );
+        const transport = await this.processManager.createStdioProcess(serverId, config);
 
         transport.onmessage = (message) => {
             this.handleProcessData(serverId, message);
@@ -106,12 +129,6 @@ class StdioTransportHandler extends BaseTransportHandler {
         }
     }
 
-    /**
-     * 处理POST请求
-     * @param {string} serverId - 服务器ID
-     * @param {any} req - 请求数据
-     * @param {object} res - 响应数据
-     */
     async handlePost(serverId, req, res) {
         const isRunning = this.processManager.isProcessRunning(serverId);
         if (!isRunning) {
@@ -137,17 +154,18 @@ class StdioTransportHandler extends BaseTransportHandler {
                     serverId,
                     internalId,
                     clientId,
+                    // stdio响应 => http响应
                     (response) => {
                         const formattedResponse = this.formatResponse(
                             response,
-                            { 'Content-Type': 'application/json' },
+                            { 'content-type': 'application/json' },
                             200
                         );
 
                         // 结束请求
                         res.set(formattedResponse.headers);
                         res.status = formattedResponse.status;
-                        res.body = formattedResponse.response;
+                        res.res.end( JSON.stringify(formattedResponse.response));
                         resolve(formattedResponse);
                     },
                     reject,
@@ -160,10 +178,7 @@ class StdioTransportHandler extends BaseTransportHandler {
                 console.log(`发送消息内容:`, JSON.stringify(messageWithInternalId));
 
                 // 发送请求到MCP服务器
-                 await this.processManager.sendMessage(
-                    serverId,
-                    messageWithInternalId
-                );
+                await this.processManager.sendMessage(serverId, messageWithInternalId);
             } catch (error) {
                 this.requestManager.removePendingRequest(serverId, internalId);
                 reject(error);
@@ -171,69 +186,13 @@ class StdioTransportHandler extends BaseTransportHandler {
         });
     }
 
-    /**
-     * 处理GET请求
-     * @param {string} serverId - 服务器ID
-     * @param {any} req - 请求数据
-     * @param {object} res - 响应数据
-     * @returns {Promise<{response: any, headers?: Record<string, string>, status: number}>} 响应数据
-     */
     async handleGet(serverId, req, res) {
         const isRunning = this.processManager.isProcessRunning(serverId);
         if (!isRunning) {
             throw new Error(`服务器 ${serverId} 的进程未运行`);
         }
 
-        // GET请求通常用于查询服务器状态或获取资源信息
-        const mcpMessage = {
-            jsonrpc: '2.0',
-            id: this.requestManager.generateRequestId(),
-            method: req.query?.method,
-            params: req.query || {},
-        };
-
-        const clientId = mcpMessage.id;
-        const internalId = this.requestManager.generateRequestId();
-        const messageWithInternalId = { ...mcpMessage, id: internalId };
-
-        console.log(
-            `STDIO GET请求映射 [${serverId}]: 客户端ID=${clientId} -> 内部ID=${internalId}`
-        );
-
-        return new Promise(async (resolve, reject) => {
-            try {
-                this.requestManager.addPendingRequest(
-                    serverId,
-                    internalId,
-                    clientId,
-                    (response) => {
-                        const formattedResponse = this.formatResponse(
-                            response,
-                            {
-                                'Content-Type': 'application/json',
-                                'Cache-Control': 'no-cache',
-                            },
-                            200
-                        );
-                        resolve(formattedResponse);
-                    },
-                    reject,
-                    MESSAGE_RESPONSE_TIMEOUT
-                );
-
-                const success = await this.processManager.sendMessage(
-                    serverId,
-                    messageWithInternalId
-                );
-                if (!success) {
-                    this.requestManager.removePendingRequest(serverId, internalId);
-                    reject(new Error('GET请求发送到进程失败'));
-                }
-            } catch (error) {
-                this.requestManager.removePendingRequest(serverId, internalId);
-                reject(error);
-            }
-        });
+        return this.endWithMethodNotAllowed(res);
     }
 
     /**
@@ -249,65 +208,7 @@ class StdioTransportHandler extends BaseTransportHandler {
             throw new Error(`服务器 ${serverId} 的进程未运行`);
         }
 
-        // DELETE请求用于删除资源
-        const mcpMessage = {
-            jsonrpc: '2.0',
-            id: this.requestManager.generateRequestId(),
-            method: req.body?.method || 'delete',
-            params: {
-                ...req.body?.params,
-                resourceId: req.params?.id || req.body?.resourceId,
-            },
-        };
-
-        const clientId = mcpMessage.id;
-        const internalId = this.requestManager.generateRequestId();
-        const messageWithInternalId = { ...mcpMessage, id: internalId };
-
-        console.log(
-            `STDIO DELETE请求映射 [${serverId}]: 客户端ID=${clientId} -> 内部ID=${internalId}`
-        );
-
-        return new Promise(async (resolve, reject) => {
-            try {
-                this.requestManager.addPendingRequest(
-                    serverId,
-                    internalId,
-                    clientId,
-                    (response) => {
-                        const formattedResponse = this.formatResponse(
-                            response,
-                            { 'Content-Type': 'application/json' },
-                            204 // DELETE成功通常返回204 No Content
-                        );
-                        resolve(formattedResponse);
-                    },
-                    reject,
-                    MESSAGE_RESPONSE_TIMEOUT
-                );
-
-                const success = await this.processManager.sendMessage(
-                    serverId,
-                    messageWithInternalId
-                );
-                if (!success) {
-                    this.requestManager.removePendingRequest(serverId, internalId);
-                    reject(new Error(`${serverId}DELETE请求发送到进程失败`));
-                }
-            } catch (error) {
-                this.requestManager.removePendingRequest(serverId, internalId);
-                reject(error);
-            }
-        });
-    }
-
-    /**
-     * 检查是否运行
-     * @param {string} serverId - 服务器ID
-     * @returns {boolean} 是否运行中
-     */
-    isRunning(serverId) {
-        return this.processManager.isProcessRunning(serverId);
+        return this.endWithMethodNotAllowed(res);
     }
 
     /**
@@ -349,7 +250,10 @@ class StdioTransportHandler extends BaseTransportHandler {
      * @private
      */
     handleProcessError(serverId, error) {
-        this.requestManager.clearServerRequests(serverId, new Error(`${serverId}进程错误: ${error.message}`));
+        this.requestManager.clearServerRequests(
+            serverId,
+            new Error(`${serverId}进程错误: ${error.message}`)
+        );
     }
 
     /**
@@ -360,10 +264,7 @@ class StdioTransportHandler extends BaseTransportHandler {
      * @private
      */
     handleProcessExit(serverId) {
-        this.requestManager.clearServerRequests(
-            serverId,
-            new Error(`${serverId}进程退出`)
-        );
+        this.requestManager.clearServerRequests(serverId, new Error(`${serverId}进程退出`));
     }
 
     /**
@@ -451,12 +352,6 @@ class SSETransportHandler extends BaseTransportHandler {
         }
     }
 
-    /**
-     * 处理POST请求
-     * @param {string} serverId - 服务器ID
-     * @param {any} req - 请求数据
-     * @param {object} res - 响应数据
-     */
     async handlePost(serverId, req, res) {
         const sseProxy = this.sseProxies.get(serverId);
         if (!sseProxy) {
@@ -478,20 +373,14 @@ class SSETransportHandler extends BaseTransportHandler {
         }
     }
 
-    /**
-     * 处理GET请求
-     * @param {string} serverId - 服务器ID
-     * @param {any} req - 请求数据
-     * @param {object} res - 响应数据
-     */
     async handleGet(serverId, req, res) {
         const sseProxy = this.sseProxies.get(serverId);
         if (!sseProxy) {
             throw new Error(`服务器 ${serverId} 的SSE连接未找到`);
         }
 
-        let transportToClientClosed = false;
-        let transportToServerClosed = false;
+        let serverClosed = false;
+        let clientClosed = false;
 
         const headers = {
             ...req.headers,
@@ -517,31 +406,20 @@ class SSETransportHandler extends BaseTransportHandler {
         serverTransport.onmessage = (message) => clientTransport.send(message);
         clientTransport.onmessage = (message) => serverTransport.send(message);
         serverTransport.onclose = () => {
-            if (transportToServerClosed) {
+            serverClosed = true;
+            if (clientClosed) {
                 return;
             }
-
-            transportToClientClosed = true;
             clientTransport.close().catch((e) => console.log(e));
         };
 
         clientTransport.onclose = () => {
-            if (transportToClientClosed) {
+            clientClosed = true;
+            if (serverClosed) {
                 return;
             }
-            transportToServerClosed = true;
             serverTransport.close().catch((e) => console.log(e));
         };
-        
-    }
-
-    /**
-     * 检查是否运行
-     * @param {string} serverId - 服务器ID
-     * @returns {boolean} 是否运行中
-     */
-    isRunning(serverId) {
-        return this.sseProxies.has(serverId);
     }
 }
 
@@ -552,6 +430,8 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
     constructor() {
         super();
         this.httpProxies = new Map();
+        this.clientTransports = new Map();
+        this.serverTransports = new Map();
     }
 
     async start(serverId, config) {
@@ -566,23 +446,28 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
             throw new Error(`无效的URL格式: ${config.httpUrl}`);
         }
 
-        // 存储HTTP代理信息
-        this.httpProxies.set(serverId, {
+        // 暂时创建一个简单的占位符对象
+        const mockProxy = {
             url: config.httpUrl,
             headers: config.headers || {},
-        });
+            close: () => {},
+        };
 
         console.log(`Streamable HTTP传输处理器启动: ${serverId} -> ${config.httpUrl}`);
+        this.httpProxies.set(serverId, mockProxy);
     }
 
     async stop(serverId) {
-        this.httpProxies.delete(serverId);
-        console.log(`Streamable HTTP传输处理器已停止: ${serverId}`);
+        const httpProxy = this.httpProxies.get(serverId);
+        if (httpProxy) {
+            httpProxy.close();
+            this.httpProxies.delete(serverId);
+            console.log(`Streamable HTTP传输处理器已停止: ${serverId}`);
+        }
     }
 
     async forward(serverId, req, res) {
-        const method = req.method?.toUpperCase() || 'POST';
-
+        const method = req.method?.toUpperCase() || 'GET';
         switch (method) {
             case 'POST':
                 return this.handlePost(serverId, req, res);
@@ -595,373 +480,115 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
         }
     }
 
-    /**
-     * 处理POST请求
-     * @param {string} serverId - 服务器ID
-     * @param {any} req - 请求数据
-     * @param {object} res - 响应数据
-     * @returns {Promise<{response: any, headers?: Record<string, string>, status: number, streamPromise?: Promise<void>}>} 响应数据
-     */
     async handlePost(serverId, req, res) {
         const httpProxy = this.httpProxies.get(serverId);
         if (!httpProxy) {
-            throw new Error(`服务器 ${serverId} 的HTTP代理未启动`);
+            throw new Error(`服务器 ${serverId} 的HTTP代理未找到`);
         }
 
-        try {
-            console.log(`转发POST请求到Streamable HTTP服务器: ${httpProxy.url}`);
+        const sessionId = req.headers['mcp-session-id'];
 
-            // 设置POST请求头
+        let clientTransport = null;
+        let serverTransport = null;
+        if (sessionId) {
+            clientTransport = this.clientTransports.get(sessionId);
+            serverTransport = this.serverTransports.get(sessionId);
+            if (!clientTransport || !serverTransport) {
+                throw new Error(`session ${sessionId} transport 不存在`);
+            }
+        } else {
             const headers = {
                 ...req.headers,
                 ...httpProxy.headers,
-                'Content-Type': 'application/json',
-                Accept: 'application/json, text/event-stream',
+                accept: 'text/event-stream, application/json',
             };
+            delete headers['content-length'];
+            let clientClosed = false;
+            let serverClosed = false;
 
-            // 发送HTTP POST请求
-            console.log(`发送POST请求头:`, JSON.stringify(headers, null, 2));
-            console.log(`发送POST请求体:`, JSON.stringify(req.body));
-
-            const response = await fetch(httpProxy.url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(req.body),
+            clientTransport = new StreamableHTTPClientTransport(new URL(httpProxy.url), {
+                requestInit: { headers },
+            });
+            serverTransport = new StreamableHTTPServerTransport({
+                sessionIdGenerator: () => require('crypto').randomUUID(),
+                onsessioninitialized: (sessionId) => {
+                    this.serverTransports.set(sessionId, serverTransport);
+                    this.clientTransports.set(sessionId, clientTransport);
+                },
             });
 
-            return this.processHttpResponse(response, 'POST');
+            serverTransport.onmessage = (message) => clientTransport.send(message);
+            clientTransport.onmessage = (message) => serverTransport.send(message);
+            serverTransport.onclose = () => {
+                serverClosed = true;
+                if (clientClosed) {
+                    return;
+                }
+                clientTransport.close().catch((e) => console.log(e));
+            };
+
+            clientTransport.onclose = () => {
+                clientClosed = true;
+                if (serverClosed) {
+                    return;
+                }
+                serverTransport.close().catch((e) => console.log(e));
+            };
+
+            await serverTransport.start();
+        }
+
+        try {
+            await serverTransport.handleRequest(req.req, res.res, req.body);
         } catch (error) {
-            console.error(
-                `Streamable HTTP POST请求错误:`,
-                error instanceof Error ? error.message : error
-            );
-            throw new Error(
-                `Streamable HTTP POST请求失败: ${
-                    error instanceof Error ? error.message : '未知错误'
-                }`
-            );
+            console.error(`Streamable HTTP POST请求处理错误:`, error);
+            throw error;
         }
     }
 
-    /**
-     * 处理GET请求
-     * @param {string} serverId - 服务器ID
-     * @param {any} req - 请求数据
-     * @param {object} res - 响应数据
-     * @returns {Promise<{response: any, headers?: Record<string, string>, status: number, streamPromise?: Promise<void>}>} 响应数据
-     */
     async handleGet(serverId, req, res) {
         const httpProxy = this.httpProxies.get(serverId);
         if (!httpProxy) {
-            throw new Error(`服务器 ${serverId} 的HTTP代理未启动`);
+            throw new Error(`服务器 ${serverId} 的HTTP代理未找到`);
         }
 
-        try {
-            console.log(`转发GET请求到Streamable HTTP服务器: ${httpProxy.url}`);
-
-            // 构建查询参数
-            const url = new URL(httpProxy.url);
-            if (req.query) {
-                Object.keys(req.query).forEach((key) => {
-                    url.searchParams.append(key, req.query[key]);
-                });
-            }
-
-            // 设置GET请求头
-            const headers = {
-                ...req.headers,
-                ...httpProxy.headers,
-                Accept: 'application/json, text/event-stream',
-            };
-
-            console.log(`发送GET请求到: ${url.toString()}`);
-            console.log(`发送GET请求头:`, JSON.stringify(headers, null, 2));
-
-            const response = await fetch(url.toString(), {
-                method: 'GET',
-                headers,
-            });
-
-            return this.processHttpResponse(response, 'GET');
-        } catch (error) {
-            console.error(
-                `Streamable HTTP GET请求错误:`,
-                error instanceof Error ? error.message : error
-            );
-            throw new Error(
-                `Streamable HTTP GET请求失败: ${
-                    error instanceof Error ? error.message : '未知错误'
-                }`
-            );
+        const sessionId = req.headers['mcp-session-id'];
+        const serverTransport = this.serverTransports.get(sessionId);
+        if (!serverTransport) {
+            throw new Error('session id is required');
         }
+
+        await serverTransport.handleRequest(req.req, res.res, req.body);
     }
 
-    /**
-     * 处理DELETE请求
-     * @param {string} serverId - 服务器ID
-     * @param {any} req - 请求数据
-     * @param {object} res - 响应数据
-     * @returns {Promise<{response: any, headers?: Record<string, string>, status: number, streamPromise?: Promise<void>}>} 响应数据
-     */
     async handleDelete(serverId, req, res) {
         const httpProxy = this.httpProxies.get(serverId);
         if (!httpProxy) {
-            throw new Error(`服务器 ${serverId} 的HTTP代理未启动`);
+            throw new Error(`服务器 ${serverId} 的HTTP代理未找到`);
+        }
+
+        const sessionId = req.headers['mcp-session-id'];
+        const serverTransport = this.serverTransports.get(sessionId);
+
+        if (!serverTransport) {
+            throw new Error(`session ${sessionId} 不存在`);
         }
 
         try {
-            console.log(`转发DELETE请求到Streamable HTTP服务器: ${httpProxy.url}`);
+            await serverTransport.handleRequest(req.req, res.res, req.body);
 
-            // 构建DELETE URL，通常包含资源ID
-            let url = httpProxy.url;
-            if (req.params?.id) {
-                url = `${url}/${req.params.id}`;
-            } else if (req.body?.resourceId) {
-                url = `${url}/${req.body.resourceId}`;
+            const clientTransport = this.clientTransports.get(sessionId);
+            if (clientTransport) {
+                await clientTransport.terminateSession();
+                await clientTransport.close();
+                this.clientTransports.delete(sessionId);
             }
 
-            // 设置DELETE请求头
-            const headers = {
-                ...req.headers,
-                ...httpProxy.headers,
-                Accept: 'application/json',
-            };
-
-            // 如果有请求体，添加Content-Type
-            if (req.body && Object.keys(req.body).length > 0) {
-                headers['Content-Type'] = 'application/json';
-            }
-
-            console.log(`发送DELETE请求到: ${url}`);
-            console.log(`发送DELETE请求头:`, JSON.stringify(headers, null, 2));
-
-            const response = await fetch(url, {
-                method: 'DELETE',
-                headers,
-                body:
-                    req.body && Object.keys(req.body).length > 0
-                        ? JSON.stringify(req.body)
-                        : undefined,
-            });
-
-            return this.processHttpResponse(response, 'DELETE');
+            this.serverTransports.delete(sessionId);
         } catch (error) {
-            console.error(
-                `Streamable HTTP DELETE请求错误:`,
-                error instanceof Error ? error.message : error
-            );
-            throw new Error(
-                `Streamable HTTP DELETE请求失败: ${
-                    error instanceof Error ? error.message : '未知错误'
-                }`
-            );
+            console.error(`Streamable HTTP DELETE请求处理错误:`, error);
+            throw error;
         }
-    }
-
-    /**
-     * 处理HTTP响应的通用方法
-     * @param {Response} response - HTTP响应
-     * @param {string} method - HTTP方法
-     * @returns {Promise<{response: any, headers?: Record<string, string>, status: number, streamPromise?: Promise<void>}>} 响应数据
-     * @private
-     */
-    async processHttpResponse(response, method) {
-        console.log(`收到${method}响应状态: ${response.status} ${response.statusText}`);
-        console.log(`响应头:`, Object.fromEntries(response.headers.entries()));
-
-        // 立即提取响应头信息
-        const responseHeaders = {};
-        response.headers.forEach((value, key) => {
-            responseHeaders[key] = value;
-        });
-
-        // 立即返回响应状态和头信息
-        const responseInfo = {
-            status: response.status,
-            headers: responseHeaders,
-        };
-
-        if (!response.ok) {
-            const errorText = await response.text().catch(() => '');
-            console.error(`HTTP ${method}请求失败详情: 状态=${response.status}, 响应=${errorText}`);
-            throw new Error(
-                `HTTP ${method}请求失败: ${response.status} ${response.statusText}${
-                    errorText ? ` - ${errorText}` : ''
-                }`
-            );
-        }
-
-        const contentType = response.headers.get('content-type') || '';
-        console.log(`${method}响应Content-Type: ${contentType}`);
-
-        // 处理不同类型的响应
-        if (contentType.includes('text/event-stream')) {
-            // SSE流响应 - 立即返回响应信息，异步处理流
-            console.log(`处理${method} SSE流响应`);
-
-            // 流式转发模式 - 异步处理流数据
-            const streamPromise = this.processSSEStreamAsync(response);
-            return {
-                response: response,
-                ...responseInfo,
-                streamPromise,
-            };
-        } else if (contentType.includes('application/json')) {
-            // JSON响应 - 需要读取完整响应体
-            let responseText = '';
-            try {
-                responseText = await response.text();
-                console.log(`收到HTTP ${method}原始响应文本:`, responseText);
-
-                if (!responseText.trim()) {
-                    // 对于DELETE请求，空响应体是正常的
-                    if (method === 'DELETE') {
-                        return this.formatResponse(
-                            { result: 'Resource deleted successfully' },
-                            responseInfo.headers,
-                            responseInfo.status
-                        );
-                    }
-                    throw new Error('响应体为空');
-                }
-
-                const responseData = JSON.parse(responseText);
-                console.log(
-                    `成功解析HTTP ${method} JSON响应:`,
-                    JSON.stringify(responseData, null, 2)
-                );
-
-                return this.formatResponse(responseData, responseInfo.headers, responseInfo.status);
-            } catch (parseError) {
-                console.error(`解析${method} JSON响应失败:`, parseError);
-                console.error(`原始响应内容:`, responseText);
-                throw new Error(
-                    `JSON解析失败: ${
-                        parseError instanceof Error ? parseError.message : '未知错误'
-                    } - 响应内容: ${responseText}`
-                );
-            }
-        } else {
-            // 其他类型响应
-            const responseText = await response.text();
-            console.log(`收到HTTP ${method}文本响应:`, responseText);
-            try {
-                const responseData = JSON.parse(responseText);
-                return this.formatResponse(responseData, responseInfo.headers, responseInfo.status);
-            } catch {
-                return this.formatResponse(
-                    { result: responseText },
-                    responseInfo.headers,
-                    responseInfo.status
-                );
-            }
-        }
-    }
-
-    /**
-     * 检查是否运行
-     * @param {string} serverId - 服务器ID
-     * @returns {boolean} 是否运行中
-     */
-    isRunning(serverId) {
-        return this.httpProxies.has(serverId);
-    }
-
-    /**
-     * 异步处理SSE流数据
-     * @param {Response} response - HTTP响应
-     * @returns {Promise<void>} 流处理Promise
-     * @private
-     */
-    async processSSEStreamAsync(response) {
-        const stream = response.body;
-        if (!stream) {
-            throw new Error('无法读取SSE流响应');
-        }
-
-        let buffer = '';
-
-        return new Promise((resolve, reject) => {
-            stream.on('data', (chunk) => {
-                try {
-                    buffer += chunk.toString();
-
-                    // 处理完整的SSE事件
-                    const events = this.parseSSEEvents(buffer);
-
-                    for (const event of events.complete) {
-                        if (event.data) {
-                            try {
-                                const eventData = JSON.parse(event.data);
-                                console.log(`处理SSE事件:`, JSON.stringify(eventData, null, 2));
-                            } catch (parseError) {
-                                console.warn(`解析SSE事件数据失败:`, event.data);
-                            }
-                        }
-                    }
-
-                    // 更新缓冲区，保留不完整的事件
-                    buffer = events.incomplete;
-                } catch (error) {
-                    console.error(`处理SSE数据块失败:`, error);
-                    reject(error);
-                }
-            });
-
-            stream.on('end', () => {
-                console.log(`SSE流结束`);
-                resolve();
-            });
-
-            stream.on('error', (error) => {
-                console.error(`SSE流处理失败:`, error);
-                reject(error);
-            });
-        });
-    }
-
-    /**
-     * 解析SSE事件
-     * @param {string} buffer - 缓冲区内容
-     * @returns {{complete: Array<{id?: string, event?: string, data?: string}>, incomplete: string}} 解析结果
-     * @private
-     */
-    parseSSEEvents(buffer) {
-        const lines = buffer.split('\n');
-        const complete = [];
-        let current = {};
-        let i = 0;
-
-        while (i < lines.length) {
-            const line = lines[i].trim();
-
-            if (line === '') {
-                // 空行表示事件结束
-                if (Object.keys(current).length > 0) {
-                    complete.push(current);
-                    current = {};
-                }
-            } else if (line.startsWith('id: ')) {
-                current.id = line.slice(4);
-            } else if (line.startsWith('event: ')) {
-                current.event = line.slice(7);
-            } else if (line.startsWith('data: ')) {
-                current.data = line.slice(6);
-            }
-
-            i++;
-        }
-
-        // 检查是否有不完整的事件
-        let incomplete = '';
-        if (Object.keys(current).length > 0) {
-            // 重建不完整的事件
-            if (current.id) incomplete += `id: ${current.id}\n`;
-            if (current.event) incomplete += `event: ${current.event}\n`;
-            if (current.data) incomplete += `data: ${current.data}\n`;
-        }
-
-        return { complete, incomplete };
     }
 }
 

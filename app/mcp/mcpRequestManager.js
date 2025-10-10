@@ -1,13 +1,4 @@
-/**
- * 请求处理接口
- * @typedef {Object} PendingRequest
- * @property {string} internalId - 内部唯一ID
- * @property {string|number} clientId - 客户端原始ID
- * @property {function(any): void} resolve - 成功回调
- * @property {function(Error): void} reject - 失败回调
- * @property {NodeJS.Timeout} timeout - 超时定时器
- * @property {string} buffer - 缓冲区
- */
+const { randomUUID } = require('crypto');
 
 /**
  * MCP请求管理器
@@ -15,12 +6,11 @@
  */
 class MCPRequestManager {
     constructor() {
-        // 每个服务器的待处理请求队列（使用内部ID作为key）
         this.pendingRequests = new Map();
     }
 
     /**
-     * 初始化服务器的请求队列
+     * 初始化请求队列
      * @param {string} serverId - 服务器ID
      */
     initializeServerQueue(serverId) {
@@ -33,7 +23,7 @@ class MCPRequestManager {
      * 添加待处理请求
      * @param {string} serverId - 服务器ID
      * @param {string} internalId - 内部ID
-     * @param {string|number} clientId - 客户端ID
+     * @param {string} clientId - 客户端ID
      * @param {function(any): void} resolve - 成功回调
      * @param {function(Error): void} reject - 失败回调
      * @param {number} [timeoutMs=30000] - 超时时间
@@ -57,7 +47,6 @@ class MCPRequestManager {
             resolve,
             reject,
             timeout,
-            buffer: '',
         };
 
         // 添加到队列（使用内部ID作为key）
@@ -139,7 +128,7 @@ class MCPRequestManager {
     }
 
     /**
-     * 删除服务器队列
+     * 删除请求队列
      * @param {string} serverId - 服务器ID
      */
     deleteServerQueue(serverId) {
@@ -152,29 +141,7 @@ class MCPRequestManager {
      * @returns {string} 唯一ID
      */
     generateRequestId() {
-        return Date.now().toString() + Math.random().toString(36).substr(2, 9);
-    }
-
-    /**
-     * 获取服务器的待处理请求数量
-     * @param {string} serverId - 服务器ID
-     * @returns {number} 待处理请求数量
-     */
-    getPendingRequestCount(serverId) {
-        const requestMap = this.pendingRequests.get(serverId);
-        return requestMap ? requestMap.size : 0;
-    }
-
-    /**
-     * 获取所有服务器的待处理请求统计
-     * @returns {Record<string, number>} 统计信息
-     */
-    getAllPendingRequestStats() {
-        const stats = {};
-        for (const [serverId, requestMap] of this.pendingRequests.entries()) {
-            stats[serverId] = requestMap.size;
-        }
-        return stats;
+        return randomUUID();
     }
 }
 
