@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Col, Tag, Tooltip } from 'antd';
+import { Card, Col, Tag } from 'antd';
 import { McpServerItem } from '../../types';
 import StatusBadge from '../statusBadge';
 import TransportTag from '../transportTag';
@@ -27,17 +27,16 @@ const ServerCard: React.FC<ServerCardProps> = ({
             <Card
                 className="server-card"
                 hoverable
-                style={{ 
+                style={{
                     animationDelay: `${index * 0.1}s`,
-                    opacity: loading ? 0 : 1 
+                    opacity: loading ? 0 : 1,
                 }}
             >
                 <div className="card-content" onClick={() => onViewDetail(server.server_id)}>
-                    {/* 顶部区域：标题、作者和transport标签 */}
                     <div className="card-header">
                         <div className="header-left">
-                            <h3 
-                                className="server-title" 
+                            <h3
+                                className="server-title"
                                 title={server.title}
                                 onClick={() => onViewDetail(server.server_id)}
                             >
@@ -45,7 +44,9 @@ const ServerCard: React.FC<ServerCardProps> = ({
                             </h3>
                             <div className="author-info">
                                 <span className="author-label">作者:</span>
-                                <span className="author-name" title={server.author}>{server.author}</span>
+                                <span className="author-name" title={server.author}>
+                                    {server.author}
+                                </span>
                             </div>
                         </div>
                         <div className="header-right">
@@ -55,35 +56,22 @@ const ServerCard: React.FC<ServerCardProps> = ({
                     </div>
 
                     <div className="description-section">
-                        <p className="description" title={server.description}>
-                            {server.description || '暂无描述'}
+                        <p className="description" title={server.short_description || server.description}>
+                            {server.short_description || server.description || '暂无描述'}
                         </p>
                     </div>
 
                     <div className="card-footer">
                         <div className="footer-date">
-                            <span className="date-label">创建于:</span>
-                            <span className="create-time">
-                                {formatDate(server.created_at)}
-                            </span>
+                            <span>创建于: {formatDate(server.created_at)}</span>
+                            <span>调用次数: {server.use_count}</span>
                         </div>
                         <div className="tags-section">
-                            {server.tags.slice(0, 4).map((tag, tagIndex) => (
-                                <Tag 
-                                    key={tagIndex} 
-                                    className="server-tag"
-                                >
+                            {server.tags.map((tag, tagIndex) => (
+                                <Tag key={tagIndex} className="server-tag">
                                     {tag}
                                 </Tag>
                             ))}
-                            {server.tags.length > 4 && (
-                                <Tooltip 
-                                    title={`更多标签: ${server.tags.slice(4).join(', ')}`}
-                                    placement="top"
-                                >
-                                    <Tag className="more-tags">+{server.tags.length - 4}</Tag>
-                                </Tooltip>
-                            )}
                         </div>
                     </div>
                 </div>

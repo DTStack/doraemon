@@ -1,32 +1,24 @@
 import React from 'react';
-import { Card, Divider, Typography, Button, message } from 'antd';
+import { Card, Button } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import { McpServerDetail } from '../../types';
 import { copyToClipboard } from '@/utils/copyUtils';
-
-const { Title } = Typography;
+import { generateMCPClientConfig } from '@/utils/common';
 
 interface ConfigTabProps {
     serverDetail: McpServerDetail;
 }
 
-const generateConfigExample = (server: McpServerDetail) => {
-    const config: any = {
-        mcpServers: {
-            [server.server_id]: {
-                url: `${location.origin}/mcp-endpoint/${server.server_id}${
-                    server.transport === 'sse' ? '/sse' : '/mcp'
-                }`,
-            },
-        },
-    };
-
-    return JSON.stringify(config, null, 2);
-};
-
 const ConfigTab: React.FC<ConfigTabProps> = ({ serverDetail }) => {
+
+    const config = generateMCPClientConfig({
+        name: serverDetail.server_id,
+        transport: serverDetail.transport === 'sse' ? 'sse' : 'streamable-http',
+        httpUrl: `${location.origin}/mcp-endpoint/${serverDetail.server_id}/mcp`,
+        sseUrl: `${location.origin}/mcp-endpoint/${serverDetail.server_id}/sse`,
+    });
+
     const handleCopyConfig = () => {
-        const config = generateConfigExample(serverDetail);
         copyToClipboard(config, '配置已复制到剪贴板');
     };
 
@@ -41,33 +33,8 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ serverDetail }) => {
             }
         >
             <pre className="config-code">
-                <code>{generateConfigExample(serverDetail)}</code>
+                <code>{config}</code>
             </pre>
-
-            <Divider />
-
-            <Title level={5}>配置说明</Title>
-            <ul>
-                {serverDetail.transport === 'stdio' && (
-                    <>
-                        <li>
-                            <strong>command</strong>: 启动MCP服务器的命令
-                        </li>
-                        <li>
-                            <strong>args</strong>: 命令行参数数组
-                        </li>
-                        <li>
-                            <strong>env</strong>: 环境变量配置（可选）
-                        </li>
-                    </>
-                )}
-                {(serverDetail.transport === 'streamable-http' ||
-                    serverDetail.transport === 'sse') && (
-                    <li>
-                        <strong>url</strong>: 服务器访问地址
-                    </li>
-                )}
-            </ul>
         </Card>
     );
 };

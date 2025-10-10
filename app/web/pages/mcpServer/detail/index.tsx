@@ -1,19 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Tabs,
-    Tag,
-    Button,
-    Typography,
-    Space,
-    message,
-    Spin,
-    Badge,
-} from 'antd';
-import {
-    ArrowLeftOutlined,
-    GithubOutlined,
-    SettingOutlined,
-} from '@ant-design/icons';
+import { Tabs, Tag, Button, Typography, Space, message, Spin, Badge } from 'antd';
+import { ArrowLeftOutlined, GithubOutlined, SettingOutlined } from '@ant-design/icons';
 import { API } from '@/api';
 import OverviewTab from '../components/overviewTab';
 import ConfigTab from '../components/configTab';
@@ -21,6 +8,7 @@ import ToolsResourcesTab from '../components/toolsResourcesTab';
 import InspectorTab from '../components/inspectorTab';
 import { McpServerDetail } from '../types';
 import StatusBadge from '../components/statusBadge';
+import TransportTag from '../components/transportTag';
 import './style.scss';
 
 const { TabPane } = Tabs;
@@ -51,34 +39,12 @@ const McpServerDetailPage: React.FC = (props: any) => {
         }
     };
 
-
     useEffect(() => {
         fetchServerDetail();
     }, [serverId]);
 
     const handleBack = () => {
         history.push('/page/mcp-server-market');
-    };
-
-    const handleInspector = () => {
-        setActiveTab('inspector');
-    };
-
-    const getTransportColor = (transport: string) => {
-        switch (transport) {
-            case 'stdio': return 'blue';
-            case 'streamable-http': return 'green';
-            case 'sse': return 'orange';
-            default: return 'default';
-        }
-    };
-
-    const getStatusBadge = () => {
-        if (!serverDetail) {
-            return <Badge status="default" text="未知" />;
-        }
-        
-        return <StatusBadge status={serverDetail.status} errorMsg={serverDetail.ping_error} />;
     };
 
     const formatDate = (dateString: string) => {
@@ -97,11 +63,8 @@ const McpServerDetailPage: React.FC = (props: any) => {
                     </Button>
                 )}
 
-                <Button 
-                    icon={<SettingOutlined />} 
-                    onClick={handleInspector}
-                >
-                    Inspector
+                <Button icon={<SettingOutlined />} onClick={() => setActiveTab('inspector')}>
+                    调试
                 </Button>
             </Space>
         );
@@ -137,47 +100,43 @@ const McpServerDetailPage: React.FC = (props: any) => {
                             {serverDetail.title}
                         </Title>
                         <div className="status-tags">
-                            <Tag
-                                color={getTransportColor(serverDetail.transport)}
-                                className="transport-tag"
-                            >
-                                {serverDetail.transport.toUpperCase()}
-                            </Tag>
-                            {getStatusBadge()}
+                            <TransportTag transport={serverDetail.transport} />
+                            <StatusBadge
+                                status={serverDetail.status}
+                                errorMsg={serverDetail.ping_error}
+                            />
                         </div>
                     </div>
 
-                    <Text code className="server-name">
-                        {serverDetail.server_id}
-                    </Text>
+                    <div className='server-name-section'>
+                        <Text code className="server-name">
+                            id: {serverDetail.server_id}
+                        </Text>
+                        <div className="tags">
+                            {serverDetail.tags.map((tag) => (
+                                <Tag key={tag}>{tag}</Tag>
+                            ))}
+                        </div>
+                    </div>
 
                     <div className="meta-info">
                         <Space size="large">
-                            <span>v{serverDetail.version}</span>
-                            <span>{serverDetail.use_count} 次使用</span>
+                            <span>版本: v{serverDetail.version}</span>
+                            <span>调用次数: {serverDetail.use_count} 次</span>
                             <span>作者: {serverDetail.author}</span>
-                            <span>更新: {formatDate(serverDetail.updated_at)}</span>
+                            <span>创建于: {formatDate(serverDetail.created_at)}</span>
+                            <span>上次状态更新: {formatDate(serverDetail.updated_at)}</span>
                         </Space>
                     </div>
-
-                    <div className="tags">
-                        {serverDetail.tags.map((tag, index) => (
-                            <Tag key={index}>{tag}</Tag>
-                        ))}
-                    </div>
                 </div>
 
-                <div className="action-buttons">
-                    {renderServerActions()}
-                </div>
+                <div className="action-buttons">{renderServerActions()}</div>
             </div>
 
             <div className="detail-content">
                 <Tabs activeKey={activeTab} onChange={setActiveTab}>
                     <TabPane tab="概览" key="overview">
-                        <OverviewTab 
-                            serverDetail={serverDetail} 
-                        />
+                        <OverviewTab serverDetail={serverDetail} />
                     </TabPane>
 
                     <TabPane tab="配置示例" key="config">
@@ -188,8 +147,8 @@ const McpServerDetailPage: React.FC = (props: any) => {
                         <ToolsResourcesTab serverDetail={serverDetail} />
                     </TabPane>
 
-                    <TabPane tab="Inspector" key="inspector">
-                        <InspectorTab />
+                    <TabPane tab="调试" key="inspector">
+                        <InspectorTab serverDetail={serverDetail} />
                     </TabPane>
                 </Tabs>
             </div>

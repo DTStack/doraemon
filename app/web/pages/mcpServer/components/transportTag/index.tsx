@@ -22,21 +22,21 @@ const TransportTag: React.FC<TransportTagProps> = ({ transport }) => {
                     color: 'blue',
                     icon: <ApiOutlined />,
                     name: 'STDIO',
-                    description: '标准输入输出'
+                    description: '原始传输方式：标准输入输出'
                 };
             case 'streamable-http':
                 return {
                     color: 'green',
                     icon: <CloudServerOutlined />,
                     name: 'HTTP',
-                    description: 'HTTP流传输'
+                    description: '原始传输方式：HTTP传输'
                 };
             case 'sse':
                 return {
                     color: 'orange',
                     icon: <ThunderboltOutlined />,
                     name: 'SSE',
-                    description: '服务器发送事件'
+                    description: '原始传输方式：SSE流式传输'
                 };
             default:
                 return {

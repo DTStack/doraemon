@@ -1,5 +1,4 @@
 .mcp-server-detail {
-    background-color: #f5f5f5;
     min-height: 100vh;
 
     &.loading {
@@ -24,7 +23,7 @@
 
         .back-button {
             margin-bottom: 20px;
-            
+
             &.ant-btn {
                 border: 1px solid rgba(255, 255, 255, 0.3);
                 color: white;
@@ -70,13 +69,19 @@
                 }
             }
 
+            .server-name-section {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                margin-bottom: 12px;
+            }
+
             .server-name {
-                background: rgba(255, 255, 255, 0.2) !important;
-                color: white !important;
-                padding: 4px 8px !important;
+                color: white;
+                padding: 4px 8px;
                 border-radius: 4px;
                 display: inline-block;
-                margin-bottom: 16px;
+                font-size: 16px;
             }
 
             .meta-info {
@@ -86,33 +91,11 @@
                     display: inline-flex;
                     align-items: center;
                     gap: 8px;
-
-                    .ant-rate {
-                        color: #ffd700;
-
-                        .ant-rate-star {
-                            color: rgba(255, 255, 255, 0.3);
-
-                            &.ant-rate-star-full {
-                                color: #ffd700;
-                            }
-                        }
-                    }
                 }
 
                 span {
                     color: rgba(255, 255, 255, 0.9);
                     font-size: 14px;
-                }
-            }
-
-            .tags {
-                .ant-tag {
-                    background: rgba(255, 255, 255, 0.2);
-                    color: white;
-                    border: 1px solid rgba(255, 255, 255, 0.3);
-                    border-radius: 4px;
-                    margin: 2px 4px 2px 0;
                 }
             }
         }
@@ -154,140 +137,25 @@
     }
 
     .detail-content {
-        padding: 24px;
+        margin-top: 24px;
 
         .ant-tabs {
             background: white;
-            border-radius: 8px;
+            border-radius: 4px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-            .ant-tabs-bar {
-                margin: 0;
-                padding: 0 24px;
-                background: #fafafa;
-                border-radius: 8px 8px 0 0;
-                border-bottom: 1px solid #f0f0f0;
-
-                .ant-tabs-tab {
-                    padding: 16px 20px;
-                    font-weight: 500;
-
-                    &.ant-tabs-tab-active {
-                        color: #1890ff;
-                    }
-                }
-            }
-
             .ant-tabs-content {
-                padding: 24px;
+                padding: 0 24px 24px;
             }
         }
 
-        .overview-card,
-        .documentation-card,
-        .config-card,
-        .debug-card,
-        .tools-card,
-        .prompts-card,
-        .resources-card,
-        .inspector-card {
+        .ant-card {
             border: none;
             box-shadow: none;
             padding: 0;
 
             .ant-card-body {
                 padding: 0;
-            }
-
-            .ant-typography h4 {
-                color: #262626;
-                font-weight: 600;
-                margin-bottom: 16px;
-            }
-
-            .ant-descriptions {
-                .ant-descriptions-item-label {
-                    font-weight: 600;
-                    color: #595959;
-                }
-
-                .ant-descriptions-item-content {
-                    color: #262626;
-                }
-            }
-
-            .env-vars-display {
-                .env-var-item {
-                    display: flex;
-                    align-items: center;
-                    margin-bottom: 8px;
-                    padding: 6px 0;
-                    border-bottom: 1px solid #f0f0f0;
-
-                    &:last-child {
-                        border-bottom: none;
-                        margin-bottom: 0;
-                    }
-
-                    .ant-typography {
-                        margin: 0 !important;
-                        
-                        &:first-child {
-                            min-width: 120px;
-                            background-color: #f6f8fa !important;
-                            color: #1890ff !important;
-                            font-weight: 600;
-                        }
-
-                        &:last-child {
-                            background-color: #fff2e8 !important;
-                            color: #d46b08 !important;
-                            flex: 1;
-                        }
-                    }
-
-                    .env-separator {
-                        margin: 0 8px;
-                        color: #8c8c8c;
-                        font-weight: 600;
-                    }
-                }
-            }
-        }
-
-        .documentation-card {
-            .markdown-content {
-                line-height: 1.6;
-
-                h1, h2, h3 {
-                    color: #262626;
-                    margin: 24px 0 16px 0;
-                    font-weight: 600;
-                }
-
-                h1 {
-                    font-size: 24px;
-                    border-bottom: 2px solid #f0f0f0;
-                    padding-bottom: 8px;
-                }
-
-                h2 {
-                    font-size: 20px;
-                }
-
-                h3 {
-                    font-size: 16px;
-                }
-
-                ul {
-                    padding-left: 20px;
-                    margin: 16px 0;
-
-                    li {
-                        margin: 8px 0;
-                        line-height: 1.5;
-                    }
-                }
             }
         }
 
@@ -304,262 +172,6 @@
                     font-size: 14px;
                     line-height: 1.5;
                     color: #24292e;
-                }
-            }
-
-            ul {
-                padding-left: 20px;
-
-                li {
-                    margin: 8px 0;
-                    line-height: 1.5;
-
-                    strong {
-                        color: #1890ff;
-                    }
-                }
-            }
-        }
-
-        .debug-card {
-            .debug-placeholder {
-                text-align: center;
-                padding: 60px 20px;
-                color: #8c8c8c;
-
-                .ant-typography h4 {
-                    color: #8c8c8c !important;
-                    margin-bottom: 16px;
-                }
-
-                .debug-features {
-                    max-width: 400px;
-                    margin: 32px auto 0;
-                    text-align: left;
-
-                    h5 {
-                        color: #595959;
-                        font-weight: 600;
-                        margin-bottom: 12px;
-                    }
-
-                    ul {
-                        list-style: none;
-                        padding: 0;
-
-                        li {
-                            padding: 8px 0;
-                            border-bottom: 1px solid #f0f0f0;
-                            color: #8c8c8c;
-
-                            &:last-child {
-                                border-bottom: none;
-                            }
-
-                            &::before {
-                                content: '⚡';
-                                margin-right: 8px;
-                                color: #1890ff;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Tools, Prompts, Resources 页面样式
-        .tools-card,
-        .prompts-card,
-        .resources-card {
-            .empty-state {
-                text-align: center;
-                padding: 60px 20px;
-                color: #8c8c8c;
-            }
- 
-            .tools-list,
-            .prompts-list,
-            .resources-list {
-                .tool-item,
-                .prompt-item,
-                .resource-item {
-                    margin-bottom: 16px;
-                    border: 1px solid #f0f0f0;
-                    border-radius: 8px;
-                    transition: all 0.3s ease;
-
-                    &:hover {
-                        border-color: #1890ff;
-                        box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
-                    }
-
-                    .tool-header,
-                    .prompt-header,
-                    .resource-header {
-                        .ant-typography h5 {
-                            color: #1890ff;
-                            margin-bottom: 8px;
-                        }
-
-                        .ant-typography p {
-                            color: #666;
-                            margin-bottom: 12px;
-                        }
-                    }
-
-                    .tool-schema {
-                        margin-top: 12px;
-                        padding-top: 12px;
-                        border-top: 1px solid #f0f0f0;
-
-                        pre {
-                            background: #f6f8fa;
-                            border: 1px solid #e1e4e8;
-                            border-radius: 4px;
-                            padding: 12px;
-                            margin-top: 8px;
-                            font-size: 12px;
-                            line-height: 1.4;
-                            overflow-x: auto;
-                        }
-                    }
-
-                    .prompt-arguments {
-                        margin-top: 12px;
-                        padding-top: 12px;
-                        border-top: 1px solid #f0f0f0;
-
-                        .arguments-list {
-                            margin-top: 8px;
-
-                            .ant-tag {
-                                margin: 2px 4px 2px 0;
-                                background: #f0f8ff;
-                                border: 1px solid #91d5ff;
-                                color: #1890ff;
-                            }
-                        }
-                    }
-
-                    .resource-details {
-                        margin-top: 12px;
-                        padding-top: 12px;
-                        border-top: 1px solid #f0f0f0;
-
-                        .ant-descriptions-item-label {
-                            font-weight: 600;
-                            color: #595959;
-                        }
-
-                        .ant-descriptions-item-content {
-                            color: #262626;
-
-                            .ant-typography {
-                                margin: 0;
-                            }
-
-                            .ant-tag {
-                                margin: 0;
-                                background: #f6ffed;
-                                border: 1px solid #b7eb8f;
-                                color: #52c41a;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        .inspector-card {
-            .inspector-placeholder {
-                text-align: center;
-                padding: 60px 20px;
-                color: #8c8c8c;
-
-                .ant-typography h4 {
-                    color: #8c8c8c !important;
-                    margin-bottom: 16px;
-                }
-
-                .inspector-features {
-                    max-width: 400px;
-                    margin: 32px auto 0;
-                    text-align: left;
-
-                    h5 {
-                        color: #595959;
-                        font-weight: 600;
-                        margin-bottom: 12px;
-                    }
-
-                    ul {
-                        list-style: none;
-                        padding: 0;
-
-                        li {
-                            padding: 8px 0;
-                            border-bottom: 1px solid #f0f0f0;
-                            color: #8c8c8c;
-
-                            &:last-child {
-                                border-bottom: none;
-                            }
-
-                            &::before {
-                                content: '⚡';
-                                margin-right: 8px;
-                                color: #1890ff;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@media (max-width: 768px) {
-    .mcp-server-detail {
-        .detail-header {
-            padding: 16px;
-
-            .server-info {
-                .title-section {
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 8px;
-
-                    .server-title {
-                        font-size: 24px !important;
-                    }
-                }
-
-                .meta-info {
-                    .ant-space {
-                        flex-wrap: wrap;
-                    }
-                }
-            }
-
-            .action-buttons {
-                margin-top: 16px;
-            }
-        }
-
-        .detail-content {
-            padding: 16px;
-
-            .ant-tabs {
-                .ant-tabs-bar {
-                    padding: 0 16px;
-
-                    .ant-tabs-tab {
-                        padding: 12px 16px;
-                    }
-                }
-
-                .ant-tabs-content {
-                    padding: 16px;
                 }
             }
         }

@@ -1,12 +1,10 @@
 import React from 'react';
 import { Badge, Tooltip } from 'antd';
-import './style.scss';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
-// MCP服务器状态类型定义
 export type MCPServerStatus = 'running' | 'stopped' | 'error';
 
-interface StatusBadgeProps {
+export interface StatusBadgeProps {
     status: MCPServerStatus;
     errorMsg?: string;
 }
@@ -29,7 +27,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, errorMsg }) => {
     };
 
     return (
-        <div className="status-badge-enhanced">
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
             {getBadgeConfig()}
         </div>
     );

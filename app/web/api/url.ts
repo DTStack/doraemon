@@ -332,16 +332,6 @@ export default {
         method: 'post',
         url: '/api/mcp-servers/restart',
     },
-    // 获取MCP服务器状态
-    getMCPServerStatus: {
-        method: 'get',
-        url: '/api/mcp-servers/status',
-    },
-    // 获取所有MCP服务器状态
-    getAllMCPServerStatus: {
-        method: 'get',
-        url: '/api/mcp-servers/status/all',
-    },
     // 获取热门标签
     getMCPPopularTags: {
         method: 'get',

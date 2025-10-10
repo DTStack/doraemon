@@ -7,6 +7,7 @@ export interface McpServerItem {
     server_id: string;
     title: string;
     description: string;
+    short_description?: string;
     author: string;
     version: string;
     transport: TransportType;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Tag, message, Popconfirm, Badge, Tooltip, Typography } from 'antd';
+import { Table, Button, Space, Tag, message, Popconfirm, Tooltip, Typography } from 'antd';
 import {
     PlusOutlined,
     EditOutlined,
@@ -14,12 +14,13 @@ import type { ColumnsType } from 'antd/es/table';
 import { API } from '@/api';
 import { McpServerItem } from '../types';
 import StatusBadge from '../components/statusBadge';
+import TransportTag from '../components/transportTag';
+import type { RouteComponentProps } from 'react-router';
 import './style.scss';
 
 const { Title } = Typography;
 
-
-const McpServerManagement: React.FC = (props: any) => {
+const McpServerManagement: React.FC<RouteComponentProps> = (props) => {
     const { history } = props;
     const [loading, setLoading] = useState(false);
     const [serverList, setServerList] = useState<McpServerItem[]>([]);
@@ -49,103 +50,94 @@ const McpServerManagement: React.FC = (props: any) => {
                     total: response.data.total || 0,
                 }));
             } else {
-                message.error(response.msg || '获取服务器列表失败');
+                message.error(response.msg || '获取MCP服务器列表失败');
             }
         } catch (error) {
-            message.error('获取服务器列表失败');
+            message.error('获取MCP服务器列表失败');
             console.error('获取服务器列表错误:', error);
         } finally {
             setLoading(false);
         }
     };
 
-
-    // 启动服务器
     const handleStartServer = async (serverId: string) => {
         try {
             const response = await API.startMCPServer({ serverId });
             if (response.success) {
-                message.success('服务器启动成功');
-                fetchServerList(); // 刷新列表以获取最新状态
+                message.success('MCP服务器启动成功');
+                fetchServerList();
             } else {
-                message.error(response.msg || '服务器启动失败');
+                message.error(response.msg || 'MCP服务器启动失败');
             }
         } catch (error) {
-            message.error('服务器启动失败');
+            message.error('MCP服务器启动失败');
             console.error('启动服务器错误:', error);
         }
     };
 
-    // 停止服务器
     const handleStopServer = async (serverId: string) => {
         try {
             const response = await API.stopMCPServer({ serverId });
             if (response.success) {
-                message.success('服务器停止成功');
-                fetchServerList(); // 刷新列表以获取最新状态
+                message.success('MCP服务器停止成功');
+                fetchServerList();
             } else {
-                message.error(response.msg || '服务器停止失败');
+                message.error(response.msg || 'MCP服务器停止失败');
             }
         } catch (error) {
-            message.error('服务器停止失败');
-            console.error('停止服务器错误:', error);
+            message.error('MCP服务器停止失败');
+            console.error(error);
         }
     };
 
-    // 重启服务器
     const handleRestartServer = async (serverId: string) => {
         try {
             const response = await API.restartMCPServer({ serverId });
             if (response.success) {
-                message.success('服务器重启成功');
-                fetchServerList(); // 刷新列表以获取最新状态
+                message.success('MCP服务器重启成功');
+                fetchServerList();
             } else {
-                message.error(response.msg || '服务器重启失败');
+                message.error(response.msg || 'MCP服务器重启失败');
             }
         } catch (error) {
-            message.error('服务器重启失败');
-            console.error('重启服务器错误:', error);
+            message.error('MCP服务器重启失败');
+            console.log(error)
         }
     };
 
-    // 删除服务器
     const handleDeleteServer = async (serverId: string) => {
         try {
             const response = await API.deleteMCPServer({ serverId });
             if (response.success) {
-                message.success('服务器删除成功');
+                message.success('MCP删除成功');
                 fetchServerList();
             } else {
-                message.error(response.msg || '服务器删除失败');
+                message.error(response.msg || 'MCP删除失败');
             }
         } catch (error) {
-            message.error('服务器删除失败');
-            console.error('删除服务器错误:', error);
+            message.error('MCP删除失败');
+            console.log(error)
         }
     };
 
-    // 查看详情
     const handleViewDetail = (serverId: string) => {
         history.push(`/page/mcp-server-detail/${serverId}`);
     };
 
-    // 跳转到新增页面
     const handleAddServer = () => {
         history.push('/page/mcp-server-registry');
     };
 
-    // 跳转到编辑页面
     const handleEditServer = (serverId: string) => {
-        history.push(`/page/mcp-server-registry?edit=${serverId}`);
+        history.push(`/page/mcp-server-registry/edit/${serverId}`);
     };
 
-    // 同步服务器信息
     const handleSyncServerInfo = async (serverId: string) => {
         try {
             const response = await API.syncMCPServerInfo({ serverId });
             if (response.success) {
                 message.success('服务器信息同步成功');
-                fetchServerList(); // 刷新列表
+                fetchServerList();
             } else {
                 message.error(response.msg || '服务器信息同步失败');
             }
@@ -155,29 +147,11 @@ const McpServerManagement: React.FC = (props: any) => {
         }
     };
 
-
-    // 处理分页变化
     const handleTableChange = (page: number, pageSize?: number) => {
         const newPageSize = pageSize || tablePagination.pageSize;
         fetchServerList(page, newPageSize);
     };
 
-    // 获取传输类型颜色
-    const getTransportColor = (transport: string) => {
-        switch (transport) {
-            case 'stdio':
-                return 'blue';
-            case 'streamable-http':
-                return 'green';
-            case 'sse':
-                return 'orange';
-            default:
-                return 'default';
-        }
-    };
-
-
-    // 表格列定义
     const columns: ColumnsType<McpServerItem> = [
         {
             title: '服务器信息',
@@ -198,7 +172,7 @@ const McpServerManagement: React.FC = (props: any) => {
             key: 'transport',
             width: 160,
             render: (transport) => (
-                <Tag color={getTransportColor(transport)}>{transport.toUpperCase()}</Tag>
+                <TransportTag transport={transport} />
             ),
         },
         {
@@ -206,7 +180,9 @@ const McpServerManagement: React.FC = (props: any) => {
             dataIndex: 'status',
             key: 'status',
             width: 120,
-            render: (status, record) => <StatusBadge status={status} errorMsg={record.ping_error}/>,
+            render: (status, record) => (
+                <StatusBadge status={status} errorMsg={record.ping_error} />
+            ),
         },
         {
             title: '版本',
@@ -243,7 +219,7 @@ const McpServerManagement: React.FC = (props: any) => {
         {
             title: '操作',
             key: 'actions',
-            width: 200,
+            width: 230,
             fixed: 'right',
             render: (_, record) => {
                 const isRunning = record.status === 'running';
@@ -259,6 +235,13 @@ const McpServerManagement: React.FC = (props: any) => {
                                 onClick={() => handleViewDetail(record.server_id)}
                             />
                         </Tooltip>
+                        <Tooltip title="同步信息">
+                            <Button
+                                size="small"
+                                icon={<SyncOutlined />}
+                                onClick={() => handleSyncServerInfo(record.server_id)}
+                            />
+                        </Tooltip>
 
                         {record.transport === 'stdio' && (
                             <>
@@ -270,7 +253,7 @@ const McpServerManagement: React.FC = (props: any) => {
                                             onClick={() => handleStopServer(record.server_id)}
                                         />
                                     </Tooltip>
-                                ) : (isStopped || isError) ? (
+                                ) : isStopped || isError ? (
                                     <Tooltip title="启动">
                                         <Button
                                             size="small"
@@ -291,14 +274,6 @@ const McpServerManagement: React.FC = (props: any) => {
                                 )}
                             </>
                         )}
-
-                        <Tooltip title="同步信息">
-                            <Button
-                                size="small"
-                                icon={<SyncOutlined />}
-                                onClick={() => handleSyncServerInfo(record.server_id)}
-                            />
-                        </Tooltip>
 
                         <Tooltip title="编辑">
                             <Button
@@ -333,7 +308,7 @@ const McpServerManagement: React.FC = (props: any) => {
             <div className="header">
                 <Title level={2}>MCP服务器管理</Title>
                 <Button type="primary" icon={<PlusOutlined />} onClick={handleAddServer}>
-                    新增服务器
+                    新增MCP
                 </Button>
             </div>
 

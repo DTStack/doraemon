@@ -5,9 +5,7 @@ import {
     Collapse,
     Table,
     Tag,
-    Button,
     Space,
-    Descriptions,
     Switch,
     Divider,
 } from 'antd';
@@ -61,7 +59,7 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                     <Panel
                         header={
                             <div className="json-header">
-                                <Text strong>{item.name || `${title} ${index + 1}`}</Text>
+                                <Text strong style={{ fontSize: '14px' }}>{item.name || `${title} ${index + 1}`}</Text>
                                 {item.description && (
                                     <div className="json-description">
                                         <Text type="secondary">{item.description}</Text>
@@ -229,7 +227,7 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                             header={
                                 <div className="tool-header">
                                     <Space>
-                                        <Text strong>{tool.name}</Text>
+                                        <Text strong style={{ fontSize: '14px' }}>{tool.name}</Text>
                                     </Space>
                                     {tool.description && (
                                         <div className="tool-description">

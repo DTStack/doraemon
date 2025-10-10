@@ -94,6 +94,10 @@ const routes: any = [
                 path: `${urlPrefix}/mcp-server-market`,
                 component: McpServerMarket,
             },
+                        {
+                path: `${urlPrefix}/mcp-server-registry/edit/:serverId`,
+                component: McpServerRegistryCenter,
+            },
             {
                 path: `${urlPrefix}/mcp-server-registry`,
                 component: McpServerRegistryCenter,
@@ -103,7 +107,7 @@ const routes: any = [
                 component: McpServerDetail,
             },
             {
-                path: `${urlPrefix}/mcp-server-debug/:serverId`,
+                path: `${urlPrefix}/mcp-server-inspector`,
                 component: McpServerInspector,
             },
             {

@@ -4,6 +4,10 @@ body,
     height: 100%;
 }
 
+iframe {
+    border: 1px solid #eee;
+}
+
 // table 滚动状态下的样式, small table
 .ant-table {
     &.ant-table-ping-right:not(.ant-table-has-fix-right) .ant-table-container::after,

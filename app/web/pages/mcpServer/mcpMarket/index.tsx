@@ -1,19 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    Input, 
-    Row, 
-    Button, 
-    message, 
-    Empty,
-    Divider
-} from 'antd';
-import { 
-    SearchOutlined, 
-    SettingOutlined
-} from '@ant-design/icons';
+import { Input, Row, Button, message, Empty, Divider, Space, Spin } from 'antd';
+import { BugOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
 import { API } from '@/api';
 import ServerCard from '../components/serverCard';
-import ServerCardSkeleton from '../components/serverCardSkeleton';
 import { McpServerItem } from '../types';
 import './style.scss';
 
@@ -44,7 +33,6 @@ const McpMarket: React.FC = (props: any) => {
         }
     };
 
-
     // 搜索过滤
     const handleSearch = (value: string) => {
         setSearchValue(value);
@@ -59,38 +47,42 @@ const McpMarket: React.FC = (props: any) => {
         setFilteredData(filtered);
     };
 
-    // 查看详情
     const handleViewDetail = (serverId: string) => {
         history.push(`/page/mcp-server-detail/${serverId}`);
     };
 
-    // 跳转到管理页面
     const handleManagement = () => {
         history.push('/page/mcp-server-management');
     };
 
-    // 页面加载时获取数据
+    const handleInspector = () => {
+        history.push('/page/mcp-server-inspector');
+    };
+
     useEffect(() => {
         fetchServerList();
     }, []);
-
 
     return (
         <div className="mcp-server-market">
             <div className="header">
                 <div className="header-text">
-                    <h1>MCP Servers市场</h1>
+                    <h1 className="gradient-title">MCP Servers市场</h1>
                     <p>发现和查看可用的MCP服务器</p>
                 </div>
                 <div className="header-actions">
-                    <Button
-                        icon={<SettingOutlined />}
-                        size="large"
-                        onClick={handleManagement}
-                        className="management-button"
-                    >
-                        管理MCP
-                    </Button>
+                    <Space size={8}>
+                        <Button icon={<SettingOutlined />} size="large" onClick={handleManagement}>
+                            管理MCP
+                        </Button>
+                        <Button
+                            icon={<BugOutlined />}
+                            size="large"
+                            onClick={handleInspector}
+                        >
+                            在线调试
+                        </Button>
+                    </Space>
                 </div>
             </div>
 
@@ -107,15 +99,11 @@ const McpMarket: React.FC = (props: any) => {
                 />
             </div>
 
-            <Divider style={{ backgroundColor: '#EEE' }} />
+            <Divider style={{ backgroundColor: '#eee' }} />
 
             <div className="server-grid">
                 {loading ? (
-                    <Row gutter={[24, 24]}>
-                        {Array.from({ length: 8 }).map((_, index) => (
-                            <ServerCardSkeleton key={`skeleton-${index}`} />
-                        ))}
-                    </Row>
+                   <Spin spinning />
                 ) : filteredData.length === 0 ? (
                     <Empty
                         description="暂无MCP服务器"

@@ -11,6 +11,31 @@
         h1 {
             font-size: 48px;
         }
+
+        .gradient-title {
+            background: linear-gradient(
+                90deg,
+                #2c3e50,
+                #34495e,
+                #5a6c7d,
+                #6c7a89,
+                #5a6c7d,
+                #34495e,
+                #2c3e50
+            );
+            background-size: 200% auto;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+
+            &:hover {
+                animation: gradient-flow 3s linear infinite;
+            }
+        }
+
         p {
             font-size: 20px;
             color: #6d6e70;
@@ -23,10 +48,6 @@
             height: 38px;
             padding-left: 12px;
         }
-    }
-    
-    .server-grid {
-        // padding: 0 80px;
     }
 
     .empty-state-enhanced {
@@ -62,34 +83,6 @@
             }
         }
     }
-
-    .empty-state {
-        text-align: center;
-        padding: 80px 0;
-        color: #a0aec0;
-        font-size: 18px;
-        font-weight: 500;
-        animation: fadeIn 0.6s ease-out;
-
-        &::before {
-            content: '🔍';
-            font-size: 48px;
-            display: block;
-            margin-bottom: 16px;
-            opacity: 0.7;
-        }
-    }
-}
-
-@keyframes headerSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 @keyframes fadeInUp {
@@ -103,11 +96,11 @@
     }
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
+@keyframes gradient-flow {
+    0% {
+        background-position: 0% center;
     }
-    to {
-        opacity: 1;
+    100% {
+        background-position: 200% center;
     }
 }

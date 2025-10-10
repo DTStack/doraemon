@@ -1,6 +1,5 @@
 .mcp-server-registry-center {
     padding: 24px;
-    background-color: #f5f5f5;
     min-height: 100vh;
 
     .header {
@@ -10,7 +9,6 @@
         h2 {
             font-size: 28px;
             font-weight: 600;
-            color: #262626;
             margin-bottom: 8px;
         }
 
@@ -31,34 +29,16 @@
             padding: 32px;
         }
 
-        .ant-divider {
-            margin: 32px 0 24px 0;
-            font-size: 16px;
-            font-weight: 600;
-            color: #262626;
-
-            &::before,
-            &::after {
-                border-color: #d9d9d9;
-            }
-        }
-
         .ant-radio-group {
             width: 100%;
 
             .ant-radio-wrapper {
                 display: flex;
-                align-items: flex-start;
+                align-items: center;
                 padding: 12px 16px;
-                margin: 4px 0;
                 border: 1px solid #d9d9d9;
                 border-radius: 6px;
                 transition: all 0.3s ease;
-
-                &:hover {
-                    border-color: #40a9ff;
-                    background-color: #f6ffed;
-                }
 
                 &.ant-radio-wrapper-checked {
                     border-color: #1890ff;
@@ -66,26 +46,16 @@
                 }
 
                 .ant-radio {
-                    margin-top: 2px;
-                }
-
-                span:last-child {
-                    margin-left: 8px;
-                    line-height: 1.5;
+                    margin-top: -4px;
                 }
             }
         }
         .upload-tip {
             margin-top: 8px;
             font-size: 12px;
-            color: #8c8c8c;
             display: flex;
             align-items: center;
             gap: 4px;
-
-            .anticon {
-                color: #1890ff;
-            }
         }
 
         .env-vars-container {
@@ -100,18 +70,7 @@
                 border: 1px dashed #d9d9d9;
                 background-color: #fafafa;
                 color: #8c8c8c;
-                transition: all 0.3s ease;
                 margin-top: 8px;
-                
-                &:hover {
-                    border-color: #40a9ff;
-                    background-color: #e6f7ff;
-                    color: #1890ff;
-                }
-                
-                .anticon {
-                    font-size: 14px;
-                }
             }
         }
     }
