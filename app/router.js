@@ -147,20 +147,6 @@ module.exports = (app) => {
     app.post('/api/mcp-servers/health/:serverId', app.controller.mcp.checkMCPServerHealth);
     app.post('/api/mcp-servers/health/all', app.controller.mcp.checkAllMCPServersHealth);
 
-    /**
-     * MCP代理端点
-     */
-    app.post('/mcp-endpoint/:serverId/mcp', app.controller.mcp.handleMCPEndpointPost);
-    app.get('/mcp-endpoint/:serverId/mcp', app.controller.mcp.handleMCPEndpointGet);
-    app.delete('/mcp-endpoint/:serverId/mcp', app.controller.mcp.handleMCPEndpointDelete);
-
-
-    app.post('/mcp-endpoint/:serverId/messages', app.controller.mcp.handleMCPEndpointPost);
-    app.get('/mcp-endpoint/:serverId/sse', app.controller.mcp.handleMCPEndpointGet);
-
-    // app.post('/mcp/:serverId/mcp', app.controller.mcp.handleMCPEndpointPost);
-    // app.get('/mcp/:serverId/mcp', app.controller.mcp.handleMCPEndpointGet);
-    // app.delete('/mcp/:serverId/mcp', app.controller.mcp.handleMCPEndpointDelete);
 
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
     // 暂时close Terminal相关功能

@@ -6,23 +6,13 @@ const {
 const {
     StreamableHTTPServerTransport,
 } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
+const env = require('../../env.json');
 
 const MESSAGE_RESPONSE_TIMEOUT = 30000;
 
 class BaseTransportHandler {
-    /**
-     * 统一的响应处理方法
-     * @param {any} response - 响应数据
-     * @param {Record<string, string>} headers - 响应头
-     * @param {number} status - 状态码
-     * @returns {{response: any, headers: Record<string, string>, status: number}} 格式化的响应
-     */
-    formatResponse(response, headers, status) {
-        return {
-            response,
-            headers,
-            status,
-        };
+    constructor(logger) {
+        this.logger = logger;
     }
 
     /**
@@ -57,11 +47,8 @@ class BaseTransportHandler {
      * @param {object} res - 响应对象
      */
     endWithMethodNotAllowed(res) {
-        res.status = 405;
-        res.set({
-            'content-type': 'application/json',
-        });
-        res.res.end(
+        res.writeHead(405, { 'Content-Type': 'application/json' });
+        res.end(
             JSON.stringify({
                 jsonrpc: '2.0',
                 error: {
@@ -78,8 +65,8 @@ class BaseTransportHandler {
  * STDIO传输处理器
  */
 class StdioTransportHandler extends BaseTransportHandler {
-    constructor(processManager, requestManager) {
-        super();
+    constructor(processManager, requestManager, logger) {
+        super(logger);
         this.processManager = processManager;
         this.requestManager = requestManager;
     }
@@ -109,9 +96,13 @@ class StdioTransportHandler extends BaseTransportHandler {
     }
 
     async stop(serverId) {
-        await this.processManager.stopStdioProcess(serverId);
-        this.requestManager.deleteServerQueue(serverId);
-        console.log(`STDIO传输处理器已停止: ${serverId}`);
+        try {
+            await this.processManager.stopStdioProcess(serverId);
+            this.requestManager.deleteServerQueue(serverId);
+        } catch (error) {
+            this.logger?.error(`[STDIO] 停止失败 [${serverId}]:`, error);
+            throw error;
+        }
     }
 
     async forward(serverId, req, res) {
@@ -131,8 +122,11 @@ class StdioTransportHandler extends BaseTransportHandler {
 
     async handlePost(serverId, req, res) {
         const isRunning = this.processManager.isProcessRunning(serverId);
+        
         if (!isRunning) {
-            throw new Error(`服务器 ${serverId} 的进程未运行`);
+            const error = new Error(`服务器 ${serverId} 的进程未运行`);
+            this.logger?.error(`[STDIO] 进程未运行 [${serverId}]`);
+            throw error;
         }
 
         // 确保消息符合JSON-RPC 2.0规范
@@ -143,10 +137,6 @@ class StdioTransportHandler extends BaseTransportHandler {
         const internalId = this.requestManager.generateRequestId();
         const messageWithInternalId = { ...mcpMessage, id: internalId };
 
-        console.log(
-            `STDIO POST请求映射 [${serverId}]: 客户端ID=${clientId} -> 内部ID=${internalId}`
-        );
-
         return new Promise(async (resolve, reject) => {
             try {
                 // 添加到待处理请求队列
@@ -156,26 +146,17 @@ class StdioTransportHandler extends BaseTransportHandler {
                     clientId,
                     // stdio响应 => http响应
                     (response) => {
-                        const formattedResponse = this.formatResponse(
-                            response,
-                            { 'content-type': 'application/json' },
-                            200
-                        );
-
                         // 结束请求
-                        res.set(formattedResponse.headers);
-                        res.status = formattedResponse.status;
-                        res.res.end( JSON.stringify(formattedResponse.response));
-                        resolve(formattedResponse);
+                        res.writeHead(200, { 'content-type': 'application/json' });
+                        res.end(JSON.stringify(response));
+                        resolve({ response, headers: { 'content-type': 'application/json' }, status: 200 });
                     },
-                    reject,
+                    (error) => {
+                        this.logger?.error(`[STDIO] 请求失败 [${serverId}]:`, error);
+                        reject(error);
+                    },
                     MESSAGE_RESPONSE_TIMEOUT
                 );
-
-                console.log(
-                    `发送到STDIO进程 [${serverId}]: 客户端ID=${clientId}, 内部ID=${internalId}`
-                );
-                console.log(`发送消息内容:`, JSON.stringify(messageWithInternalId));
 
                 // 发送请求到MCP服务器
                 await this.processManager.sendMessage(serverId, messageWithInternalId);
@@ -218,15 +199,12 @@ class StdioTransportHandler extends BaseTransportHandler {
      * @private
      */
     handleProcessData(serverId, data) {
-        let pendingRequest;
-
         const internalId = data.id;
         if (internalId === undefined || internalId === null) {
-            console.warn(`${serverId}响应缺少ID: ${internalId}`);
             return;
         }
 
-        pendingRequest = this.requestManager.findPendingRequest(serverId, internalId);
+        const pendingRequest = this.requestManager.findPendingRequest(serverId, internalId);
         if (!pendingRequest) {
             return;
         }
@@ -237,6 +215,7 @@ class StdioTransportHandler extends BaseTransportHandler {
         if (data.jsonrpc === '2.0') {
             pendingRequest.resolve(clientResponse);
         } else {
+            this.logger?.error(`[STDIO] 无效响应格式 [${serverId}]`);
             pendingRequest.reject(new Error(`无效的JSON-RPC响应格式`));
         }
 
@@ -307,8 +286,8 @@ class StdioTransportHandler extends BaseTransportHandler {
  * SSE传输处理器
  */
 class SSETransportHandler extends BaseTransportHandler {
-    constructor() {
-        super();
+    constructor(logger) {
+        super(logger);
         this.sseProxies = new Map();
         this.clientTransports = new Map();
         this.serverTransports = new Map();
@@ -316,7 +295,9 @@ class SSETransportHandler extends BaseTransportHandler {
 
     async start(serverId, config) {
         if (!config.sseUrl) {
-            throw new Error('SSE传输需要提供URL');
+            const error = new Error('SSE传输需要提供URL');
+            this.logger?.error(`[SSE] 启动失败 [${serverId}]:`, error);
+            throw error;
         }
 
         // 暂时创建一个简单的占位符对象
@@ -326,16 +307,19 @@ class SSETransportHandler extends BaseTransportHandler {
             close: () => {},
         };
 
-        console.log(`SSE传输处理器启动: ${serverId} -> ${config.sseUrl}`);
         this.sseProxies.set(serverId, mockEventSource);
     }
 
     async stop(serverId) {
         const sseProxy = this.sseProxies.get(serverId);
         if (sseProxy) {
-            sseProxy.close();
-            this.sseProxies.delete(serverId);
-            console.log(`SSE传输处理器已停止: ${serverId}`);
+            try {
+                sseProxy.close();
+                this.sseProxies.delete(serverId);
+            } catch (error) {
+                this.logger?.error(`[SSE] 停止失败 [${serverId}]:`, error);
+                throw error;
+            }
         }
     }
 
@@ -354,21 +338,23 @@ class SSETransportHandler extends BaseTransportHandler {
 
     async handlePost(serverId, req, res) {
         const sseProxy = this.sseProxies.get(serverId);
+        
         if (!sseProxy) {
+            this.logger?.error(`[SSE] 连接未找到 [${serverId}]`);
             throw new Error(`服务器 ${serverId} 的SSE连接未找到`);
         }
 
         const serverTransport = this.serverTransports.get(req.query.sessionId);
 
         if (!serverTransport) {
+            this.logger?.error(`[SSE] Session不存在 [${serverId}]`);
             throw new Error(`session ${req.query.sessionId} 不存在`);
         }
 
         try {
-            // 由于Egg.js已经解析了请求体，我们需要将解析好的body传递给handlePostMessage
-            await serverTransport.handlePostMessage(req.req, res.res, req.body);
+            await serverTransport.handlePostMessage(req, res, req.body);
         } catch (error) {
-            console.error(`SSE POST请求处理错误:`, error);
+            this.logger?.error(`[SSE] POST失败 [${serverId}]:`, error);
             throw error;
         }
     }
@@ -376,6 +362,7 @@ class SSETransportHandler extends BaseTransportHandler {
     async handleGet(serverId, req, res) {
         const sseProxy = this.sseProxies.get(serverId);
         if (!sseProxy) {
+            this.logger?.error(`[SSE] 连接未找到 [${serverId}]`);
             throw new Error(`服务器 ${serverId} 的SSE连接未找到`);
         }
 
@@ -388,38 +375,42 @@ class SSETransportHandler extends BaseTransportHandler {
             accept: 'text/event-stream',
         };
 
-        const clientTransport = new SSEClientTransport(new URL(sseProxy.url), {
-            headers,
-        });
+        try {
+            const clientTransport = new SSEClientTransport(new URL(sseProxy.url), {
+                headers,
+            });
 
-        await clientTransport.start();
-        const messageEndpoint = 'http://localhost:7001/mcp-endpoint/' + serverId + '/messages';
+            await clientTransport.start();
+            const mcpEndpointPort = env.mcpEndpointPort || 7005;
+            const messageEndpoint = `http://localhost:${mcpEndpointPort}/mcp-endpoint/${serverId}/messages`;
 
-        const serverTransport = new SSEServerTransport(messageEndpoint, res.res, {
-            headers,
-        });
-        await serverTransport.start();
+            const serverTransport = new SSEServerTransport(messageEndpoint, res, {
+                headers,
+            });
+            await serverTransport.start();
 
-        this.serverTransports.set(serverTransport.sessionId, serverTransport);
-        this.clientTransports.set(serverTransport.sessionId, clientTransport);
+            this.serverTransports.set(serverTransport.sessionId, serverTransport);
+            this.clientTransports.set(serverTransport.sessionId, clientTransport);
 
-        serverTransport.onmessage = (message) => clientTransport.send(message);
-        clientTransport.onmessage = (message) => serverTransport.send(message);
-        serverTransport.onclose = () => {
-            serverClosed = true;
-            if (clientClosed) {
-                return;
-            }
-            clientTransport.close().catch((e) => console.log(e));
-        };
+            serverTransport.onmessage = (message) => clientTransport.send(message);
+            clientTransport.onmessage = (message) => serverTransport.send(message);
+            serverTransport.onclose = () => {
+                serverClosed = true;
+                if (!clientClosed) {
+                    clientTransport.close().catch(() => {});
+                }
+            };
 
-        clientTransport.onclose = () => {
-            clientClosed = true;
-            if (serverClosed) {
-                return;
-            }
-            serverTransport.close().catch((e) => console.log(e));
-        };
+            clientTransport.onclose = () => {
+                clientClosed = true;
+                if (!serverClosed) {
+                    serverTransport.close().catch(() => {});
+                }
+            };
+        } catch (error) {
+            this.logger?.error(`[SSE] GET失败 [${serverId}]:`, error);
+            throw error;
+        }
     }
 }
 
@@ -427,8 +418,8 @@ class SSETransportHandler extends BaseTransportHandler {
  * Streamable HTTP传输处理器
  */
 class StreamableHttpTransportHandler extends BaseTransportHandler {
-    constructor() {
-        super();
+    constructor(logger) {
+        super(logger);
         this.httpProxies = new Map();
         this.clientTransports = new Map();
         this.serverTransports = new Map();
@@ -436,13 +427,16 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
 
     async start(serverId, config) {
         if (!config.httpUrl) {
-            throw new Error('Streamable HTTP传输需要提供URL');
+            const error = new Error('Streamable HTTP传输需要提供URL');
+            this.logger?.error(`[HTTP] 启动失败 [${serverId}]:`, error);
+            throw error;
         }
 
         // 验证URL格式
         try {
             new URL(config.httpUrl);
         } catch (error) {
+            this.logger?.error(`[HTTP] URL无效 [${serverId}]:`, error);
             throw new Error(`无效的URL格式: ${config.httpUrl}`);
         }
 
@@ -453,16 +447,19 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
             close: () => {},
         };
 
-        console.log(`Streamable HTTP传输处理器启动: ${serverId} -> ${config.httpUrl}`);
         this.httpProxies.set(serverId, mockProxy);
     }
 
     async stop(serverId) {
         const httpProxy = this.httpProxies.get(serverId);
         if (httpProxy) {
-            httpProxy.close();
-            this.httpProxies.delete(serverId);
-            console.log(`Streamable HTTP传输处理器已停止: ${serverId}`);
+            try {
+                httpProxy.close();
+                this.httpProxies.delete(serverId);
+            } catch (error) {
+                this.logger?.error(`[HTTP] 停止失败 [${serverId}]:`, error);
+                throw error;
+            }
         }
     }
 
@@ -482,7 +479,9 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
 
     async handlePost(serverId, req, res) {
         const httpProxy = this.httpProxies.get(serverId);
+        
         if (!httpProxy) {
+            this.logger?.error(`[HTTP] 代理未找到 [${serverId}]`);
             throw new Error(`服务器 ${serverId} 的HTTP代理未找到`);
         }
 
@@ -490,10 +489,12 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
 
         let clientTransport = null;
         let serverTransport = null;
+        
         if (sessionId) {
             clientTransport = this.clientTransports.get(sessionId);
             serverTransport = this.serverTransports.get(sessionId);
             if (!clientTransport || !serverTransport) {
+                this.logger?.error(`[HTTP] Session不存在 [${serverId}]`);
                 throw new Error(`session ${sessionId} transport 不存在`);
             }
         } else {
@@ -511,9 +512,9 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
             });
             serverTransport = new StreamableHTTPServerTransport({
                 sessionIdGenerator: () => require('crypto').randomUUID(),
-                onsessioninitialized: (sessionId) => {
-                    this.serverTransports.set(sessionId, serverTransport);
-                    this.clientTransports.set(sessionId, clientTransport);
+                onsessioninitialized: (newSessionId) => {
+                    this.serverTransports.set(newSessionId, serverTransport);
+                    this.clientTransports.set(newSessionId, clientTransport);
                 },
             });
 
@@ -521,27 +522,25 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
             clientTransport.onmessage = (message) => serverTransport.send(message);
             serverTransport.onclose = () => {
                 serverClosed = true;
-                if (clientClosed) {
-                    return;
+                if (!clientClosed) {
+                    clientTransport.close().catch(() => {});
                 }
-                clientTransport.close().catch((e) => console.log(e));
             };
 
             clientTransport.onclose = () => {
                 clientClosed = true;
-                if (serverClosed) {
-                    return;
+                if (!serverClosed) {
+                    serverTransport.close().catch(() => {});
                 }
-                serverTransport.close().catch((e) => console.log(e));
             };
 
             await serverTransport.start();
         }
 
         try {
-            await serverTransport.handleRequest(req.req, res.res, req.body);
+            await serverTransport.handleRequest(req, res, req.body);
         } catch (error) {
-            console.error(`Streamable HTTP POST请求处理错误:`, error);
+            this.logger?.error(`[HTTP] POST失败 [${serverId}]:`, error);
             throw error;
         }
     }
@@ -558,12 +557,14 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
             throw new Error('session id is required');
         }
 
-        await serverTransport.handleRequest(req.req, res.res, req.body);
+        await serverTransport.handleRequest(req, res, req.body);
     }
 
     async handleDelete(serverId, req, res) {
         const httpProxy = this.httpProxies.get(serverId);
+        
         if (!httpProxy) {
+            this.logger?.error(`[HTTP] 代理未找到 [${serverId}]`);
             throw new Error(`服务器 ${serverId} 的HTTP代理未找到`);
         }
 
@@ -571,11 +572,12 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
         const serverTransport = this.serverTransports.get(sessionId);
 
         if (!serverTransport) {
+            this.logger?.error(`[HTTP] Session不存在 [${serverId}]`);
             throw new Error(`session ${sessionId} 不存在`);
         }
 
         try {
-            await serverTransport.handleRequest(req.req, res.res, req.body);
+            await serverTransport.handleRequest(req, res, req.body);
 
             const clientTransport = this.clientTransports.get(sessionId);
             if (clientTransport) {
@@ -586,7 +588,7 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
 
             this.serverTransports.delete(sessionId);
         } catch (error) {
-            console.error(`Streamable HTTP DELETE请求处理错误:`, error);
+            this.logger?.error(`[HTTP] DELETE失败 [${serverId}]:`, error);
             throw error;
         }
     }

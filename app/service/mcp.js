@@ -5,9 +5,8 @@ const fs = require('fs');
 const AdmZip = require('adm-zip');
 const tar = require('tar');
 const env = require('../../env.json');
-const { MCPProxy } = require('../mcp/mcpProxy');
 const { MCPClient } = require('../mcp/mcpClient');
-const { convertKeysToSnakeCase } = require('../utils');
+const { convertKeysToSnakeCase, buildMCPConfig } = require('../utils');
 
 class MCPService extends Service {
     /**
@@ -643,32 +642,6 @@ class MCPService extends Service {
     }
 
     /**
-     * 构建MCP配置对象（从app.js中复制的逻辑）
-     * @param {Object} server - 数据库中的服务器记录
-     * @returns {Object} MCP配置对象
-     */
-    buildMCPConfig(server) {
-        const config = {
-            transport: {
-                type: server.transport,
-            },
-        };
-
-        if (server.transport === 'stdio') {
-            config.command = server.command;
-            config.args = server.args || [];
-            config.env = server.env || {};
-            config.cwd = server.deploy_path; // 设置工作目录为部署路径
-        } else if (server.transport === 'streamable-http') {
-            config.httpUrl = server.http_url;
-        } else if (server.transport === 'sse') {
-            config.sseUrl = server.sse_url;
-        }
-
-        return config;
-    }
-
-    /**
      * 同步MCP服务器信息（tools、prompts、resources）
      * @param {String} serverId - 服务器ID
      */
@@ -806,7 +779,7 @@ class MCPService extends Service {
     }
 
     /**
-     * 启动MCP服务器（合并状态管理）
+     * 启动MCP服务器
      * @param {string} serverId 服务器ID
      */
     async startMCPServer(serverId) {
@@ -818,64 +791,19 @@ class MCPService extends Service {
         this.ctx.logger.info(`开始启动MCP服务器: ${serverId}`);
 
         // 构建配置对象
-        const config = this.buildMCPConfig(server);
+        const config = buildMCPConfig(server);
 
-        try {
-            // 获取MCP代理实例并启动服务器
-            const mcpProxy = MCPProxy.getInstance(this.ctx.logger);
-            await mcpProxy.startProxy(serverId, config);
+        // 通过messenger发送启动请求到agent进程
+        // agent 会在完成后发送结果消息，由 app.js 监听并更新数据库
+        this.app.messenger.sendToAgent('mcpStart', { serverId, config });
 
-            // 更新状态为运行中
-            await this.ctx.model.McpServer.update(
-                {
-                    status: 'running',
-                    ping_error: null,
-                    last_ping_at: new Date(),
-                },
-                { where: { server_id: serverId } }
-            );
+        this.ctx.logger.info(`MCP服务器启动请求已发送: ${serverId}`);
 
-            this.ctx.logger.info(`MCP服务器启动成功: ${serverId}`);
-
-            // 检查服务器状态
-            setTimeout(async () => {
-                try {
-                    const healthResult = await this.checkMCPServerHealth(serverId);
-                    if (!healthResult.healthy) {
-                        await this.ctx.model.McpServer.update(
-                            {
-                                status: 'error',
-                                ping_error: healthResult.error,
-                                last_ping_at: new Date(),
-                            },
-                            { where: { server_id: serverId } }
-                        );
-                    }
-                    this.ctx.logger.info(`服务器启动后状态检查完成: ${serverId}`);
-                } catch (error) {
-                    this.ctx.logger.error(`服务器启动后状态检查失败 [${serverId}]:`, error);
-                }
-            }, 2000); // 等待2秒后检查，确保服务器已完全启动
-
-            return true;
-        } catch (error) {
-            // 启动失败，更新状态为错误
-            await this.ctx.model.McpServer.update(
-                {
-                    status: 'error',
-                    ping_error: error.message,
-                    last_ping_at: new Date(),
-                },
-                { where: { server_id: serverId } }
-            );
-
-            this.ctx.logger.error(`MCP服务器启动失败 [${serverId}]:`, error);
-            throw error;
-        }
+        return true;
     }
 
     /**
-     * 停止MCP服务器（合并状态管理）
+     * 停止MCP服务器
      * @param {string} serverId 服务器ID
      */
     async stopMCPServer(serverId) {
@@ -886,40 +814,16 @@ class MCPService extends Service {
 
         this.ctx.logger.info(`开始停止MCP服务器: ${serverId}`);
 
-        try {
-            const mcpProxy = MCPProxy.getInstance(this.ctx.logger);
-            await mcpProxy.stopProxy(serverId);
+        // 通过messenger发送停止请求到agent进程
+        // agent 会在完成后发送结果消息，由 app.js 监听并更新数据库
+        this.app.messenger.sendToAgent('mcpStop', { serverId });
 
-            // 更新状态为已停止
-            await this.ctx.model.McpServer.update(
-                {
-                    status: 'stopped',
-                    ping_error: null,
-                    last_ping_at: new Date(),
-                },
-                { where: { server_id: serverId } }
-            );
-
-            this.ctx.logger.info(`MCP服务器停止成功: ${serverId}`);
-            return true;
-        } catch (error) {
-            // 停止失败，更新状态为错误
-            await this.ctx.model.McpServer.update(
-                {
-                    status: 'error',
-                    ping_error: error.message,
-                    last_ping_at: new Date(),
-                },
-                { where: { server_id: serverId } }
-            );
-
-            this.ctx.logger.error(`MCP服务器停止失败 [${serverId}]:`, error);
-            throw error;
-        }
+        this.ctx.logger.info(`MCP服务器停止请求已发送: ${serverId}`);
+        return true;
     }
 
     /**
-     * 重启MCP服务器（合并状态管理）
+     * 重启MCP服务器
      * @param {string} serverId 服务器ID
      */
     async restartMCPServer(serverId) {
@@ -930,56 +834,123 @@ class MCPService extends Service {
 
         this.ctx.logger.info(`开始重启MCP服务器: ${serverId}`);
 
+        // 通过messenger发送重启请求到agent进程
+        // agent 会在完成后发送结果消息，由 app.js 监听并更新数据库
+        this.app.messenger.sendToAgent('mcpRestart', { serverId });
+
+        this.ctx.logger.info(`MCP服务器重启请求已发送: ${serverId}`);
+        return true;
+    }
+
+    /**
+     * 处理MCP服务器启动结果（由消息监听器调用）
+     * @param {string} serverId - 服务器ID
+     * @param {boolean} success - 是否成功
+     * @param {string} error - 错误信息
+     */
+    async handleMCPStartResult(serverId, success, error) {
         try {
-            const mcpProxy = MCPProxy.getInstance(this.ctx.logger);
-            await mcpProxy.restartProxy(serverId);
-
-            // 更新状态为运行中
-            await this.ctx.model.McpServer.update(
-                {
-                    status: 'running',
-                    ping_error: null,
-                    last_ping_at: new Date(),
-                },
-                { where: { server_id: serverId } }
-            );
-
-            this.ctx.logger.info(`MCP服务器重启成功: ${serverId}`);
-
-            // 立即检查服务器状态
-            setTimeout(async () => {
+            if (success) {
                 try {
                     const healthResult = await this.checkMCPServerHealth(serverId);
-                    if (!healthResult.healthy) {
-                        await this.ctx.model.McpServer.update(
-                            {
-                                status: 'error',
-                                ping_error: healthResult.error || '健康检查失败',
-                                last_ping_at: new Date(),
-                            },
-                            { where: { server_id: serverId } }
-                        );
-                    }
-                    this.ctx.logger.info(`服务器重启后状态检查完成: ${serverId}`);
-                } catch (error) {
-                    this.ctx.logger.error(`服务器重启后状态检查失败 [${serverId}]:`, error);
+                    await this.ctx.model.McpServer.update(
+                        {
+                            status: healthResult.healthy ? 'running' : 'error',
+                            ping_error: healthResult.error || null,
+                            last_ping_at: new Date(),
+                        },
+                        { where: { server_id: serverId } }
+                    );
+                    this.ctx.logger.info(
+                        `MCP服务器启动后状态已更新 [${serverId}]: ${
+                            healthResult.healthy ? 'running' : 'error'
+                        }`
+                    );
+                } catch (checkError) {
+                    this.ctx.logger.error(`MCP服务器启动后状态检查失败 [${serverId}]:`, checkError);
                 }
-            }, 2000); // 等待2秒后检查，确保服务器已完全重启
+            } else {
+                // 启动失败，更新状态为错误
+                await this.ctx.model.McpServer.update(
+                    {
+                        status: 'error',
+                        ping_error: error,
+                        last_ping_at: new Date(),
+                    },
+                    { where: { server_id: serverId } }
+                );
+                this.ctx.logger.error(`MCP服务器启动失败 [${serverId}]: ${error}`);
+            }
+        } catch (updateError) {
+            this.ctx.logger.error(`更新MCP服务器状态失败 [${serverId}]:`, updateError);
+        }
+    }
 
-            return true;
-        } catch (error) {
-            // 重启失败，更新状态为错误
+    /**
+     * 处理MCP服务器停止结果（由消息监听器调用）
+     * @param {string} serverId - 服务器ID
+     * @param {boolean} success - 是否成功
+     * @param {string} error - 错误信息
+     */
+    async handleMCPStopResult(serverId, success, error) {
+        try {
             await this.ctx.model.McpServer.update(
                 {
-                    status: 'error',
-                    ping_error: error.message,
+                    status: success ? 'stopped' : 'error',
+                    ping_error: success ? null : error,
                     last_ping_at: new Date(),
                 },
                 { where: { server_id: serverId } }
             );
+            this.ctx.logger.info(
+                `MCP服务器停止后状态已更新 [${serverId}]: ${success ? 'stopped' : 'error'}`
+            );
+        } catch (updateError) {
+            this.ctx.logger.error(`更新MCP服务器停止状态失败 [${serverId}]:`, updateError);
+        }
+    }
 
-            this.ctx.logger.error(`MCP服务器重启失败 [${serverId}]:`, error);
-            throw error;
+    /**
+     * 处理MCP服务器重启结果（由消息监听器调用）
+     * @param {string} serverId - 服务器ID
+     * @param {boolean} success - 是否成功
+     * @param {string} error - 错误信息
+     */
+    async handleMCPRestartResult(serverId, success, error) {
+        try {
+            if (success) {
+                try {
+                    const healthResult = await this.checkMCPServerHealth(serverId);
+                    await this.ctx.model.McpServer.update(
+                        {
+                            status: healthResult.healthy ? 'running' : 'error',
+                            ping_error: healthResult.error || null,
+                            last_ping_at: new Date(),
+                        },
+                        { where: { server_id: serverId } }
+                    );
+                    this.ctx.logger.info(
+                        `MCP服务器重启后状态已更新 [${serverId}]: ${
+                            healthResult.healthy ? 'running' : 'error'
+                        }`
+                    );
+                } catch (checkError) {
+                    this.ctx.logger.error(`MCP服务器重启后状态检查失败 [${serverId}]:`, checkError);
+                }
+            } else {
+                // 重启失败，更新状态为错误
+                await this.ctx.model.McpServer.update(
+                    {
+                        status: 'error',
+                        ping_error: error,
+                        last_ping_at: new Date(),
+                    },
+                    { where: { server_id: serverId } }
+                );
+                this.ctx.logger.error(`MCP服务器重启失败 [${serverId}]: ${error}`);
+            }
+        } catch (updateError) {
+            this.ctx.logger.error(`更新MCP服务器重启状态失败 [${serverId}]:`, updateError);
         }
     }
 }

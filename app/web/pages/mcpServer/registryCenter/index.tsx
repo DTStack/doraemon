@@ -25,7 +25,6 @@ import { copyToClipboard } from '@/utils/copyUtils';
 import MarkdownEditor from '@/components/markdownEditor';
 import './style.scss';
 import { generateMCPClientConfig } from '@/utils/common';
-import { useParams, withRouter } from 'react-router';
 
 const { Option } = Select;
 const { TextArea } = Input;

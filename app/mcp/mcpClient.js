@@ -39,7 +39,6 @@ class MCPClient {
 
             await this.client.connect(this.transport);
             
-            this.logger?.info(`MCP客户端连接成功: ${server.server_id}`);
             return true;
         } catch (error) {
             this.logger?.error(`MCP客户端连接失败 [${server.server_id}]:`, error);
@@ -115,7 +114,7 @@ class MCPClient {
             const response = await this.client.listTools();
             return response.tools || [];
         } catch (error) {
-            this.logger?.warn('获取工具列表失败:', error.message);
+            this.logger?.warn('获取工具列表失败:', error);
             return [];
         }
     }
@@ -133,7 +132,7 @@ class MCPClient {
             const response = await this.client.listPrompts();
             return response.prompts || [];
         } catch (error) {
-            this.logger?.warn('获取提示词列表失败:', error.message);
+            this.logger?.warn('获取提示词列表失败:', error);
             return [];
         }
     }
@@ -151,7 +150,7 @@ class MCPClient {
             const response = await this.client.listResources();
             return response.resources || [];
         } catch (error) {
-            this.logger?.warn('获取资源列表失败:', error.message);
+            this.logger?.warn('获取资源列表失败:', error);
             return [];
         }
     }
@@ -169,7 +168,7 @@ class MCPClient {
             const capabilities = await this.client.getServerCapabilities();
             return capabilities || {};
         } catch (error) {
-            this.logger?.warn('获取服务器能力信息失败:', error.message);
+            this.logger?.warn('获取服务器能力失败:', error);
             return {};
         }
     }
@@ -197,27 +196,23 @@ class MCPClient {
 
             if (tools.status === 'fulfilled') {
                 serverInfo.tools = tools.value;
-                this.logger?.info(`获取到 ${serverInfo.tools.length} 个工具`);
             }
 
             if (prompts.status === 'fulfilled') {
                 serverInfo.prompts = prompts.value;
-                this.logger?.info(`获取到 ${serverInfo.prompts.length} 个提示词`);
             }
 
             if (resources.status === 'fulfilled') {
                 serverInfo.resources = resources.value;
-                this.logger?.info(`获取到 ${serverInfo.resources.length} 个资源`);
             }
 
             if (capabilities.status === 'fulfilled') {
                 serverInfo.capabilities = capabilities.value;
-                this.logger?.info('获取服务器能力信息成功');
             }
 
             return serverInfo;
         } catch (error) {
-            this.logger?.error('获取MCP服务器信息失败:', error);
+            this.logger?.error('获取服务器信息失败:', error);
             throw error;
         }
     }
@@ -285,9 +280,8 @@ class MCPClient {
         if (this.client) {
             try {
                 await this.client.close();
-                this.logger?.info('MCP客户端连接已关闭');
             } catch (error) {
-                this.logger?.warn('关闭MCP客户端连接失败:', error.message);
+                this.logger?.warn('关闭MCP客户端连接失败:', error);
             } finally {
                 this.client = null;
                 this.transport = null;

@@ -5,8 +5,9 @@ const { randomUUID } = require('crypto');
  * 负责管理待处理请求队列和ID映射
  */
 class MCPRequestManager {
-    constructor() {
+    constructor(logger) {
         this.pendingRequests = new Map();
+        this.logger = logger;
     }
 
     /**
@@ -31,11 +32,14 @@ class MCPRequestManager {
     addPendingRequest(serverId, internalId, clientId, resolve, reject, timeoutMs = 30000) {
         const requestMap = this.pendingRequests.get(serverId);
         if (!requestMap) {
-            throw new Error(`服务器 ${serverId} 的请求队列未初始化`);
+            const error = new Error(`服务器 ${serverId} 的请求队列未初始化`);
+            this.logger?.error(`请求队列未初始化 [${serverId}]`);
+            throw error;
         }
 
         // 设置超时
         const timeout = setTimeout(() => {
+            this.logger?.warn(`请求超时 [${serverId}]`);
             this.removePendingRequest(serverId, internalId);
             reject(new Error(`请求超时: 客户端ID=${clientId}, 内部ID=${internalId}`));
         }, timeoutMs);
@@ -47,6 +51,7 @@ class MCPRequestManager {
             resolve,
             reject,
             timeout,
+            createdAt: Date.now(),
         };
 
         // 添加到队列（使用内部ID作为key）
@@ -99,7 +104,6 @@ class MCPRequestManager {
 
         const pendingRequest = requestMap.get(internalId);
         if (!pendingRequest) {
-            console.warn(`未找到待处理请求: ${internalId}`);
             return null;
         }
 
@@ -118,6 +122,10 @@ class MCPRequestManager {
         }
 
         const defaultError = error || new Error('服务器正在停止');
+
+        if (requestMap.size > 0) {
+            this.logger?.warn(`清理待处理请求 [${serverId}]: ${requestMap.size}个`);
+        }
 
         for (const [, pendingRequest] of requestMap.entries()) {
             clearTimeout(pendingRequest.timeout);

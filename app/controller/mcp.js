@@ -1,32 +1,6 @@
 const Controller = require('egg').Controller;
 
-const { MCPProxy } = require('../mcp/mcpProxy');
-
 class MCPController extends Controller {
-    async handleMCPEndpointPost() {
-        const { ctx } = this;
-        const { serverId } = ctx.params;
-        ctx.respond = false;
-        const mcpProxy = MCPProxy.getInstance(ctx.logger);
-        await mcpProxy.forwardRequest(serverId, ctx.request, ctx.response);
-        await ctx.service.mcp.incrementUseCount(serverId);
-    }
-
-    async handleMCPEndpointGet() {
-        const { ctx } = this;
-        const { serverId } = ctx.params;
-        ctx.respond = false;
-        const mcpProxy = MCPProxy.getInstance(ctx.logger);
-        await mcpProxy.forwardRequest(serverId, ctx.request, ctx.response);
-    }
-
-    async handleMCPEndpointDelete() {
-        const { ctx } = this;
-        const { serverId } = ctx.params;
-        const mcpProxy = MCPProxy.getInstance(ctx.logger);
-        await mcpProxy.forwardRequest(serverId, ctx.request, ctx.response);
-    }
-
     async getMCPServerList() {
         const { app, ctx } = this;
         const params = ctx.query;

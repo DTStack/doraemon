@@ -4,6 +4,7 @@ import { CopyOutlined } from '@ant-design/icons';
 import { McpServerDetail } from '../../types';
 import { copyToClipboard } from '@/utils/copyUtils';
 import { generateMCPClientConfig } from '@/utils/common';
+import env from '@env';
 
 interface ConfigTabProps {
     serverDetail: McpServerDetail;
@@ -14,8 +15,8 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ serverDetail }) => {
     const config = generateMCPClientConfig({
         name: serverDetail.server_id,
         transport: serverDetail.transport === 'sse' ? 'sse' : 'streamable-http',
-        httpUrl: `${location.origin}/mcp-endpoint/${serverDetail.server_id}/mcp`,
-        sseUrl: `${location.origin}/mcp-endpoint/${serverDetail.server_id}/sse`,
+        httpUrl: `${location.protocol}//${location.hostname}:${env.mcpEndpointPort}/mcp-endpoint/${serverDetail.server_id}/mcp`,
+        sseUrl: `${location.protocol}//${location.hostname}:${env.mcpEndpointPort}/mcp-endpoint/${serverDetail.server_id}/sse`,
     });
 
     const handleCopyConfig = () => {

@@ -64,8 +64,10 @@ const McpServerManagement: React.FC<RouteComponentProps> = (props) => {
         try {
             const response = await API.startMCPServer({ serverId });
             if (response.success) {
-                message.success('MCP服务器启动成功');
-                fetchServerList();
+                message.success('MCP服务器启动请求已发送');
+                setTimeout(() => {
+                    fetchServerList();
+                }, 2000);
             } else {
                 message.error(response.msg || 'MCP服务器启动失败');
             }
@@ -79,8 +81,10 @@ const McpServerManagement: React.FC<RouteComponentProps> = (props) => {
         try {
             const response = await API.stopMCPServer({ serverId });
             if (response.success) {
-                message.success('MCP服务器停止成功');
-                fetchServerList();
+                message.success('MCP服务器停止请求已发送');
+                setTimeout(() => {
+                    fetchServerList();
+                }, 2000);
             } else {
                 message.error(response.msg || 'MCP服务器停止失败');
             }
@@ -94,8 +98,10 @@ const McpServerManagement: React.FC<RouteComponentProps> = (props) => {
         try {
             const response = await API.restartMCPServer({ serverId });
             if (response.success) {
-                message.success('MCP服务器重启成功');
-                fetchServerList();
+                message.success('MCP服务器重启请求已发送');
+                setTimeout(() => {
+                    fetchServerList();
+                }, 2000);
             } else {
                 message.error(response.msg || 'MCP服务器重启失败');
             }

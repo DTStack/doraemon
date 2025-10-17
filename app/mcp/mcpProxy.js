@@ -13,15 +13,14 @@ class MCPProxy {
         }
 
         this.logger = logger;
-        this.requestManager = new MCPRequestManager();
+        this.requestManager = new MCPRequestManager(logger);
         this.processManager = new MCPProcessManager(logger);
         this.transportHandlers = new Map();
-        this.connections = new Map();
 
         // 传输处理器实例
-        this.stdioHandler = new StdioTransportHandler(this.processManager, this.requestManager);
-        this.sseHandler = new SSETransportHandler();
-        this.httpHandler = new StreamableHttpTransportHandler();
+        this.stdioHandler = new StdioTransportHandler(this.processManager, this.requestManager, logger);
+        this.sseHandler = new SSETransportHandler(logger);
+        this.httpHandler = new StreamableHttpTransportHandler(logger);
 
         // 保存实例
         MCPProxy.instance = this;
@@ -77,10 +76,8 @@ class MCPProxy {
 
             // 记录使用的处理器
             this.transportHandlers.set(serverId, handler);
-
-            console.log(`MCP代理已启动: ${serverId} (${transport.type})`);
         } catch (error) {
-            console.error(`启动MCP代理失败 [${serverId}]:`, error);
+            this.logger?.error(`启动代理失败 [${serverId}]:`, error);
             throw error;
         }
     }
@@ -98,12 +95,8 @@ class MCPProxy {
                 await handler.stop(serverId);
                 this.transportHandlers.delete(serverId);
             }
-
-            // 清理连接
-            this.connections.delete(serverId);
-
         } catch (error) {
-            console.error(`停止MCP代理失败 [${serverId}]:`, error);
+            this.logger?.error(`停止代理失败 [${serverId}]:`, error);
             throw error;
         }
     }
@@ -117,53 +110,22 @@ class MCPProxy {
     async forwardRequest(serverId, request, response) {
         const handler = this.transportHandlers.get(serverId);
         if (!handler) {
+            this.logger?.error(`服务器未运行 [${serverId}]`);
             throw new Error(`服务器 ${serverId} 未运行`);
         }
 
         try {
-            console.log(`转发请求到服务器 [${serverId}]:`, JSON.stringify(request.body));
             await handler.forward(serverId, request, response);
         } catch (error) {
-            console.error(`请求转发失败 [${serverId}]:`, error);
+            this.logger?.error(`转发请求失败 [${serverId}]:`, error);
             throw error;
-        }
-    }
-
-    /**
-     * 添加客户端连接
-     * @param {string} serverId - 服务器ID
-     * @param {any} connection - 连接对象
-     */
-    addConnection(serverId, connection) {
-        if (!this.connections.has(serverId)) {
-            this.connections.set(serverId, new Set());
-        }
-        this.connections.get(serverId).add(connection);
-        console.log(
-            `添加客户端连接 [${serverId}], 当前连接数: ${this.connections.get(serverId).size}`
-        );
-    }
-
-    /**
-     * 移除客户端连接
-     * @param {string} serverId - 服务器ID
-     * @param {any} connection - 连接对象
-     */
-    removeConnection(serverId, connection) {
-        const connections = this.connections.get(serverId);
-        if (connections) {
-            connections.delete(connection);
-            console.log(`移除客户端连接 [${serverId}], 当前连接数: ${connections.size}`);
-
-            if (connections.size === 0) {
-                this.connections.delete(serverId);
-            }
         }
     }
 
     async restartProxy(serverId) {
         const handler = this.transportHandlers.get(serverId);
         if (!handler) {
+            this.logger?.error(`重启失败 [${serverId}]: 服务器不存在`);
             throw new Error(`服务器 ${serverId} 不存在`);
         }
 
@@ -176,25 +138,31 @@ class MCPProxy {
                     (error) => this.stdioHandler.handleProcessError(serverId, error),
                     (code, signal) => this.stdioHandler.handleProcessExit(serverId, code, signal)
                 );
-                console.log(`STDIO服务器重启成功: ${serverId}`);
             } catch (error) {
-                console.error(`STDIO服务器重启失败 [${serverId}]:`, error);
+                this.logger?.error(`重启失败 [${serverId}]:`, error);
                 throw error;
             }
         } else {
-            throw new Error(`服务器类型不支持重启: ${serverId}`);
+            const error = new Error(`服务器类型不支持重启: ${serverId}`);
+            this.logger?.error(`重启失败 [${serverId}]:`, error);
+            throw error;
         }
     }
 
     async cleanup() {
-        console.log('开始清理所有MCP代理...');
-
         const serverIds = Array.from(this.transportHandlers.keys());
-        await Promise.all(serverIds.map((serverId) => this.stopProxy(serverId)));
+        
+        if (serverIds.length === 0) {
+            return;
+        }
 
-        await this.processManager.cleanup();
-
-        console.log('MCP代理清理完成');
+        try {
+            await Promise.all(serverIds.map((serverId) => this.stopProxy(serverId)));
+            await this.processManager.cleanup();
+        } catch (error) {
+            this.logger?.error('清理失败:', error);
+            throw error;
+        }
     }
 }
 

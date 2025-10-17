@@ -19,7 +19,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, errorMsg }) => {
             case 'error':
                 return <span style={{display: 'inline-flex', alignItems: 'center', gap: 4}}>
                     <Badge status="error" text="运行错误" />
-                    <Tooltip title={errorMsg}><InfoCircleOutlined style={{color: '#999'}}/></Tooltip>
+                   {!!errorMsg && <Tooltip title={errorMsg}><InfoCircleOutlined style={{color: '#999'}}/></Tooltip>}
                 </span>;
             default:
                 return <Badge status="warning" text="未知" />;

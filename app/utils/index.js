@@ -116,6 +116,33 @@ const convertKeysToSnakeCase = (obj, excludeKeys = []) => {
     return result;
 };
 
+
+/**
+ * 构建MCP配置对象
+ * @param {Object} server - 数据库中的MCP配置记录
+ * @returns {Object} MCP服务配置对象
+ */
+const buildMCPConfig = (server) => {
+    const config = {
+        transport: {
+            type: server.transport,
+        },
+    };
+
+    if (server.transport === 'stdio') {
+        config.command = server.command;
+        config.args = server.args || [];
+        config.env = server.env || {};
+        config.cwd = server.deploy_path; // 设置工作目录为部署路径
+    } else if (server.transport === 'streamable-http') {
+        config.httpUrl = server.http_url;
+    } else if (server.transport === 'sse') {
+        config.sseUrl = server.sse_url;
+    }
+
+    return config;
+}
+
 module.exports = {
     createFolder,
     createFileSync,
@@ -125,6 +152,7 @@ module.exports = {
     sendMsgAfterSendArticle,
     camelToSnake,
     convertKeysToSnakeCase,
+    buildMCPConfig,
     response: (success, data = null, message) => {
         if (success) {
             message = '执行成功';

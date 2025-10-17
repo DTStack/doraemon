@@ -20,7 +20,7 @@ const createQueryString = (config?: InspectorConfig) => {
         transport: config?.transport || 'streamable-http',
         serverCommand: config?.serverCommand || 'npx',
         serverArgs: config?.serverArgs?.join(',') || '',
-        serverUrl: config?.serverUrl || `${location.origin}/mcp-endpoint/your-server-id/mcp`,
+        serverUrl: config?.serverUrl || `${location.protocol}//${location.hostname}:${env.mcpEndpointPort}/mcp-endpoint/your-server-id/mcp`,
     };
     const searchParams = new URLSearchParams(queryParams);
     return searchParams.toString();
