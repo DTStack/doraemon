@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import SyntaxHighlighter from 'react-syntax-highlighter'
+import { atomOneLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs'
 import './style.scss';
 
 interface MarkdownRendererProps {
@@ -34,7 +34,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                                 PreTag="div"
                                 children={String(children).replace(/\n$/, '')}
                                 language={match[1]}
-                                style={oneLight}
+                                style={atomOneLight}
                             />
                         ) : (
                             <code {...rest} className={className}>
