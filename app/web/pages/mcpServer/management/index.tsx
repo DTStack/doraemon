@@ -241,7 +241,7 @@ const McpServerManagement: React.FC<RouteComponentProps> = (props) => {
                                 onClick={() => handleViewDetail(record.server_id)}
                             />
                         </Tooltip>
-                        <Tooltip title="同步信息">
+                        <Tooltip title="工具同步">
                             <Button
                                 size="small"
                                 icon={<SyncOutlined />}

@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import './style.scss';
 
 interface MarkdownRendererProps {
@@ -17,50 +19,29 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     return (
         <div className={`markdown-renderer ${className}`} style={style}>
             <ReactMarkdown
+                className='md-theme-juejin-light'
                 remarkPlugins={[remarkGfm]}
                 components={{
                     a: ({ node, ...props }) => (
                         <a {...props} target="_blank" rel="noopener noreferrer" />
                     ),
-                    code: ({ node, inline, className, children, ...props }) => {
+                    code(props) {
+                        const { children, className, node, ...rest } = props;
                         const match = /language-(\w+)/.exec(className || '');
-                        const language = match ? match[1] : '';
-                        
-                        if (inline) {
-                            return (
-                                <code className="inline-code" {...props}>
-                                    {children}
-                                </code>
-                            );
-                        }
-                        
-                        return (
-                            <div className="code-block-wrapper">
-                                {language && (
-                                    <div className="code-block-header">
-                                        <span className="language-tag">{language}</span>
-                                    </div>
-                                )}
-                                <pre className={`code-block ${className || ''}`}>
-                                    <code {...props}>
-                                        {children}
-                                    </code>
-                                </pre>
-                            </div>
+                        return match ? (
+                            <SyntaxHighlighter
+                                {...rest}
+                                PreTag="div"
+                                children={String(children).replace(/\n$/, '')}
+                                language={match[1]}
+                                style={oneLight}
+                            />
+                        ) : (
+                            <code {...rest} className={className}>
+                                {children}
+                            </code>
                         );
-                    },
-                    // 自定义表格样式
-                    table: ({ children }) => (
-                        <div className="table-wrapper">
-                            <table className="markdown-table">{children}</table>
-                        </div>
-                    ),
-                    // 自定义引用块样式
-                    blockquote: ({ children }) => (
-                        <blockquote className="markdown-blockquote">
-                            {children}
-                        </blockquote>
-                    ),
+                    }
                 }}
             >
                 {content || ''}

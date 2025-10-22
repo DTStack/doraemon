@@ -1,211 +1,169 @@
 .markdown-renderer {
-    line-height: 1.6;
-    color: #333;
-    
-    // 标题样式
-    h1, h2, h3, h4, h5, h6 {
-        margin: 1.5em 0 0.5em 0;
-        font-weight: 600;
-        line-height: 1.3;
-        
-        &:first-child {
-            margin-top: 0;
+    $monospace-font: Menlo, Monaco, Consolas, "Courier New", monospace;
+    $line-space: 22px;
+
+    .md-theme-juejin-light {
+        word-break: break-word;
+        line-height: 1.75;
+        font-size: 16px;
+        overflow-x: hidden;
+        color: #333;
+
+        ol,
+        ul {
+            list-style: unset;
         }
-    }
-    
-    h1 {
-        font-size: 2em;
-        border-bottom: 2px solid #eaecef;
-        padding-bottom: 0.3em;
-    }
-    
-    h2 {
-        font-size: 1.5em;
-        border-bottom: 1px solid #eaecef;
-        padding-bottom: 0.3em;
-    }
-    
-    h3 {
-        font-size: 1.25em;
-    }
-    
-    h4 {
-        font-size: 1em;
-    }
-    
-    h5 {
-        font-size: 0.875em;
-    }
-    
-    h6 {
-        font-size: 0.85em;
-        color: #6a737d;
-    }
-    
-    // 段落样式
-    p {
-        margin: 0 0 1em 0;
-        
-        &:last-child {
-            margin-bottom: 0;
-        }
-    }
-    
-    // 链接样式
-    a {
-        color: #0366d6;
-        text-decoration: none;
-        
-        &:hover {
-            text-decoration: underline;
-        }
-    }
-    
-    // 列表样式
-    ul, ol {
-        margin: 0 0 1em 0;
-        padding-left: 2em;
-        
-        li {
-            margin: 0.25em 0;
-        }
-        
-        ul, ol {
-            margin: 0.25em 0;
-        }
-    }
-    
-    // 行内代码样式
-    .inline-code {
-        background-color: #f6f8fa;
-        border-radius: 3px;
-        font-size: 85%;
-        margin: 0;
-        padding: 0.2em 0.4em;
-        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-        color: #e36209;
-    }
-    
-    // 代码块样式
-    .code-block-wrapper {
-        margin: 1em 0;
-        border-radius: 6px;
-        overflow: hidden;
-        background-color: #f6f8fa;
-        border: 1px solid #e1e4e8;
-        
-        .code-block-header {
-            background-color: #f1f3f4;
-            padding: 0.5em 1em;
-            border-bottom: 1px solid #e1e4e8;
-            font-size: 12px;
-            
-            .language-tag {
-                color: #586069;
-                font-weight: 600;
-                text-transform: uppercase;
-            }
-        }
-        
-        .code-block {
-            margin: 0;
-            padding: 1em;
-            background-color: #f6f8fa;
+
+        code:not(pre code) {
+            font-family: $monospace-font;
+            word-break: break-word;
+            border-radius: 2px;
             overflow-x: auto;
-            font-size: 14px;
-            line-height: 1.45;
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            
-            code {
-                background: transparent;
-                border: 0;
-                display: inline;
-                max-width: auto;
-                padding: 0;
-                margin: 0;
-                overflow: visible;
-                line-height: inherit;
-                word-wrap: normal;
-                white-space: pre;
-                color: #24292e;
-            }
+            background-color: #fff5f5;
+            color: #ff502c;
+            font-size: 0.87em;
+            padding: 0.065em 0.4em;
         }
-    }
-    
-    // 表格样式
-    .table-wrapper {
-        margin: 1em 0;
-        overflow-x: auto;
-        
-        .markdown-table {
-            width: 100%;
-            border-collapse: collapse;
-            border-spacing: 0;
-            
-            th, td {
-                padding: 6px 13px;
-                border: 1px solid #dfe2e5;
-                text-align: left;
-            }
-            
-            th {
-                background-color: #f6f8fa;
-                font-weight: 600;
-            }
-            
-            tr:nth-child(even) {
-                background-color: #f6f8fa;
-            }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            line-height: 1.5;
+            margin-top: 35px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
         }
-    }
-    
-    // 引用块样式
-    .markdown-blockquote {
-        margin: 1em 0;
-        padding: 0 1em;
-        color: #6a737d;
-        border-left: 4px solid #dfe2e5;
-        background-color: #f6f8fa;
-        
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-size: 20px;
+        }
+
+        h2 {
+            padding-bottom: 12px;
+            border-bottom: 1px solid #ececec;
+        }
+
+        h3 {
+            font-size: 18px;
+            padding-bottom: 0;
+        }
+
+        h6 {
+            margin-top: 5px;
+        }
+
         p {
-            margin: 0.5em 0;
+            line-height: inherit;
+            margin-top: $line-space;
+            margin-bottom: $line-space;
         }
-    }
-    
-    // 分割线样式
-    hr {
-        height: 2px;
-        padding: 0;
-        margin: 1.5em 0;
-        background-color: #e1e4e8;
-        border: 0;
-    }
-    
-    // 图片样式
-    img {
-        max-width: 100%;
-        height: auto;
-        margin: 0.5em 0;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    
-    // 任务列表样式
-    input[type="checkbox"] {
-        margin-right: 0.5em;
-    }
-    
-    // 删除线样式
-    del {
-        color: #6a737d;
-    }
-    
-    // 强调样式
-    strong {
-        font-weight: 600;
-    }
-    
-    em {
-        font-style: italic;
+
+        img {
+            max-width: 100%;
+        }
+
+        hr {
+            border-top: 1px solid #ddd;
+            border-bottom: none;
+            border-left: none;
+            border-right: none;
+            margin-top: 32px;
+            margin-bottom: 32px;
+        }
+
+        pre {
+            font-family: $monospace-font;
+            overflow: auto;
+            position: relative;
+            line-height: 1.75;
+        }
+
+        a {
+            text-decoration: none;
+            color: #0269c8;
+
+            &:hover,
+            &:active {
+                color: #275b8c;
+            }
+        }
+
+        table {
+            display: inline-block !important;
+            font-size: 12px;
+            width: auto;
+            max-width: 100%;
+            overflow: auto;
+            border: solid 1px #f6f6f6;
+        }
+
+        thead {
+            background: #f6f6f6;
+            color: #000;
+            text-align: left;
+        }
+
+        tr:nth-child(2n) {
+            background-color: #fcfcfc;
+        }
+
+        th,
+        td {
+            padding: 12px 7px;
+            line-height: 24px;
+        }
+
+        td {
+            min-width: 120px;
+        }
+
+        blockquote {
+            color: #666;
+            padding: 1px 23px;
+            margin: 22px 0;
+            border-left: 4px solid #cbcbcb;
+            background-color: #f8f8f8;
+
+            &::after {
+                display: block;
+                content: "";
+            }
+
+            &>p {
+                margin: 10px 0;
+            }
+        }
+
+        ol,
+        ul {
+            padding-left: 28px;
+
+            li {
+                margin-bottom: 0;
+                list-style: inherit;
+            }
+
+            ul,
+            ol {
+                margin-top: 3px;
+            }
+        }
+
+        ol li {
+            padding-left: 6px;
+        }
     }
 }
