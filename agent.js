@@ -24,9 +24,9 @@ module.exports = (agent) => {
         try {
             agent.logger.info('Worker进程已就绪，开始启动MCP端点HTTP服务...');
 
-            httpServer = createHttpServer(mcpHttpHandler);
+            httpServer = createHttpServer(agent, mcpHttpHandler);
 
-            // 启动所有已注册的MCP服务器，包括STDIO、SSE、HTTP等
+            // 启动所有已注册的MCP代理服务
             await startMCPServices(agent);
         } catch (error) {
             agent.logger.error('MCP端点HTTP服务启动失败:', error);
@@ -155,7 +155,7 @@ module.exports = (agent) => {
 };
 
 // 创建HTTP服务（用于处理MCP端点请求）
-async function createHttpServer(mcpHttpHandler) {
+async function createHttpServer(agent, mcpHttpHandler) {
     const port = env.mcpEndpointPort || 7005;
 
     httpServer = http.createServer(async (req, res) => {
@@ -173,10 +173,7 @@ async function createHttpServer(mcpHttpHandler) {
     return httpServer;
 }
 
-/**
- * 启动所有MCP服务，缓存配置信息
- * @param {Agent} agent - Agent实例
- */
+// 启动所有MCP服务，缓存配置信息
 async function startMCPServices(agent) {
     agent.logger.info('开始启动MCP服务...');
 
