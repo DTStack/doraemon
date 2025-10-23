@@ -51,7 +51,7 @@ const getOutputTransportType = (originalTransport: TransportType): string => {
 };
 
 const McpServerRegistryCenter: React.FC = (props: any) => {
-    const { history, location, match } = props;
+    const { history, match } = props;
     const serverId = match.params.serverId;
     const isEdit = !!serverId;
 
@@ -127,6 +127,13 @@ const McpServerRegistryCenter: React.FC = (props: any) => {
                             formData.append('files', file.originFileObj || file);
                         });
                     }
+                } else if (key === 'args' && typeof values[key] === 'string') {
+                    // 处理参数：将字符串转换为数组，支持空格和换行符切分
+                    const argsArray = values[key]
+                        .split(/[\s\n]+/)
+                        .map((arg: string) => arg.trim())
+                        .filter((arg: string) => arg.length > 0);
+                    formData.append(key, JSON.stringify(argsArray));
                 } else if (key === 'tags' && Array.isArray(values[key])) {
                     // 处理标签数组
                     formData.append(key, JSON.stringify(values[key]));
@@ -389,11 +396,11 @@ const McpServerRegistryCenter: React.FC = (props: any) => {
                                         <Form.Item
                                             label="命令参数"
                                             name="args"
-                                            tooltip="启动命令的参数列表，每行一个参数"
+                                            tooltip='启动命令的参数列表, 空格或换行分割。一般将托管部署路径作为启动参数'
                                         >
                                             <TextArea
-                                                rows={3}
-                                                placeholder="每行一个参数，例如:&#10;/opt/doraemon/mcp-server/my-awesome-server/dist/index.js&#10;--token&#10;your-token"
+                                                rows={5}
+                                                placeholder="使用空格或换行分割参数&#10;例如node参数：/opt/doraemon/mcp-server/my-awesome-server/dist/index.js &#10;uv参数：--directory /opt/doraemon/mcp-server/my-awesome-server/dist run server.py"
                                             />
                                         </Form.Item>
                                     </Col>
@@ -545,20 +552,9 @@ const McpServerRegistryCenter: React.FC = (props: any) => {
                                     sseUrl: getFieldValue('sseUrl'),
                                 };
 
+                                const origin = typeof window !== 'undefined' ? window.location.origin : '';
                                 const originalConfig = generateMCPClientConfig(currentValues);
-
-                                const urlConfig =
-                                    currentValues.transport === 'sse'
-                                        ? {
-                                              sseUrl: `${window?.location?.origin}/mcp-endpoint/${
-                                                  currentValues.name || 'your-server-name'
-                                              }/sse`,
-                                          }
-                                        : {
-                                              httpUrl: `${window?.location?.origin}/mcp-endpoint/${
-                                                  currentValues.name || 'your-server-name'
-                                              }/mcp`,
-                                          };
+                                const urlConfig = currentValues.transport === 'sse' ? { sseUrl: `${origin}/mcp-endpoint/${currentValues.name || 'your-server-name'}/sse` } : { httpUrl: `${origin}/mcp-endpoint/${currentValues.name || 'your-server-name'}/mcp` };
                                 const hostedConfig = generateMCPClientConfig({
                                     name: currentValues.name,
                                     transport:

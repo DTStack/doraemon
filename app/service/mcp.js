@@ -18,6 +18,7 @@ class MCPService extends Service {
      * @param {String} params.author - 作者
      * @param {Array} params.tags - 标签数组
      * @param {String} params.keyword - 搜索关键词
+     * @param {Boolean} params.showAll - 是否显示所有服务器
      */
     async getMCPServerList(params = {}) {
         const {
@@ -160,14 +161,6 @@ class MCPService extends Service {
             }
         }
 
-        // 处理参数数组
-        let parsedArgs = null;
-        if (args && typeof args === 'string') {
-            parsedArgs = args.split('\n').filter((arg) => arg.trim());
-        } else if (Array.isArray(args)) {
-            parsedArgs = args;
-        }
-
         // 处理环境变量
         let parsedEnv = null;
         if (env && Array.isArray(env)) {
@@ -196,7 +189,7 @@ class MCPService extends Service {
         // 根据传输类型设置特定字段
         if (transport === 'stdio') {
             serverData.command = command;
-            serverData.args = parsedArgs;
+            serverData.args = args;
             serverData.env = parsedEnv;
         } else if (transport === 'streamable-http') {
             serverData.http_url = httpUrl;
@@ -293,11 +286,6 @@ class MCPService extends Service {
             }, 5000); // 5秒后清理临时文件
         }
 
-        // 处理特殊字段
-        if (updateData.args && typeof updateData.args === 'string') {
-            updateData.args = updateData.args.split('\n').filter((arg) => arg.trim());
-        }
-
         if (updateData.env && Array.isArray(updateData.env)) {
             const envObj = {};
             updateData.env.forEach((item) => {
@@ -308,8 +296,8 @@ class MCPService extends Service {
             updateData.env = envObj;
         }
 
-        // 检测关键配置变更，如果有变更且服务器在运行，需要重启
-        if (server.status === 'running' && server.transport === 'stdio' && !needsRestart) {
+        // 检测关键配置变更，需要重启
+        if (server.transport === 'stdio' && !needsRestart) {
             const keyConfigFields = ['command', 'args', 'env'];
             needsRestart = keyConfigFields.some((field) => {
                 if (updateData[field] !== undefined) {

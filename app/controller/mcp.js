@@ -52,6 +52,15 @@ class MCPController extends Controller {
                 }
             }
 
+            if (body.args && typeof body.args === 'string') {
+                try {
+                    body.args = JSON.parse(body.args);
+                } catch (e) {
+                    // 解析失败时保持原值
+                    ctx.logger.warn('参数解析失败:', body.args);
+                }
+            }
+
             if (body.env && typeof body.env === 'string') {
                 try {
                     body.env = JSON.parse(body.env);
@@ -111,6 +120,15 @@ class MCPController extends Controller {
                     if (body.tags.includes(',')) {
                         body.tags = body.tags.split(',').map((item) => item.trim());
                     }
+                }
+            }
+
+            if (body.args && typeof body.args === 'string') {
+                try {
+                    body.args = JSON.parse(body.args);
+                } catch (e) {
+                    // 解析失败时保持原值
+                    ctx.logger.warn('参数解析失败:', body.args);
                 }
             }
 

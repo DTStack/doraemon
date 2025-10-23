@@ -25,11 +25,19 @@ export const generateMCPClientConfig = (config: MCPServerConfig) => {
             });
         }
 
+        // 处理参数：支持空格和换行符切分
+        const parseArgs = (argsStr: string) => {
+            return argsStr
+                .split(/[\s\n]+/) // 使用空格和换行符切分
+                .map((arg: string) => arg.trim())
+                .filter((arg: string) => arg.length > 0);
+        };
+
         const mcpConfig: any = {
             mcpServers: {
                 [name || 'your-server-name']: {
                     command: command || 'node',
-                    args: args ? args.split('\n').filter(Boolean) : ['path/to/your/server.js'],
+                    args: args ? parseArgs(args) : ['path/to/your/server.js'],
                     env: Object.keys(envObj).length > 0 ? envObj : undefined,
                 },
             },
