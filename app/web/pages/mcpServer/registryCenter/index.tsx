@@ -197,6 +197,34 @@ const McpServerRegistryCenter: React.FC = (props: any) => {
         maxCount: 1,
     };
 
+    const handleFillNode = () => {
+        const serverId = form.getFieldValue('serverId');
+        if (!serverId) {
+            message.warning('请先填写名称');
+            return;
+        }
+        const deployPath = `${env.mcpDeployDir}${serverId}/`;
+        form.setFieldsValue({
+            command: 'node',
+            args: `${deployPath}dist/index.js`,
+        });
+        message.success('已填充Node默认配置');
+    };
+
+    const handleFillUv = () => {
+        const serverId = form.getFieldValue('serverId');
+        if (!serverId) {
+            message.warning('请先填写名称');
+            return;
+        }
+        const deployPath = `${env.mcpDeployDir}${serverId}/`;
+        form.setFieldsValue({
+            command: 'uv',
+            args: `--directory\n${deployPath}\nrun\nserver.py`,
+        });
+        message.success('已填充UV默认配置');
+    };
+
     return (
         <Spin spinning={initialLoading}>
             <div className="mcp-server-registry-center">
@@ -383,7 +411,27 @@ const McpServerRegistryCenter: React.FC = (props: any) => {
                                 <Row gutter={24}>
                                     <Col span={24}>
                                         <Form.Item
-                                            label="启动命令"
+                                            label={
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span>启动命令</span>
+                                                    <Button
+                                                        size="small"
+                                                        type="link"
+                                                        onClick={handleFillNode}
+                                                        style={{ padding: '0 8px' }}
+                                                    >
+                                                        一键填写node
+                                                    </Button>
+                                                    <Button
+                                                        size="small"
+                                                        type="link"
+                                                        onClick={handleFillUv}
+                                                        style={{ padding: '0 8px' }}
+                                                    >
+                                                        一键填写uv
+                                                    </Button>
+                                                </div>
+                                            }
                                             name="command"
                                             rules={[{ required: true, message: '请输入启动命令' }]}
                                             tooltip="用于启动MCP服务器的命令"
