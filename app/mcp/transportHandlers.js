@@ -374,7 +374,9 @@ class SSETransportHandler extends BaseTransportHandler {
             accept: 'text/event-stream',
         };
 
-        const requestUrl = new URL(req.url);
+        // 获取原请求的协议和主机名
+        const protocol = req.headers['x-forwarded-proto'] || (req.socket.encrypted ? 'https' : 'http');
+        const hostname = (req.headers.host || 'localhost').split(':')[0];
 
         try {
             const clientTransport = new SSEClientTransport(new URL(sseProxy.url), {
@@ -383,7 +385,7 @@ class SSETransportHandler extends BaseTransportHandler {
 
             await clientTransport.start();
             const mcpEndpointPort = env.mcpEndpointPort || 7005;
-            const messageEndpoint = `${requestUrl.protocol}://${requestUrl.hostname}:${mcpEndpointPort}/mcp-endpoint/${serverId}/messages`;
+            const messageEndpoint = `${protocol}://${hostname}:${mcpEndpointPort}/mcp-endpoint/${serverId}/messages`;
 
             const serverTransport = new SSEServerTransport(messageEndpoint, res, {
                 headers,
