@@ -5,7 +5,7 @@
     "scripts": {
         "helpDoc": "docsify serve ./docs/docsify",
         "clean": "easy clean",
-        "build": "easy build",
+        "build": "NODE_OPTIONS=--openssl-legacy-provider && easy build",
         "debug": "egg-bin debug",
         "dev": "NODE_OPTIONS=--openssl-legacy-provider && egg-bin dev --daemon",
         "start": "bash start.sh",
