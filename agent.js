@@ -15,7 +15,7 @@ const { buildMCPConfig } = require('./app/utils');
 // 接收 app 发送来的消息并作出反应
 module.exports = (agent) => {
     // 初始化MCP端点HTTP处理器
-    const mcpHttpHandler = new MCPHttpHandler(agent.logger);
+    const mcpHttpHandler = new MCPHttpHandler(agent);
     const mcpProxy = new MCPProxy(agent.logger);
     let httpServer = null;
 
@@ -24,7 +24,7 @@ module.exports = (agent) => {
         try {
             agent.logger.info('Worker进程已就绪，开始启动MCP端点HTTP服务...');
 
-            httpServer = createHttpServer(agent, mcpHttpHandler);
+            httpServer = await createHttpServer(agent, mcpHttpHandler);
 
             // 启动所有已注册的MCP代理服务
             await startMCPServices(agent);
@@ -145,8 +145,7 @@ module.exports = (agent) => {
             }
 
             // 清理MCP代理
-            await mcpHttpHandler.cleanup();
-
+            await mcpProxy.cleanup();
             agent.logger.info('MCP服务清理完成');
         } catch (error) {
             agent.logger.error('MCP服务清理失败:', error);
@@ -158,19 +157,19 @@ module.exports = (agent) => {
 async function createHttpServer(agent, mcpHttpHandler) {
     const port = env.mcpEndpointPort || 7005;
 
-    httpServer = http.createServer(async (req, res) => {
+    const server = http.createServer(async (req, res) => {
         await mcpHttpHandler.handleRequest(req, res);
     });
 
-    httpServer.listen(port, () => {
+    server.listen(port, () => {
         agent.logger.info(`MCP端点HTTP服务已启动，监听端口: ${port}`);
     });
 
-    httpServer.on('error', (error) => {
+    server.on('error', (error) => {
         agent.logger.error('MCP端点HTTP服务错误:', error);
     });
 
-    return httpServer;
+    return server;
 }
 
 // 启动所有MCP服务，缓存配置信息

@@ -7,8 +7,9 @@ const contentType = require('content-type');
  * Agent进程的MCP HTTP请求处理器
  */
 class MCPHttpHandler {
-    constructor(logger = null) {
-        this.logger = logger;
+    constructor(agent) {
+        this.agent = agent;
+        this.logger = agent.logger;
     }
 
     /**
@@ -60,11 +61,18 @@ class MCPHttpHandler {
             if (req.method === 'POST') {
                 const body = await getRawBody(req, {
                     length: req.headers['content-length'],
-                    limit: '1mb',
+                    // 也许存在blob资源，需要设置较大的值
+                    limit: '100mb',
                     encoding:
                         req.method === 'POST' ? contentType.parse(req).parameters.charset : 'utf-8',
                 });
                 req.body = JSON.parse(body);
+
+                // 调用埋点
+                this.agent.messenger.sendRandom('mcpTraceRequest', {
+                    serverId,
+                    data: req.body,
+                });
             }
 
             const mcpProxy = MCPProxy.getInstance();
@@ -110,18 +118,6 @@ class MCPHttpHandler {
             this.logger.error(...args);
         } else {
             console.error('[MCPHttpHandler Error]', ...args);
-        }
-    }
-
-    /**
-     * 清理资源
-     */
-    async cleanup() {
-        const mcpProxy = MCPProxy.getInstance();
-        if (mcpProxy) {
-            await mcpProxy.cleanup();
-            MCPProxy.destroyInstance();
-            this.log('MCPProxy已清理');
         }
     }
 }

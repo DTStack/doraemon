@@ -376,6 +376,16 @@ class MCPService extends Service {
         }
 
         await server.update({ is_delete: 1 });
+
+        if (server.deploy_path && fs.existsSync(server.deploy_path)) {
+            try {
+                fs.rmSync(server.deploy_path, { recursive: true, force: true });
+                this.ctx.logger.info(`部署目录已清理: ${server.deploy_path}`);
+            } catch (error) {
+                this.ctx.logger.error(`清理部署目录失败: ${server.deploy_path}`, error);
+            }
+        }
+
         return true;
     }
 

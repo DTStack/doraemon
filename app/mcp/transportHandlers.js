@@ -8,7 +8,8 @@ const {
 } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const env = require('../../env.json');
 
-const MESSAGE_RESPONSE_TIMEOUT = 30000;
+/** STDIO 消息响应超时时间 */
+const STDIO_MESSAGE_RESPONSE_TIMEOUT = 60000;
 
 class BaseTransportHandler {
     constructor(logger) {
@@ -79,9 +80,11 @@ class StdioTransportHandler extends BaseTransportHandler {
         // 初始化请求队列
         this.requestManager.initializeServerQueue(serverId);
 
+        if (this.processManager.isProcessRunning(serverId)) {
+            await this.processManager.stopStdioProcess(serverId);
+        }
         // 创建进程
         const transport = await this.processManager.createStdioProcess(serverId, config);
-
         transport.onmessage = (message) => {
             this.handleProcessData(serverId, message);
         };
@@ -122,7 +125,7 @@ class StdioTransportHandler extends BaseTransportHandler {
 
     async handlePost(serverId, req, res) {
         const isRunning = this.processManager.isProcessRunning(serverId);
-        
+
         if (!isRunning) {
             const error = new Error(`服务器 ${serverId} 的进程未运行`);
             this.logger?.error(`[STDIO] 进程未运行 [${serverId}]`);
@@ -149,13 +152,17 @@ class StdioTransportHandler extends BaseTransportHandler {
                         // 结束请求
                         res.writeHead(200, { 'content-type': 'application/json' });
                         res.end(JSON.stringify(response));
-                        resolve({ response, headers: { 'content-type': 'application/json' }, status: 200 });
+                        resolve({
+                            response,
+                            headers: { 'content-type': 'application/json' },
+                            status: 200,
+                        });
                     },
                     (error) => {
                         this.logger?.error(`[STDIO] 请求失败 [${serverId}]:`, error);
                         reject(error);
                     },
-                    MESSAGE_RESPONSE_TIMEOUT
+                    STDIO_MESSAGE_RESPONSE_TIMEOUT
                 );
 
                 // 发送请求到MCP服务器
@@ -167,21 +174,20 @@ class StdioTransportHandler extends BaseTransportHandler {
         });
     }
 
+    /**
+     * 创建长连接，暂不支持
+     */
     async handleGet(serverId, req, res) {
         const isRunning = this.processManager.isProcessRunning(serverId);
         if (!isRunning) {
             throw new Error(`服务器 ${serverId} 的进程未运行`);
         }
 
-        return this.endWithMethodNotAllowed(res);
+        this.endWithMethodNotAllowed(res);
     }
 
     /**
-     * 处理DELETE请求
-     * @param {string} serverId - 服务器ID
-     * @param {any} req - 请求数据
-     * @param {object} res - 响应数据
-     * @returns {Promise<{response: any, headers?: Record<string, string>, status: number}>} 响应数据
+     * 删除请求，暂不支持
      */
     async handleDelete(serverId, req, res) {
         const isRunning = this.processManager.isProcessRunning(serverId);
@@ -189,7 +195,7 @@ class StdioTransportHandler extends BaseTransportHandler {
             throw new Error(`服务器 ${serverId} 的进程未运行`);
         }
 
-        return this.endWithMethodNotAllowed(res);
+        this.endWithMethodNotAllowed(res);
     }
 
     /**
@@ -300,21 +306,15 @@ class SSETransportHandler extends BaseTransportHandler {
             throw error;
         }
 
-        // 暂时创建一个简单的占位符对象
-        const mockEventSource = {
+        this.sseProxies.set(serverId, {
             url: config.sseUrl,
-            headers: config.headers || {},
-            close: () => {},
-        };
-
-        this.sseProxies.set(serverId, mockEventSource);
+        });
     }
 
     async stop(serverId) {
         const sseProxy = this.sseProxies.get(serverId);
         if (sseProxy) {
             try {
-                sseProxy.close();
                 this.sseProxies.delete(serverId);
             } catch (error) {
                 this.logger?.error(`[SSE] 停止失败 [${serverId}]:`, error);
@@ -338,7 +338,7 @@ class SSETransportHandler extends BaseTransportHandler {
 
     async handlePost(serverId, req, res) {
         const sseProxy = this.sseProxies.get(serverId);
-        
+
         if (!sseProxy) {
             this.logger?.error(`[SSE] 连接未找到 [${serverId}]`);
             throw new Error(`服务器 ${serverId} 的SSE连接未找到`);
@@ -371,9 +371,10 @@ class SSETransportHandler extends BaseTransportHandler {
 
         const headers = {
             ...req.headers,
-            ...sseProxy.headers,
             accept: 'text/event-stream',
         };
+
+        const requestUrl = new URL(req.url);
 
         try {
             const clientTransport = new SSEClientTransport(new URL(sseProxy.url), {
@@ -382,7 +383,7 @@ class SSETransportHandler extends BaseTransportHandler {
 
             await clientTransport.start();
             const mcpEndpointPort = env.mcpEndpointPort || 7005;
-            const messageEndpoint = `http://localhost:${mcpEndpointPort}/mcp-endpoint/${serverId}/messages`;
+            const messageEndpoint = `${requestUrl.protocol}://${requestUrl.hostname}:${mcpEndpointPort}/mcp-endpoint/${serverId}/messages`;
 
             const serverTransport = new SSEServerTransport(messageEndpoint, res, {
                 headers,
@@ -440,21 +441,15 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
             throw new Error(`无效的URL格式: ${config.httpUrl}`);
         }
 
-        // 暂时创建一个简单的占位符对象
-        const mockProxy = {
+        this.httpProxies.set(serverId, {
             url: config.httpUrl,
-            headers: config.headers || {},
-            close: () => {},
-        };
-
-        this.httpProxies.set(serverId, mockProxy);
+        });
     }
 
     async stop(serverId) {
         const httpProxy = this.httpProxies.get(serverId);
         if (httpProxy) {
             try {
-                httpProxy.close();
                 this.httpProxies.delete(serverId);
             } catch (error) {
                 this.logger?.error(`[HTTP] 停止失败 [${serverId}]:`, error);
@@ -479,7 +474,7 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
 
     async handlePost(serverId, req, res) {
         const httpProxy = this.httpProxies.get(serverId);
-        
+
         if (!httpProxy) {
             this.logger?.error(`[HTTP] 代理未找到 [${serverId}]`);
             throw new Error(`服务器 ${serverId} 的HTTP代理未找到`);
@@ -489,7 +484,7 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
 
         let clientTransport = null;
         let serverTransport = null;
-        
+
         if (sessionId) {
             clientTransport = this.clientTransports.get(sessionId);
             serverTransport = this.serverTransports.get(sessionId);
@@ -500,7 +495,6 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
         } else {
             const headers = {
                 ...req.headers,
-                ...httpProxy.headers,
                 accept: 'text/event-stream, application/json',
             };
             delete headers['content-length'];
@@ -562,7 +556,7 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
 
     async handleDelete(serverId, req, res) {
         const httpProxy = this.httpProxies.get(serverId);
-        
+
         if (!httpProxy) {
             this.logger?.error(`[HTTP] 代理未找到 [${serverId}]`);
             throw new Error(`服务器 ${serverId} 的HTTP代理未找到`);
@@ -581,6 +575,7 @@ class StreamableHttpTransportHandler extends BaseTransportHandler {
 
             const clientTransport = this.clientTransports.get(sessionId);
             if (clientTransport) {
+                // 向真实MCP服务器发送DELETE请求
                 await clientTransport.terminateSession();
                 await clientTransport.close();
                 this.clientTransports.delete(sessionId);

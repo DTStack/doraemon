@@ -56,5 +56,14 @@ module.exports = class AppBootHook {
                 await ctx.service.mcp.checkAllServersHealth();
             });
         });
+
+        // 监听 MCP 请求埋点
+        app.messenger.on('mcpTraceRequest', (data) => {
+            const ctx = app.createAnonymousContext();
+            ctx.runInBackground(async () => {
+                const { serverId } = data;
+                await ctx.service.mcp.incrementUseCount(serverId);
+            });
+        });
     }
 };

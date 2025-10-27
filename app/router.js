@@ -135,7 +135,6 @@ module.exports = (app) => {
     app.post('/api/mcp-servers/use', app.controller.mcp.incrementUseCount);
     app.get('/api/mcp-servers/tags/popular', app.controller.mcp.getPopularTags);
     app.get('/api/mcp-servers/health', app.controller.mcp.checkMCPServerHealth);
-    app.post('/api/mcp-servers/cleanup-file', app.controller.mcp.cleanupFile);
     
     // MCP服务器生命周期管理
     app.post('/api/mcp-servers/start', app.controller.mcp.startMCPServer);

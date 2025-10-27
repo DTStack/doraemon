@@ -312,11 +312,6 @@ export default {
         method: 'get',
         url: '/api/mcp-servers/health',
     },
-    // 清理文件
-    cleanupFile: {
-        method: 'post',
-        url: '/api/mcp-servers/cleanup-file',
-    },
     // 启动MCP服务器
     startMCPServer: {
         method: 'post',

@@ -188,19 +188,6 @@ class MCPController extends Controller {
         }
     }
 
-    async cleanupFile() {
-        const { app, ctx } = this;
-        const { filePath } = ctx.request.body;
-
-        try {
-            ctx.service.mcp.cleanupFile(filePath);
-            ctx.body = app.utils.response(true, null, '文件清理成功');
-        } catch (error) {
-            ctx.logger.error('文件清理失败:', error);
-            ctx.body = app.utils.response(false, null, error.message);
-        }
-    }
-
     async startMCPServer() {
         const { app, ctx } = this;
         const { serverId } = ctx.request.body;
