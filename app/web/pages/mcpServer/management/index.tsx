@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Tag, message, Popconfirm, Tooltip, Typography } from 'antd';
+import React, { useEffect, useState } from 'react';
+import type { RouteComponentProps } from 'react-router';
 import {
-    PlusOutlined,
-    EditOutlined,
     DeleteOutlined,
-    PlayCircleOutlined,
-    PauseCircleOutlined,
-    ReloadOutlined,
+    EditOutlined,
     EyeOutlined,
+    PauseCircleOutlined,
+    PlayCircleOutlined,
+    PlusOutlined,
+    ReloadOutlined,
     SyncOutlined,
 } from '@ant-design/icons';
+import { Button, message, Popconfirm, Space, Table, Tag, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+
 import { API } from '@/api';
-import { McpServerItem } from '../types';
 import StatusBadge from '../components/statusBadge';
 import TransportTag from '../components/transportTag';
-import type { RouteComponentProps } from 'react-router';
+import { McpServerItem } from '../types';
 import './style.scss';
 
 const { Title } = Typography;
@@ -107,7 +108,7 @@ const McpServerManagement: React.FC<RouteComponentProps> = (props) => {
             }
         } catch (error) {
             message.error('MCP服务器重启失败');
-            console.log(error)
+            console.log(error);
         }
     };
 
@@ -122,7 +123,7 @@ const McpServerManagement: React.FC<RouteComponentProps> = (props) => {
             }
         } catch (error) {
             message.error('MCP删除失败');
-            console.log(error)
+            console.log(error);
         }
     };
 
@@ -177,9 +178,7 @@ const McpServerManagement: React.FC<RouteComponentProps> = (props) => {
             dataIndex: 'transport',
             key: 'transport',
             width: 160,
-            render: (transport) => (
-                <TransportTag transport={transport} />
-            ),
+            render: (transport) => <TransportTag transport={transport} />,
         },
         {
             title: '运行状态',

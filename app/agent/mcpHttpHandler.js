@@ -1,4 +1,3 @@
-const url = require('url');
 const { MCPProxy } = require('../mcp/mcpProxy');
 const getRawBody = require('raw-body');
 const contentType = require('content-type');
@@ -19,8 +18,14 @@ class MCPHttpHandler {
      */
     async handleRequest(req, res) {
         try {
-            const parsedUrl = url.parse(req.url, true);
-            const { pathname, query } = parsedUrl;
+            const parsedUrl = new URL(req.url, 'http://localhost');
+            const pathname = parsedUrl.pathname;
+
+            // 将查询参数转换为对象
+            const query = {};
+            parsedUrl.searchParams.forEach((value, key) => {
+                query[key] = value;
+            });
             req.query = query;
 
             // 处理/mcp-endpoint/:serverId/*路径 - MCP代理端点

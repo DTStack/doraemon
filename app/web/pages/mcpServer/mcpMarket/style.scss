@@ -1,28 +1,26 @@
 .mcp-server-market {
     padding: 32px 90px;
     background-color: #F2F7FA;
-
     .header {
         margin-bottom: 40px;
         display: flex;
         width: 100%;
         justify-content: space-between;
-
         h1 {
             font-size: 48px;
         }
-
         .gradient-title {
-            background: linear-gradient(
-                90deg,
-                #2c3e50,
-                #34495e,
-                #5a6c7d,
-                #6c7a89,
-                #5a6c7d,
-                #34495e,
-                #2c3e50
-            );
+            background:
+                linear-gradient(
+                    90deg,
+                    #2C3E50,
+                    #34495E,
+                    #5A6C7D,
+                    #6C7A89,
+                    #5A6C7D,
+                    #34495E,
+                    #2C3E50
+                );
             background-size: 200% auto;
             background-clip: text;
             -webkit-background-clip: text;
@@ -30,39 +28,32 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-
             &:hover {
                 animation: gradient-flow 3s linear infinite;
             }
         }
-
         p {
             font-size: 20px;
-            color: #6d6e70;
+            color: #6D6E70;
         }
     }
-
-
     .search-section {
         .ant-input {
             height: 38px;
             padding-left: 12px;
         }
     }
-
     .empty-state-enhanced {
         padding: 80px 0;
         animation: fadeInUp 0.6s ease-out;
-
         .ant-empty-description {
             color: #718096;
             font-size: 16px;
             font-weight: 500;
             margin-bottom: 24px;
         }
-
         .empty-action-button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
             border: none;
             border-radius: 12px;
             height: 48px;
@@ -71,13 +62,11 @@
             font-size: 15px;
             box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
             &:hover {
-                background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+                background: linear-gradient(135deg, #5A67D8 0%, #6B46C1 100%);
                 transform: translateY(-2px);
                 box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
             }
-
             &:active {
                 transform: translateY(0);
             }

@@ -4,7 +4,7 @@ export const copyToClipboard = async (text: string, successMsg: string) => {
     try {
         if (navigator.clipboard && window.isSecureContext) {
             await navigator.clipboard.writeText(text);
-            message.success(successMsg ?? "已复制到剪贴板");
+            message.success(successMsg ?? '已复制到剪贴板');
             return;
         }
 
@@ -21,7 +21,7 @@ export const copyToClipboard = async (text: string, successMsg: string) => {
         document.body.removeChild(textArea);
 
         if (successful) {
-            message.success(successMsg ?? "已复制到剪贴板");
+            message.success(successMsg ?? '已复制到剪贴板');
         } else {
             throw new Error('execCommand failed');
         }

@@ -175,19 +175,6 @@ class MCPController extends Controller {
         ctx.body = app.utils.response(true, data);
     }
 
-    async checkMCPServerHealth() {
-        const { app, ctx } = this;
-        const { serverId } = ctx.query;
-
-        try {
-            const isHealthy = await ctx.service.mcp.checkMCPServerHealth(serverId);
-            ctx.body = app.utils.response(true, { serverId, healthy: isHealthy });
-        } catch (error) {
-            ctx.logger.error('MCP服务器健康检查失败:', error);
-            ctx.body = app.utils.response(false, null, error.message);
-        }
-    }
-
     async startMCPServer() {
         const { app, ctx } = this;
         const { serverId } = ctx.request.body;

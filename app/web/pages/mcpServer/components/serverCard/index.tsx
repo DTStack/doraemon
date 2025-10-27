@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, Col, Tag } from 'antd';
+
 import { McpServerItem } from '../../types';
 import StatusBadge from '../statusBadge';
 import TransportTag from '../transportTag';
@@ -56,7 +57,10 @@ const ServerCard: React.FC<ServerCardProps> = ({
                     </div>
 
                     <div className="description-section">
-                        <p className="description" title={server.short_description || server.description}>
+                        <p
+                            className="description"
+                            title={server.short_description || server.description}
+                        >
                             {server.short_description || server.description || '暂无描述'}
                         </p>
                     </div>

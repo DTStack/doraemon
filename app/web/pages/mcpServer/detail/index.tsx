@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Tabs, Tag, Button, Typography, Space, message, Spin, Badge } from 'antd';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeftOutlined, GithubOutlined, SettingOutlined } from '@ant-design/icons';
+import { Button, message, Space, Spin, Tabs, Tag, Typography } from 'antd';
+
 import { API } from '@/api';
-import OverviewTab from '../components/overviewTab';
 import ConfigTab from '../components/configTab';
-import ToolsResourcesTab from '../components/toolsResourcesTab';
 import InspectorTab from '../components/inspectorTab';
-import { McpServerDetail } from '../types';
+import OverviewTab from '../components/overviewTab';
 import StatusBadge from '../components/statusBadge';
+import ToolsResourcesTab from '../components/toolsResourcesTab';
 import TransportTag from '../components/transportTag';
+import { McpServerDetail } from '../types';
 import './style.scss';
 
 const { TabPane } = Tabs;
@@ -108,7 +109,7 @@ const McpServerDetailPage: React.FC = (props: any) => {
                         </div>
                     </div>
 
-                    <div className='server-name-section'>
+                    <div className="server-name-section">
                         <Text code className="server-name">
                             id: {serverDetail.server_id}
                         </Text>

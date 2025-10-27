@@ -1,12 +1,10 @@
 .mcp-server-detail {
     min-height: 100vh;
-
     &.loading {
         display: flex;
         align-items: center;
         justify-content: center;
     }
-
     &.error {
         display: flex;
         flex-direction: column;
@@ -14,22 +12,18 @@
         justify-content: center;
         padding: 60px;
     }
-
     .detail-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
         color: white;
         padding: 24px;
         position: relative;
-
         .back-button {
             margin-bottom: 20px;
-
             &.ant-btn {
                 border: 1px solid rgba(255, 255, 255, 0.3);
                 color: white;
                 background: rgba(255, 255, 255, 0.1);
                 backdrop-filter: blur(10px);
-
                 &:hover {
                     background: rgba(255, 255, 255, 0.2);
                     border-color: rgba(255, 255, 255, 0.5);
@@ -37,30 +31,25 @@
                 }
             }
         }
-
         .server-info {
             margin-bottom: 20px;
-
             .title-section {
                 display: flex;
                 align-items: center;
                 gap: 16px;
                 margin-bottom: 12px;
-
                 .server-title {
                     color: white !important;
                     margin: 0 !important;
                     font-size: 32px;
                     font-weight: 700;
                 }
-
                 .status-tags {
                     white-space: nowrap;
                     display: flex;
                     align-items: center;
                     gap: 16px;
                 }
-
                 .transport-tag {
                     font-size: 12px;
                     padding: 4px 8px;
@@ -68,14 +57,12 @@
                     margin: 0;
                 }
             }
-
             .server-name-section {
                 display: flex;
                 align-items: center;
                 gap: 16px;
                 margin-bottom: 12px;
             }
-
             .server-name {
                 color: white;
                 padding: 4px 8px;
@@ -83,95 +70,80 @@
                 display: inline-block;
                 font-size: 16px;
             }
-
             .meta-info {
                 margin-bottom: 16px;
-
                 .rating {
                     display: inline-flex;
                     align-items: center;
                     gap: 8px;
                 }
-
                 span {
                     color: rgba(255, 255, 255, 0.9);
                     font-size: 14px;
                 }
             }
         }
-
         .action-buttons {
             .ant-btn {
                 border-radius: 6px;
                 height: 40px;
                 padding: 0 20px;
                 font-weight: 500;
-
                 &:not(.ant-btn-primary) {
                     border: 1px solid rgba(255, 255, 255, 0.3);
                     color: white;
                     background: rgba(255, 255, 255, 0.1);
                     backdrop-filter: blur(10px);
-
                     &:hover {
                         background: rgba(255, 255, 255, 0.2);
                         border-color: rgba(255, 255, 255, 0.5);
                         color: white;
                     }
                 }
-
                 &.ant-btn-primary {
                     background: rgba(255, 255, 255, 0.9);
-                    color: #667eea;
+                    color: #667EEA;
                     border: none;
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-
                     &:hover {
                         background: white;
-                        color: #667eea;
+                        color: #667EEA;
                         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
                     }
                 }
             }
         }
     }
-
     .detail-content {
         margin-top: 24px;
-
         .ant-tabs {
             background: white;
             border-radius: 4px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
             .ant-tabs-content {
                 padding: 0 24px 24px;
             }
         }
-
         .ant-card {
             border: none;
             box-shadow: none;
             padding: 0;
-
             .ant-card-body {
                 padding: 0;
             }
         }
-
         .config-card {
             .config-code {
-                background: #f6f8fa;
-                border: 1px solid #e1e4e8;
+                background: #F6F8FA;
+                border: 1px solid #E1E4E8;
                 border-radius: 6px;
                 padding: 16px;
                 margin: 16px 0;
                 overflow-x: auto;
-
                 code {
                     font-size: 14px;
                     line-height: 1.5;
-                    color: #24292e;
+                    color: #24292E;
                 }
             }
         }

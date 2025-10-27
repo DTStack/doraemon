@@ -233,6 +233,5 @@ module.exports = (app) => {
         return values;
     };
 
-
     return McpServer;
 };

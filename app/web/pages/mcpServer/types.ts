@@ -35,7 +35,6 @@ export interface McpServerDetail extends McpServerItem {
     last_sync_at?: string;
 }
 
-
 export interface TransportConfig {
     color: string;
     icon: React.ReactNode;

@@ -3,7 +3,6 @@
     .prompts-section,
     .resources-section {
         margin-bottom: 0;
-
         .ant-card-head {
             .ant-card-extra {
                 .ant-space {
@@ -12,7 +11,6 @@
             }
         }
     }
-
     .json-view {
         .ant-collapse {
             .json-header {
@@ -22,10 +20,9 @@
                 }
             }
         }
-
         .json-content {
-            background-color: #f6f8fa;
-            border: 1px solid #e1e4e8;
+            background-color: #F6F8FA;
+            border: 1px solid #E1E4E8;
             border-radius: 6px;
             padding: 16px;
             margin: 0;
@@ -35,7 +32,6 @@
             line-height: 1.4;
             white-space: pre-wrap;
             word-break: break-all;
-
             code {
                 padding: 0;
                 border: none;
@@ -43,12 +39,10 @@
             }
         }
     }
-
     .empty-state {
         text-align: center;
         padding: 40px 20px;
     }
-
     .ant-divider {
         margin: 24px 0;
     }

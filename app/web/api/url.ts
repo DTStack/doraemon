@@ -273,7 +273,7 @@ export default {
         method: 'get',
         url: '/api/article-topic/get-topic-list',
     },
-    
+
     /**
      * MCP服务器管理
      */

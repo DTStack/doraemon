@@ -62,7 +62,7 @@ class MCPProcessManager {
 
             // 使用MCP客户端发送请求
             await transport.send(messageObject);
-            
+
             return true;
         } catch (error) {
             this.logger?.error(`向MCP服务器发送消息失败 [${serverId}]:`, error);
@@ -111,11 +111,11 @@ class MCPProcessManager {
     async cleanup() {
         const serverIds = Array.from(this.mcpTransports.keys());
         const count = serverIds.length;
-        
+
         if (count === 0) {
             return;
         }
-        
+
         try {
             await Promise.all(serverIds.map((serverId) => this.stopStdioProcess(serverId)));
         } catch (error) {

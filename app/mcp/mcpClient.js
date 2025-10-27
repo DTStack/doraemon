@@ -1,6 +1,8 @@
 const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
 const { StdioClientTransport } = require('@modelcontextprotocol/sdk/client/stdio.js');
-const { StreamableHTTPClientTransport } = require('@modelcontextprotocol/sdk/client/streamableHttp.js');
+const {
+    StreamableHTTPClientTransport,
+} = require('@modelcontextprotocol/sdk/client/streamableHttp.js');
 const { SSEClientTransport } = require('@modelcontextprotocol/sdk/client/sse.js');
 
 /**
@@ -22,7 +24,7 @@ class MCPClient {
     async connect(server) {
         try {
             this.transport = await this.createTransport(server);
-            
+
             this.client = new Client(
                 {
                     name: `doraemon-client-${server.server_id}`,
@@ -38,7 +40,7 @@ class MCPClient {
             );
 
             await this.client.connect(this.transport);
-            
+
             return true;
         } catch (error) {
             this.logger?.error(`MCP客户端连接失败 [${server.server_id}]:`, error);
@@ -54,12 +56,12 @@ class MCPClient {
      */
     async createTransport(server) {
         let transport;
-        
+
         if (server.transport === 'stdio') {
             transport = new StdioClientTransport({
                 command: server.command,
                 args: server.args || [],
-                env: { ...process.env, ...server.env || {} },
+                env: { ...process.env, ...(server.env || {}) },
                 cwd: server.deploy_path,
             });
         } else if (server.transport === 'streamable-http') {
@@ -88,15 +90,15 @@ class MCPClient {
             const request = {
                 jsonrpc: '2.0',
                 id: pingId,
-                method: 'ping'
+                method: 'ping',
             };
 
             await this.sendRequest(request, timeout);
             return { healthy: true };
         } catch (error) {
-            return { 
-                healthy: false, 
-                error: `Ping失败: ${error.message}`
+            return {
+                healthy: false,
+                error: `Ping失败: ${error.message}`,
             };
         }
     }
@@ -191,7 +193,7 @@ class MCPClient {
                 this.listTools(),
                 this.listPrompts(),
                 this.listResources(),
-                this.getServerCapabilities()
+                this.getServerCapabilities(),
             ]);
 
             if (tools.status === 'fulfilled') {
@@ -237,7 +239,7 @@ class MCPClient {
             const messageHandler = (message) => {
                 if (message.id === request.id) {
                     clearTimeout(timeoutHandle);
-                    
+
                     if (message.error) {
                         reject(new Error(message.error.message || '服务器返回错误'));
                     } else {

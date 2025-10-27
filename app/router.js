@@ -135,17 +135,16 @@ module.exports = (app) => {
     app.post('/api/mcp-servers/use', app.controller.mcp.incrementUseCount);
     app.get('/api/mcp-servers/tags/popular', app.controller.mcp.getPopularTags);
     app.get('/api/mcp-servers/health', app.controller.mcp.checkMCPServerHealth);
-    
+
     // MCP服务器生命周期管理
     app.post('/api/mcp-servers/start', app.controller.mcp.startMCPServer);
     app.post('/api/mcp-servers/stop', app.controller.mcp.stopMCPServer);
     app.post('/api/mcp-servers/restart', app.controller.mcp.restartMCPServer);
     app.post('/api/mcp-servers/sync-info', app.controller.mcp.syncMCPServerInfo);
-    
+
     // MCP服务器健康检查路由
     app.post('/api/mcp-servers/health/:serverId', app.controller.mcp.checkMCPServerHealth);
     app.post('/api/mcp-servers/health/all', app.controller.mcp.checkAllMCPServersHealth);
-
 
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
     // 暂时close Terminal相关功能

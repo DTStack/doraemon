@@ -1,30 +1,22 @@
 .markdown-renderer {
-    $monospace-font: Menlo, Monaco, Consolas, "Courier New", monospace;
+    $monospace-font: menlo, monaco, consolas, "Courier New", monospace;
     $line-space: 22px;
-
     .md-theme-juejin-light {
         word-break: break-word;
         line-height: 1.75;
         font-size: 16px;
         overflow-x: hidden;
         color: #333;
-
-        ol,
-        ul {
-            list-style: unset;
-        }
-
         code:not(pre code) {
             font-family: $monospace-font;
             word-break: break-word;
             border-radius: 2px;
             overflow-x: auto;
-            background-color: #fff5f5;
-            color: #ff502c;
+            background-color: #FFF5F5;
+            color: #FF502C;
             font-size: 0.87em;
             padding: 0.065em 0.4em;
         }
-
         h1,
         h2,
         h3,
@@ -37,12 +29,10 @@
             margin-bottom: 10px;
             padding-bottom: 5px;
         }
-
         h1 {
             font-size: 24px;
             margin-bottom: 5px;
         }
-
         h2,
         h3,
         h4,
@@ -50,118 +40,98 @@
         h6 {
             font-size: 20px;
         }
-
         h2 {
             padding-bottom: 12px;
-            border-bottom: 1px solid #ececec;
+            border-bottom: 1px solid #ECECEC;
         }
-
         h3 {
             font-size: 18px;
             padding-bottom: 0;
         }
-
         h6 {
             margin-top: 5px;
         }
-
         p {
             line-height: inherit;
             margin-top: $line-space;
             margin-bottom: $line-space;
         }
-
         img {
             max-width: 100%;
         }
-
         hr {
-            border-top: 1px solid #ddd;
+            border-top: 1px solid #DDD;
             border-bottom: none;
             border-left: none;
             border-right: none;
             margin-top: 32px;
             margin-bottom: 32px;
         }
-
         pre {
             font-family: $monospace-font;
             overflow: auto;
             position: relative;
             line-height: 1.75;
         }
-
         a {
             text-decoration: none;
-            color: #0269c8;
-
+            color: #0269C8;
             &:hover,
             &:active {
-                color: #275b8c;
+                color: #275B8C;
             }
         }
-
         table {
             display: inline-block !important;
             font-size: 12px;
             width: auto;
             max-width: 100%;
             overflow: auto;
-            border: solid 1px #f6f6f6;
+            border: solid 1px #F6F6F6;
         }
-
         thead {
-            background: #f6f6f6;
+            background: #F6F6F6;
             color: #000;
             text-align: left;
         }
-
         tr:nth-child(2n) {
-            background-color: #fcfcfc;
+            background-color: #FCFCFC;
         }
-
         th,
         td {
             padding: 12px 7px;
             line-height: 24px;
         }
-
         td {
             min-width: 120px;
         }
-
         blockquote {
             color: #666;
             padding: 1px 23px;
             margin: 22px 0;
-            border-left: 4px solid #cbcbcb;
-            background-color: #f8f8f8;
-
+            border-left: 4px solid #CBCBCB;
+            background-color: #F8F8F8;
             &::after {
                 display: block;
                 content: "";
             }
-
-            &>p {
+            & > p {
                 margin: 10px 0;
             }
         }
-
         ol,
         ul {
+            list-style: none;
             padding-left: 28px;
-
             li {
                 margin-bottom: 0;
                 list-style: inherit;
             }
-
             ul,
             ol {
                 margin-top: 3px;
             }
         }
-
         ol li {
             padding-left: 6px;
         }

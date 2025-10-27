@@ -16,7 +16,7 @@ module.exports = (app) => {
     exports.cacheDirectory = path.join(__dirname, '../cache');
     exports.bodyParser = {
         ignore: [/^\/proxy/],
-        enableTypes: ['json', 'form', 'text'], 
+        enableTypes: ['json', 'form', 'text'],
     };
     exports.logger = {
         consoleLevel: 'DEBUG',
@@ -70,10 +70,9 @@ module.exports = (app) => {
             '.zip',
             '.tar',
             '.gz',
-            '.tgz'
-        ]
+            '.tgz',
+        ],
     };
-
 
     exports.io = {
         init: {}, // passed to engine.io

@@ -1,4 +1,4 @@
-import { TransportType } from "@/pages/mcpServer/types";
+import { TransportType } from '@/pages/mcpServer/types';
 
 interface MCPServerConfig {
     name: string;
@@ -14,7 +14,7 @@ export const generateMCPClientConfig = (config: MCPServerConfig) => {
     const { name, transport, command, args, env, httpUrl, sseUrl } = config;
 
     if (transport === 'stdio') {
-        let envObj: Record<string, string> = {};
+        const envObj: Record<string, string> = {};
 
         // 添加环境变量
         if (env && env.length > 0) {

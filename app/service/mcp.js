@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const Service = require('egg').Service;
 const path = require('path');
 const fs = require('fs');
@@ -69,7 +68,7 @@ class MCPService extends Service {
         const result = await this.ctx.model.McpServer.findAndCountAll({
             where,
             limit: parseInt(pageSize),
-            offset: offset,
+            offset,
             order: [['created_at', 'DESC']],
             attributes: {
                 // 列表中不返回敏感的环境变量信息
@@ -241,7 +240,7 @@ class MCPService extends Service {
 
         // 处理文件上传（仅对stdio类型且有文件的情况）
         let filePath = null;
-        let deployPath = server.deploy_path;
+        const deployPath = server.deploy_path;
 
         if (server.transport === 'stdio' && files && files.length > 0) {
             this.ctx.logger.info(

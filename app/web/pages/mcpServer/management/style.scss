@@ -1,23 +1,19 @@
 .mcp-server-management {
     padding: 24px;
-    
     .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 24px;
-        
         h2 {
             margin: 0;
         }
     }
-    
     .env-vars-display {
         .env-var-item {
             display: flex;
             align-items: center;
             margin-bottom: 4px;
-            
             .env-separator {
                 margin: 0 8px;
                 color: #999;

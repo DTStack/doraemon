@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Tabs, Input, Card } from 'antd';
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
+import { Card, Input, Tabs } from 'antd';
+
 import MarkdownRenderer from '../markdownRenderer';
 import './style.scss';
 
@@ -24,7 +25,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     height = 300,
     disabled = false,
     className = '',
-    style
+    style,
 }) => {
     const [activeTab, setActiveTab] = useState<string>('edit');
 
@@ -57,12 +58,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                                 onChange={handleContentChange}
                                 placeholder={placeholder}
                                 disabled={disabled}
-                                style={{ 
-                                    height: height,
+                                style={{
+                                    height,
                                     resize: 'none',
                                     border: 'none',
                                     outline: 'none',
-                                    boxShadow: 'none'
+                                    boxShadow: 'none',
                                 }}
                                 className="markdown-textarea"
                             />
@@ -77,9 +78,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                         }
                         key="preview"
                     >
-                        <div 
+                        <div
                             className="markdown-preview-container"
-                            style={{ height: height, overflow: 'auto' }}
+                            style={{ height, overflow: 'auto' }}
                         >
                             {value ? (
                                 <MarkdownRenderer content={value} />
@@ -92,7 +93,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                     </TabPane>
                 </Tabs>
             </Card>
-            
+
             {/* 帮助提示 */}
             <div className="markdown-editor-tips">
                 <span className="tip-text">

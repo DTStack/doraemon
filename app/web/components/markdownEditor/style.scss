@@ -1,51 +1,42 @@
 .markdown-editor {
     width: 100%;
-
     .markdown-editor-tabs {
-        padding: 0 12px
+        padding: 0 12px;
     }
-
     .markdown-editor-container {
         position: relative;
-        
         .markdown-textarea {
             padding: 16px;
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
             font-size: 14px;
             line-height: 1.6;
-            
             &:focus {
                 border: none !important;
                 box-shadow: none !important;
             }
-            
             &::placeholder {
-                color: #bfbfbf;
+                color: #BFBFBF;
             }
         }
     }
-    
     .markdown-preview-container {
         padding: 16px;
-        background: #fff;
-        
+        background: #FFF;
         .markdown-preview-empty {
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100%;
-            color: #bfbfbf;
+            color: #BFBFBF;
             font-style: italic;
         }
     }
-    
     .markdown-editor-tips {
         margin-top: 8px;
         padding: 8px 0;
-        
         .tip-text {
             font-size: 12px;
-            color: #8c8c8c;
+            color: #8C8C8C;
             line-height: 1.4;
         }
     }

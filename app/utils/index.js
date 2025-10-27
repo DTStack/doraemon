@@ -116,7 +116,6 @@ const convertKeysToSnakeCase = (obj, excludeKeys = []) => {
     return result;
 };
 
-
 /**
  * 构建MCP配置对象
  * @param {Object} server - 数据库中的MCP配置记录
@@ -141,7 +140,7 @@ const buildMCPConfig = (server) => {
     }
 
     return config;
-}
+};
 
 module.exports = {
     createFolder,

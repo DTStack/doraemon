@@ -22,13 +22,13 @@ class MCPHealthCheck extends Subscription {
      */
     async subscribe() {
         const { ctx } = this;
-        
+
         try {
             ctx.logger.info('开始执行MCP服务器健康检查定时任务');
-            
+
             // 调用服务方法检查所有服务器健康状态
             await ctx.service.mcp.checkAllServersHealth();
-            
+
             ctx.logger.info('MCP服务器健康检查定时任务执行完成');
         } catch (error) {
             ctx.logger.error('MCP服务器健康检查定时任务执行失败:', error);

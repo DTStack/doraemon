@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Input, Row, Button, message, Empty, Divider, Space, Spin } from 'antd';
+import React, { useEffect, useState } from 'react';
 import { BugOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
+import { Button, Divider, Empty, Input, message, Row, Space, Spin } from 'antd';
+
 import { API } from '@/api';
 import ServerCard from '../components/serverCard';
 import { McpServerItem } from '../types';
@@ -75,11 +76,7 @@ const McpMarket: React.FC = (props: any) => {
                         <Button icon={<SettingOutlined />} size="large" onClick={handleManagement}>
                             管理MCP
                         </Button>
-                        <Button
-                            icon={<BugOutlined />}
-                            size="large"
-                            onClick={handleInspector}
-                        >
+                        <Button icon={<BugOutlined />} size="large" onClick={handleInspector}>
                             在线调试
                         </Button>
                     </Space>
@@ -103,7 +100,7 @@ const McpMarket: React.FC = (props: any) => {
 
             <div className="server-grid">
                 {loading ? (
-                   <Spin spinning />
+                    <Spin spinning />
                 ) : filteredData.length === 0 ? (
                     <Empty
                         description="暂无MCP服务器"

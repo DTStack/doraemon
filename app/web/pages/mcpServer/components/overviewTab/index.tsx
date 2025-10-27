@@ -1,17 +1,14 @@
 import React from 'react';
-import {
-    Card,
-    Typography,
-} from 'antd';
-import { McpServerDetail } from '../../types';
+import { Card } from 'antd';
+
 import MarkdownRenderer from '@/components/markdownRenderer';
+import { McpServerDetail } from '../../types';
 
 interface OverviewTabProps {
     serverDetail: McpServerDetail;
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({ serverDetail }) => {
-
     return (
         <Card className="overview-card" style={{ minHeight: 400 }}>
             {serverDetail.short_description && (

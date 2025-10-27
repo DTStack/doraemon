@@ -1,66 +1,58 @@
 .server-card {
     height: 100%;
     border-radius: 16px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #E5E7EB;
     overflow: hidden;
     position: relative;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
+    animation: fadeInUp 0.5s ease-out;
+    animation-fill-mode: both;
     &:hover {
-        border-color: #3b82f6;
+        border-color: #3B82F6;
         box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         transform: translateY(-2px);
     }
-
     .ant-card-body {
         padding: 0;
         height: 100%;
     }
-
     .card-content {
         padding: 20px;
         height: 100%;
         display: flex;
         flex-direction: column;
-
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 16px;
             padding-bottom: 16px;
-            border-bottom: 1px solid #f3f4f6;
-
+            border-bottom: 1px solid #F3F4F6;
             .header-left {
                 flex: 1;
                 min-width: 0;
-
                 .server-title {
                     font-size: 18px;
                     font-weight: 600;
-                    color: #1f2937;
-                    margin: 0 0 8px 0;
+                    color: #1F2937;
+                    margin: 0 0 8px;
                     line-height: 1.4;
                     cursor: pointer;
                     transition: color 0.2s ease;
-
                     display: -webkit-box;
                     -webkit-line-clamp: 2;
                     -webkit-box-orient: vertical;
                     overflow: hidden;
-
                     &:hover {
-                        color: #2563eb;
+                        color: #2563EB;
                     }
                 }
-
                 .author-info {
                     display: flex;
                     align-items: center;
                     gap: 4px;
                     font-size: 12px;
-                    color: #84878d;
-
+                    color: #84878D;
                     .author-name {
                         font-weight: 400;
                         max-width: 140px;
@@ -70,7 +62,6 @@
                     }
                 }
             }
-
             .header-right {
                 display: flex;
                 flex-direction: column;
@@ -79,16 +70,14 @@
                 flex-shrink: 0;
             }
         }
-
         .description-section {
             flex: 1;
             margin-bottom: 16px;
-
             .description {
                 font-size: 14px;
-                color: #84878d;
+                color: #84878D;
                 margin: 0;
-                
+
                 // 限制行数
                 display: -webkit-box;
                 -webkit-line-clamp: 3;
@@ -96,53 +85,46 @@
                 overflow: hidden;
                 min-height: 40px;
             }
-
             .server-id {
                 margin-top: auto;
-
                 .server-id-code {
                     display: inline-flex;
                     align-items: center;
-                    font-family: 'SF Mono', 'Monaco', monospace;
+                    font-family: "SF Mono", Monaco, monospace;
                     font-size: 12px;
                     font-weight: 600;
-                    color: #1e40af;
-                    background: #eff6ff;
-                    border: 1px solid #bfdbfe;
+                    color: #1E40AF;
+                    background: #EFF6FF;
+                    border: 1px solid #BFDBFE;
                     border-radius: 8px;
                     padding: 6px 10px;
                     cursor: pointer;
                     transition: all 0.2s ease;
                     user-select: all;
-
                     &:hover {
-                        background: #1e40af;
+                        background: #1E40AF;
                         color: white;
-                        border-color: #1e40af;
+                        border-color: #1E40AF;
                         transform: translateY(-1px);
                         box-shadow: 0 4px 8px rgba(30, 64, 175, 0.2);
                     }
-
                     &:active {
                         transform: scale(0.98);
                     }
                 }
             }
         }
-
         .card-footer {
             margin-top: auto;
-            color: #84878d;
-
+            color: #84878D;
             .footer-date {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 margin-bottom: 12px;
                 padding-top: 12px;
-                border-top: 1px solid #f3f4f6;
+                border-top: 1px solid #F3F4F6;
             }
-
             .tags-section {
                 display: flex;
                 flex-wrap: wrap;
@@ -161,9 +143,4 @@
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-.server-card {
-    animation: fadeInUp 0.5s ease-out;
-    animation-fill-mode: both;
 }

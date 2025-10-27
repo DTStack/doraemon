@@ -1,30 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { CopyOutlined, DeleteOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import env from '@env';
 import {
-    Form,
-    Input,
-    Select,
     Button,
     Card,
-    Upload,
-    message,
-    Row,
     Col,
-    Radio,
-    Space,
     Divider,
-    Tabs,
-    Typography,
+    Form,
+    Input,
+    message,
+    Radio,
+    Row,
+    Select,
+    Space,
     Spin,
+    Tabs,
     Tooltip,
+    Typography,
+    Upload,
 } from 'antd';
-import { UploadOutlined, PlusOutlined, DeleteOutlined, CopyOutlined } from '@ant-design/icons';
+
 import { API } from '@/api';
-import env from '@env';
-import { TransportType } from '../types';
-import { copyToClipboard } from '@/utils/copyUtils';
 import MarkdownEditor from '@/components/markdownEditor';
-import './style.scss';
 import { generateMCPClientConfig } from '@/utils/common';
+import { copyToClipboard } from '@/utils/copyUtils';
+import { TransportType } from '../types';
+import './style.scss';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -412,7 +413,13 @@ const McpServerRegistryCenter: React.FC = (props: any) => {
                                     <Col span={24}>
                                         <Form.Item
                                             label={
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                    }}
+                                                >
                                                     <span>启动命令</span>
                                                     <Button
                                                         size="small"
@@ -444,7 +451,7 @@ const McpServerRegistryCenter: React.FC = (props: any) => {
                                         <Form.Item
                                             label="命令参数"
                                             name="args"
-                                            tooltip='启动命令的参数列表, 空格或换行分割。一般将托管部署路径作为启动参数'
+                                            tooltip="启动命令的参数列表, 空格或换行分割。一般将托管部署路径作为启动参数"
                                         >
                                             <TextArea
                                                 rows={5}
@@ -600,9 +607,21 @@ const McpServerRegistryCenter: React.FC = (props: any) => {
                                     sseUrl: getFieldValue('sseUrl'),
                                 };
 
-                                const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                                const origin =
+                                    typeof window !== 'undefined' ? window.location.origin : '';
                                 const originalConfig = generateMCPClientConfig(currentValues);
-                                const urlConfig = currentValues.transport === 'sse' ? { sseUrl: `${origin}/mcp-endpoint/${currentValues.name || 'your-server-name'}/sse` } : { httpUrl: `${origin}/mcp-endpoint/${currentValues.name || 'your-server-name'}/mcp` };
+                                const urlConfig =
+                                    currentValues.transport === 'sse'
+                                        ? {
+                                              sseUrl: `${origin}/mcp-endpoint/${
+                                                  currentValues.name || 'your-server-name'
+                                              }/sse`,
+                                          }
+                                        : {
+                                              httpUrl: `${origin}/mcp-endpoint/${
+                                                  currentValues.name || 'your-server-name'
+                                              }/mcp`,
+                                          };
                                 const hostedConfig = generateMCPClientConfig({
                                     name: currentValues.name,
                                     transport:

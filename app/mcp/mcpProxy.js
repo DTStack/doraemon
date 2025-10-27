@@ -18,7 +18,11 @@ class MCPProxy {
         this.transportHandlers = new Map();
 
         // 传输处理器实例
-        this.stdioHandler = new StdioTransportHandler(this.processManager, this.requestManager, logger);
+        this.stdioHandler = new StdioTransportHandler(
+            this.processManager,
+            this.requestManager,
+            logger
+        );
         this.sseHandler = new SSETransportHandler(logger);
         this.httpHandler = new StreamableHttpTransportHandler(logger);
 
@@ -151,7 +155,7 @@ class MCPProxy {
 
     async cleanup() {
         const serverIds = Array.from(this.transportHandlers.keys());
-        
+
         if (serverIds.length === 0) {
             return;
         }

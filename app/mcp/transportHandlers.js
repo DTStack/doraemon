@@ -21,7 +21,8 @@ class BaseTransportHandler {
      * @param {string} serverId - 服务器ID
      * @param {object} config - 配置
      */
-    start(serverId, config) {
+    // @ts-ignore
+    start() {
         throw new Error('Start Method Not Implemented');
     }
 
@@ -29,7 +30,8 @@ class BaseTransportHandler {
      * 关闭传输
      * @param {string} serverId - 服务器ID
      */
-    stop(serverId) {
+    // @ts-ignore
+    stop() {
         throw new Error('Stop Method Not Implemented');
     }
 
@@ -39,7 +41,8 @@ class BaseTransportHandler {
      * @param {any} req - 请求对象
      * @param {object} res - 响应对象
      */
-    forward(serverId, req, res) {
+    // @ts-ignore
+    forward() {
         throw new Error('Forward Method Not Implemented');
     }
 
@@ -375,7 +378,8 @@ class SSETransportHandler extends BaseTransportHandler {
         };
 
         // 获取原请求的协议和主机名
-        const protocol = req.headers['x-forwarded-proto'] || (req.socket.encrypted ? 'https' : 'http');
+        const protocol =
+            req.headers['x-forwarded-proto'] || (req.socket.encrypted ? 'https' : 'http');
         const hostname = (req.headers.host || 'localhost').split(':')[0];
 
         try {

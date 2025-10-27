@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
-import {
-    Card,
-    Typography,
-    Collapse,
-    Table,
-    Tag,
-    Space,
-    Switch,
-    Divider,
-} from 'antd';
 import { CodeOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Card, Collapse, Divider, Space, Switch, Table, Tag, Typography } from 'antd';
+
 import { McpServerDetail } from '../../types';
 import './style.scss';
 
@@ -24,15 +16,21 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
     const [toolsViewMode, setToolsViewMode] = useState<'doc' | 'json'>('doc');
     const [promptsViewMode, setPromptsViewMode] = useState<'doc' | 'json'>('doc');
     const [resourcesViewMode, setResourcesViewMode] = useState<'doc' | 'json'>('doc');
-    
+
     // 用于记录每个部分的展开状态
     const [toolsExpandedKeys, setToolsExpandedKeys] = useState<string[]>([]);
     const [promptsExpandedKeys, setPromptsExpandedKeys] = useState<string[]>([]);
     const [resourcesExpandedKeys, setResourcesExpandedKeys] = useState<string[]>([]);
 
-    const renderViewModeSwitch = (viewMode: 'doc' | 'json', onChange: (mode: 'doc' | 'json') => void, label: string) => (
+    const renderViewModeSwitch = (
+        viewMode: 'doc' | 'json',
+        onChange: (mode: 'doc' | 'json') => void,
+        label: string
+    ) => (
         <Space align="center" size="small">
-            <Text type="secondary" style={{ fontSize: '12px' }}>{label}</Text>
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+                {label}
+            </Text>
             <FileTextOutlined style={{ fontSize: '12px' }} />
             <Switch
                 checked={viewMode === 'json'}
@@ -40,18 +38,20 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                 size="small"
             />
             <CodeOutlined style={{ fontSize: '12px' }} />
-            <Text type="secondary" style={{ fontSize: '12px' }}>{viewMode === 'json' ? 'JSON' : '文档'}</Text>
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+                {viewMode === 'json' ? 'JSON' : '文档'}
+            </Text>
         </Space>
     );
 
     const renderJsonView = (
-        data: any[], 
-        title: string, 
-        expandedKeys: string[], 
+        data: any[],
+        title: string,
+        expandedKeys: string[],
         onExpandedKeysChange: (keys: string[]) => void
     ) => (
         <div className="json-view">
-            <Collapse 
+            <Collapse
                 activeKey={expandedKeys}
                 onChange={(keys) => onExpandedKeysChange(keys as string[])}
             >
@@ -59,7 +59,9 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                     <Panel
                         header={
                             <div className="json-header">
-                                <Text strong style={{ fontSize: '14px' }}>{item.name || `${title} ${index + 1}`}</Text>
+                                <Text strong style={{ fontSize: '14px' }}>
+                                    {item.name || `${title} ${index + 1}`}
+                                </Text>
                                 {item.description && (
                                     <div className="json-description">
                                         <Text type="secondary">{item.description}</Text>
@@ -82,13 +84,15 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
         if (!serverDetail.tools || serverDetail.tools.length === 0) {
             return (
                 <div className="empty-state">
-                    <Paragraph type="secondary">暂无工具信息，请确保服务器正在运行并点击"同步信息"按钮</Paragraph>
+                    <Paragraph type="secondary">
+                        暂无工具信息，请确保服务器正在运行并点击"同步信息"按钮
+                    </Paragraph>
                 </div>
             );
         }
 
         return (
-            <Collapse 
+            <Collapse
                 className="tools-collapse"
                 activeKey={toolsExpandedKeys}
                 onChange={(keys) => setToolsExpandedKeys(keys as string[])}
@@ -98,15 +102,17 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                     const parseInputSchemaParameters = (tool: any) => {
                         if (tool.inputSchema && tool.inputSchema.properties) {
                             const required = tool.inputSchema.required || [];
-                            return Object.entries(tool.inputSchema.properties).map(([name, schema]: [string, any]) => ({
-                                key: name,
-                                name,
-                                type: schema.type || 'string',
-                                required: required.includes(name),
-                                description: schema.description || '-',
-                                default: schema.default,
-                                enum: schema.enum,
-                            }));
+                            return Object.entries(tool.inputSchema.properties).map(
+                                ([name, schema]: [string, any]) => ({
+                                    key: name,
+                                    name,
+                                    type: schema.type || 'string',
+                                    required: required.includes(name),
+                                    description: schema.description || '-',
+                                    default: schema.default,
+                                    enum: schema.enum,
+                                })
+                            );
                         }
                         return [];
                     };
@@ -114,23 +120,25 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                     // 解析 annotations 参数
                     const parseAnnotationsParameters = (tool: any) => {
                         if (tool.annotations && Object.keys(tool.annotations).length > 0) {
-                            return Object.entries(tool.annotations).map(([name, schema]: [string, any]) => ({
-                                key: name,
-                                name,
-                                type: schema.type || 'string',
-                                required: !schema.hasOwnProperty('default'),
-                                description: schema.description || '-',
-                                default: schema.default,
-                                enum: schema.enum,
-                                originalData: schema, // 保存原始数据用于展示
-                            }));
+                            return Object.entries(tool.annotations).map(
+                                ([name, schema]: [string, any]) => ({
+                                    key: name,
+                                    name,
+                                    type: schema.type || 'string',
+                                    required: !schema.hasOwnProperty('default'),
+                                    description: schema.description || '-',
+                                    default: schema.default,
+                                    enum: schema.enum,
+                                    originalData: schema, // 保存原始数据用于展示
+                                })
+                            );
                         }
                         return [];
                     };
 
                     const inputSchemaParameters = parseInputSchemaParameters(tool);
                     const annotationsParameters = parseAnnotationsParameters(tool);
-                    
+
                     // InputSchema 表格列定义
                     const inputSchemaColumns = [
                         {
@@ -169,10 +177,21 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                                     {record.enum && (
                                         <div style={{ marginTop: 8 }}>
                                             <div style={{ marginBottom: 4 }}>
-                                                <Text strong style={{ fontSize: '12px' }}>可选值：</Text>
+                                                <Text strong style={{ fontSize: '12px' }}>
+                                                    可选值：
+                                                </Text>
                                             </div>
                                             {record.enum.map((value: string, idx: number) => (
-                                                <Tag key={idx} style={{ margin: '2px', fontSize: '11px', padding: '0 4px', height: '20px', lineHeight: '18px' }}>
+                                                <Tag
+                                                    key={idx}
+                                                    style={{
+                                                        margin: '2px',
+                                                        fontSize: '11px',
+                                                        padding: '0 4px',
+                                                        height: '20px',
+                                                        lineHeight: '18px',
+                                                    }}
+                                                >
                                                     {value}
                                                 </Tag>
                                             ))}
@@ -180,8 +199,19 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                                     )}
                                     {record.default !== undefined && (
                                         <div style={{ marginTop: 8 }}>
-                                            <Text strong style={{ fontSize: '12px' }}>默认值：</Text>
-                                            <Tag color="orange" style={{ marginLeft: 4, fontSize: '11px', padding: '0 4px', height: '20px', lineHeight: '18px' }}>
+                                            <Text strong style={{ fontSize: '12px' }}>
+                                                默认值：
+                                            </Text>
+                                            <Tag
+                                                color="orange"
+                                                style={{
+                                                    marginLeft: 4,
+                                                    fontSize: '11px',
+                                                    padding: '0 4px',
+                                                    height: '20px',
+                                                    lineHeight: '18px',
+                                                }}
+                                            >
                                                 {String(record.default)}
                                             </Tag>
                                         </div>
@@ -206,15 +236,25 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                             key: 'originalData',
                             width: '80%',
                             render: (originalData: any) => (
-                                <div style={{ backgroundColor: '#f6f8fa', padding: '8px', borderRadius: '4px', border: '1px solid #e1e4e8' }}>
-                                    <pre style={{ 
-                                        margin: 0, 
-                                        fontSize: '12px', 
-                                        lineHeight: '1.4', 
-                                        fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', monospace",
-                                        whiteSpace: 'pre-wrap',
-                                        wordBreak: 'break-all'
-                                    }}>
+                                <div
+                                    style={{
+                                        backgroundColor: '#f6f8fa',
+                                        padding: '8px',
+                                        borderRadius: '4px',
+                                        border: '1px solid #e1e4e8',
+                                    }}
+                                >
+                                    <pre
+                                        style={{
+                                            margin: 0,
+                                            fontSize: '12px',
+                                            lineHeight: '1.4',
+                                            fontFamily:
+                                                "'Monaco', 'Menlo', 'Ubuntu Mono', monospace",
+                                            whiteSpace: 'pre-wrap',
+                                            wordBreak: 'break-all',
+                                        }}
+                                    >
                                         {JSON.stringify(originalData, null, 2)}
                                     </pre>
                                 </div>
@@ -227,7 +267,9 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                             header={
                                 <div className="tool-header">
                                     <Space>
-                                        <Text strong style={{ fontSize: '14px' }}>{tool.name}</Text>
+                                        <Text strong style={{ fontSize: '14px' }}>
+                                            {tool.name}
+                                        </Text>
                                     </Space>
                                     {tool.description && (
                                         <div className="tool-description">
@@ -241,8 +283,14 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                             <div className="tool-content">
                                 {/* InputSchema 参数 */}
                                 {inputSchemaParameters.length > 0 && (
-                                    <div className="input-schema-section" style={{ marginBottom: 24 }}>
-                                        <Title level={5} style={{ marginBottom: 16, color: '#1890ff' }}>
+                                    <div
+                                        className="input-schema-section"
+                                        style={{ marginBottom: 24 }}
+                                    >
+                                        <Title
+                                            level={5}
+                                            style={{ marginBottom: 16, color: '#1890ff' }}
+                                        >
                                             输入参数
                                         </Title>
                                         <Table
@@ -258,7 +306,10 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                                 {/* Annotations 参数 */}
                                 {annotationsParameters.length > 0 && (
                                     <div className="annotations-section">
-                                        <Title level={5} style={{ marginBottom: 16, color: '#52c41a' }}>
+                                        <Title
+                                            level={5}
+                                            style={{ marginBottom: 16, color: '#52c41a' }}
+                                        >
                                             Annotations 参数
                                         </Title>
                                         <Table
@@ -272,9 +323,10 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                                 )}
 
                                 {/* 无参数提示 */}
-                                {inputSchemaParameters.length === 0 && annotationsParameters.length === 0 && (
-                                    <Text type="secondary">该工具无需参数</Text>
-                                )}
+                                {inputSchemaParameters.length === 0 &&
+                                    annotationsParameters.length === 0 && (
+                                        <Text type="secondary">该工具无需参数</Text>
+                                    )}
                             </div>
                         </Panel>
                     );
@@ -287,7 +339,9 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
         if (!serverDetail.prompts || serverDetail.prompts.length === 0) {
             return (
                 <div className="empty-state">
-                    <Paragraph type="secondary">暂无提示词信息，请确保服务器正在运行并点击"同步信息"按钮</Paragraph>
+                    <Paragraph type="secondary">
+                        暂无提示词信息，请确保服务器正在运行并点击"同步信息"按钮
+                    </Paragraph>
                 </div>
             );
         }
@@ -348,7 +402,9 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
         if (!serverDetail.resources || serverDetail.resources.length === 0) {
             return (
                 <div className="empty-state">
-                    <Paragraph type="secondary">暂无资源信息，请确保服务器正在运行并点击"同步信息"按钮</Paragraph>
+                    <Paragraph type="secondary">
+                        暂无资源信息，请确保服务器正在运行并点击"同步信息"按钮
+                    </Paragraph>
                 </div>
             );
         }
@@ -373,14 +429,18 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
                 dataIndex: 'uri',
                 key: 'uri',
                 width: '30%',
-                render: (text: string) => <Text code style={{ fontSize: '12px' }}>{text}</Text>,
+                render: (text: string) => (
+                    <Text code style={{ fontSize: '12px' }}>
+                        {text}
+                    </Text>
+                ),
             },
             {
                 title: 'MIME类型',
                 dataIndex: 'mimeType',
                 key: 'mimeType',
                 width: '10%',
-                render: (text: string) => text ? <Tag color="blue">{text}</Tag> : '-',
+                render: (text: string) => (text ? <Tag color="blue">{text}</Tag> : '-'),
             },
         ];
 
@@ -403,53 +463,66 @@ const ToolsResourcesTab: React.FC<ToolsResourcesTabProps> = ({ serverDetail }) =
     return (
         <div className="tools-resources-tab">
             {/* 工具部分 */}
-            <Card 
+            <Card
                 className="tools-section"
                 title={`可用工具 (${serverDetail.tools?.length || 0})`}
                 extra={
                     <Space>
                         {renderViewModeSwitch(toolsViewMode, setToolsViewMode, '工具')}
                         <Text type="secondary" style={{ fontSize: '12px' }}>
-                            {serverDetail.last_sync_at ? 
-                                `最后同步: ${new Date(serverDetail.last_sync_at).toLocaleString()}` : 
-                                '尚未同步'
-                            }
+                            {serverDetail.last_sync_at
+                                ? `最后同步: ${new Date(
+                                      serverDetail.last_sync_at
+                                  ).toLocaleString()}`
+                                : '尚未同步'}
                         </Text>
                     </Space>
                 }
             >
-                {toolsViewMode === 'json' ? 
-                    renderJsonView(serverDetail.tools || [], '工具', toolsExpandedKeys, setToolsExpandedKeys) : 
-                    renderToolsDoc()
-                }
+                {toolsViewMode === 'json'
+                    ? renderJsonView(
+                          serverDetail.tools || [],
+                          '工具',
+                          toolsExpandedKeys,
+                          setToolsExpandedKeys
+                      )
+                    : renderToolsDoc()}
             </Card>
 
             <Divider />
 
             {/* 提示词部分 */}
-            <Card 
+            <Card
                 className="prompts-section"
                 title={`可用提示词 (${serverDetail.prompts?.length || 0})`}
                 extra={renderViewModeSwitch(promptsViewMode, setPromptsViewMode, '提示词')}
             >
-                {promptsViewMode === 'json' ? 
-                    renderJsonView(serverDetail.prompts || [], '提示词', promptsExpandedKeys, setPromptsExpandedKeys) : 
-                    renderPromptsDoc()
-                }
+                {promptsViewMode === 'json'
+                    ? renderJsonView(
+                          serverDetail.prompts || [],
+                          '提示词',
+                          promptsExpandedKeys,
+                          setPromptsExpandedKeys
+                      )
+                    : renderPromptsDoc()}
             </Card>
 
             <Divider />
 
             {/* 资源部分 */}
-            <Card 
+            <Card
                 className="resources-section"
                 title={`可用资源 (${serverDetail.resources?.length || 0})`}
                 extra={renderViewModeSwitch(resourcesViewMode, setResourcesViewMode, '资源')}
             >
-                {resourcesViewMode === 'json' ? 
-                    renderJsonView(serverDetail.resources || [], '资源', resourcesExpandedKeys, setResourcesExpandedKeys) : 
-                    renderResourcesDoc()
-                }
+                {resourcesViewMode === 'json'
+                    ? renderJsonView(
+                          serverDetail.resources || [],
+                          '资源',
+                          resourcesExpandedKeys,
+                          setResourcesExpandedKeys
+                      )
+                    : renderResourcesDoc()}
             </Card>
         </div>
     );

@@ -1,17 +1,17 @@
 import React from 'react';
-import { Card, Button } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
-import { McpServerDetail } from '../../types';
-import { copyToClipboard } from '@/utils/copyUtils';
-import { generateMCPClientConfig } from '@/utils/common';
 import env from '@env';
+import { Button, Card } from 'antd';
+
+import { generateMCPClientConfig } from '@/utils/common';
+import { copyToClipboard } from '@/utils/copyUtils';
+import { McpServerDetail } from '../../types';
 
 interface ConfigTabProps {
     serverDetail: McpServerDetail;
 }
 
 const ConfigTab: React.FC<ConfigTabProps> = ({ serverDetail }) => {
-
     const config = generateMCPClientConfig({
         name: serverDetail.server_id,
         transport: serverDetail.transport === 'sse' ? 'sse' : 'streamable-http',
