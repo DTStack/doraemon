@@ -20,7 +20,7 @@ const startMcpInspector = (agent) => {
             // 如果fetch failed, 可以尝试切换到国内镜像
             '--registry=https://registry.npmjs.org',
             '-y',
-            '@modelcontextprotocol/inspector@0.17.0',
+            '@modelcontextprotocol/inspector@0.17.5',
         ],
         {
             stdio: ['pipe', 'pipe', 'pipe'],
