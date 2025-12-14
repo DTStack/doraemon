@@ -10,7 +10,7 @@ class MCPHealthCheck extends Subscription {
      */
     static get schedule() {
         return {
-            cron: '0 0 * * * *', // 每小时的0分钟执行
+            cron: '0 0 */12 * * *', // 每12小时检测一次
             type: 'worker', // 指定一个 worker 执行
             immediate: false, // 应用启动后不立即执行
             disable: false,
