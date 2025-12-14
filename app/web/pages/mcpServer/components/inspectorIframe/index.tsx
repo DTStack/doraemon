@@ -15,6 +15,10 @@ interface InspectorIframeProps {
 }
 
 const createQueryString = (config?: InspectorConfig) => {
+    if (typeof location === 'undefined') {
+        return '';
+    }
+
     const queryParams: Record<string, string> = {
         MCP_PROXY_PORT: mcpInspectorServerPort.toString(),
         transport: config?.transport || 'streamable-http',
@@ -30,6 +34,11 @@ const createQueryString = (config?: InspectorConfig) => {
 
 const InspectorIframe = ({ config }: InspectorIframeProps) => {
     const queryString = useMemo(() => createQueryString(config), [config]);
+
+    // 仅在客户端渲染 iframe
+    if (typeof location === 'undefined') {
+        return null;
+    }
 
     return (
         <div className="mcp-inspector-iframe" style={{ minHeight: 800, height: 800 }}>
