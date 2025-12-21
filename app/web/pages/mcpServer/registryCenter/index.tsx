@@ -183,13 +183,18 @@ const McpServerRegistryCenter: React.FC = (props: any) => {
     const uploadProps = {
         beforeUpload: (file: any) => {
             const isValidType =
-                file.type === 'application/zip' || file.type === 'application/x-tar';
+                [
+                    'application/zip',
+                    'application/x-tar',
+                    'application/gzip',
+                    'application/x-gzip',
+                ].includes(file.type) || file.name.endsWith('.tar.gz');
             if (!isValidType) {
-                message.error('只能上传 ZIP 或 TAR 格式的文件！');
+                message.error('只能上传 ZIP、TAR 或 TAR.GZ 格式的文件！');
                 return false;
             }
-            const isLt100M = file.size / 1024 / 1024 < 200;
-            if (!isLt100M) {
+            const isLt200M = file.size / 1024 / 1024 < 200;
+            if (!isLt200M) {
                 message.error('文件大小必须小于 200MB！');
                 return false;
             }
@@ -578,7 +583,9 @@ const McpServerRegistryCenter: React.FC = (props: any) => {
                                 }}
                             >
                                 <Upload {...uploadProps}>
-                                    <Button icon={<UploadOutlined />}>上传文件 (ZIP/TAR)</Button>
+                                    <Button icon={<UploadOutlined />}>
+                                        上传文件 (ZIP/TAR/TAR.GZ)
+                                    </Button>
                                 </Upload>
                             </Form.Item>
                         )}

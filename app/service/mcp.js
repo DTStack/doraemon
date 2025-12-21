@@ -487,16 +487,19 @@ class MCPService extends Service {
      * @param {String} extractPath - 解压目录
      */
     async extractFile(filePath, extractPath) {
+        const fileName = path.basename(filePath).toLowerCase();
         const fileExtension = path.extname(filePath).toLowerCase();
 
         try {
             if (fileExtension === '.zip') {
+                this.ctx.logger.info(`检测到ZIP文件，开始解压: ${fileName}`);
                 await this.extractZip(filePath, extractPath);
             } else if (
                 fileExtension === '.tar' ||
                 fileExtension === '.gz' ||
                 fileExtension === '.tgz'
             ) {
+                this.ctx.logger.info(`检测到TAR/GZ文件，开始解压: ${fileName}`);
                 await this.extractTar(filePath, extractPath);
             } else {
                 throw new Error(`不支持的文件格式: ${fileExtension}`);
