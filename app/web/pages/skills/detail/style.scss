@@ -1,0 +1,51 @@
+.page-skill-detail {
+    padding: 20px 24px;
+
+    &.loading-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 420px;
+    }
+
+    .detail-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 16px;
+
+        .back-btn {
+            margin-top: 4px;
+        }
+
+        .title-group {
+            flex: 1;
+            min-width: 0;
+        }
+    }
+
+    .meta-card {
+        margin-bottom: 16px;
+
+        .tags-wrap {
+            margin-top: 12px;
+        }
+    }
+
+    .markdown-card {
+        max-height: 70vh;
+        overflow: auto;
+    }
+
+    .related-card {
+        height: 100%;
+
+        .related-title {
+            margin-bottom: 8px;
+            color: #1f2d3d;
+            font-size: 16px;
+            font-weight: 600;
+        }
+    }
+}

@@ -19,3 +19,8 @@ export interface SkillListResponse {
     pageSize: number;
     categories: string[];
 }
+
+export interface SkillDetail extends SkillItem {
+    fileList: string[];
+    skillMd: string;
+}
