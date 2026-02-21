@@ -20,6 +20,8 @@ import McpServerInspector from '@/pages/mcpServer/inspector';
 import McpServerManagement from '@/pages/mcpServer/management';
 import McpServerMarket from '@/pages/mcpServer/mcpMarket';
 import McpServerRegistryCenter from '@/pages/mcpServer/registryCenter';
+import SkillDetail from '@/pages/skills/detail';
+import SkillsMarket from '@/pages/skills';
 // 代理服务
 import ProxyServer from '@/pages/proxyServer';
 // hosts列表
@@ -111,6 +113,14 @@ const routes: any = [
             {
                 path: `${urlPrefix}/mcp-server-management`,
                 component: McpServerManagement,
+            },
+            {
+                path: `${urlPrefix}/skills/:slug`,
+                component: SkillDetail,
+            },
+            {
+                path: `${urlPrefix}/skills`,
+                component: SkillsMarket,
             },
             {
                 path: '*',

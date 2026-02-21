@@ -337,4 +337,23 @@ export default {
         method: 'post',
         url: '/api/mcp-servers/sync-info',
     },
+
+    /**
+     * Skills 市场
+     */
+    // 获取 Skills 列表
+    getSkillList: {
+        method: 'get',
+        url: '/api/skills/list',
+    },
+    // 获取 Skill 详情
+    getSkillDetail: {
+        method: 'get',
+        url: '/api/skills/detail',
+    },
+    // 获取相关 Skills
+    getRelatedSkills: {
+        method: 'get',
+        url: '/api/skills/related',
+    },
 };
