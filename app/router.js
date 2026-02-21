@@ -146,6 +146,13 @@ module.exports = (app) => {
     app.post('/api/mcp-servers/health/:serverId', app.controller.mcp.checkMCPServerHealth);
     app.post('/api/mcp-servers/health/all', app.controller.mcp.checkAllMCPServersHealth);
 
+    /**
+     * Skills 市场
+     */
+    app.get('/api/skills/list', app.controller.skills.getSkillList);
+    app.get('/api/skills/detail', app.controller.skills.getSkillDetail);
+    app.get('/api/skills/related', app.controller.skills.getRelatedSkills);
+
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
     // 暂时close Terminal相关功能
     // io.of('/').route('loginServer',  io.controller.home.loginServer)
