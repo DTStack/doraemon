@@ -3,11 +3,13 @@ const AdmZip = require('adm-zip');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const fetch = require('node-fetch');
 
 const CACHE_TTL_MS = 60 * 1000;
 const MAX_FILE_LIST_COUNT = 300;
 const MAX_FILE_CONTENT_SIZE = 2 * 1024 * 1024;
 const IMPORT_TIMEOUT_MS = 60 * 1000;
+const GITHUB_API_TIMEOUT_MS = 10 * 1000;
 const MAX_PLATFORM_TAGS = 5;
 const MAX_TAG_LENGTH = 20;
 const SKILL_CATEGORY_OPTIONS = [
@@ -572,6 +574,7 @@ class SkillsService extends Service {
         const skillName = String(params.skillName || '').trim();
         const category = this.normalizeCategory(params.category);
         const tags = this.normalizePlatformTags(params.tags);
+        const sourceRepoFallback = this.extractSourceRepoFromImportSource(source);
         if (!source) {
             this.ctx.throw(400, '缺少导入来源地址');
         }
@@ -591,22 +594,26 @@ class SkillsService extends Service {
         }
 
         this.skillCache = null;
+        this.skillSourceCache = {};
         await this.ensureSkillCache();
         const importedSkills = this.skillCache.skills
             .filter((item) => !beforeSlugs.has(item.slug))
             .map((item) => ({
                 slug: item.slug,
                 name: item.name,
-                sourceRepo: item.sourceRepo,
+                sourceRepo: item.sourceRepo || sourceRepoFallback,
                 sourcePath: item.sourcePath,
             }));
 
         if (importedSkills.length > 0) {
+            const starsBySlug = await this.fetchStarsForImportedSkills(importedSkills);
             this.persistSkillMeta(importedSkills, {
                 category,
                 tags,
+                starsBySlug,
             });
             this.skillCache = null;
+            this.skillSourceCache = {};
             await this.ensureSkillCache();
         }
 
@@ -628,6 +635,7 @@ class SkillsService extends Service {
     persistSkillMeta(skills = [], meta = {}) {
         const nextCategory = this.normalizeCategory(meta.category);
         const nextTags = this.normalizePlatformTags(meta.tags);
+        const starsBySlug = meta.starsBySlug || {};
         skills.forEach((item) => {
             const skillDir = item.sourcePath;
             if (!skillDir || !fs.existsSync(skillDir)) return;
@@ -647,8 +655,118 @@ class SkillsService extends Service {
                 platformTags: nextTags,
                 tags: nextTags,
             };
+            const stars = starsBySlug[item.slug];
+            if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) {
+                nextMeta.stars = stars;
+                nextMeta['github_stars'] = stars;
+                nextMeta.starsFetchedAt = new Date().toISOString();
+            }
             fs.writeFileSync(metaFilePath, `${JSON.stringify(nextMeta, null, 2)}\n`, 'utf8');
         });
+    }
+
+    async fetchStarsForImportedSkills(skills = []) {
+        const repoToStars = {};
+        const uniqueRepos = Array.from(
+            new Set(
+                skills
+                    .map((item) => this.extractGitHubRepoFullName(item.sourceRepo))
+                    .filter(Boolean)
+            )
+        );
+
+        for (const repoFullName of uniqueRepos) {
+            // 顺序请求，减少被限流概率；一次导入通常仓库数很少
+            const stars = await this.fetchGitHubRepoStars(repoFullName);
+            if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) {
+                repoToStars[repoFullName] = stars;
+            }
+        }
+
+        const starsBySlug = {};
+        skills.forEach((item) => {
+            const repoFullName = this.extractGitHubRepoFullName(item.sourceRepo);
+            if (!repoFullName) return;
+            const stars = repoToStars[repoFullName];
+            if (typeof stars === 'number') {
+                starsBySlug[item.slug] = stars;
+            }
+        });
+
+        return starsBySlug;
+    }
+
+    extractGitHubRepoFullName(sourceRepo = '') {
+        const raw = String(sourceRepo || '').trim();
+        if (!raw) return '';
+        const normalized = raw.replace(/^git\+/, '').replace(/\.git$/, '');
+        const sshMatch = normalized.match(/^git@github\.com:([^/]+)\/([^/]+)$/i);
+        if (sshMatch) {
+            return `${sshMatch[1]}/${sshMatch[2]}`;
+        }
+        const httpsMatch = normalized.match(/^https?:\/\/github\.com\/([^/]+)\/([^/#?]+)/i);
+        if (httpsMatch) {
+            return `${httpsMatch[1]}/${httpsMatch[2]}`;
+        }
+        return '';
+    }
+
+    async fetchGitHubRepoStars(repoFullName) {
+        if (!repoFullName) return null;
+        const url = `https://api.github.com/repos/${repoFullName}`;
+        const headers = {
+            Accept: 'application/vnd.github+json',
+            'User-Agent': 'doraemon-skills-market',
+        };
+        const token = String(process.env.GITHUB_TOKEN || '').trim();
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), GITHUB_API_TIMEOUT_MS);
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers,
+                signal: controller.signal,
+            });
+            if (!response.ok) {
+                this.ctx.logger.warn(
+                    `[skills] 获取 GitHub stars 失败: ${repoFullName}, status=${response.status}`
+                );
+                return null;
+            }
+            const data = await response.json();
+            const stars = Number(data.stargazers_count);
+            if (Number.isNaN(stars) || stars < 0) return null;
+            return stars;
+        } catch (error) {
+            this.ctx.logger.warn(
+                `[skills] 获取 GitHub stars 异常: ${repoFullName}, ${error.message}`
+            );
+            return null;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    extractSourceRepoFromImportSource(source = '') {
+        const raw = String(source || '').trim();
+        if (!raw) return '';
+
+        // 支持 GitHub tree URL：/owner/repo/tree/branch/path
+        const treeMatch = raw.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/[^/]+\/?.*$/i);
+        if (treeMatch) {
+            return `https://github.com/${treeMatch[1]}/${treeMatch[2]}.git`;
+        }
+
+        const repoMatch = raw.match(/^https?:\/\/github\.com\/([^/]+)\/([^/#?]+)/i);
+        if (repoMatch) {
+            return `https://github.com/${repoMatch[1]}/${repoMatch[2].replace(/\.git$/i, '')}.git`;
+        }
+
+        return '';
     }
 
     runCommand(command, args = [], timeout = IMPORT_TIMEOUT_MS) {
