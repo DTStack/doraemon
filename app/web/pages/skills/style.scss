@@ -26,6 +26,12 @@
         .keyword-search {
             width: 620px;
             max-width: 100%;
+            .ant-input-group > .ant-input-affix-wrapper:not(:last-child) {
+                padding-left: 14px;
+            }
+            .ant-input-group > .ant-input-affix-wrapper:not(:last-child) .ant-input {
+                padding-left: 0;
+            }
         }
         .import-btn {
             min-width: 100px;
