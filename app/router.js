@@ -153,6 +153,7 @@ module.exports = (app) => {
     app.get('/api/skills/detail', app.controller.skills.getSkillDetail);
     app.get('/api/skills/related', app.controller.skills.getRelatedSkills);
     app.get('/api/skills/file-content', app.controller.skills.getSkillFileContent);
+    app.get('/api/skills/download', app.controller.skills.downloadSkillArchive);
 
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
     // 暂时close Terminal相关功能

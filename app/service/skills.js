@@ -1,4 +1,5 @@
 const Service = require('egg').Service;
+const AdmZip = require('adm-zip');
 const fs = require('fs');
 const path = require('path');
 
@@ -367,6 +368,25 @@ class SkillsService extends Service {
         };
     }
 
+    async getSkillArchive(slug) {
+        await this.ensureSkillCache();
+        const skill = this.getSkillBySlug(slug);
+        const files = this.collectSkillFiles(skill.sourcePath);
+        const zip = new AdmZip();
+        const rootFolder = this.sanitizeFileName(skill.name || skill.slug || 'skill');
+
+        files.forEach((relativePath) => {
+            const absolutePath = path.resolve(skill.sourcePath, relativePath);
+            const content = fs.readFileSync(absolutePath);
+            zip.addFile(path.posix.join(rootFolder, relativePath), content);
+        });
+
+        return {
+            fileName: `${rootFolder}.zip`,
+            content: zip.toBuffer(),
+        };
+    }
+
     listSkillFiles(skillDir) {
         const files = [];
         const stack = [skillDir];
@@ -391,6 +411,35 @@ class SkillsService extends Service {
             });
 
             if (files.length >= MAX_FILE_LIST_COUNT) break;
+        }
+
+        return files.sort();
+    }
+
+    collectSkillFiles(skillDir, maxCount = 2000) {
+        const files = [];
+        const stack = [skillDir];
+        while (stack.length > 0) {
+            const currentDir = stack.pop();
+            let entries = [];
+            try {
+                entries = fs.readdirSync(currentDir, { withFileTypes: true });
+            } catch (error) {
+                continue;
+            }
+
+            entries.forEach((entry) => {
+                if (entry.name === '.git' || entry.name === 'node_modules') return;
+                const fullPath = path.join(currentDir, entry.name);
+                if (entry.isDirectory()) {
+                    stack.push(fullPath);
+                    return;
+                }
+                if (!entry.isFile()) return;
+                files.push(path.relative(skillDir, fullPath).split(path.sep).join('/'));
+            });
+
+            if (files.length >= maxCount) break;
         }
 
         return files.sort();
@@ -434,6 +483,14 @@ class SkillsService extends Service {
             if (buffer[i] === 0) return true;
         }
         return false;
+    }
+
+    sanitizeFileName(fileName) {
+        return String(fileName || 'skill')
+            .trim()
+            .replace(/[^a-zA-Z0-9._-]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .toLowerCase();
     }
 
     async getRelatedSkills(slug, limit = 6) {

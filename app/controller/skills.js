@@ -28,6 +28,15 @@ class SkillsController extends Controller {
         const data = await ctx.service.skills.getSkillFileContent(slug, filePath);
         ctx.body = app.utils.response(true, data);
     }
+
+    async downloadSkillArchive() {
+        const { ctx } = this;
+        const { slug } = ctx.query;
+        const { fileName, content } = await ctx.service.skills.getSkillArchive(slug);
+        ctx.set('Content-Type', 'application/zip');
+        ctx.set('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+        ctx.body = content;
+    }
 }
 
 module.exports = SkillsController;
