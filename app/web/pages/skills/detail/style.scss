@@ -45,20 +45,31 @@
     .markdown-file-viewer {
         .frontmatter-table-wrap {
             margin-bottom: 16px;
-            border: 1px solid #F1DFD7;
-            border-radius: 8px;
+            border: 1px solid #E5EDF6;
+            border-radius: 10px;
             overflow: hidden;
-            background: #FEFAF8;
+            background: #FFF;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
         }
         .frontmatter-table {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
+            position: relative;
+            &::before {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #2F7BFF 0%, #56A1FF 100%);
+            }
             th,
             td {
-                padding: 14px 16px;
+                padding: 14px 18px;
                 vertical-align: top;
-                border-bottom: 1px solid #F1DFD7;
+                border-bottom: 1px solid #EEF3F8;
             }
             tr:last-child {
                 th,
@@ -67,18 +78,20 @@
                 }
             }
             th {
-                width: 180px;
-                color: #C56F4E;
-                font-size: 18px;
+                width: 176px;
+                color: #2D4A6A;
+                font-size: 15px;
                 font-weight: 600;
                 text-align: left;
-                background: rgba(230, 200, 186, 0.16);
+                background: linear-gradient(180deg, #F7FAFF 0%, #F2F7FF 100%);
+                border-right: 1px solid #E8EEF7;
             }
             td {
                 font-size: 16px;
-                color: #2A3441;
-                line-height: 1.75;
+                color: #344054;
+                line-height: 1.7;
                 word-break: break-word;
+                background: #FFF;
             }
             .frontmatter-code {
                 margin: 0;
@@ -86,6 +99,11 @@
                 line-height: 1.55;
                 white-space: pre-wrap;
                 word-break: break-word;
+                color: #1F2D3D;
+                background: #F7FAFC;
+                border: 1px solid #E4EAF1;
+                border-radius: 8px;
+                padding: 10px 12px;
             }
         }
     }
