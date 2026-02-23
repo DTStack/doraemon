@@ -8,6 +8,18 @@ const CACHE_TTL_MS = 60 * 1000;
 const MAX_FILE_LIST_COUNT = 300;
 const MAX_FILE_CONTENT_SIZE = 2 * 1024 * 1024;
 const IMPORT_TIMEOUT_MS = 60 * 1000;
+const MAX_PLATFORM_TAGS = 5;
+const MAX_TAG_LENGTH = 20;
+const SKILL_CATEGORY_OPTIONS = [
+    '通用',
+    '前端',
+    '后端',
+    '数据与AI',
+    '运维与系统',
+    '工程效率',
+    '安全',
+    '其他',
+];
 
 const EXTENSION_LANGUAGE_MAP = {
     '.md': 'markdown',
@@ -52,6 +64,10 @@ class SkillsService extends Service {
         this.skillSourceCache = {};
     }
 
+    getSkillCategoryOptions() {
+        return [ ...SKILL_CATEGORY_OPTIONS ];
+    }
+
     getSkillRootDirs() {
         const homeDir = process.env.HOME || '';
         const codexHome = process.env.CODEX_HOME || path.join(homeDir, '.codex');
@@ -91,7 +107,7 @@ class SkillsService extends Service {
             });
         });
 
-        const categories = Array.from(new Set(skills.map((item) => item.category))).sort();
+        const categories = this.getSkillCategoryOptions();
         this.skillCache = {
             loadedAt: Date.now(),
             skills,
@@ -159,7 +175,9 @@ class SkillsService extends Service {
 
         const name = frontmatter.name || path.basename(skillDir);
         const description = frontmatter.description || this.extractDescription(content);
-        const tags = this.parseArrayLike(frontmatter.tags);
+        const categoryByPath = this.getCategoryFromRelativePath(relativeDir);
+        const category = this.normalizeCategory(metaJson.category || categoryByPath);
+        const tags = this.normalizePlatformTags(metaJson.platformTags || metaJson.tags);
         const allowedTools = this.parseArrayLike(frontmatter['allowed-tools']);
         const stars = Number(metaJson.stars || metaJson.star || metaJson.github_stars || 0);
         const skillDirName = path.basename(skillDir);
@@ -178,7 +196,7 @@ class SkillsService extends Service {
             slug,
             name,
             description,
-            category: this.getCategoryFromRelativePath(relativeDir),
+            category,
             tags,
             allowedTools,
             stars: Number.isNaN(stars) ? 0 : stars,
@@ -253,6 +271,24 @@ class SkillsService extends Service {
         if (parts.length === 0) return '未分类';
         if (parts.length === 1) return '通用';
         return parts[0];
+    }
+
+    normalizeCategory(rawCategory) {
+        const category = String(rawCategory || '').trim();
+        if (!category) return '通用';
+        if (SKILL_CATEGORY_OPTIONS.includes(category)) {
+            return category;
+        }
+        return '其他';
+    }
+
+    normalizePlatformTags(rawTags) {
+        const values = this.parseArrayLike(rawTags)
+            .map((item) => String(item || '').trim())
+            .map((item) => item.replace(/\s+/g, ' '))
+            .filter(Boolean)
+            .map((item) => item.slice(0, MAX_TAG_LENGTH));
+        return Array.from(new Set(values)).slice(0, MAX_PLATFORM_TAGS);
     }
 
     extractSourceRepo(packageJson = {}) {
@@ -523,7 +559,8 @@ class SkillsService extends Service {
             .sort((a, b) => b._score - a._score || b.stars - a.stars)
             .slice(0, parseInt(limit, 10) || 6)
             .map((item) => {
-                const { _score, ...rest } = item;
+                const rest = { ...item };
+                delete rest._score;
                 return rest;
             });
 
@@ -533,6 +570,8 @@ class SkillsService extends Service {
     async importSkill(params = {}) {
         const source = String(params.source || '').trim();
         const skillName = String(params.skillName || '').trim();
+        const category = this.normalizeCategory(params.category);
+        const tags = this.normalizePlatformTags(params.tags);
         if (!source) {
             this.ctx.throw(400, '缺少导入来源地址');
         }
@@ -562,9 +601,20 @@ class SkillsService extends Service {
                 sourcePath: item.sourcePath,
             }));
 
+        if (importedSkills.length > 0) {
+            this.persistSkillMeta(importedSkills, {
+                category,
+                tags,
+            });
+            this.skillCache = null;
+            await this.ensureSkillCache();
+        }
+
         return {
             source,
             skillName,
+            category,
+            tags,
             importedCount: importedSkills.length,
             importedSkills,
             command: `npx ${args.join(' ')}`,
@@ -573,6 +623,32 @@ class SkillsService extends Service {
                 stderr: this.trimCommandOutput(commandResult.stderr),
             },
         };
+    }
+
+    persistSkillMeta(skills = [], meta = {}) {
+        const nextCategory = this.normalizeCategory(meta.category);
+        const nextTags = this.normalizePlatformTags(meta.tags);
+        skills.forEach((item) => {
+            const skillDir = item.sourcePath;
+            if (!skillDir || !fs.existsSync(skillDir)) return;
+            const metaFilePath = path.join(skillDir, '_meta.json');
+            let currentMeta = {};
+            if (fs.existsSync(metaFilePath)) {
+                try {
+                    currentMeta = JSON.parse(fs.readFileSync(metaFilePath, 'utf8'));
+                } catch (error) {
+                    currentMeta = {};
+                }
+            }
+
+            const nextMeta = {
+                ...currentMeta,
+                category: nextCategory,
+                platformTags: nextTags,
+                tags: nextTags,
+            };
+            fs.writeFileSync(metaFilePath, `${JSON.stringify(nextMeta, null, 2)}\n`, 'utf8');
+        });
     }
 
     runCommand(command, args = [], timeout = IMPORT_TIMEOUT_MS) {
