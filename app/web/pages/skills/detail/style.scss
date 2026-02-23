@@ -1,79 +1,89 @@
 .page-skill-detail {
     padding: 20px 24px;
-
     &.loading-wrap {
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 420px;
     }
-
     .detail-header {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
         gap: 14px;
         margin-bottom: 16px;
-
         .back-btn {
             margin-top: 4px;
         }
-
         .title-group {
             flex: 1;
             min-width: 0;
         }
     }
-
     .meta-card {
         margin-bottom: 16px;
-
         .tags-wrap {
             margin-top: 12px;
         }
     }
-
     .detail-main-row {
         margin-bottom: 16px;
     }
-
     .file-tree-card {
-        height: 100%;
-        min-height: 560px;
-
-        .ant-card-body {
-            max-height: 500px;
-            overflow: auto;
-        }
-
+        margin-bottom: 16px;
         .ant-tree {
             padding: 4px 8px 8px;
         }
     }
-
     .file-viewer-card {
         min-height: 560px;
-
         .ant-card-body {
-            max-height: 500px;
+            max-height: 640px;
             overflow: auto;
         }
     }
-
     .file-viewer-loading {
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 420px;
     }
-
+    .action-card {
+        margin-bottom: 16px;
+        &:last-child {
+            margin-bottom: 0;
+        }
+        .runtime-switch {
+            margin-bottom: 12px;
+        }
+        .download-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+    }
+    .command-block {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        border: 1px solid #E5E7EB;
+        background: #F8FAFC;
+        code {
+            flex: 1;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #1F2D3D;
+        }
+    }
     .related-card-list {
         .related-item-card {
             height: 100%;
-
             .related-title {
                 margin-bottom: 8px;
-                color: #1f2d3d;
+                color: #1F2D3D;
                 font-size: 16px;
                 font-weight: 600;
             }

@@ -3,15 +3,22 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import {
     ArrowLeftOutlined,
+    CopyOutlined,
+    DownloadOutlined,
     FolderOpenOutlined,
+    HeartFilled,
+    HeartOutlined,
+    LinkOutlined,
     ReadOutlined,
+    ShareAltOutlined,
     StarOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Col, Empty, Row, Space, Spin, Tag, Tree, Typography } from 'antd';
+import { Button, Card, Col, Empty, Radio, Row, Space, Spin, Tag, Tree, Typography } from 'antd';
 import type { DataNode } from 'antd/lib/tree';
 
 import { API } from '@/api';
 import MarkdownRenderer from '@/components/markdownRenderer';
+import { copyToClipboard } from '@/utils/copyUtils';
 import { SkillDetail as SkillDetailType, SkillFileContent, SkillItem } from '../types';
 import './style.scss';
 
@@ -19,8 +26,9 @@ const { Title, Text, Paragraph } = Typography;
 
 interface SkillTreeNode extends DataNode {
     children?: SkillTreeNode[];
-    isFile?: boolean;
 }
+
+type InstallRuntime = 'npx' | 'bunx' | 'pnpm';
 
 const formatFileSize = (size = 0) => {
     if (size < 1024) return `${size} B`;
@@ -60,7 +68,6 @@ const buildFileTreeData = (fileList: string[]): SkillTreeNode[] => {
                     key: currentPath,
                     title: segment,
                     isLeaf,
-                    isFile: isLeaf,
                     children: isLeaf ? undefined : [],
                 };
                 currentNodes.push(node);
@@ -77,6 +84,43 @@ const buildFileTreeData = (fileList: string[]): SkillTreeNode[] => {
     return treeData;
 };
 
+const normalizeSourceUrl = (sourceRepo: string) => {
+    if (!sourceRepo) return '';
+    const normalized = sourceRepo.replace(/^git\+/, '').trim();
+    const sshMatch = normalized.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
+    if (sshMatch) {
+        return `https://${sshMatch[1]}/${sshMatch[2]}`;
+    }
+    if (/^https?:\/\//.test(normalized)) {
+        return normalized.replace(/\.git$/, '');
+    }
+    return '';
+};
+
+const getInstallArgs = (detail: SkillDetailType) => {
+    const installCommand = detail.installCommand || '';
+    const addPattern = /(?:npx|bunx|pnpm\s+dlx)\s+skills\s+add\s+(.+)$/i;
+    const addMatch = installCommand.match(addPattern);
+    if (addMatch && addMatch[1]) {
+        return addMatch[1].trim();
+    }
+    if (detail.sourceRepo) {
+        return `${detail.sourceRepo} --skill "${detail.name}"`;
+    }
+    return '';
+};
+
+const getInstallCommandByRuntime = (
+    runtime: InstallRuntime,
+    detail: SkillDetailType,
+    installArgs: string
+) => {
+    if (!installArgs) return detail.installCommand || '';
+    if (runtime === 'bunx') return `bunx skills add ${installArgs}`;
+    if (runtime === 'pnpm') return `pnpm dlx skills add ${installArgs}`;
+    return `npx skills add ${installArgs}`;
+};
+
 const SkillDetail: React.FC<any> = ({ history, match }) => {
     const { slug } = match.params;
     const [loading, setLoading] = useState(true);
@@ -85,8 +129,30 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
     const [related, setRelated] = useState<SkillItem[]>([]);
     const [selectedFilePath, setSelectedFilePath] = useState('');
     const [fileContent, setFileContent] = useState<SkillFileContent | null>(null);
+    const [installRuntime, setInstallRuntime] = useState<InstallRuntime>('npx');
+    const [favorited, setFavorited] = useState(false);
 
     const fileTreeData = useMemo(() => buildFileTreeData(detail?.fileList || []), [detail?.fileList]);
+    const sourceUrl = useMemo(() => normalizeSourceUrl(detail?.sourceRepo || ''), [detail?.sourceRepo]);
+    const installArgs = useMemo(() => (detail ? getInstallArgs(detail) : ''), [detail]);
+    const installCommand = useMemo(() => {
+        if (!detail) return '';
+        return getInstallCommandByRuntime(installRuntime, detail, installArgs);
+    }, [detail, installArgs, installRuntime]);
+
+    const downloadPath = useMemo(() => `/api/skills/download?slug=${encodeURIComponent(slug)}`, [slug]);
+    const archiveFileName = useMemo(() => {
+        const rawName = detail?.name || slug || 'skill';
+        const normalized = rawName
+            .toLowerCase()
+            .replace(/[^a-z0-9._-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        return `${normalized || 'skill'}.zip`;
+    }, [detail?.name, slug]);
+    const wgetCommand = useMemo(() => {
+        if (typeof window === 'undefined') return '';
+        return `wget "${window.location.origin}${downloadPath}" -O ${archiveFileName}`;
+    }, [archiveFileName, downloadPath]);
 
     useEffect(() => {
         let cancelled = false;
@@ -197,7 +263,7 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
             <SyntaxHighlighter
                 style={atomOneLight}
                 language={fileContent.language || 'text'}
-                customStyle={{ margin: 0, borderRadius: 6, minHeight: 420 }}
+                customStyle={{ margin: 0, borderRadius: 6, minHeight: 460 }}
                 showLineNumbers
             >
                 {fileContent.content || ''}
@@ -258,7 +324,7 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
             </Card>
 
             <Row gutter={[16, 16]} className="detail-main-row">
-                <Col xs={24} md={8} lg={7}>
+                <Col xs={24} xl={16}>
                     <Card
                         className="file-tree-card"
                         title={
@@ -267,7 +333,7 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
                                 文件浏览
                             </Space>
                         }
-                        bodyStyle={{ padding: '8px 0' }}
+                        bodyStyle={{ padding: '8px 0', maxHeight: 280, overflow: 'auto' }}
                     >
                         {fileTreeData.length === 0 ? (
                             <Empty description="暂无文件" />
@@ -286,9 +352,7 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
                             />
                         )}
                     </Card>
-                </Col>
 
-                <Col xs={24} md={16} lg={17}>
                     <Card
                         className="file-viewer-card"
                         title={
@@ -307,6 +371,90 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
                         }
                     >
                         {renderFileViewer()}
+                    </Card>
+                </Col>
+
+                <Col xs={24} xl={8}>
+                    <Card className="action-card" title="$ install --global" extra={<Text>skills.sh</Text>}>
+                        <Radio.Group
+                            value={installRuntime}
+                            onChange={(event) => setInstallRuntime(event.target.value)}
+                            buttonStyle="solid"
+                            className="runtime-switch"
+                        >
+                            <Radio.Button value="npx">npx</Radio.Button>
+                            <Radio.Button value="bunx">bunx</Radio.Button>
+                            <Radio.Button value="pnpm">pnpm</Radio.Button>
+                        </Radio.Group>
+                        <div className="command-block">
+                            <code>{installCommand || '暂无可用安装命令'}</code>
+                            <Button
+                                type="text"
+                                icon={<CopyOutlined />}
+                                onClick={() =>
+                                    copyToClipboard(installCommand || '', '安装命令已复制到剪贴板')
+                                }
+                                disabled={!installCommand}
+                            />
+                        </div>
+                    </Card>
+
+                    <Card className="action-card" title="$ download --local" extra={<Text>man</Text>}>
+                        <div className="download-buttons">
+                            <Button
+                                type="primary"
+                                block
+                                icon={<DownloadOutlined />}
+                                onClick={() => window.open(downloadPath, '_blank')}
+                            >
+                                下载 skill.zip
+                            </Button>
+                            <div className="command-block">
+                                <code>{wgetCommand || `wget "${downloadPath}" -O ${archiveFileName}`}</code>
+                                <Button
+                                    type="text"
+                                    icon={<CopyOutlined />}
+                                    onClick={() =>
+                                        copyToClipboard(
+                                            wgetCommand || `wget "${downloadPath}" -O ${archiveFileName}`,
+                                            'wget 命令已复制到剪贴板'
+                                        )
+                                    }
+                                />
+                            </div>
+                            <Text type="secondary">
+                                下载完整技能目录，包含 SKILL.md 与所有相关文件
+                            </Text>
+                        </div>
+                    </Card>
+
+                    <Card className="action-card" title="源码与分享">
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                            <Button
+                                block
+                                icon={<LinkOutlined />}
+                                onClick={() => window.open(sourceUrl, '_blank')}
+                                disabled={!sourceUrl}
+                            >
+                                源码跳转
+                            </Button>
+                            <Button
+                                block
+                                icon={favorited ? <HeartFilled /> : <HeartOutlined />}
+                                onClick={() => setFavorited(!favorited)}
+                            >
+                                {favorited ? '已收藏' : '收藏'}
+                            </Button>
+                            <Button
+                                block
+                                icon={<ShareAltOutlined />}
+                                onClick={() =>
+                                    copyToClipboard(window.location.href, '详情页链接已复制到剪贴板')
+                                }
+                            >
+                                分享
+                            </Button>
+                        </Space>
                     </Card>
                 </Col>
             </Row>

@@ -361,4 +361,9 @@ export default {
         method: 'get',
         url: '/api/skills/file-content',
     },
+    // 下载 Skill 目录压缩包
+    downloadSkillArchive: {
+        method: 'get',
+        url: '/api/skills/download',
+    },
 };
