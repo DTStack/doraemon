@@ -49,6 +49,7 @@ class SkillsService extends Service {
     constructor(ctx) {
         super(ctx);
         this.skillCache = null;
+        this.skillSourceCache = {};
     }
 
     getSkillRootDirs() {
@@ -75,9 +76,10 @@ class SkillsService extends Service {
         rootDirs.forEach((rootDir) => {
             if (!fs.existsSync(rootDir)) return;
             const skillFiles = this.findSkillFiles(rootDir);
+            const sourceMap = this.getSkillSourceMapByRoot(rootDir);
             skillFiles.forEach((skillFilePath) => {
                 try {
-                    const skill = this.parseSkillMeta(skillFilePath, rootDir);
+                    const skill = this.parseSkillMeta(skillFilePath, rootDir, sourceMap);
                     if (skill) {
                         skills.push(skill);
                     }
@@ -127,7 +129,7 @@ class SkillsService extends Service {
         return result;
     }
 
-    parseSkillMeta(skillFilePath, rootDir) {
+    parseSkillMeta(skillFilePath, rootDir, sourceMap = {}) {
         const content = fs.readFileSync(skillFilePath, 'utf8');
         const stat = fs.statSync(skillFilePath);
         const skillDir = path.dirname(skillFilePath);
@@ -160,9 +162,14 @@ class SkillsService extends Service {
         const tags = this.parseArrayLike(frontmatter.tags);
         const allowedTools = this.parseArrayLike(frontmatter['allowed-tools']);
         const stars = Number(metaJson.stars || metaJson.star || metaJson.github_stars || 0);
+        const skillDirName = path.basename(skillDir);
+        const sourceRepo =
+            this.extractSourceRepo(packageJson) ||
+            String(metaJson.sourceRepo || '').trim() ||
+            String(sourceMap[skillDirName] || sourceMap[name] || '').trim();
 
         const installCommand = this.getInstallCommand({
-            sourceRepo: this.extractSourceRepo(packageJson),
+            sourceRepo,
             name,
             skillDir,
         });
@@ -176,7 +183,7 @@ class SkillsService extends Service {
             allowedTools,
             stars: Number.isNaN(stars) ? 0 : stars,
             updatedAt: stat.mtime.toISOString(),
-            sourceRepo: this.extractSourceRepo(packageJson),
+            sourceRepo,
             sourcePath: skillDir,
             skillFilePath,
             installCommand,
@@ -620,6 +627,33 @@ class SkillsService extends Service {
         const maxLength = 3000;
         if (value.length <= maxLength) return value;
         return value.slice(value.length - maxLength);
+    }
+
+    getSkillSourceMapByRoot(rootDir) {
+        if (this.skillSourceCache[rootDir]) {
+            return this.skillSourceCache[rootDir];
+        }
+
+        const sourceMap = {};
+        const parentDir = path.dirname(rootDir);
+        const lockFilePath = path.join(parentDir, '.skill-lock.json');
+        if (fs.existsSync(lockFilePath)) {
+            try {
+                const lockData = JSON.parse(fs.readFileSync(lockFilePath, 'utf8'));
+                const skills = lockData && lockData.skills ? lockData.skills : {};
+                Object.keys(skills).forEach((skillName) => {
+                    const sourceUrl = skills[skillName] && skills[skillName].sourceUrl;
+                    if (sourceUrl) {
+                        sourceMap[skillName] = String(sourceUrl);
+                    }
+                });
+            } catch (error) {
+                this.ctx.logger.warn(`[skills] 读取锁文件失败: ${lockFilePath}, ${error.message}`);
+            }
+        }
+
+        this.skillSourceCache[rootDir] = sourceMap;
+        return sourceMap;
     }
 }
 
