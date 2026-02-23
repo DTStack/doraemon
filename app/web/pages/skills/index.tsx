@@ -34,6 +34,16 @@ import './style.scss';
 const { Search } = Input;
 const { Option } = Select;
 const { Paragraph, Text } = Typography;
+const FIXED_CATEGORY_OPTIONS = [
+    '通用',
+    '前端',
+    '后端',
+    '数据与AI',
+    '运维与系统',
+    '工程效率',
+    '安全',
+    '其他',
+];
 const INITIAL_QUERY = {
     keyword: '',
     sortBy: 'stars',
@@ -87,6 +97,10 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
 
     const openImportModal = () => {
         setImportVisible(true);
+        importForm.setFieldsValue({
+            category: '通用',
+            tags: [],
+        });
     };
 
     const closeImportModal = () => {
@@ -286,6 +300,43 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     </Form.Item>
                     <Form.Item name="skillName" label="Skill 名称（可选）">
                         <Input placeholder="可选，等价于 --skill <name>" />
+                    </Form.Item>
+                    <Form.Item
+                        name="category"
+                        label="分类"
+                        initialValue="通用"
+                        rules={[{ required: true, message: '请选择分类' }]}
+                    >
+                        <Select placeholder="请选择分类">
+                            {FIXED_CATEGORY_OPTIONS.map((item) => (
+                                <Option key={item} value={item}>
+                                    {item}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name="tags"
+                        label="标签（可选）"
+                        extra="最多 5 个标签，可自定义输入，回车或逗号分隔"
+                        rules={[
+                            {
+                                validator: (_, value = []) => {
+                                    if (!Array.isArray(value)) return Promise.resolve();
+                                    if (value.length > 5) {
+                                        return Promise.reject(new Error('标签最多 5 个'));
+                                    }
+                                    return Promise.resolve();
+                                },
+                            },
+                        ]}
+                    >
+                        <Select
+                            mode="tags"
+                            tokenSeparators={[ ',', '，' ]}
+                            placeholder="例如：邮件, 效率, 命令行"
+                            maxTagCount={5}
+                        />
                     </Form.Item>
                 </Form>
                 <Text type="secondary">
