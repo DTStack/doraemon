@@ -129,7 +129,7 @@
     }
     .command-block {
         display: flex;
-        align-items: flex-start;
+        align-items: stretch;
         justify-content: space-between;
         gap: 8px;
         padding: 10px 12px;
@@ -141,6 +141,26 @@
             white-space: pre-wrap;
             word-break: break-all;
             color: #1F2D3D;
+        }
+        .command-copy-btn {
+            flex: 0 0 auto;
+            align-self: center;
+            min-width: 40px;
+            height: 40px;
+            border: 1px solid #D7E1EC;
+            border-radius: 8px;
+            background: #FFF;
+            color: #1F2D3D;
+            &:hover,
+            &:focus {
+                color: #2F7BFF;
+                border-color: #2F7BFF;
+                background: #F4F9FF;
+            }
+            &[disabled] {
+                border-color: #E5E7EB;
+                background: #F8FAFC;
+            }
         }
     }
     .related-card-list {

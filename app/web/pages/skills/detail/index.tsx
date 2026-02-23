@@ -6,8 +6,6 @@ import {
     CopyOutlined,
     DownloadOutlined,
     FolderOpenOutlined,
-    HeartFilled,
-    HeartOutlined,
     LinkOutlined,
     ReadOutlined,
     ShareAltOutlined,
@@ -193,7 +191,6 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
     const [selectedFilePath, setSelectedFilePath] = useState('');
     const [fileContent, setFileContent] = useState<SkillFileContent | null>(null);
     const [installRuntime, setInstallRuntime] = useState<InstallRuntime>('npx');
-    const [favorited, setFavorited] = useState(false);
 
     const fileTreeData = useMemo(() => buildFileTreeData(detail?.fileList || []), [detail?.fileList]);
     const sourceUrl = useMemo(() => normalizeSourceUrl(detail?.sourceRepo || ''), [detail?.sourceRepo]);
@@ -488,6 +485,7 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
                             <code>{installCommand || '暂无可用安装命令'}</code>
                             <Button
                                 type="text"
+                                className="command-copy-btn"
                                 icon={<CopyOutlined />}
                                 onClick={() =>
                                     copyToClipboard(installCommand || '', '安装命令已复制到剪贴板')
@@ -511,6 +509,7 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
                                 <code>{wgetCommand || `wget "${downloadPath}" -O ${archiveFileName}`}</code>
                                 <Button
                                     type="text"
+                                    className="command-copy-btn"
                                     icon={<CopyOutlined />}
                                     onClick={() =>
                                         copyToClipboard(
@@ -535,13 +534,6 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
                                 disabled={!sourceUrl}
                             >
                                 源码跳转
-                            </Button>
-                            <Button
-                                block
-                                icon={favorited ? <HeartFilled /> : <HeartOutlined />}
-                                onClick={() => setFavorited(!favorited)}
-                            >
-                                {favorited ? '已收藏' : '收藏'}
                             </Button>
                             <Button
                                 block
