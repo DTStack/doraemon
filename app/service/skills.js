@@ -584,6 +584,9 @@ class SkillsService extends Service {
         const args = [ '-y', 'skills@latest', 'add', source, '-g', '--agent', 'codex', '--copy', '--yes' ];
         if (skillName) {
             args.push('--skill', skillName);
+        } else {
+            // 未指定 skillName 时显式导入源中的全部 skills，避免依赖 CLI 默认选择行为
+            args.push('--skill', '*');
         }
 
         let commandResult = null;
