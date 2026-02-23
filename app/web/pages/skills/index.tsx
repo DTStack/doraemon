@@ -208,7 +208,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                                                 <StarOutlined /> {skill.stars || 0}
                                             </span>
                                         </div>
-                                        <Paragraph className="skill-desc" ellipsis={{ rows: 3 }}>
+                                        <Paragraph className="skill-desc">
                                             {skill.description || '暂无描述'}
                                         </Paragraph>
                                         <div className="meta-row">
