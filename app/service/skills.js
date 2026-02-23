@@ -608,6 +608,7 @@ class SkillsService extends Service {
                 sourcePath: item.sourcePath,
             }));
 
+        let refreshedCount = 0;
         if (importedSkills.length > 0) {
             const starsBySlug = await this.fetchStarsForImportedSkills(importedSkills);
             this.persistSkillMeta(importedSkills, {
@@ -615,9 +616,37 @@ class SkillsService extends Service {
                 tags,
                 starsBySlug,
             });
+            refreshedCount = importedSkills.length;
             this.skillCache = null;
             this.skillSourceCache = {};
             await this.ensureSkillCache();
+        } else {
+            // 重复导入同仓库时也刷新一次 stars，避免历史 0 值无法更新。
+            const sourceRepoFullName = this.extractGitHubRepoFullName(sourceRepoFallback);
+            if (sourceRepoFullName) {
+                const existingRepoSkills = this.skillCache.skills
+                    .filter(
+                        (item) =>
+                            this.extractGitHubRepoFullName(item.sourceRepo) === sourceRepoFullName
+                    )
+                    .map((item) => ({
+                        slug: item.slug,
+                        name: item.name,
+                        sourceRepo: item.sourceRepo,
+                        sourcePath: item.sourcePath,
+                    }));
+
+                if (existingRepoSkills.length > 0) {
+                    const starsBySlug = await this.fetchStarsForImportedSkills(existingRepoSkills);
+                    this.persistSkillMeta(existingRepoSkills, {
+                        starsBySlug,
+                    });
+                    refreshedCount = existingRepoSkills.length;
+                    this.skillCache = null;
+                    this.skillSourceCache = {};
+                    await this.ensureSkillCache();
+                }
+            }
         }
 
         return {
@@ -626,6 +655,7 @@ class SkillsService extends Service {
             category,
             tags,
             importedCount: importedSkills.length,
+            refreshedCount,
             importedSkills,
             command: `npx ${args.join(' ')}`,
             logs: {
@@ -636,8 +666,10 @@ class SkillsService extends Service {
     }
 
     persistSkillMeta(skills = [], meta = {}) {
-        const nextCategory = this.normalizeCategory(meta.category);
-        const nextTags = this.normalizePlatformTags(meta.tags);
+        const hasCategory = Object.prototype.hasOwnProperty.call(meta, 'category');
+        const hasTags = Object.prototype.hasOwnProperty.call(meta, 'tags');
+        const nextCategory = hasCategory ? this.normalizeCategory(meta.category) : '';
+        const nextTags = hasTags ? this.normalizePlatformTags(meta.tags) : [];
         const starsBySlug = meta.starsBySlug || {};
         skills.forEach((item) => {
             const skillDir = item.sourcePath;
@@ -654,10 +686,14 @@ class SkillsService extends Service {
 
             const nextMeta = {
                 ...currentMeta,
-                category: nextCategory,
-                platformTags: nextTags,
-                tags: nextTags,
             };
+            if (hasCategory) {
+                nextMeta.category = nextCategory;
+            }
+            if (hasTags) {
+                nextMeta.platformTags = nextTags;
+                nextMeta.tags = nextTags;
+            }
             const stars = starsBySlug[item.slug];
             if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) {
                 nextMeta.stars = stars;
@@ -714,6 +750,87 @@ class SkillsService extends Service {
         return '';
     }
 
+    parseCompactNumber(input) {
+        const raw = String(input || '')
+            .trim()
+            .replace(/,/g, '')
+            .toLowerCase();
+        if (!raw) return null;
+
+        const match = raw.match(/^(\d+(?:\.\d+)?)\s*([kmb])?$/i);
+        if (!match) return null;
+
+        const value = Number(match[1]);
+        if (!Number.isFinite(value)) return null;
+        const suffix = (match[2] || '').toLowerCase();
+        if (!suffix) return Math.round(value);
+        if (suffix === 'k') return Math.round(value * 1000);
+        if (suffix === 'm') return Math.round(value * 1000 * 1000);
+        if (suffix === 'b') return Math.round(value * 1000 * 1000 * 1000);
+        return null;
+    }
+
+    extractStarsFromGitHubHtml(html = '') {
+        const content = String(html || '');
+        if (!content) return null;
+
+        const titleMatch = content.match(/id="repo-stars-counter-star"[^>]*title="([^"]+)"/i);
+        if (titleMatch) {
+            const stars = this.parseCompactNumber(titleMatch[1]);
+            if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) return stars;
+        }
+
+        const ariaMatch = content.match(
+            /id="repo-stars-counter-star"[^>]*aria-label="([^"]+)"/i
+        );
+        if (ariaMatch) {
+            const numberLike = ariaMatch[1].match(/[\d,.]+\s*[kmb]?/i);
+            if (numberLike) {
+                const stars = this.parseCompactNumber(numberLike[0]);
+                if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) return stars;
+            }
+        }
+
+        const textMatch = content.match(/id="repo-stars-counter-star"[^>]*>([^<]+)</i);
+        if (textMatch) {
+            const stars = this.parseCompactNumber(textMatch[1]);
+            if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) return stars;
+        }
+
+        return null;
+    }
+
+    async fetchGitHubRepoStarsFromHtml(repoFullName) {
+        const url = `https://github.com/${repoFullName}`;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), GITHUB_API_TIMEOUT_MS);
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'doraemon-skills-market',
+                    Accept: 'text/html',
+                },
+                signal: controller.signal,
+            });
+            if (!response.ok) {
+                this.ctx.logger.warn(
+                    `[skills] HTML兜底获取 stars 失败: ${repoFullName}, status=${response.status}`
+                );
+                return null;
+            }
+            const html = await response.text();
+            return this.extractStarsFromGitHubHtml(html);
+        } catch (error) {
+            this.ctx.logger.warn(
+                `[skills] HTML兜底获取 stars 异常: ${repoFullName}, ${error.message}`
+            );
+            return null;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
     async fetchGitHubRepoStars(repoFullName) {
         if (!repoFullName) return null;
         const url = `https://api.github.com/repos/${repoFullName}`;
@@ -738,6 +855,10 @@ class SkillsService extends Service {
                 this.ctx.logger.warn(
                     `[skills] 获取 GitHub stars 失败: ${repoFullName}, status=${response.status}`
                 );
+                // GitHub API 限流时，尝试从仓库页面兜底解析 stars。
+                if (response.status === 403 || response.status === 429) {
+                    return await this.fetchGitHubRepoStarsFromHtml(repoFullName);
+                }
                 return null;
             }
             const data = await response.json();
