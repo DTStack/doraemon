@@ -21,6 +21,13 @@ class SkillsController extends Controller {
         const data = await ctx.service.skills.getRelatedSkills(slug, limit);
         ctx.body = app.utils.response(true, data);
     }
+
+    async getSkillFileContent() {
+        const { app, ctx } = this;
+        const { slug, path: filePath } = ctx.query;
+        const data = await ctx.service.skills.getSkillFileContent(slug, filePath);
+        ctx.body = app.utils.response(true, data);
+    }
 }
 
 module.exports = SkillsController;

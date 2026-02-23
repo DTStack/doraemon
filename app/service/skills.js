@@ -4,6 +4,43 @@ const path = require('path');
 
 const CACHE_TTL_MS = 60 * 1000;
 const MAX_FILE_LIST_COUNT = 300;
+const MAX_FILE_CONTENT_SIZE = 2 * 1024 * 1024;
+
+const EXTENSION_LANGUAGE_MAP = {
+    '.md': 'markdown',
+    '.markdown': 'markdown',
+    '.js': 'javascript',
+    '.mjs': 'javascript',
+    '.cjs': 'javascript',
+    '.jsx': 'javascript',
+    '.ts': 'typescript',
+    '.tsx': 'typescript',
+    '.json': 'json',
+    '.yml': 'yaml',
+    '.yaml': 'yaml',
+    '.html': 'html',
+    '.css': 'css',
+    '.scss': 'scss',
+    '.less': 'less',
+    '.sh': 'bash',
+    '.bash': 'bash',
+    '.zsh': 'bash',
+    '.py': 'python',
+    '.go': 'go',
+    '.java': 'java',
+    '.kt': 'kotlin',
+    '.rb': 'ruby',
+    '.php': 'php',
+    '.rs': 'rust',
+    '.swift': 'swift',
+    '.xml': 'xml',
+    '.sql': 'sql',
+    '.toml': 'toml',
+    '.ini': 'ini',
+    '.conf': 'ini',
+    '.txt': 'text',
+    '.log': 'text',
+};
 
 class SkillsService extends Service {
     constructor(ctx) {
@@ -278,10 +315,7 @@ class SkillsService extends Service {
 
     async getSkillDetail(slug) {
         await this.ensureSkillCache();
-        const skill = this.skillCache.skills.find((item) => item.slug === slug);
-        if (!skill) {
-            this.ctx.throw(404, '技能不存在');
-        }
+        const skill = this.getSkillBySlug(slug);
 
         const content = fs.readFileSync(skill.skillFilePath, 'utf8');
         const fileList = this.listSkillFiles(skill.sourcePath);
@@ -290,6 +324,46 @@ class SkillsService extends Service {
             ...skill,
             skillMd: content,
             fileList,
+        };
+    }
+
+    async getSkillFileContent(slug, filePath) {
+        await this.ensureSkillCache();
+        const skill = this.getSkillBySlug(slug);
+        const normalizedPath = this.normalizeRelativePath(filePath);
+        const rootPath = path.resolve(skill.sourcePath);
+        const targetPath = path.resolve(rootPath, normalizedPath);
+
+        if (!this.isPathInsideRoot(rootPath, targetPath)) {
+            this.ctx.throw(400, '非法文件路径');
+        }
+
+        if (!fs.existsSync(targetPath)) {
+            this.ctx.throw(404, '文件不存在');
+        }
+
+        const stat = fs.statSync(targetPath);
+        if (!stat.isFile()) {
+            this.ctx.throw(400, '仅支持读取文件内容');
+        }
+
+        if (stat.size > MAX_FILE_CONTENT_SIZE) {
+            this.ctx.throw(413, '文件过大，无法在线预览');
+        }
+
+        const fileBuffer = fs.readFileSync(targetPath);
+        const isBinary = this.isLikelyBinary(fileBuffer);
+        const extension = path.extname(normalizedPath).toLowerCase();
+
+        return {
+            slug: skill.slug,
+            path: normalizedPath,
+            language: EXTENSION_LANGUAGE_MAP[extension] || 'text',
+            size: stat.size,
+            readonly: true,
+            isBinary,
+            encoding: isBinary ? 'base64' : 'utf8',
+            content: isBinary ? fileBuffer.toString('base64') : fileBuffer.toString('utf8'),
         };
     }
 
@@ -320,6 +394,46 @@ class SkillsService extends Service {
         }
 
         return files.sort();
+    }
+
+    getSkillBySlug(slug) {
+        const skill = this.skillCache.skills.find((item) => item.slug === slug);
+        if (!skill) {
+            this.ctx.throw(404, '技能不存在');
+        }
+        return skill;
+    }
+
+    normalizeRelativePath(filePath) {
+        const value = String(filePath || '').trim();
+        if (!value) {
+            this.ctx.throw(400, '缺少文件路径');
+        }
+
+        const normalized = path
+            .normalize(value)
+            .replace(/\\/g, '/')
+            .replace(/^\/+/, '');
+
+        if (!normalized || normalized === '.' || normalized.startsWith('..')) {
+            this.ctx.throw(400, '非法文件路径');
+        }
+
+        return normalized;
+    }
+
+    isPathInsideRoot(rootPath, targetPath) {
+        if (targetPath === rootPath) return false;
+        return targetPath.startsWith(`${rootPath}${path.sep}`);
+    }
+
+    isLikelyBinary(buffer) {
+        if (!buffer || buffer.length === 0) return false;
+        const sampleLength = Math.min(buffer.length, 1024);
+        for (let i = 0; i < sampleLength; i += 1) {
+            if (buffer[i] === 0) return true;
+        }
+        return false;
     }
 
     async getRelatedSkills(slug, limit = 6) {
