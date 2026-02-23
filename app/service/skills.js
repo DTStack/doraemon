@@ -1,11 +1,13 @@
 const Service = require('egg').Service;
 const AdmZip = require('adm-zip');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 const CACHE_TTL_MS = 60 * 1000;
 const MAX_FILE_LIST_COUNT = 300;
 const MAX_FILE_CONTENT_SIZE = 2 * 1024 * 1024;
+const IMPORT_TIMEOUT_MS = 60 * 1000;
 
 const EXTENSION_LANGUAGE_MAP = {
     '.md': 'markdown',
@@ -519,6 +521,105 @@ class SkillsService extends Service {
             });
 
         return related;
+    }
+
+    async importSkill(params = {}) {
+        const source = String(params.source || '').trim();
+        const skillName = String(params.skillName || '').trim();
+        if (!source) {
+            this.ctx.throw(400, '缺少导入来源地址');
+        }
+
+        await this.ensureSkillCache();
+        const beforeSlugs = new Set(this.skillCache.skills.map((item) => item.slug));
+        const args = [ '-y', 'skills@latest', 'add', source, '-g', '--agent', 'codex', '--copy', '--yes' ];
+        if (skillName) {
+            args.push('--skill', skillName);
+        }
+
+        let commandResult = null;
+        try {
+            commandResult = await this.runCommand('npx', args, IMPORT_TIMEOUT_MS);
+        } catch (error) {
+            this.ctx.throw(500, `导入失败: ${error.message}`);
+        }
+
+        this.skillCache = null;
+        await this.ensureSkillCache();
+        const importedSkills = this.skillCache.skills
+            .filter((item) => !beforeSlugs.has(item.slug))
+            .map((item) => ({
+                slug: item.slug,
+                name: item.name,
+                sourceRepo: item.sourceRepo,
+                sourcePath: item.sourcePath,
+            }));
+
+        return {
+            source,
+            skillName,
+            importedCount: importedSkills.length,
+            importedSkills,
+            command: `npx ${args.join(' ')}`,
+            logs: {
+                stdout: this.trimCommandOutput(commandResult.stdout),
+                stderr: this.trimCommandOutput(commandResult.stderr),
+            },
+        };
+    }
+
+    runCommand(command, args = [], timeout = IMPORT_TIMEOUT_MS) {
+        return new Promise((resolve, reject) => {
+            const child = spawn(command, args, {
+                cwd: process.cwd(),
+                env: process.env,
+            });
+            let stdout = '';
+            let stderr = '';
+            let timedOut = false;
+
+            const timer = setTimeout(() => {
+                timedOut = true;
+                child.kill('SIGTERM');
+            }, timeout);
+
+            child.stdout.on('data', (chunk) => {
+                stdout += chunk.toString();
+            });
+
+            child.stderr.on('data', (chunk) => {
+                stderr += chunk.toString();
+            });
+
+            child.on('error', (error) => {
+                clearTimeout(timer);
+                reject(error);
+            });
+
+            child.on('close', (code) => {
+                clearTimeout(timer);
+                if (timedOut) {
+                    reject(new Error(`导入命令执行超时（${timeout}ms）`));
+                    return;
+                }
+
+                if (code !== 0) {
+                    const detail = this.trimCommandOutput(stderr || stdout);
+                    reject(new Error(detail || `命令退出码: ${code}`));
+                    return;
+                }
+
+                resolve({ stdout, stderr });
+            });
+        });
+    }
+
+    trimCommandOutput(content = '') {
+        const value = String(content || '').trim();
+        if (!value) return '';
+        const maxLength = 3000;
+        if (value.length <= maxLength) return value;
+        return value.slice(value.length - maxLength);
     }
 }
 

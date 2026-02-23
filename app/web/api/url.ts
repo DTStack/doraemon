@@ -366,4 +366,9 @@ export default {
         method: 'get',
         url: '/api/skills/download',
     },
+    // 导入 Skill
+    importSkill: {
+        method: 'post',
+        url: '/api/skills/import',
+    },
 };

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     CopyOutlined,
     EyeOutlined,
     FilterOutlined,
+    ImportOutlined,
     SearchOutlined,
     StarOutlined,
 } from '@ant-design/icons';
@@ -12,7 +13,10 @@ import {
     Col,
     Divider,
     Empty,
+    Form,
     Input,
+    message,
+    Modal,
     Pagination,
     Row,
     Select,
@@ -20,7 +24,6 @@ import {
     Spin,
     Tag,
     Typography,
-    message,
 } from 'antd';
 
 import { API } from '@/api';
@@ -31,21 +34,25 @@ import './style.scss';
 const { Search } = Input;
 const { Option } = Select;
 const { Paragraph, Text } = Typography;
+const INITIAL_QUERY = {
+    keyword: '',
+    sortBy: 'stars',
+    category: '',
+    pageNum: 1,
+    pageSize: 12,
+};
 
 const SkillsMarket: React.FC<any> = ({ history }) => {
     const [loading, setLoading] = useState(false);
     const [skills, setSkills] = useState<SkillItem[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
     const [total, setTotal] = useState(0);
-    const [query, setQuery] = useState({
-        keyword: '',
-        sortBy: 'stars',
-        category: '',
-        pageNum: 1,
-        pageSize: 12,
-    });
+    const [importVisible, setImportVisible] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const [importForm] = Form.useForm();
+    const [query, setQuery] = useState(INITIAL_QUERY);
 
-    const fetchSkills = async (nextQuery = query) => {
+    const fetchSkills = useCallback(async (nextQuery) => {
         setLoading(true);
         try {
             const response = await API.getSkillList(nextQuery);
@@ -63,20 +70,57 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchSkills(query);
-    }, []);
+    }, [fetchSkills, query]);
 
     const updateQueryAndFetch = (patch: Partial<typeof query>) => {
         const next = { ...query, ...patch };
         setQuery(next);
-        fetchSkills(next);
     };
 
     const handleOpenDetail = (slug: string) => {
         history.push(`/page/skills/${slug}`);
+    };
+
+    const openImportModal = () => {
+        setImportVisible(true);
+    };
+
+    const closeImportModal = () => {
+        if (importing) return;
+        setImportVisible(false);
+        importForm.resetFields();
+    };
+
+    const handleImportSkill = async () => {
+        try {
+            const values = await importForm.validateFields();
+            setImporting(true);
+            const response = await API.importSkill(values);
+            if (!response.success) {
+                message.error(response.msg || '导入失败');
+                return;
+            }
+
+            const importedCount = Number(response.data?.importedCount || 0);
+            if (importedCount > 0) {
+                message.success(`导入成功，新增 ${importedCount} 个技能`);
+            } else {
+                message.success('导入完成，技能可能已存在');
+            }
+            setImportVisible(false);
+            importForm.resetFields();
+            fetchSkills({ ...query });
+        } catch (error) {
+            if (error?.errorFields) return;
+            message.error('导入失败，请检查来源地址或网络权限');
+            console.error('导入 Skill 失败:', error);
+        } finally {
+            setImporting(false);
+        }
     };
 
     return (
@@ -99,6 +143,9 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     onSearch={(value) => updateQueryAndFetch({ keyword: value, pageNum: 1 })}
                 />
                 <Space size={12}>
+                    <Button icon={<ImportOutlined />} className="import-btn" onClick={openImportModal}>
+                        导入技能
+                    </Button>
                     <Select
                         value={query.sortBy}
                         style={{ width: 160 }}
@@ -218,6 +265,33 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     </>
                 )}
             </Spin>
+
+            <Modal
+                title="导入 Skill"
+                visible={importVisible}
+                confirmLoading={importing}
+                okText="开始导入"
+                cancelText="取消"
+                onCancel={closeImportModal}
+                onOk={handleImportSkill}
+                destroyOnClose
+            >
+                <Form form={importForm} layout="vertical">
+                    <Form.Item
+                        name="source"
+                        label="来源地址"
+                        rules={[{ required: true, message: '请输入来源地址' }]}
+                    >
+                        <Input placeholder="支持 GitHub / GitLab / 内网 GitLab / tree 子目录 URL" />
+                    </Form.Item>
+                    <Form.Item name="skillName" label="Skill 名称（可选）">
+                        <Input placeholder="可选，等价于 --skill <name>" />
+                    </Form.Item>
+                </Form>
+                <Text type="secondary">
+                    示例：`https://github.com/openclaw/openclaw/tree/main/skills/himalaya`
+                </Text>
+            </Modal>
         </div>
     );
 };

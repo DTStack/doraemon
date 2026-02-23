@@ -37,6 +37,13 @@ class SkillsController extends Controller {
         ctx.set('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
         ctx.body = content;
     }
+
+    async importSkill() {
+        const { app, ctx } = this;
+        const params = ctx.request.body || {};
+        const data = await ctx.service.skills.importSkill(params);
+        ctx.body = app.utils.response(true, data);
+    }
 }
 
 module.exports = SkillsController;

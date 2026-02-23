@@ -1,85 +1,74 @@
 .page-skills {
     padding: 20px 24px;
-
     .skills-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
-
     .title-group {
         .page-title {
             margin: 0;
-            color: #1f2d3d;
+            color: #1F2D3D;
             font-size: 28px;
             font-weight: 700;
         }
-
         .page-subtitle {
             margin: 8px 0 0;
             color: #667085;
         }
     }
-
     .search-filter-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 16px;
         margin-top: 18px;
-
         .keyword-search {
             width: 620px;
             max-width: 100%;
         }
+        .import-btn {
+            min-width: 100px;
+        }
     }
-
     .skill-card {
         height: 100%;
         border-radius: 10px;
-        border: 1px solid #edf2f7;
-
+        border: 1px solid #EDF2F7;
         .card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 10px;
         }
-
         .skill-name {
-            color: #1f2d3d;
+            color: #1F2D3D;
             font-size: 16px;
             font-weight: 600;
         }
-
         .meta-stars {
-            color: #e6a23c;
+            color: #E6A23C;
             font-weight: 600;
         }
-
         .skill-desc {
             min-height: 66px;
             margin-bottom: 12px;
             color: #475467;
         }
-
         .meta-row {
             display: flex;
             align-items: center;
             margin-bottom: 8px;
             gap: 8px;
-
             .meta-value {
                 flex: 1;
                 color: #344054;
             }
         }
-
         .tag-row {
             min-height: 28px;
             margin-bottom: 10px;
         }
-
         .action-row {
             display: flex;
             align-items: center;
@@ -88,7 +77,6 @@
             gap: 8px;
         }
     }
-
     .pagination-wrap {
         display: flex;
         justify-content: flex-end;
