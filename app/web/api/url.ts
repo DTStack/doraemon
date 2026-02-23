@@ -356,4 +356,9 @@ export default {
         method: 'get',
         url: '/api/skills/related',
     },
+    // 获取 Skill 文件内容
+    getSkillFileContent: {
+        method: 'get',
+        url: '/api/skills/file-content',
+    },
 };

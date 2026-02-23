@@ -1,57 +1,209 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomOneLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import {
     ArrowLeftOutlined,
-    CopyOutlined,
-    EyeOutlined,
     FolderOpenOutlined,
-    ProfileOutlined,
     ReadOutlined,
     StarOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Col, Divider, Empty, List, Row, Space, Spin, Tabs, Tag, Typography } from 'antd';
+import { Button, Card, Col, Empty, Row, Space, Spin, Tag, Tree, Typography } from 'antd';
+import type { DataNode } from 'antd/lib/tree';
 
 import { API } from '@/api';
 import MarkdownRenderer from '@/components/markdownRenderer';
-import { copyToClipboard } from '@/utils/copyUtils';
-import { SkillDetail as SkillDetailType, SkillItem } from '../types';
+import { SkillDetail as SkillDetailType, SkillFileContent, SkillItem } from '../types';
 import './style.scss';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
+
+interface SkillTreeNode extends DataNode {
+    children?: SkillTreeNode[];
+    isFile?: boolean;
+}
+
+const formatFileSize = (size = 0) => {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / 1024 / 1024).toFixed(1)} MB`;
+};
+
+const sortTreeNodes = (nodes: SkillTreeNode[]) => {
+    nodes.sort((a, b) => {
+        const aIsLeaf = Boolean(a.isLeaf);
+        const bIsLeaf = Boolean(b.isLeaf);
+        if (aIsLeaf !== bIsLeaf) return aIsLeaf ? 1 : -1;
+        return String(a.title).localeCompare(String(b.title));
+    });
+    nodes.forEach((node) => {
+        if (node.children && node.children.length > 0) {
+            sortTreeNodes(node.children);
+        }
+    });
+};
+
+const buildFileTreeData = (fileList: string[]): SkillTreeNode[] => {
+    const treeData: SkillTreeNode[] = [];
+
+    fileList.forEach((filePath) => {
+        const segments = filePath.split('/').filter(Boolean);
+        let currentNodes = treeData;
+        let currentPath = '';
+
+        segments.forEach((segment, index) => {
+            currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+            const isLeaf = index === segments.length - 1;
+            let node = currentNodes.find((item) => item.key === currentPath);
+
+            if (!node) {
+                node = {
+                    key: currentPath,
+                    title: segment,
+                    isLeaf,
+                    isFile: isLeaf,
+                    children: isLeaf ? undefined : [],
+                };
+                currentNodes.push(node);
+            }
+
+            if (!isLeaf) {
+                node.children = node.children || [];
+                currentNodes = node.children;
+            }
+        });
+    });
+
+    sortTreeNodes(treeData);
+    return treeData;
+};
 
 const SkillDetail: React.FC<any> = ({ history, match }) => {
     const { slug } = match.params;
     const [loading, setLoading] = useState(true);
+    const [fileLoading, setFileLoading] = useState(false);
     const [detail, setDetail] = useState<SkillDetailType | null>(null);
     const [related, setRelated] = useState<SkillItem[]>([]);
+    const [selectedFilePath, setSelectedFilePath] = useState('');
+    const [fileContent, setFileContent] = useState<SkillFileContent | null>(null);
 
-    const fetchDetail = async () => {
-        setLoading(true);
-        try {
-            const [detailRes, relatedRes] = await Promise.all([
-                API.getSkillDetail({ slug }),
-                API.getRelatedSkills({ slug, limit: 6 }),
-            ]);
-
-            if (detailRes.success) {
-                setDetail(detailRes.data);
-            } else {
-                setDetail(null);
-            }
-
-            if (relatedRes.success) {
-                setRelated(relatedRes.data || []);
-            }
-        } catch (error) {
-            console.error('获取 Skill 详情失败:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const fileTreeData = useMemo(() => buildFileTreeData(detail?.fileList || []), [detail?.fileList]);
 
     useEffect(() => {
-        fetchDetail();
+        let cancelled = false;
+
+        const loadDetail = async () => {
+            setLoading(true);
+            try {
+                const [detailRes, relatedRes] = await Promise.all([
+                    API.getSkillDetail({ slug }),
+                    API.getRelatedSkills({ slug, limit: 6 }),
+                ]);
+
+                if (cancelled) return;
+
+                if (detailRes.success) {
+                    const detailData = detailRes.data as SkillDetailType;
+                    setDetail(detailData);
+                    const defaultFile = detailData.fileList.includes('SKILL.md')
+                        ? 'SKILL.md'
+                        : detailData.fileList[0] || '';
+                    setSelectedFilePath(defaultFile);
+                } else {
+                    setDetail(null);
+                    setSelectedFilePath('');
+                }
+
+                if (relatedRes.success) {
+                    setRelated(relatedRes.data || []);
+                }
+            } catch (error) {
+                console.error('获取 Skill 详情失败:', error);
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadDetail();
+
+        return () => {
+            cancelled = true;
+        };
     }, [slug]);
+
+    useEffect(() => {
+        if (!selectedFilePath) {
+            setFileContent(null);
+            return;
+        }
+
+        let cancelled = false;
+        const loadFileContent = async () => {
+            setFileLoading(true);
+            try {
+                const response = await API.getSkillFileContent({
+                    slug,
+                    path: selectedFilePath,
+                });
+                if (!cancelled) {
+                    if (response.success) {
+                        setFileContent(response.data as SkillFileContent);
+                    } else {
+                        setFileContent(null);
+                    }
+                }
+            } catch (error) {
+                console.error('获取文件内容失败:', error);
+                if (!cancelled) {
+                    setFileContent(null);
+                }
+            } finally {
+                if (!cancelled) {
+                    setFileLoading(false);
+                }
+            }
+        };
+
+        loadFileContent();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [slug, selectedFilePath]);
+
+    const renderFileViewer = () => {
+        if (fileLoading) {
+            return (
+                <div className="file-viewer-loading">
+                    <Spin size="large" />
+                </div>
+            );
+        }
+
+        if (!fileContent) {
+            return <Empty description="请选择需要查看的文件" />;
+        }
+
+        if (fileContent.isBinary) {
+            return <Empty description="二进制文件暂不支持在线预览" />;
+        }
+
+        if (fileContent.language === 'markdown') {
+            return <MarkdownRenderer content={fileContent.content || ''} />;
+        }
+
+        return (
+            <SyntaxHighlighter
+                style={atomOneLight}
+                language={fileContent.language || 'text'}
+                customStyle={{ margin: 0, borderRadius: 6, minHeight: 420 }}
+                showLineNumbers
+            >
+                {fileContent.content || ''}
+            </SyntaxHighlighter>
+        );
+    };
 
     if (loading) {
         return (
@@ -87,14 +239,6 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
                         {detail.description || '暂无描述'}
                     </Paragraph>
                 </div>
-                <Space>
-                    <Button
-                        icon={<CopyOutlined />}
-                        onClick={() => copyToClipboard(detail.installCommand, '安装命令已复制')}
-                    >
-                        复制安装命令
-                    </Button>
-                </Space>
             </div>
 
             <Card className="meta-card">
@@ -113,112 +257,85 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
                 </div>
             </Card>
 
-            <Tabs defaultActiveKey="overview">
-                <TabPane
-                    key="overview"
-                    tab={
-                        <span>
-                            <EyeOutlined />
-                            概览
-                        </span>
-                    }
-                >
-                    <Card>
-                        <Paragraph>
-                            <Text strong>技能名称：</Text>
-                            {detail.name}
-                        </Paragraph>
-                        <Paragraph>
-                            <Text strong>技能描述：</Text>
-                            {detail.description || '-'}
-                        </Paragraph>
-                        <Paragraph>
-                            <Text strong>可用工具：</Text>
-                            {(detail.allowedTools && detail.allowedTools.length > 0
-                                ? detail.allowedTools.join(', ')
-                                : '未声明') || '未声明'}
-                        </Paragraph>
-                        <Paragraph>
-                            <Text strong>安装命令：</Text>
-                        </Paragraph>
-                        <Paragraph code copyable={{ text: detail.installCommand }}>
-                            {detail.installCommand}
-                        </Paragraph>
+            <Row gutter={[16, 16]} className="detail-main-row">
+                <Col xs={24} md={8} lg={7}>
+                    <Card
+                        className="file-tree-card"
+                        title={
+                            <Space>
+                                <FolderOpenOutlined />
+                                文件浏览
+                            </Space>
+                        }
+                        bodyStyle={{ padding: '8px 0' }}
+                    >
+                        {fileTreeData.length === 0 ? (
+                            <Empty description="暂无文件" />
+                        ) : (
+                            <Tree
+                                treeData={fileTreeData}
+                                selectedKeys={selectedFilePath ? [selectedFilePath] : []}
+                                defaultExpandAll
+                                onSelect={(keys, info) => {
+                                    if (!info.node.isLeaf) return;
+                                    const targetPath = String(keys[0] || '');
+                                    if (targetPath) {
+                                        setSelectedFilePath(targetPath);
+                                    }
+                                }}
+                            />
+                        )}
                     </Card>
-                </TabPane>
+                </Col>
 
-                <TabPane
-                    key="skill-md"
-                    tab={
-                        <span>
-                            <ReadOutlined />
-                            SKILL.md
-                        </span>
-                    }
-                >
-                    <Card className="markdown-card">
-                        <MarkdownRenderer content={detail.skillMd || ''} />
+                <Col xs={24} md={16} lg={17}>
+                    <Card
+                        className="file-viewer-card"
+                        title={
+                            <Space>
+                                <ReadOutlined />
+                                <Text>{selectedFilePath || '文件预览'}</Text>
+                            </Space>
+                        }
+                        extra={
+                            fileContent ? (
+                                <Space>
+                                    <Tag>{fileContent.language}</Tag>
+                                    <Text type="secondary">{formatFileSize(fileContent.size)}</Text>
+                                </Space>
+                            ) : null
+                        }
+                    >
+                        {renderFileViewer()}
                     </Card>
-                </TabPane>
+                </Col>
+            </Row>
 
-                <TabPane
-                    key="files"
-                    tab={
-                        <span>
-                            <FolderOpenOutlined />
-                            文件列表
-                        </span>
-                    }
-                >
-                    <Card>
-                        <List
-                            size="small"
-                            dataSource={detail.fileList || []}
-                            renderItem={(file) => (
-                                <List.Item>
-                                    <Text code>{file}</Text>
-                                </List.Item>
-                            )}
-                        />
-                    </Card>
-                </TabPane>
-
-                <TabPane
-                    key="related"
-                    tab={
-                        <span>
-                            <ProfileOutlined />
-                            相关技能
-                        </span>
-                    }
-                >
-                    {related.length === 0 ? (
-                        <Empty description="暂无相关技能推荐" />
-                    ) : (
-                        <Row gutter={[16, 16]}>
-                            {related.map((item) => (
-                                <Col key={item.slug} xs={24} sm={12} lg={8}>
-                                    <Card
-                                        className="related-card"
-                                        hoverable
-                                        onClick={() => history.push(`/page/skills/${item.slug}`)}
-                                    >
-                                        <div className="related-title">{item.name}</div>
-                                        <Paragraph ellipsis={{ rows: 2 }}>
-                                            {item.description || '暂无描述'}
-                                        </Paragraph>
-                                        <Text type="secondary">
-                                            <StarOutlined /> {item.stars || 0}
-                                        </Text>
-                                    </Card>
-                                </Col>
-                            ))}
-                        </Row>
-                    )}
-                </TabPane>
-            </Tabs>
-
-            <Divider />
+            <Card className="related-card-list" title="相关技能推荐">
+                {related.length === 0 ? (
+                    <Empty description="暂无相关技能推荐" />
+                ) : (
+                    <Row gutter={[16, 16]}>
+                        {related.map((item) => (
+                            <Col key={item.slug} xs={24} sm={12} lg={8}>
+                                <Card
+                                    className="related-item-card"
+                                    hoverable
+                                    onClick={() => history.push(`/page/skills/${item.slug}`)}
+                                >
+                                    <div className="related-title">{item.name}</div>
+                                    <Paragraph ellipsis={{ rows: 2 }}>
+                                        {item.description || '暂无描述'}
+                                    </Paragraph>
+                                    <Text type="secondary">
+                                        <StarOutlined /> {item.stars || 0}
+                                    </Text>
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
+                )}
+            </Card>
         </div>
     );
 };

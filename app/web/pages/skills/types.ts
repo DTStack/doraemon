@@ -24,3 +24,14 @@ export interface SkillDetail extends SkillItem {
     fileList: string[];
     skillMd: string;
 }
+
+export interface SkillFileContent {
+    slug: string;
+    path: string;
+    language: string;
+    size: number;
+    readonly: boolean;
+    isBinary: boolean;
+    encoding: 'utf8' | 'base64';
+    content: string;
+}

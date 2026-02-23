@@ -33,19 +33,50 @@
         }
     }
 
-    .markdown-card {
-        max-height: 70vh;
-        overflow: auto;
+    .detail-main-row {
+        margin-bottom: 16px;
     }
 
-    .related-card {
+    .file-tree-card {
         height: 100%;
+        min-height: 560px;
 
-        .related-title {
-            margin-bottom: 8px;
-            color: #1f2d3d;
-            font-size: 16px;
-            font-weight: 600;
+        .ant-card-body {
+            max-height: 500px;
+            overflow: auto;
+        }
+
+        .ant-tree {
+            padding: 4px 8px 8px;
+        }
+    }
+
+    .file-viewer-card {
+        min-height: 560px;
+
+        .ant-card-body {
+            max-height: 500px;
+            overflow: auto;
+        }
+    }
+
+    .file-viewer-loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 420px;
+    }
+
+    .related-card-list {
+        .related-item-card {
+            height: 100%;
+
+            .related-title {
+                margin-bottom: 8px;
+                color: #1f2d3d;
+                font-size: 16px;
+                font-weight: 600;
+            }
         }
     }
 }
