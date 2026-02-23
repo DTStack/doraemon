@@ -42,6 +42,53 @@
             overflow: auto;
         }
     }
+    .markdown-file-viewer {
+        .frontmatter-table-wrap {
+            margin-bottom: 16px;
+            border: 1px solid #F1DFD7;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #FEFAF8;
+        }
+        .frontmatter-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            th,
+            td {
+                padding: 14px 16px;
+                vertical-align: top;
+                border-bottom: 1px solid #F1DFD7;
+            }
+            tr:last-child {
+                th,
+                td {
+                    border-bottom: none;
+                }
+            }
+            th {
+                width: 180px;
+                color: #C56F4E;
+                font-size: 18px;
+                font-weight: 600;
+                text-align: left;
+                background: rgba(230, 200, 186, 0.16);
+            }
+            td {
+                font-size: 16px;
+                color: #2A3441;
+                line-height: 1.75;
+                word-break: break-word;
+            }
+            .frontmatter-code {
+                margin: 0;
+                font-size: 14px;
+                line-height: 1.55;
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+        }
+    }
     .file-viewer-loading {
         display: flex;
         justify-content: center;

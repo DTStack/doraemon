@@ -30,6 +30,11 @@ interface SkillTreeNode extends DataNode {
 
 type InstallRuntime = 'npx' | 'bunx' | 'pnpm';
 
+interface FrontmatterItem {
+    key: string;
+    value: string;
+}
+
 const formatFileSize = (size = 0) => {
     if (size < 1024) return `${size} B`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
@@ -119,6 +124,64 @@ const getInstallCommandByRuntime = (
     if (runtime === 'bunx') return `bunx skills add ${installArgs}`;
     if (runtime === 'pnpm') return `pnpm dlx skills add ${installArgs}`;
     return `npx skills add ${installArgs}`;
+};
+
+const normalizeFrontmatterValue = (value: string) => {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) return '-';
+    if (
+        (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+        (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    ) {
+        return trimmed.slice(1, -1);
+    }
+    return trimmed;
+};
+
+const parseMarkdownFrontmatter = (markdown = ''): { frontmatter: FrontmatterItem[]; body: string } => {
+    const content = String(markdown || '');
+    const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+    if (!match) {
+        return {
+            frontmatter: [],
+            body: content,
+        };
+    }
+
+    const block = match[1] || '';
+    const lines = block.split(/\r?\n/);
+    const frontmatter: FrontmatterItem[] = [];
+    let currentKey = '';
+    let currentValueLines: string[] = [];
+
+    const pushCurrent = () => {
+        if (!currentKey) return;
+        const value = normalizeFrontmatterValue(currentValueLines.join('\n'));
+        frontmatter.push({ key: currentKey, value });
+    };
+
+    lines.forEach((line) => {
+        const keyMatch = line.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
+        const isTopLevelKey = Boolean(keyMatch) && !/^\s/.test(line);
+
+        if (isTopLevelKey && keyMatch) {
+            pushCurrent();
+            currentKey = keyMatch[1];
+            currentValueLines = [keyMatch[2] || ''];
+            return;
+        }
+
+        if (currentKey) {
+            currentValueLines.push(line);
+        }
+    });
+
+    pushCurrent();
+
+    return {
+        frontmatter,
+        body: content.slice(match[0].length),
+    };
 };
 
 const SkillDetail: React.FC<any> = ({ history, match }) => {
@@ -256,7 +319,42 @@ const SkillDetail: React.FC<any> = ({ history, match }) => {
         }
 
         if (fileContent.language === 'markdown') {
-            return <MarkdownRenderer content={fileContent.content || ''} />;
+            const parsedMarkdown = parseMarkdownFrontmatter(fileContent.content || '');
+            return (
+                <div className="markdown-file-viewer">
+                    {parsedMarkdown.frontmatter.length > 0 ? (
+                        <div className="frontmatter-table-wrap">
+                            <table className="frontmatter-table">
+                                <tbody>
+                                    {parsedMarkdown.frontmatter.map((item) => {
+                                        const isCodeStyle =
+                                            item.value.includes('\n') ||
+                                            item.value.startsWith('{') ||
+                                            item.value.startsWith('[');
+                                        return (
+                                            <tr key={item.key}>
+                                                <th>{item.key}</th>
+                                                <td>
+                                                    {isCodeStyle ? (
+                                                        <pre className="frontmatter-code">
+                                                            {item.value}
+                                                        </pre>
+                                                    ) : (
+                                                        <span>{item.value}</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : null}
+                    {parsedMarkdown.body.trim() ? (
+                        <MarkdownRenderer content={parsedMarkdown.body} />
+                    ) : null}
+                </div>
+            );
         }
 
         return (
