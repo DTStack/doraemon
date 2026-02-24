@@ -15,7 +15,10 @@ const GITHUB_API_TIMEOUT_MS = 10 * 1000;
 const MAX_PLATFORM_TAGS = 5;
 const MAX_TAG_LENGTH = 20;
 const DISCOVER_DEPTH_LIMIT = 2;
+const SKILLS_ROOT_DISCOVER_DEPTH_LIMIT = 8;
 const DISCOVER_MAX_DIR_COUNT = 3000;
+// 临时测试用：优先走环境变量 GITLAB_TOKEN，缺失时回退该默认值（仅用于内网 GitLab 域名）。
+const DEFAULT_GITLAB_TOKEN = '[REDACTED]';
 
 const SKILL_CATEGORY_OPTIONS = [
     '通用',
@@ -774,10 +777,11 @@ class SkillsService extends Service {
     async listRemoteHeadRefs(cloneUrl) {
         if (!cloneUrl) return [];
         const env = this.buildCommandEnv({ remoteUrl: cloneUrl });
+        const authArgs = this.getGitAuthPrefixArgs(cloneUrl);
         try {
             const { stdout } = await this.runCommand(
                 'git',
-                [ 'ls-remote', '--heads', cloneUrl ],
+                [ ...authArgs, 'ls-remote', '--heads', cloneUrl ],
                 GIT_COMMAND_TIMEOUT_MS,
                 process.cwd(),
                 env
@@ -803,7 +807,8 @@ class SkillsService extends Service {
         }
 
         const env = this.buildCommandEnv({ remoteUrl: parsedSource.cloneUrl });
-        const cloneArgs = [ 'clone', '--depth', '1' ];
+        const authArgs = this.getGitAuthPrefixArgs(parsedSource.cloneUrl);
+        const cloneArgs = [ ...authArgs, 'clone', '--depth', '1' ];
         if (parsedSource.ref) {
             cloneArgs.push('--branch', parsedSource.ref);
         }
@@ -817,7 +822,14 @@ class SkillsService extends Service {
             }
 
             // 分支解析异常时回退默认分支，尽量提升兼容性。
-            const fallbackArgs = [ 'clone', '--depth', '1', parsedSource.cloneUrl, targetDir ];
+            const fallbackArgs = [
+                ...authArgs,
+                'clone',
+                '--depth',
+                '1',
+                parsedSource.cloneUrl,
+                targetDir,
+            ];
             await this.runCommand('git', fallbackArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
         }
     }
@@ -855,7 +867,7 @@ class SkillsService extends Service {
         return dirName === '.git' || dirName === 'node_modules' || dirName === '.idea' || dirName === '.vscode';
     }
 
-    findSkillsRootDirs(baseDir, maxDepth = DISCOVER_DEPTH_LIMIT) {
+    findSkillsRootDirs(baseDir, maxDepth = SKILLS_ROOT_DISCOVER_DEPTH_LIMIT) {
         const roots = [];
         const queue = [ { dir: baseDir, depth: 0 } ];
         const visited = new Set();
@@ -944,7 +956,7 @@ class SkillsService extends Service {
             return [ selectedDir ];
         }
 
-        const roots = this.findSkillsRootDirs(selectedDir, DISCOVER_DEPTH_LIMIT);
+        const roots = this.findSkillsRootDirs(selectedDir, SKILLS_ROOT_DISCOVER_DEPTH_LIMIT);
         let skillDirs = [];
 
         if (roots.length > 0) {
@@ -1518,6 +1530,30 @@ class SkillsService extends Service {
         env.NO_PROXY = noProxyValue;
         env.no_proxy = noProxyValue;
         return env;
+    }
+
+    resolveGitlabToken() {
+        const runtimeToken = String(process.env.GITLAB_TOKEN || '').trim();
+        if (runtimeToken) return runtimeToken;
+        return String(DEFAULT_GITLAB_TOKEN || '').trim();
+    }
+
+    getGitAuthPrefixArgs(remoteUrl = '') {
+        const host = this.extractHostFromRemote(remoteUrl);
+        if (host !== 'gitlab.prod.dtstack.cn') {
+            return [];
+        }
+
+        const token = this.resolveGitlabToken();
+        if (!token) {
+            return [];
+        }
+
+        const basicToken = Buffer.from(`oauth2:${token}`).toString('base64');
+        return [
+            '-c',
+            `http.https://${host}/.extraHeader=Authorization: Basic ${basicToken}`,
+        ];
     }
 
     runCommand(
