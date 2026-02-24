@@ -2,16 +2,21 @@ const Service = require('egg').Service;
 const AdmZip = require('adm-zip');
 const { spawn } = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const fetch = require('node-fetch');
 
 const CACHE_TTL_MS = 60 * 1000;
-const MAX_FILE_LIST_COUNT = 300;
+const MAX_FILE_LIST_COUNT = 2000;
 const MAX_FILE_CONTENT_SIZE = 2 * 1024 * 1024;
-const IMPORT_TIMEOUT_MS = 60 * 1000;
+const MAX_STORED_FILE_CONTENT_SIZE = 8 * 1024 * 1024;
+const GIT_COMMAND_TIMEOUT_MS = 120 * 1000;
 const GITHUB_API_TIMEOUT_MS = 10 * 1000;
 const MAX_PLATFORM_TAGS = 5;
 const MAX_TAG_LENGTH = 20;
+const DISCOVER_DEPTH_LIMIT = 2;
+const DISCOVER_MAX_DIR_COUNT = 3000;
+
 const SKILL_CATEGORY_OPTIONS = [
     '通用',
     '前端',
@@ -63,18 +68,16 @@ class SkillsService extends Service {
     constructor(ctx) {
         super(ctx);
         this.skillCache = null;
-        this.skillSourceCache = {};
+        this.storageReady = false;
+        this.storageReadyPromise = null;
     }
 
     getSkillCategoryOptions() {
         return [ ...SKILL_CATEGORY_OPTIONS ];
     }
 
-    getSkillRootDirs() {
-        const homeDir = process.env.HOME || '';
-        const codexHome = process.env.CODEX_HOME || path.join(homeDir, '.codex');
-        const agentHome = path.join(homeDir, '.agents');
-        return [path.join(codexHome, 'skills'), path.join(agentHome, 'skills')];
+    invalidateCache() {
+        this.skillCache = null;
     }
 
     isCacheValid() {
@@ -85,161 +88,383 @@ class SkillsService extends Service {
         );
     }
 
+    async ensureStorageReady() {
+        if (this.storageReady) return;
+        if (this.storageReadyPromise) {
+            await this.storageReadyPromise;
+            return;
+        }
+
+        this.storageReadyPromise = (async () => {
+            const { SkillsSource, SkillsItem, SkillsFile } = this.app.model;
+            if (!SkillsSource || !SkillsItem || !SkillsFile) {
+                this.ctx.throw(500, 'Skills 数据模型未加载');
+            }
+
+            await SkillsSource.sync();
+            await SkillsItem.sync();
+            await SkillsFile.sync();
+            this.storageReady = true;
+        })();
+
+        try {
+            await this.storageReadyPromise;
+        } finally {
+            this.storageReadyPromise = null;
+        }
+    }
+
+    parseJsonArray(value) {
+        if (!value) return [];
+        if (Array.isArray(value)) return value;
+        if (typeof value !== 'string') return [];
+
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed.map((item) => String(item)) : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    toPublicSkill(skill) {
+        return {
+            slug: skill.slug,
+            name: skill.name,
+            description: skill.description,
+            category: skill.category,
+            tags: skill.tags,
+            allowedTools: skill.allowedTools,
+            stars: skill.stars,
+            updatedAt: skill.updatedAt,
+            sourceRepo: skill.sourceRepo,
+            sourcePath: skill.sourcePath,
+            installCommand: skill.installCommand,
+        };
+    }
+
+    toSkillDto(row) {
+        return {
+            id: row.id,
+            sourceId: row.source_id,
+            slug: row.slug,
+            name: row.name || '',
+            description: row.description || '',
+            category: row.category || '通用',
+            tags: this.parseJsonArray(row.tags),
+            allowedTools: this.parseJsonArray(row.allowed_tools),
+            stars: Number(row.stars) || 0,
+            updatedAt: (row.updated_at_remote || row.updated_at || row.created_at || new Date()).toISOString(),
+            sourceRepo: row.source_repo || '',
+            sourcePath: row.source_path || '',
+            skillMd: row.skill_md || '',
+            installCommand: row.install_command || '',
+            fileCount: Number(row.file_count) || 0,
+        };
+    }
+
     async ensureSkillCache() {
         if (this.isCacheValid()) return this.skillCache;
 
-        const rootDirs = this.getSkillRootDirs();
-        const skills = [];
-
-        rootDirs.forEach((rootDir) => {
-            if (!fs.existsSync(rootDir)) return;
-            const skillFiles = this.findSkillFiles(rootDir);
-            const sourceMap = this.getSkillSourceMapByRoot(rootDir);
-            skillFiles.forEach((skillFilePath) => {
-                try {
-                    const skill = this.parseSkillMeta(skillFilePath, rootDir, sourceMap);
-                    if (skill) {
-                        skills.push(skill);
-                    }
-                } catch (error) {
-                    this.ctx.logger.warn(
-                        `[skills] 解析技能失败: ${skillFilePath}, ${error.message}`
-                    );
-                }
-            });
+        await this.ensureStorageReady();
+        const { SkillsItem } = this.app.model;
+        const rows = await SkillsItem.findAll({
+            where: { is_delete: 0 },
+            order: [
+                [ 'stars', 'DESC' ],
+                [ 'updated_at_remote', 'DESC' ],
+                [ 'updated_at', 'DESC' ],
+                [ 'id', 'DESC' ],
+            ],
         });
 
+        const skills = rows.map((row) => this.toSkillDto(row));
         const categories = this.getSkillCategoryOptions();
         this.skillCache = {
             loadedAt: Date.now(),
             skills,
             categories,
+            bySlug: new Map(skills.map((item) => [ item.slug, item ])),
         };
+
         return this.skillCache;
     }
 
-    findSkillFiles(rootDir) {
-        const result = [];
-        const stack = [rootDir];
+    getSkillList(params = {}) {
+        const {
+            keyword = '',
+            sortBy = 'stars',
+            category = '',
+            pageNum = 1,
+            pageSize = 20,
+        } = params;
 
-        while (stack.length > 0) {
-            const currentDir = stack.pop();
-            let entries = [];
-            try {
-                entries = fs.readdirSync(currentDir, { withFileTypes: true });
-            } catch (error) {
-                continue;
-            }
+        const safePageNum = Math.max(parseInt(pageNum, 10) || 1, 1);
+        const safePageSize = Math.max(parseInt(pageSize, 10) || 20, 1);
+        const { skills, categories } = this.skillCache;
 
-            entries.forEach((entry) => {
-                const fullPath = path.join(currentDir, entry.name);
-                if (entry.isDirectory()) {
-                    if (entry.name === 'node_modules' || entry.name === '.git') return;
-                    stack.push(fullPath);
-                    return;
-                }
-                if (entry.isFile() && entry.name === 'SKILL.md') {
-                    result.push(fullPath);
-                }
-            });
+        let list = [ ...skills ];
+        if (keyword) {
+            const value = String(keyword).toLowerCase();
+            list = list.filter(
+                (item) =>
+                    item.name.toLowerCase().includes(value) ||
+                    item.description.toLowerCase().includes(value) ||
+                    item.sourceRepo.toLowerCase().includes(value) ||
+                    item.tags.some((tag) => tag.toLowerCase().includes(value))
+            );
         }
 
-        return result;
-    }
-
-    parseSkillMeta(skillFilePath, rootDir, sourceMap = {}) {
-        const content = fs.readFileSync(skillFilePath, 'utf8');
-        const stat = fs.statSync(skillFilePath);
-        const skillDir = path.dirname(skillFilePath);
-        const relativeDir = path.relative(rootDir, skillDir);
-        const slug = relativeDir.split(path.sep).join('-').toLowerCase();
-        const frontmatter = this.parseFrontmatter(content);
-
-        const packageJsonPath = path.join(skillDir, 'package.json');
-        let packageJson = {};
-        if (fs.existsSync(packageJsonPath)) {
-            try {
-                packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-            } catch (error) {
-                packageJson = {};
-            }
+        if (category) {
+            list = list.filter((item) => item.category === category);
         }
 
-        const metaJsonPath = path.join(skillDir, '_meta.json');
-        let metaJson = {};
-        if (fs.existsSync(metaJsonPath)) {
-            try {
-                metaJson = JSON.parse(fs.readFileSync(metaJsonPath, 'utf8'));
-            } catch (error) {
-                metaJson = {};
+        list.sort((a, b) => {
+            if (sortBy === 'recent') {
+                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
             }
-        }
-
-        const name = frontmatter.name || path.basename(skillDir);
-        const description = frontmatter.description || this.extractDescription(content);
-        const categoryByPath = this.getCategoryFromRelativePath(relativeDir);
-        const category = this.normalizeCategory(metaJson.category || categoryByPath);
-        const tags = this.normalizePlatformTags(metaJson.platformTags || metaJson.tags);
-        const allowedTools = this.parseArrayLike(frontmatter['allowed-tools']);
-        const stars = Number(metaJson.stars || metaJson.star || metaJson.github_stars || 0);
-        const skillDirName = path.basename(skillDir);
-        const sourceRepo =
-            this.extractSourceRepo(packageJson) ||
-            String(metaJson.sourceRepo || '').trim() ||
-            String(sourceMap[skillDirName] || sourceMap[name] || '').trim();
-
-        const installCommand = this.getInstallCommand({
-            sourceRepo,
-            name,
-            skillDir,
+            if (b.stars !== a.stars) return b.stars - a.stars;
+            return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
         });
 
+        const total = list.length;
+        const offset = (safePageNum - 1) * safePageSize;
+        const pageList = list.slice(offset, offset + safePageSize).map((item) => this.toPublicSkill(item));
+
         return {
-            slug,
-            name,
-            description,
-            category,
-            tags,
-            allowedTools,
-            stars: Number.isNaN(stars) ? 0 : stars,
-            updatedAt: stat.mtime.toISOString(),
-            sourceRepo,
-            sourcePath: skillDir,
-            skillFilePath,
-            installCommand,
+            list: pageList,
+            total,
+            pageNum: safePageNum,
+            pageSize: safePageSize,
+            categories,
         };
     }
 
-    parseFrontmatter(content) {
-        const result = {};
-        if (!content.startsWith('---')) return result;
-        const endIndex = content.indexOf('\n---', 3);
-        if (endIndex === -1) return result;
-
-        const frontmatterText = content.slice(3, endIndex).trim();
-        const lines = frontmatterText.split('\n');
-        lines.forEach((line) => {
-            const match = line.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
-            if (!match) return;
-            const key = match[1];
-            let value = match[2].trim();
-            if (
-                (value.startsWith('"') && value.endsWith('"')) ||
-                (value.startsWith("'") && value.endsWith("'"))
-            ) {
-                value = value.slice(1, -1);
-            }
-            result[key] = value;
-        });
-        return result;
+    async querySkillList(params = {}) {
+        await this.ensureSkillCache();
+        return this.getSkillList(params);
     }
 
-    extractDescription(content) {
-        const stripped = content
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line && !line.startsWith('#') && !line.startsWith('---'));
-        return stripped[0] || '';
+    getSkillBySlug(slug) {
+        const value = String(slug || '').trim();
+        if (!value) {
+            this.ctx.throw(400, '缺少技能标识');
+        }
+
+        const skill = this.skillCache.bySlug.get(value);
+        if (!skill) {
+            this.ctx.throw(404, '技能不存在');
+        }
+
+        return skill;
+    }
+
+    async getSkillDetail(slug) {
+        await this.ensureSkillCache();
+        const skill = this.getSkillBySlug(slug);
+        const { SkillsFile } = this.app.model;
+
+        const rows = await SkillsFile.findAll({
+            where: {
+                skill_id: skill.id,
+                is_delete: 0,
+            },
+            attributes: [ 'file_path' ],
+            order: [ [ 'file_path', 'ASC' ] ],
+            limit: MAX_FILE_LIST_COUNT,
+        });
+
+        return {
+            ...this.toPublicSkill(skill),
+            skillMd: skill.skillMd,
+            fileList: rows.map((row) => row.file_path),
+        };
+    }
+
+    async getSkillFileContent(slug, filePath) {
+        await this.ensureSkillCache();
+        const skill = this.getSkillBySlug(slug);
+        const normalizedPath = this.normalizeRelativePath(filePath);
+        const { SkillsFile } = this.app.model;
+
+        const row = await SkillsFile.findOne({
+            where: {
+                skill_id: skill.id,
+                file_path: normalizedPath,
+                is_delete: 0,
+            },
+        });
+
+        if (!row) {
+            this.ctx.throw(404, '文件不存在');
+        }
+
+        if (Number(row.size) > MAX_FILE_CONTENT_SIZE || !row.content) {
+            this.ctx.throw(413, '文件过大，无法在线预览');
+        }
+
+        return {
+            slug: skill.slug,
+            path: row.file_path,
+            language: row.language || 'text',
+            size: Number(row.size) || 0,
+            readonly: true,
+            isBinary: Boolean(row.is_binary),
+            encoding: row.encoding || 'utf8',
+            content: row.content || '',
+        };
+    }
+
+    async getSkillArchive(slug) {
+        await this.ensureSkillCache();
+        const skill = this.getSkillBySlug(slug);
+        const { SkillsFile } = this.app.model;
+        const rows = await SkillsFile.findAll({
+            where: {
+                skill_id: skill.id,
+                is_delete: 0,
+            },
+            order: [ [ 'file_path', 'ASC' ] ],
+            limit: MAX_FILE_LIST_COUNT,
+        });
+
+        const zip = new AdmZip();
+        const rootFolder = this.sanitizeFileName(skill.name || skill.slug || 'skill');
+        rows.forEach((row) => {
+            const safeRelativePath = this.normalizeRelativePath(row.file_path);
+            const zipPath = path.posix.join(rootFolder, safeRelativePath);
+            const buffer = this.decodeStoredFileContent(row.content, Boolean(row.is_binary));
+            zip.addFile(zipPath, buffer);
+        });
+
+        return {
+            fileName: `${rootFolder}.zip`,
+            content: zip.toBuffer(),
+        };
+    }
+
+    decodeStoredFileContent(content, isBinary) {
+        if (!content) return Buffer.from('');
+        if (isBinary) {
+            try {
+                return Buffer.from(content, 'base64');
+            } catch (error) {
+                return Buffer.from('');
+            }
+        }
+        return Buffer.from(content, 'utf8');
+    }
+
+    normalizeRelativePath(filePath) {
+        const value = String(filePath || '').trim();
+        if (!value) {
+            this.ctx.throw(400, '缺少文件路径');
+        }
+
+        const normalized = path
+            .normalize(value)
+            .replace(/\\/g, '/')
+            .replace(/^\/+/, '');
+
+        if (!normalized || normalized === '.' || normalized.startsWith('..')) {
+            this.ctx.throw(400, '非法文件路径');
+        }
+
+        return normalized;
+    }
+
+    isLikelyBinary(buffer) {
+        if (!buffer || buffer.length === 0) return false;
+        const sampleLength = Math.min(buffer.length, 1024);
+        for (let i = 0; i < sampleLength; i += 1) {
+            if (buffer[i] === 0) return true;
+        }
+        return false;
+    }
+
+    sanitizeFileName(fileName) {
+        return String(fileName || 'skill')
+            .trim()
+            .replace(/[^a-zA-Z0-9._-]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .toLowerCase();
+    }
+
+    sanitizeSlugSegment(value) {
+        return String(value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .replace(/-{2,}/g, '-');
+    }
+
+    hashString(value) {
+        let hash = 0;
+        const text = String(value || '');
+        for (let i = 0; i < text.length; i += 1) {
+            hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+        }
+        return hash.toString(16);
+    }
+
+    buildSkillSlug(sourceMeta, relativeSkillPath, skillName, usedSlugs = new Set()) {
+        const sourceKey = `${sourceMeta.repoHost || 'local'}-${sourceMeta.repoPath || sourceMeta.sourceUrl || ''}-${sourceMeta.ref || 'default'}`;
+        const relativeKey = String(relativeSkillPath || skillName || 'skill').replace(/\\/g, '/');
+        const base = this.sanitizeSlugSegment(`${sourceKey}-${relativeKey}`) || 'skill';
+        let slug = base;
+
+        if (slug.length > 220) {
+            slug = `${slug.slice(0, 200)}-${this.hashString(base).slice(0, 12)}`;
+        }
+
+        let index = 2;
+        while (usedSlugs.has(slug)) {
+            const suffix = `-${index}`;
+            const head = slug.length + suffix.length > 255 ? slug.slice(0, 255 - suffix.length) : slug;
+            slug = `${head}${suffix}`;
+            index += 1;
+        }
+
+        usedSlugs.add(slug);
+        return slug;
+    }
+
+    async getRelatedSkills(slug, limit = 6) {
+        await this.ensureSkillCache();
+        const target = this.skillCache.bySlug.get(String(slug || '').trim());
+        if (!target) {
+            this.ctx.throw(404, '技能不存在');
+        }
+
+        const targetTags = new Set((target.tags || []).map((item) => item.toLowerCase()));
+        const related = this.skillCache.skills
+            .filter((item) => item.slug !== target.slug)
+            .map((item) => {
+                const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
+                const overlap = itemTags.filter((tag) => targetTags.has(tag)).length;
+                const categoryScore = item.category === target.category ? 3 : 0;
+                const score = overlap * 10 + categoryScore + Math.min(item.stars, 10);
+                return { ...item, _score: score };
+            })
+            .filter((item) => item._score > 0)
+            .sort((a, b) => b._score - a._score || b.stars - a.stars)
+            .slice(0, Math.max(parseInt(limit, 10) || 6, 1))
+            .map((item) => {
+                const rest = { ...item };
+                delete rest._score;
+                return this.toPublicSkill(rest);
+            });
+
+        return related;
+    }
+
+    normalizeCategory(rawCategory) {
+        const category = String(rawCategory || '').trim();
+        if (!category) return '通用';
+        if (SKILL_CATEGORY_OPTIONS.includes(category)) {
+            return category;
+        }
+        return '其他';
     }
 
     parseArrayLike(value) {
@@ -268,305 +493,610 @@ class SkillsService extends Service {
             .filter(Boolean);
     }
 
-    getCategoryFromRelativePath(relativeDir) {
-        const parts = relativeDir.split(path.sep).filter(Boolean);
-        if (parts.length === 0) return '未分类';
-        if (parts.length === 1) return '通用';
-        return parts[0];
-    }
-
-    normalizeCategory(rawCategory) {
-        const category = String(rawCategory || '').trim();
-        if (!category) return '通用';
-        if (SKILL_CATEGORY_OPTIONS.includes(category)) {
-            return category;
-        }
-        return '其他';
-    }
-
     normalizePlatformTags(rawTags) {
         const values = this.parseArrayLike(rawTags)
             .map((item) => String(item || '').trim())
             .map((item) => item.replace(/\s+/g, ' '))
             .filter(Boolean)
             .map((item) => item.slice(0, MAX_TAG_LENGTH));
+
         return Array.from(new Set(values)).slice(0, MAX_PLATFORM_TAGS);
     }
 
-    extractSourceRepo(packageJson = {}) {
-        if (!packageJson.repository) return '';
-        if (typeof packageJson.repository === 'string') return packageJson.repository;
-        return packageJson.repository.url || '';
+    getInstallCommand({ sourceRepo, sourceUrl, name }) {
+        const source = String(sourceRepo || sourceUrl || '').trim();
+        if (!source) return '';
+        return `npx skills add ${source} --skill "${name}"`;
     }
 
-    getInstallCommand({ sourceRepo, name, skillDir }) {
-        if (sourceRepo) {
-            return `npx skills add ${sourceRepo} --skill "${name}"`;
-        }
-        return `mkdir -p "$CODEX_HOME/skills" && cp -R "${skillDir}" "$CODEX_HOME/skills/${name}"`;
+    extractDescription(content) {
+        const stripped = content
+            .split('\n')
+            .map((line) => line.trim())
+            .filter((line) => line && !line.startsWith('#') && !line.startsWith('---'));
+        return stripped[0] || '';
     }
 
-    getSkillList(params = {}) {
-        const {
-            keyword = '',
-            sortBy = 'stars',
-            category = '',
-            pageNum = 1,
-            pageSize = 20,
-        } = params;
-        const safePageNum = Math.max(parseInt(pageNum, 10) || 1, 1);
-        const safePageSize = Math.max(parseInt(pageSize, 10) || 20, 1);
+    parseFrontmatter(content) {
+        const result = {};
+        const text = String(content || '');
+        const normalized = text.replace(/\r\n/g, '\n');
+        if (!normalized.startsWith('---\n')) return result;
 
-        const { skills, categories } = this.skillCache;
-        let list = [...skills];
+        const endMarkerIndex = normalized.indexOf('\n---\n', 4);
+        const endMarkerLength = 5;
+        if (endMarkerIndex === -1) return result;
 
-        if (keyword) {
-            const value = String(keyword).toLowerCase();
-            list = list.filter(
-                (item) =>
-                    item.name.toLowerCase().includes(value) ||
-                    item.description.toLowerCase().includes(value) ||
-                    item.sourceRepo.toLowerCase().includes(value) ||
-                    item.tags.some((tag) => tag.toLowerCase().includes(value))
-            );
-        }
+        const frontmatterText = normalized.slice(4, endMarkerIndex);
+        const lines = frontmatterText.split('\n');
+        let activeKey = '';
 
-        if (category) {
-            list = list.filter((item) => item.category === category);
-        }
+        lines.forEach((line) => {
+            const keyMatch = line.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
+            if (keyMatch) {
+                const key = keyMatch[1];
+                const rawValue = keyMatch[2].trim();
+                activeKey = key;
 
-        list.sort((a, b) => {
-            if (sortBy === 'recent') {
-                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+                if (!rawValue) {
+                    result[key] = [];
+                    return;
+                }
+
+                if (
+                    (rawValue.startsWith('"') && rawValue.endsWith('"')) ||
+                    (rawValue.startsWith("'") && rawValue.endsWith("'"))
+                ) {
+                    result[key] = rawValue.slice(1, -1);
+                    return;
+                }
+
+                if (rawValue.startsWith('[') && rawValue.endsWith(']')) {
+                    result[key] = this.parseArrayLike(rawValue);
+                    return;
+                }
+
+                result[key] = rawValue;
+                return;
             }
-            if (b.stars !== a.stars) return b.stars - a.stars;
-            return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+
+            if (!activeKey) return;
+            const listMatch = line.match(/^\s*-\s+(.*)$/);
+            if (!listMatch) {
+                activeKey = '';
+                return;
+            }
+
+            const listValue = listMatch[1].trim().replace(/^['"]|['"]$/g, '');
+            if (!Array.isArray(result[activeKey])) {
+                result[activeKey] = [];
+            }
+            result[activeKey].push(listValue);
         });
 
-        const total = list.length;
-        const offset = (safePageNum - 1) * safePageSize;
-        const pageList = list.slice(offset, offset + safePageSize);
+        if (normalized.length >= endMarkerIndex + endMarkerLength) {
+            result.__body = normalized.slice(endMarkerIndex + endMarkerLength);
+        }
+
+        return result;
+    }
+
+    isLocalPathSource(source) {
+        const value = String(source || '').trim();
+        if (!value) return false;
+        if (/^(https?:\/\/|git@|ssh:\/\/)/i.test(value)) return false;
+        return (
+            value.startsWith('/') ||
+            value.startsWith('./') ||
+            value.startsWith('../') ||
+            value.startsWith('~/')
+        );
+    }
+
+    resolveLocalPath(source) {
+        const value = String(source || '').trim();
+        if (value.startsWith('~/')) {
+            const home = process.env.HOME || '';
+            return path.join(home, value.slice(2));
+        }
+        return path.resolve(value);
+    }
+
+    inferSourceType(hostname = '', pathSegments = []) {
+        const host = String(hostname || '').toLowerCase();
+        if (host.includes('github')) return 'github';
+        if (host.includes('gitlab')) return 'gitlab';
+        if (Array.isArray(pathSegments) && pathSegments.includes('-')) return 'gitlab';
+        return 'git';
+    }
+
+    parseSshGitSource(source) {
+        const match = String(source || '').trim().match(/^git@([^:]+):(.+?)(?:\.git)?$/i);
+        if (!match) return null;
+        const host = match[1];
+        const repoPath = match[2].replace(/^\/+|\/+$/g, '');
+        const sourceType = this.inferSourceType(host, repoPath.split('/'));
 
         return {
-            list: pageList,
-            total,
-            pageNum: safePageNum,
-            pageSize: safePageSize,
-            categories,
+            sourceUrl: source,
+            sourceType,
+            cloneUrl: source,
+            sourceRepo: `https://${host}/${repoPath}`,
+            ref: '',
+            subpath: '',
+            repoHost: host,
+            repoPath,
+            originalAction: '',
         };
     }
 
-    async querySkillList(params = {}) {
-        await this.ensureSkillCache();
-        return this.getSkillList(params);
-    }
+    async parseImportSource(source) {
+        const value = String(source || '').trim();
+        if (!value) {
+            this.ctx.throw(400, '缺少导入来源地址');
+        }
 
-    async getSkillDetail(slug) {
-        await this.ensureSkillCache();
-        const skill = this.getSkillBySlug(slug);
+        if (this.isLocalPathSource(value)) {
+            const absolutePath = this.resolveLocalPath(value);
+            if (!fs.existsSync(absolutePath)) {
+                this.ctx.throw(400, `本地路径不存在: ${absolutePath}`);
+            }
 
-        const content = fs.readFileSync(skill.skillFilePath, 'utf8');
-        const fileList = this.listSkillFiles(skill.sourcePath);
+            const stat = fs.statSync(absolutePath);
+            if (stat.isFile()) {
+                return {
+                    sourceUrl: value,
+                    sourceType: 'local',
+                    cloneUrl: path.dirname(absolutePath),
+                    sourceRepo: value,
+                    ref: '',
+                    subpath: path.basename(absolutePath),
+                    repoHost: 'local',
+                    repoPath: path.basename(path.dirname(absolutePath)),
+                    originalAction: 'file',
+                };
+            }
+
+            return {
+                sourceUrl: value,
+                sourceType: 'local',
+                cloneUrl: absolutePath,
+                sourceRepo: value,
+                ref: '',
+                subpath: '',
+                repoHost: 'local',
+                repoPath: path.basename(absolutePath),
+                originalAction: '',
+            };
+        }
+
+        const sshSource = this.parseSshGitSource(value);
+        if (sshSource) {
+            return sshSource;
+        }
+
+        let url;
+        try {
+            url = new URL(value);
+        } catch (error) {
+            this.ctx.throw(400, `来源地址格式无效: ${value}`);
+        }
+
+        const segments = url.pathname.split('/').filter(Boolean);
+        if (segments.length < 2) {
+            this.ctx.throw(400, `无法识别仓库地址: ${value}`);
+        }
+
+        let repoSegments = [];
+        let action = '';
+        let actionTail = [];
+
+        const dashIndex = segments.indexOf('-');
+        if (dashIndex > 0 && [ 'tree', 'blob' ].includes(segments[dashIndex + 1])) {
+            repoSegments = segments.slice(0, dashIndex);
+            action = segments[dashIndex + 1];
+            actionTail = segments.slice(dashIndex + 2);
+        } else if ([ 'tree', 'blob' ].includes(segments[2])) {
+            repoSegments = segments.slice(0, 2);
+            action = segments[2];
+            actionTail = segments.slice(3);
+        } else if (String(url.hostname || '').toLowerCase().includes('github')) {
+            repoSegments = segments.slice(0, 2);
+        } else {
+            repoSegments = segments;
+        }
+
+        if (repoSegments.length < 2) {
+            this.ctx.throw(400, `无法识别仓库路径: ${value}`);
+        }
+
+        const normalizedRepoSegments = [ ...repoSegments ];
+        normalizedRepoSegments[normalizedRepoSegments.length - 1] = normalizedRepoSegments[
+            normalizedRepoSegments.length - 1
+        ].replace(/\.git$/i, '');
+
+        const repoPath = normalizedRepoSegments.join('/');
+        const origin = `${url.protocol}//${url.host}`;
+        const cloneUrl = `${origin}/${repoPath}.git`;
+        let ref = '';
+        let subpath = '';
+
+        if (action && actionTail.length > 0) {
+            const resolved = await this.resolveRefAndSubpath(cloneUrl, actionTail, action);
+            ref = resolved.ref;
+            subpath = resolved.subpath;
+        }
 
         return {
-            ...skill,
-            skillMd: content,
-            fileList,
+            sourceUrl: value,
+            sourceType: this.inferSourceType(url.hostname, segments),
+            cloneUrl,
+            sourceRepo: `${origin}/${repoPath}`,
+            ref,
+            subpath,
+            repoHost: url.host,
+            repoPath,
+            originalAction: action,
         };
     }
 
-    async getSkillFileContent(slug, filePath) {
-        await this.ensureSkillCache();
-        const skill = this.getSkillBySlug(slug);
-        const normalizedPath = this.normalizeRelativePath(filePath);
-        const rootPath = path.resolve(skill.sourcePath);
-        const targetPath = path.resolve(rootPath, normalizedPath);
+    async resolveRefAndSubpath(cloneUrl, tailSegments = [], action = '') {
+        if (!Array.isArray(tailSegments) || tailSegments.length === 0) {
+            return { ref: '', subpath: '' };
+        }
 
-        if (!this.isPathInsideRoot(rootPath, targetPath)) {
-            this.ctx.throw(400, '非法文件路径');
+        const branches = await this.listRemoteHeadRefs(cloneUrl);
+        const branchSet = new Set(branches);
+
+        for (let i = tailSegments.length; i >= 1; i -= 1) {
+            const candidateRef = tailSegments.slice(0, i).join('/');
+            if (branchSet.has(candidateRef)) {
+                return {
+                    ref: candidateRef,
+                    subpath: tailSegments.slice(i).join('/'),
+                };
+            }
+        }
+
+        if (action === 'tree' && tailSegments.length >= 2) {
+            return {
+                ref: tailSegments.join('/'),
+                subpath: '',
+            };
+        }
+
+        return {
+            ref: tailSegments[0],
+            subpath: tailSegments.slice(1).join('/'),
+        };
+    }
+
+    async listRemoteHeadRefs(cloneUrl) {
+        if (!cloneUrl) return [];
+        try {
+            const { stdout } = await this.runCommand(
+                'git',
+                [ 'ls-remote', '--heads', cloneUrl ],
+                GIT_COMMAND_TIMEOUT_MS
+            );
+            return String(stdout || '')
+                .split('\n')
+                .map((line) => line.trim())
+                .filter(Boolean)
+                .map((line) => {
+                    const match = line.match(/\s+refs\/heads\/(.+)$/);
+                    return match ? match[1] : '';
+                })
+                .filter(Boolean);
+        } catch (error) {
+            this.ctx.logger.warn(`[skills] 获取远端分支失败，使用兜底解析: ${error.message}`);
+            return [];
+        }
+    }
+
+    async cloneSourceRepo(parsedSource, targetDir) {
+        if (parsedSource.sourceType === 'local') {
+            return;
+        }
+
+        const cloneArgs = [ 'clone', '--depth', '1' ];
+        if (parsedSource.ref) {
+            cloneArgs.push('--branch', parsedSource.ref);
+        }
+        cloneArgs.push(parsedSource.cloneUrl, targetDir);
+
+        try {
+            await this.runCommand('git', cloneArgs, GIT_COMMAND_TIMEOUT_MS);
+        } catch (error) {
+            if (!parsedSource.ref) {
+                throw error;
+            }
+
+            // 分支解析异常时回退默认分支，尽量提升兼容性。
+            const fallbackArgs = [ 'clone', '--depth', '1', parsedSource.cloneUrl, targetDir ];
+            await this.runCommand('git', fallbackArgs, GIT_COMMAND_TIMEOUT_MS);
+        }
+    }
+
+    resolveSelectedPath(repoDir, subpath = '') {
+        const rootPath = path.resolve(repoDir);
+        if (!subpath) {
+            return rootPath;
+        }
+
+        const normalizedSubpath = this.normalizeRelativePath(subpath);
+        const targetPath = path.resolve(rootPath, normalizedSubpath);
+        if (!this.isPathInsideRoot(rootPath, targetPath) && targetPath !== rootPath) {
+            this.ctx.throw(400, '来源子路径非法');
         }
 
         if (!fs.existsSync(targetPath)) {
-            this.ctx.throw(404, '文件不存在');
+            this.ctx.throw(400, `来源子路径不存在: ${normalizedSubpath}`);
         }
 
-        const stat = fs.statSync(targetPath);
-        if (!stat.isFile()) {
-            this.ctx.throw(400, '仅支持读取文件内容');
-        }
-
-        if (stat.size > MAX_FILE_CONTENT_SIZE) {
-            this.ctx.throw(413, '文件过大，无法在线预览');
-        }
-
-        const fileBuffer = fs.readFileSync(targetPath);
-        const isBinary = this.isLikelyBinary(fileBuffer);
-        const extension = path.extname(normalizedPath).toLowerCase();
-
-        return {
-            slug: skill.slug,
-            path: normalizedPath,
-            language: EXTENSION_LANGUAGE_MAP[extension] || 'text',
-            size: stat.size,
-            readonly: true,
-            isBinary,
-            encoding: isBinary ? 'base64' : 'utf8',
-            content: isBinary ? fileBuffer.toString('base64') : fileBuffer.toString('utf8'),
-        };
-    }
-
-    async getSkillArchive(slug) {
-        await this.ensureSkillCache();
-        const skill = this.getSkillBySlug(slug);
-        const files = this.collectSkillFiles(skill.sourcePath);
-        const zip = new AdmZip();
-        const rootFolder = this.sanitizeFileName(skill.name || skill.slug || 'skill');
-
-        files.forEach((relativePath) => {
-            const absolutePath = path.resolve(skill.sourcePath, relativePath);
-            const content = fs.readFileSync(absolutePath);
-            zip.addFile(path.posix.join(rootFolder, relativePath), content);
-        });
-
-        return {
-            fileName: `${rootFolder}.zip`,
-            content: zip.toBuffer(),
-        };
-    }
-
-    listSkillFiles(skillDir) {
-        const files = [];
-        const stack = [skillDir];
-        while (stack.length > 0) {
-            const currentDir = stack.pop();
-            let entries = [];
-            try {
-                entries = fs.readdirSync(currentDir, { withFileTypes: true });
-            } catch (error) {
-                continue;
-            }
-
-            entries.forEach((entry) => {
-                const fullPath = path.join(currentDir, entry.name);
-                if (entry.isDirectory()) {
-                    stack.push(fullPath);
-                    return;
-                }
-                if (!entry.isFile()) return;
-                const relativePath = path.relative(skillDir, fullPath).split(path.sep).join('/');
-                files.push(relativePath);
-            });
-
-            if (files.length >= MAX_FILE_LIST_COUNT) break;
-        }
-
-        return files.sort();
-    }
-
-    collectSkillFiles(skillDir, maxCount = 2000) {
-        const files = [];
-        const stack = [skillDir];
-        while (stack.length > 0) {
-            const currentDir = stack.pop();
-            let entries = [];
-            try {
-                entries = fs.readdirSync(currentDir, { withFileTypes: true });
-            } catch (error) {
-                continue;
-            }
-
-            entries.forEach((entry) => {
-                if (entry.name === '.git' || entry.name === 'node_modules') return;
-                const fullPath = path.join(currentDir, entry.name);
-                if (entry.isDirectory()) {
-                    stack.push(fullPath);
-                    return;
-                }
-                if (!entry.isFile()) return;
-                files.push(path.relative(skillDir, fullPath).split(path.sep).join('/'));
-            });
-
-            if (files.length >= maxCount) break;
-        }
-
-        return files.sort();
-    }
-
-    getSkillBySlug(slug) {
-        const skill = this.skillCache.skills.find((item) => item.slug === slug);
-        if (!skill) {
-            this.ctx.throw(404, '技能不存在');
-        }
-        return skill;
-    }
-
-    normalizeRelativePath(filePath) {
-        const value = String(filePath || '').trim();
-        if (!value) {
-            this.ctx.throw(400, '缺少文件路径');
-        }
-
-        const normalized = path
-            .normalize(value)
-            .replace(/\\/g, '/')
-            .replace(/^\/+/, '');
-
-        if (!normalized || normalized === '.' || normalized.startsWith('..')) {
-            this.ctx.throw(400, '非法文件路径');
-        }
-
-        return normalized;
+        return targetPath;
     }
 
     isPathInsideRoot(rootPath, targetPath) {
-        if (targetPath === rootPath) return false;
+        if (targetPath === rootPath) return true;
         return targetPath.startsWith(`${rootPath}${path.sep}`);
     }
 
-    isLikelyBinary(buffer) {
-        if (!buffer || buffer.length === 0) return false;
-        const sampleLength = Math.min(buffer.length, 1024);
-        for (let i = 0; i < sampleLength; i += 1) {
-            if (buffer[i] === 0) return true;
-        }
-        return false;
+    containsSkillMd(dirPath) {
+        const target = path.join(dirPath, 'SKILL.md');
+        return fs.existsSync(target) && fs.statSync(target).isFile();
     }
 
-    sanitizeFileName(fileName) {
-        return String(fileName || 'skill')
-            .trim()
-            .replace(/[^a-zA-Z0-9._-]+/g, '-')
-            .replace(/^-+|-+$/g, '')
-            .toLowerCase();
+    shouldSkipDirName(dirName) {
+        return dirName === '.git' || dirName === 'node_modules' || dirName === '.idea' || dirName === '.vscode';
     }
 
-    async getRelatedSkills(slug, limit = 6) {
-        await this.ensureSkillCache();
-        const target = this.skillCache.skills.find((item) => item.slug === slug);
-        if (!target) {
-            this.ctx.throw(404, '技能不存在');
+    findSkillsRootDirs(baseDir, maxDepth = DISCOVER_DEPTH_LIMIT) {
+        const roots = [];
+        const queue = [ { dir: baseDir, depth: 0 } ];
+        const visited = new Set();
+        let visitCount = 0;
+
+        while (queue.length > 0) {
+            const { dir, depth } = queue.shift();
+            const normalizedDir = path.resolve(dir);
+            if (visited.has(normalizedDir)) continue;
+            visited.add(normalizedDir);
+            visitCount += 1;
+            if (visitCount > DISCOVER_MAX_DIR_COUNT) break;
+
+            if (path.basename(normalizedDir).toLowerCase() === 'skills') {
+                roots.push(normalizedDir);
+            }
+
+            if (depth >= maxDepth) continue;
+
+            let entries = [];
+            try {
+                entries = fs.readdirSync(normalizedDir, { withFileTypes: true });
+            } catch (error) {
+                continue;
+            }
+
+            entries.forEach((entry) => {
+                if (!entry.isDirectory()) return;
+                if (this.shouldSkipDirName(entry.name)) return;
+                queue.push({ dir: path.join(normalizedDir, entry.name), depth: depth + 1 });
+            });
         }
 
-        const targetTags = new Set((target.tags || []).map((item) => item.toLowerCase()));
-        const related = this.skillCache.skills
-            .filter((item) => item.slug !== slug)
-            .map((item) => {
-                const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
-                const overlap = itemTags.filter((tag) => targetTags.has(tag)).length;
-                const categoryScore = item.category === target.category ? 3 : 0;
-                const score = overlap * 10 + categoryScore + Math.min(item.stars, 10);
-                return { ...item, _score: score };
-            })
-            .filter((item) => item._score > 0)
-            .sort((a, b) => b._score - a._score || b.stars - a.stars)
-            .slice(0, parseInt(limit, 10) || 6)
-            .map((item) => {
-                const rest = { ...item };
-                delete rest._score;
-                return rest;
+        return Array.from(new Set(roots));
+    }
+
+    findSkillDirsWithin(baseDir, maxDepth = DISCOVER_DEPTH_LIMIT) {
+        const result = [];
+        const queue = [ { dir: baseDir, depth: 0 } ];
+        const visited = new Set();
+        let visitCount = 0;
+
+        while (queue.length > 0) {
+            const { dir, depth } = queue.shift();
+            const normalizedDir = path.resolve(dir);
+            if (visited.has(normalizedDir)) continue;
+            visited.add(normalizedDir);
+            visitCount += 1;
+            if (visitCount > DISCOVER_MAX_DIR_COUNT) break;
+
+            if (this.containsSkillMd(normalizedDir)) {
+                result.push(normalizedDir);
+            }
+
+            if (depth >= maxDepth) continue;
+
+            let entries = [];
+            try {
+                entries = fs.readdirSync(normalizedDir, { withFileTypes: true });
+            } catch (error) {
+                continue;
+            }
+
+            entries.forEach((entry) => {
+                if (!entry.isDirectory()) return;
+                if (this.shouldSkipDirName(entry.name)) return;
+                queue.push({ dir: path.join(normalizedDir, entry.name), depth: depth + 1 });
+            });
+        }
+
+        return Array.from(new Set(result));
+    }
+
+    discoverSkillDirs(selectedPath) {
+        const stat = fs.statSync(selectedPath);
+        if (stat.isFile()) {
+            if (path.basename(selectedPath) !== 'SKILL.md') {
+                this.ctx.throw(400, '文件来源仅支持 SKILL.md');
+            }
+            return [ path.dirname(selectedPath) ];
+        }
+
+        const selectedDir = path.resolve(selectedPath);
+
+        if (this.containsSkillMd(selectedDir)) {
+            return [ selectedDir ];
+        }
+
+        const roots = this.findSkillsRootDirs(selectedDir, DISCOVER_DEPTH_LIMIT);
+        let skillDirs = [];
+
+        if (roots.length > 0) {
+            roots.forEach((rootDir) => {
+                const discovered = this.findSkillDirsWithin(rootDir, DISCOVER_DEPTH_LIMIT);
+                skillDirs = skillDirs.concat(discovered);
+            });
+        }
+
+        if (skillDirs.length === 0) {
+            skillDirs = this.findSkillDirsWithin(selectedDir, DISCOVER_DEPTH_LIMIT);
+        }
+
+        return Array.from(new Set(skillDirs.map((item) => path.resolve(item))));
+    }
+
+    buildFileLanguage(filePath) {
+        const extension = path.extname(filePath || '').toLowerCase();
+        return EXTENSION_LANGUAGE_MAP[extension] || 'text';
+    }
+
+    collectSkillFiles(skillDir) {
+        const files = [];
+        const queue = [ skillDir ];
+        const visited = new Set();
+
+        while (queue.length > 0) {
+            const currentDir = queue.shift();
+            const normalizedDir = path.resolve(currentDir);
+            if (visited.has(normalizedDir)) continue;
+            visited.add(normalizedDir);
+
+            let entries = [];
+            try {
+                entries = fs.readdirSync(normalizedDir, { withFileTypes: true });
+            } catch (error) {
+                continue;
+            }
+
+            entries.forEach((entry) => {
+                if (this.shouldSkipDirName(entry.name)) return;
+                const fullPath = path.join(normalizedDir, entry.name);
+                if (entry.isDirectory()) {
+                    queue.push(fullPath);
+                    return;
+                }
+
+                if (!entry.isFile()) return;
+                const relativePath = path.relative(skillDir, fullPath).split(path.sep).join('/');
+                if (!relativePath || relativePath.startsWith('..')) return;
+
+                try {
+                    const stat = fs.statSync(fullPath);
+                    const size = Number(stat.size) || 0;
+                    const buffer = size > MAX_STORED_FILE_CONTENT_SIZE ? null : fs.readFileSync(fullPath);
+                    const isBinary = buffer ? this.isLikelyBinary(buffer) : false;
+                    const encoding = isBinary ? 'base64' : 'utf8';
+                    const content =
+                        !buffer ? null : isBinary ? buffer.toString('base64') : buffer.toString('utf8');
+
+                    files.push({
+                        filePath: relativePath,
+                        language: this.buildFileLanguage(relativePath),
+                        size,
+                        isBinary,
+                        encoding,
+                        content,
+                        updatedAt: stat.mtime,
+                    });
+                } catch (error) {
+                    // 忽略不可读取文件，避免单文件损坏阻塞整次导入。
+                }
             });
 
-        return related;
+            if (files.length >= MAX_FILE_LIST_COUNT) {
+                break;
+            }
+        }
+
+        return files.sort((a, b) => a.filePath.localeCompare(b.filePath));
+    }
+
+    prepareSkillRecord(skillDir, repoDir, sourceMeta, category, tags) {
+        const skillFilePath = path.join(skillDir, 'SKILL.md');
+        const content = fs.readFileSync(skillFilePath, 'utf8');
+        const stat = fs.statSync(skillFilePath);
+        const frontmatter = this.parseFrontmatter(content);
+        const body = frontmatter.__body || content;
+
+        const name = String(frontmatter.name || path.basename(skillDir)).trim() || path.basename(skillDir);
+        const description =
+            String(frontmatter.description || this.extractDescription(body)).trim() || this.extractDescription(content);
+        const allowedTools = this.parseArrayLike(
+            frontmatter['allowed-tools'] || frontmatter.allowedTools || frontmatter.allowed_tools
+        );
+
+        const sourcePath = path.relative(repoDir, skillDir).split(path.sep).join('/');
+        const installCommand = this.getInstallCommand({
+            sourceRepo: sourceMeta.sourceRepo,
+            sourceUrl: sourceMeta.sourceUrl,
+            name,
+        });
+
+        const files = this.collectSkillFiles(skillDir);
+
+        return {
+            name,
+            description,
+            category,
+            tags,
+            allowedTools,
+            updatedAt: stat.mtime,
+            sourceRepo: sourceMeta.sourceRepo,
+            sourcePath,
+            skillMd: content,
+            installCommand,
+            files,
+        };
+    }
+
+    filterSkillByName(skills, skillName) {
+        const expected = String(skillName || '').trim().toLowerCase();
+        if (!expected) return skills;
+
+        return skills.filter((item) => {
+            const name = String(item.name || '').trim().toLowerCase();
+            const folderName = String(path.basename(item.sourcePath || '')).trim().toLowerCase();
+            return name === expected || folderName === expected;
+        });
+    }
+
+    async upsertSourceRecord(parsedSource, syncStatus, syncError = '') {
+        const { SkillsSource } = this.app.model;
+        const payload = {
+            source_url: parsedSource.sourceUrl,
+            source_type: parsedSource.sourceType,
+            clone_url: parsedSource.cloneUrl,
+            source_repo: parsedSource.sourceRepo || parsedSource.sourceUrl,
+            ref: parsedSource.ref || '',
+            subpath: parsedSource.subpath || '',
+            repo_host: parsedSource.repoHost || '',
+            repo_path: parsedSource.repoPath || '',
+            sync_status: syncStatus,
+            sync_error: syncError || '',
+        };
+
+        const existing = await SkillsSource.findOne({
+            where: { source_url: parsedSource.sourceUrl },
+        });
+
+        if (existing) {
+            await existing.update(payload);
+            return existing;
+        }
+
+        return await SkillsSource.create(payload);
     }
 
     async importSkill(params = {}) {
@@ -574,165 +1104,194 @@ class SkillsService extends Service {
         const skillName = String(params.skillName || '').trim();
         const category = this.normalizeCategory(params.category);
         const tags = this.normalizePlatformTags(params.tags);
-        const sourceRepoFallback = this.extractSourceRepoFromImportSource(source);
+
         if (!source) {
             this.ctx.throw(400, '缺少导入来源地址');
         }
 
-        await this.ensureSkillCache();
-        const beforeSlugs = new Set(this.skillCache.skills.map((item) => item.slug));
-        const args = [ '-y', 'skills@latest', 'add', source, '-g', '--agent', 'codex', '--copy', '--yes' ];
-        if (skillName) {
-            args.push('--skill', skillName);
-        } else {
-            // 未指定 skillName 时显式导入源中的全部 skills，避免依赖 CLI 默认选择行为
-            args.push('--skill', '*');
-        }
+        await this.ensureStorageReady();
 
-        let commandResult = null;
+        let parsedSource = null;
+        let sourceRecord = null;
+        let tempDir = '';
+
         try {
-            commandResult = await this.runCommand('npx', args, IMPORT_TIMEOUT_MS);
-        } catch (error) {
-            this.ctx.throw(500, `导入失败: ${error.message}`);
-        }
+            parsedSource = await this.parseImportSource(source);
+            sourceRecord = await this.upsertSourceRecord(parsedSource, 'syncing');
 
-        this.skillCache = null;
-        this.skillSourceCache = {};
-        await this.ensureSkillCache();
-        const importedSkills = this.skillCache.skills
-            .filter((item) => !beforeSlugs.has(item.slug))
-            .map((item) => ({
-                slug: item.slug,
-                name: item.name,
-                sourceRepo: item.sourceRepo || sourceRepoFallback,
-                sourcePath: item.sourcePath,
-            }));
+            if (parsedSource.sourceType !== 'local') {
+                tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-import-'));
+                await this.cloneSourceRepo(parsedSource, tempDir);
+            }
 
-        let refreshedCount = 0;
-        if (importedSkills.length > 0) {
-            const starsBySlug = await this.fetchStarsForImportedSkills(importedSkills);
-            this.persistSkillMeta(importedSkills, {
+            const repoDir = parsedSource.sourceType === 'local' ? parsedSource.cloneUrl : tempDir;
+            const selectedPath = this.resolveSelectedPath(repoDir, parsedSource.subpath);
+            const discoveredSkillDirs = this.discoverSkillDirs(selectedPath);
+
+            if (discoveredSkillDirs.length === 0) {
+                this.ctx.throw(400, '未在来源中发现技能（SKILL.md）');
+            }
+
+            let skillRecords = discoveredSkillDirs.map((skillDir) =>
+                this.prepareSkillRecord(skillDir, repoDir, parsedSource, category, tags)
+            );
+
+            skillRecords = this.filterSkillByName(skillRecords, skillName);
+            if (skillRecords.length === 0) {
+                this.ctx.throw(400, '未匹配到指定技能，请检查 skillName 是否正确');
+            }
+
+            const importedSkills = await this.persistSkillsForSource(sourceRecord.id, parsedSource, skillRecords);
+
+            await sourceRecord.update({
+                sync_status: 'idle',
+                sync_error: '',
+                last_synced_at: new Date(),
+            });
+
+            this.invalidateCache();
+            await this.ensureSkillCache();
+
+            return {
+                source,
+                skillName,
                 category,
                 tags,
-                starsBySlug,
+                importedCount: importedSkills.length,
+                refreshedCount: importedSkills.length,
+                importedSkills: importedSkills.map((item) => ({
+                    slug: item.slug,
+                    name: item.name,
+                    sourceRepo: item.sourceRepo,
+                    sourcePath: item.sourcePath,
+                })),
+            };
+        } catch (error) {
+            if (sourceRecord) {
+                try {
+                    await sourceRecord.update({
+                        sync_status: 'failed',
+                        sync_error: String(error.message || error),
+                    });
+                } catch (updateError) {
+                    this.ctx.logger.warn(`[skills] 写入同步失败状态异常: ${updateError.message}`);
+                }
+            }
+
+            if (error.status && error.status >= 400 && error.status < 600) {
+                throw error;
+            }
+            this.ctx.throw(500, `导入失败: ${error.message}`);
+        } finally {
+            if (tempDir && fs.existsSync(tempDir)) {
+                try {
+                    fs.rmSync(tempDir, { recursive: true, force: true });
+                } catch (error) {
+                    this.ctx.logger.warn(`[skills] 清理临时目录失败: ${tempDir}, ${error.message}`);
+                }
+            }
+        }
+    }
+
+    async persistSkillsForSource(sourceId, sourceMeta, skillRecords = []) {
+        const { SkillsItem, SkillsFile } = this.app.model;
+        const { Op } = this.app.Sequelize;
+        const repoStars = await this.fetchStarsBySourceRepo(sourceMeta.sourceRepo);
+
+        return await this.app.model.transaction(async (transaction) => {
+            const oldRows = await SkillsItem.findAll({
+                where: {
+                    source_id: sourceId,
+                    is_delete: 0,
+                },
+                attributes: [ 'id', 'stars' ],
+                order: [ [ 'stars', 'DESC' ], [ 'id', 'DESC' ] ],
+                transaction,
             });
-            refreshedCount = importedSkills.length;
-            this.skillCache = null;
-            this.skillSourceCache = {};
-            await this.ensureSkillCache();
-        } else {
-            // 重复导入同仓库时也刷新一次 stars，避免历史 0 值无法更新。
-            const sourceRepoFullName = this.extractGitHubRepoFullName(sourceRepoFallback);
-            if (sourceRepoFullName) {
-                const existingRepoSkills = this.skillCache.skills
-                    .filter(
-                        (item) =>
-                            this.extractGitHubRepoFullName(item.sourceRepo) === sourceRepoFullName
-                    )
-                    .map((item) => ({
-                        slug: item.slug,
-                        name: item.name,
-                        sourceRepo: item.sourceRepo,
-                        sourcePath: item.sourcePath,
+
+            const fallbackStars = oldRows[0] ? Number(oldRows[0].stars) || 0 : 0;
+            const resolvedStars =
+                typeof repoStars === 'number' && Number.isFinite(repoStars) && repoStars >= 0
+                    ? repoStars
+                    : fallbackStars;
+
+            if (oldRows.length > 0) {
+                const oldIds = oldRows.map((item) => item.id);
+                await SkillsFile.destroy({
+                    where: {
+                        skill_id: {
+                            [Op.in]: oldIds,
+                        },
+                    },
+                    transaction,
+                });
+            }
+
+            await SkillsItem.destroy({
+                where: {
+                    source_id: sourceId,
+                },
+                transaction,
+            });
+
+            const usedSlugs = new Set();
+            const createdSkills = [];
+
+            for (const record of skillRecords) {
+                const slug = this.buildSkillSlug(sourceMeta, record.sourcePath, record.name, usedSlugs);
+                const itemRow = await SkillsItem.create(
+                    {
+                        source_id: sourceId,
+                        slug,
+                        name: record.name,
+                        description: record.description,
+                        category: record.category,
+                        tags: JSON.stringify(record.tags || []),
+                        allowed_tools: JSON.stringify(record.allowedTools || []),
+                        stars: resolvedStars,
+                        updated_at_remote: record.updatedAt,
+                        source_repo: record.sourceRepo,
+                        source_path: record.sourcePath,
+                        skill_md: record.skillMd,
+                        install_command: record.installCommand,
+                        file_count: record.files.length,
+                        is_delete: 0,
+                    },
+                    { transaction }
+                );
+
+                if (record.files.length > 0) {
+                    const fileRows = record.files.map((fileItem) => ({
+                        skill_id: itemRow.id,
+                        file_path: fileItem.filePath,
+                        language: fileItem.language,
+                        size: fileItem.size,
+                        is_binary: fileItem.isBinary ? 1 : 0,
+                        encoding: fileItem.encoding,
+                        content: fileItem.content,
+                        updated_at_remote: fileItem.updatedAt,
+                        is_delete: 0,
                     }));
 
-                if (existingRepoSkills.length > 0) {
-                    const starsBySlug = await this.fetchStarsForImportedSkills(existingRepoSkills);
-                    this.persistSkillMeta(existingRepoSkills, {
-                        starsBySlug,
-                    });
-                    refreshedCount = existingRepoSkills.length;
-                    this.skillCache = null;
-                    this.skillSourceCache = {};
-                    await this.ensureSkillCache();
+                    await SkillsFile.bulkCreate(fileRows, { transaction });
                 }
-            }
-        }
 
-        return {
-            source,
-            skillName,
-            category,
-            tags,
-            importedCount: importedSkills.length,
-            refreshedCount,
-            importedSkills,
-            command: `npx ${args.join(' ')}`,
-            logs: {
-                stdout: this.trimCommandOutput(commandResult.stdout),
-                stderr: this.trimCommandOutput(commandResult.stderr),
-            },
-        };
-    }
-
-    persistSkillMeta(skills = [], meta = {}) {
-        const hasCategory = Object.prototype.hasOwnProperty.call(meta, 'category');
-        const hasTags = Object.prototype.hasOwnProperty.call(meta, 'tags');
-        const nextCategory = hasCategory ? this.normalizeCategory(meta.category) : '';
-        const nextTags = hasTags ? this.normalizePlatformTags(meta.tags) : [];
-        const starsBySlug = meta.starsBySlug || {};
-        skills.forEach((item) => {
-            const skillDir = item.sourcePath;
-            if (!skillDir || !fs.existsSync(skillDir)) return;
-            const metaFilePath = path.join(skillDir, '_meta.json');
-            let currentMeta = {};
-            if (fs.existsSync(metaFilePath)) {
-                try {
-                    currentMeta = JSON.parse(fs.readFileSync(metaFilePath, 'utf8'));
-                } catch (error) {
-                    currentMeta = {};
-                }
+                createdSkills.push({
+                    slug,
+                    name: record.name,
+                    sourceRepo: record.sourceRepo,
+                    sourcePath: record.sourcePath,
+                });
             }
 
-            const nextMeta = {
-                ...currentMeta,
-            };
-            if (hasCategory) {
-                nextMeta.category = nextCategory;
-            }
-            if (hasTags) {
-                nextMeta.platformTags = nextTags;
-                nextMeta.tags = nextTags;
-            }
-            const stars = starsBySlug[item.slug];
-            if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) {
-                nextMeta.stars = stars;
-                nextMeta['github_stars'] = stars;
-                nextMeta.starsFetchedAt = new Date().toISOString();
-            }
-            fs.writeFileSync(metaFilePath, `${JSON.stringify(nextMeta, null, 2)}\n`, 'utf8');
+            return createdSkills;
         });
     }
 
-    async fetchStarsForImportedSkills(skills = []) {
-        const repoToStars = {};
-        const uniqueRepos = Array.from(
-            new Set(
-                skills
-                    .map((item) => this.extractGitHubRepoFullName(item.sourceRepo))
-                    .filter(Boolean)
-            )
-        );
-
-        for (const repoFullName of uniqueRepos) {
-            // 顺序请求，减少被限流概率；一次导入通常仓库数很少
-            const stars = await this.fetchGitHubRepoStars(repoFullName);
-            if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) {
-                repoToStars[repoFullName] = stars;
-            }
-        }
-
-        const starsBySlug = {};
-        skills.forEach((item) => {
-            const repoFullName = this.extractGitHubRepoFullName(item.sourceRepo);
-            if (!repoFullName) return;
-            const stars = repoToStars[repoFullName];
-            if (typeof stars === 'number') {
-                starsBySlug[item.slug] = stars;
-            }
-        });
-
-        return starsBySlug;
+    async fetchStarsBySourceRepo(sourceRepo = '') {
+        const repoFullName = this.extractGitHubRepoFullName(sourceRepo);
+        if (!repoFullName) return null;
+        return await this.fetchGitHubRepoStars(repoFullName);
     }
 
     extractGitHubRepoFullName(sourceRepo = '') {
@@ -762,6 +1321,7 @@ class SkillsService extends Service {
 
         const value = Number(match[1]);
         if (!Number.isFinite(value)) return null;
+
         const suffix = (match[2] || '').toLowerCase();
         if (!suffix) return Math.round(value);
         if (suffix === 'k') return Math.round(value * 1000);
@@ -780,9 +1340,7 @@ class SkillsService extends Service {
             if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) return stars;
         }
 
-        const ariaMatch = content.match(
-            /id="repo-stars-counter-star"[^>]*aria-label="([^"]+)"/i
-        );
+        const ariaMatch = content.match(/id="repo-stars-counter-star"[^>]*aria-label="([^"]+)"/i);
         if (ariaMatch) {
             const numberLike = ariaMatch[1].match(/[\d,.]+\s*[kmb]?/i);
             if (numberLike) {
@@ -804,6 +1362,7 @@ class SkillsService extends Service {
         const url = `https://github.com/${repoFullName}`;
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), GITHUB_API_TIMEOUT_MS);
+
         try {
             const response = await fetch(url, {
                 method: 'GET',
@@ -813,18 +1372,18 @@ class SkillsService extends Service {
                 },
                 signal: controller.signal,
             });
+
             if (!response.ok) {
                 this.ctx.logger.warn(
                     `[skills] HTML兜底获取 stars 失败: ${repoFullName}, status=${response.status}`
                 );
                 return null;
             }
+
             const html = await response.text();
             return this.extractStarsFromGitHubHtml(html);
         } catch (error) {
-            this.ctx.logger.warn(
-                `[skills] HTML兜底获取 stars 异常: ${repoFullName}, ${error.message}`
-            );
+            this.ctx.logger.warn(`[skills] HTML兜底获取 stars 异常: ${repoFullName}, ${error.message}`);
             return null;
         } finally {
             clearTimeout(timer);
@@ -833,11 +1392,13 @@ class SkillsService extends Service {
 
     async fetchGitHubRepoStars(repoFullName) {
         if (!repoFullName) return null;
+
         const url = `https://api.github.com/repos/${repoFullName}`;
         const headers = {
             Accept: 'application/vnd.github+json',
             'User-Agent': 'doraemon-skills-market',
         };
+
         const token = String(process.env.GITHUB_TOKEN || '').trim();
         if (token) {
             headers.Authorization = `Bearer ${token}`;
@@ -845,60 +1406,43 @@ class SkillsService extends Service {
 
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), GITHUB_API_TIMEOUT_MS);
+
         try {
             const response = await fetch(url, {
                 method: 'GET',
                 headers,
                 signal: controller.signal,
             });
+
             if (!response.ok) {
                 this.ctx.logger.warn(
                     `[skills] 获取 GitHub stars 失败: ${repoFullName}, status=${response.status}`
                 );
-                // GitHub API 限流时，尝试从仓库页面兜底解析 stars。
                 if (response.status === 403 || response.status === 429) {
                     return await this.fetchGitHubRepoStarsFromHtml(repoFullName);
                 }
                 return null;
             }
+
             const data = await response.json();
             const stars = Number(data.stargazers_count);
-            if (Number.isNaN(stars) || stars < 0) return null;
+            if (!Number.isFinite(stars) || stars < 0) return null;
             return stars;
         } catch (error) {
-            this.ctx.logger.warn(
-                `[skills] 获取 GitHub stars 异常: ${repoFullName}, ${error.message}`
-            );
+            this.ctx.logger.warn(`[skills] 获取 GitHub stars 异常: ${repoFullName}, ${error.message}`);
             return null;
         } finally {
             clearTimeout(timer);
         }
     }
 
-    extractSourceRepoFromImportSource(source = '') {
-        const raw = String(source || '').trim();
-        if (!raw) return '';
-
-        // 支持 GitHub tree URL：/owner/repo/tree/branch/path
-        const treeMatch = raw.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/[^/]+\/?.*$/i);
-        if (treeMatch) {
-            return `https://github.com/${treeMatch[1]}/${treeMatch[2]}.git`;
-        }
-
-        const repoMatch = raw.match(/^https?:\/\/github\.com\/([^/]+)\/([^/#?]+)/i);
-        if (repoMatch) {
-            return `https://github.com/${repoMatch[1]}/${repoMatch[2].replace(/\.git$/i, '')}.git`;
-        }
-
-        return '';
-    }
-
-    runCommand(command, args = [], timeout = IMPORT_TIMEOUT_MS) {
+    runCommand(command, args = [], timeout = GIT_COMMAND_TIMEOUT_MS, cwd = process.cwd()) {
         return new Promise((resolve, reject) => {
             const child = spawn(command, args, {
-                cwd: process.cwd(),
+                cwd,
                 env: process.env,
             });
+
             let stdout = '';
             let stderr = '';
             let timedOut = false;
@@ -923,8 +1467,9 @@ class SkillsService extends Service {
 
             child.on('close', (code) => {
                 clearTimeout(timer);
+
                 if (timedOut) {
-                    reject(new Error(`导入命令执行超时（${timeout}ms）`));
+                    reject(new Error(`命令执行超时（${timeout}ms）: ${command}`));
                     return;
                 }
 
@@ -945,33 +1490,6 @@ class SkillsService extends Service {
         const maxLength = 3000;
         if (value.length <= maxLength) return value;
         return value.slice(value.length - maxLength);
-    }
-
-    getSkillSourceMapByRoot(rootDir) {
-        if (this.skillSourceCache[rootDir]) {
-            return this.skillSourceCache[rootDir];
-        }
-
-        const sourceMap = {};
-        const parentDir = path.dirname(rootDir);
-        const lockFilePath = path.join(parentDir, '.skill-lock.json');
-        if (fs.existsSync(lockFilePath)) {
-            try {
-                const lockData = JSON.parse(fs.readFileSync(lockFilePath, 'utf8'));
-                const skills = lockData && lockData.skills ? lockData.skills : {};
-                Object.keys(skills).forEach((skillName) => {
-                    const sourceUrl = skills[skillName] && skills[skillName].sourceUrl;
-                    if (sourceUrl) {
-                        sourceMap[skillName] = String(sourceUrl);
-                    }
-                });
-            } catch (error) {
-                this.ctx.logger.warn(`[skills] 读取锁文件失败: ${lockFilePath}, ${error.message}`);
-            }
-        }
-
-        this.skillSourceCache[rootDir] = sourceMap;
-        return sourceMap;
     }
 }
 
