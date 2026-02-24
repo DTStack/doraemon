@@ -10,7 +10,7 @@ module.exports = (app) => {
                 autoIncrement: true,
             },
             source_url: {
-                type: STRING(1000),
+                type: STRING(512),
                 allowNull: false,
                 unique: true,
                 comment: '用户输入的来源地址',
@@ -84,7 +84,6 @@ module.exports = (app) => {
             createdAt: 'created_at',
             updatedAt: 'updated_at',
             indexes: [
-                { unique: true, fields: ['source_url'] },
                 { fields: ['repo_host'] },
                 { fields: ['repo_path'] },
                 { fields: ['sync_status'] },

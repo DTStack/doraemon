@@ -15,7 +15,7 @@ module.exports = (app) => {
                 comment: 'skills_items.id',
             },
             file_path: {
-                type: STRING(1000),
+                type: STRING(512),
                 allowNull: false,
                 comment: '文件相对路径',
             },
@@ -71,7 +71,6 @@ module.exports = (app) => {
             updatedAt: 'updated_at',
             indexes: [
                 { fields: ['skill_id'] },
-                { unique: true, fields: ['skill_id', 'file_path'] },
             ],
         }
     );
