@@ -773,11 +773,14 @@ class SkillsService extends Service {
 
     async listRemoteHeadRefs(cloneUrl) {
         if (!cloneUrl) return [];
+        const env = this.buildCommandEnv({ remoteUrl: cloneUrl });
         try {
             const { stdout } = await this.runCommand(
                 'git',
                 [ 'ls-remote', '--heads', cloneUrl ],
-                GIT_COMMAND_TIMEOUT_MS
+                GIT_COMMAND_TIMEOUT_MS,
+                process.cwd(),
+                env
             );
             return String(stdout || '')
                 .split('\n')
@@ -799,6 +802,7 @@ class SkillsService extends Service {
             return;
         }
 
+        const env = this.buildCommandEnv({ remoteUrl: parsedSource.cloneUrl });
         const cloneArgs = [ 'clone', '--depth', '1' ];
         if (parsedSource.ref) {
             cloneArgs.push('--branch', parsedSource.ref);
@@ -806,7 +810,7 @@ class SkillsService extends Service {
         cloneArgs.push(parsedSource.cloneUrl, targetDir);
 
         try {
-            await this.runCommand('git', cloneArgs, GIT_COMMAND_TIMEOUT_MS);
+            await this.runCommand('git', cloneArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
         } catch (error) {
             if (!parsedSource.ref) {
                 throw error;
@@ -814,7 +818,7 @@ class SkillsService extends Service {
 
             // 分支解析异常时回退默认分支，尽量提升兼容性。
             const fallbackArgs = [ 'clone', '--depth', '1', parsedSource.cloneUrl, targetDir ];
-            await this.runCommand('git', fallbackArgs, GIT_COMMAND_TIMEOUT_MS);
+            await this.runCommand('git', fallbackArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
         }
     }
 
@@ -1436,11 +1440,97 @@ class SkillsService extends Service {
         }
     }
 
-    runCommand(command, args = [], timeout = GIT_COMMAND_TIMEOUT_MS, cwd = process.cwd()) {
+    extractHostFromRemote(remoteUrl = '') {
+        const value = String(remoteUrl || '').trim();
+        if (!value) return '';
+        try {
+            const target = new URL(value);
+            return String(target.hostname || '').toLowerCase();
+        } catch (error) {
+            return '';
+        }
+    }
+
+    isPrivateNetworkHost(host = '') {
+        const value = String(host || '').toLowerCase();
+        if (!value) return false;
+        if (value === 'localhost' || value.endsWith('.local')) return true;
+
+        const ipv4Match = value.match(/^(\d{1,3})(\.\d{1,3}){3}$/);
+        if (!ipv4Match) return false;
+
+        const segments = value.split('.').map((item) => parseInt(item, 10));
+        if (segments.some((item) => Number.isNaN(item) || item < 0 || item > 255)) {
+            return false;
+        }
+
+        if (segments[0] === 10) return true;
+        if (segments[0] === 127) return true;
+        if (segments[0] === 192 && segments[1] === 168) return true;
+        if (segments[0] === 172 && segments[1] >= 16 && segments[1] <= 31) return true;
+        return false;
+    }
+
+    shouldBypassProxyForHost(host = '') {
+        const value = String(host || '').toLowerCase();
+        if (!value) return false;
+        if (value.endsWith('.dtstack.cn')) return true;
+        return this.isPrivateNetworkHost(value);
+    }
+
+    appendNoProxyHost(rawNoProxy = '', host = '') {
+        const value = String(host || '').toLowerCase();
+        if (!value) return String(rawNoProxy || '').trim();
+
+        const entries = String(rawNoProxy || '')
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
+        const set = new Set(entries);
+
+        set.add(value);
+        set.add('localhost');
+        set.add('127.0.0.1');
+        if (value.includes('.')) {
+            const parts = value.split('.');
+            if (parts.length >= 2) {
+                set.add(`.${parts.slice(-2).join('.')}`);
+            }
+        }
+
+        return Array.from(set).join(',');
+    }
+
+    buildCommandEnv({ remoteUrl = '' } = {}) {
+        const env = { ...process.env };
+        const host = this.extractHostFromRemote(remoteUrl);
+        if (!host || !this.shouldBypassProxyForHost(host)) {
+            return env;
+        }
+
+        [ 'http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY' ].forEach(
+            (key) => {
+                delete env[key];
+            }
+        );
+
+        const noProxyValue = this.appendNoProxyHost(env.NO_PROXY || env.no_proxy || '', host);
+        env.NO_PROXY = noProxyValue;
+        env.no_proxy = noProxyValue;
+        return env;
+    }
+
+    runCommand(
+        command,
+        args = [],
+        timeout = GIT_COMMAND_TIMEOUT_MS,
+        cwd = process.cwd(),
+        env = process.env
+    ) {
         return new Promise((resolve, reject) => {
             const child = spawn(command, args, {
                 cwd,
-                env: process.env,
+                env,
             });
 
             let stdout = '';
