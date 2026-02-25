@@ -832,6 +832,41 @@ class SkillsService extends Service {
 
         const env = this.buildCommandEnv({ remoteUrl: parsedSource.cloneUrl });
         const authArgs = this.getGitAuthPrefixArgs(parsedSource.cloneUrl);
+        const hasSubpath = Boolean(String(parsedSource.subpath || '').trim());
+
+        // 子目录导入优先使用 sparse clone，避免大仓库全量 clone 导致长时间卡顿。
+        if (hasSubpath) {
+            const sparseCloneArgs = [ ...authArgs, 'clone', '--depth', '1', '--filter=blob:none', '--sparse' ];
+            if (parsedSource.ref) {
+                sparseCloneArgs.push('--branch', parsedSource.ref);
+            }
+            sparseCloneArgs.push(parsedSource.cloneUrl, targetDir);
+
+            try {
+                await this.runCommand('git', sparseCloneArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
+                await this.runCommand(
+                    'git',
+                    [ '-C', targetDir, 'sparse-checkout', 'set', parsedSource.subpath ],
+                    GIT_COMMAND_TIMEOUT_MS,
+                    process.cwd(),
+                    env
+                );
+                return;
+            } catch (error) {
+                this.ctx.logger.warn(`[skills] sparse clone 失败，回退普通 clone: ${error.message}`);
+                if (fs.existsSync(targetDir)) {
+                    try {
+                        fs.rmSync(targetDir, { recursive: true, force: true });
+                    } catch (cleanupError) {
+                        this.ctx.logger.warn(
+                            `[skills] sparse clone 回退清理目录失败: ${targetDir}, ${cleanupError.message}`
+                        );
+                    }
+                }
+                fs.mkdirSync(targetDir, { recursive: true });
+            }
+        }
+
         const cloneArgs = [ ...authArgs, 'clone', '--depth', '1' ];
         if (parsedSource.ref) {
             cloneArgs.push('--branch', parsedSource.ref);
