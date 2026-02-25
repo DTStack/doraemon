@@ -6,6 +6,7 @@ import {
     ImportOutlined,
     SearchOutlined,
     StarOutlined,
+    UploadOutlined,
 } from '@ant-design/icons';
 import {
     Button,
@@ -18,12 +19,14 @@ import {
     message,
     Modal,
     Pagination,
+    Radio,
     Row,
     Select,
     Space,
     Spin,
     Tag,
     Typography,
+    Upload,
 } from 'antd';
 
 import { API } from '@/api';
@@ -59,6 +62,8 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
     const [total, setTotal] = useState(0);
     const [importVisible, setImportVisible] = useState(false);
     const [importing, setImporting] = useState(false);
+    const [importMode, setImportMode] = useState<'source' | 'file'>('source');
+    const [uploadFiles, setUploadFiles] = useState<any[]>([]);
     const [importForm] = Form.useForm();
     const [query, setQuery] = useState(INITIAL_QUERY);
 
@@ -97,15 +102,20 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
 
     const openImportModal = () => {
         setImportVisible(true);
+        setImportMode('source');
+        setUploadFiles([]);
         importForm.setFieldsValue({
             category: '通用',
             tags: [],
+            source: '',
         });
     };
 
     const closeImportModal = () => {
         if (importing) return;
         setImportVisible(false);
+        setImportMode('source');
+        setUploadFiles([]);
         importForm.resetFields();
     };
 
@@ -113,7 +123,23 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
         try {
             const values = await importForm.validateFields();
             setImporting(true);
-            const response = await API.importSkill(values);
+            let response = null;
+            if (importMode === 'file') {
+                const targetFile = uploadFiles[0]?.originFileObj;
+                if (!targetFile) {
+                    message.error('请先选择 .skill 文件');
+                    return;
+                }
+                response = await API.importSkillFile({
+                    file: targetFile,
+                    skillName: values.skillName || '',
+                    category: values.category,
+                    tags: JSON.stringify(values.tags || []),
+                });
+            } else {
+                response = await API.importSkill(values);
+            }
+
             if (!response.success) {
                 message.error(response.msg || '导入失败');
                 return;
@@ -126,6 +152,8 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                 message.success('导入完成，技能可能已存在');
             }
             setImportVisible(false);
+            setImportMode('source');
+            setUploadFiles([]);
             importForm.resetFields();
             fetchSkills({ ...query });
         } catch (error) {
@@ -291,13 +319,46 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                 destroyOnClose
             >
                 <Form form={importForm} layout="vertical">
+                    <Form.Item label="导入方式">
+                        <Radio.Group
+                            value={importMode}
+                            onChange={(event) => setImportMode(event.target.value)}
+                        >
+                            <Radio.Button value="source">来源地址</Radio.Button>
+                            <Radio.Button value="file">上传 .skill 文件</Radio.Button>
+                        </Radio.Group>
+                    </Form.Item>
                     <Form.Item
                         name="source"
                         label="来源地址"
-                        rules={[{ required: true, message: '请输入来源地址' }]}
+                        rules={
+                            importMode === 'source'
+                                ? [{ required: true, message: '请输入来源地址' }]
+                                : []
+                        }
                     >
-                        <Input placeholder="支持 GitHub / GitLab / 内网 GitLab / tree 子目录 URL" />
+                        <Input
+                            disabled={importMode !== 'source'}
+                            placeholder="支持 GitHub / GitLab / 内网 GitLab / tree 子目录 URL"
+                        />
                     </Form.Item>
+                    {importMode === 'file' && (
+                        <Form.Item
+                            label=".skill 文件"
+                            required
+                            extra="仅支持 skill-creator 打包生成的 .skill（zip）文件"
+                        >
+                            <Upload
+                                accept=".skill"
+                                maxCount={1}
+                                fileList={uploadFiles}
+                                beforeUpload={() => false}
+                                onChange={(info) => setUploadFiles(info.fileList || [])}
+                            >
+                                <Button icon={<UploadOutlined />}>选择 .skill 文件</Button>
+                            </Upload>
+                        </Form.Item>
+                    )}
                     <Form.Item name="skillName" label="Skill 名称（可选）">
                         <Input placeholder="可选，等价于 --skill <name>" />
                     </Form.Item>
@@ -339,9 +400,15 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                         />
                     </Form.Item>
                 </Form>
-                <Text type="secondary">
-                    示例：`https://github.com/openclaw/openclaw/tree/main/skills/himalaya`
-                </Text>
+                {importMode === 'source' ? (
+                    <Text type="secondary">
+                        示例：`https://github.com/openclaw/openclaw/tree/main/skills/himalaya`
+                    </Text>
+                ) : (
+                    <Text type="secondary">
+                        提示：`.skill` 本质是 zip 包，内部应包含 `技能目录/SKILL.md`
+                    </Text>
+                )}
             </Modal>
         </div>
     );

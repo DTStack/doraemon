@@ -371,4 +371,9 @@ export default {
         method: 'post',
         url: '/api/skills/import',
     },
+    // 上传 .skill 文件导入
+    importSkillFile: {
+        method: 'postForm',
+        url: '/api/skills/import-file',
+    },
 };

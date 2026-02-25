@@ -17,8 +17,6 @@ const MAX_TAG_LENGTH = 20;
 const DISCOVER_DEPTH_LIMIT = 2;
 const SKILLS_ROOT_DISCOVER_DEPTH_LIMIT = 8;
 const DISCOVER_MAX_DIR_COUNT = 3000;
-// 临时测试用：优先走环境变量 GITLAB_TOKEN，缺失时回退该默认值（仅用于内网 GitLab 域名）。
-const DEFAULT_GITLAB_TOKEN = '[REDACTED]';
 
 const SKILL_CATEGORY_OPTIONS = [
     '通用',
@@ -77,6 +75,15 @@ class SkillsService extends Service {
 
     getSkillCategoryOptions() {
         return [ ...SKILL_CATEGORY_OPTIONS ];
+    }
+
+    getSkillsConfig() {
+        return this.app.config.skills || {};
+    }
+
+    resolveGitHubToken() {
+        const token = this.getSkillsConfig().githubToken;
+        return String(token || '').trim();
     }
 
     invalidateCache() {
@@ -509,7 +516,24 @@ class SkillsService extends Service {
     getInstallCommand({ sourceRepo, sourceUrl, name }) {
         const source = String(sourceRepo || sourceUrl || '').trim();
         if (!source) return '';
+        if (/^upload:\/\//i.test(source)) return '';
         return `npx skills add ${source} --skill "${name}"`;
+    }
+
+    buildUploadSourceMeta(fileName = '') {
+        const baseName = path.basename(String(fileName || '').trim(), '.skill');
+        const normalizedName = this.sanitizeSlugSegment(baseName) || 'uploaded-skill';
+        return {
+            sourceUrl: `upload://${normalizedName}.skill`,
+            sourceType: 'upload',
+            cloneUrl: '',
+            sourceRepo: '',
+            ref: '',
+            subpath: '',
+            repoHost: 'upload',
+            repoPath: normalizedName,
+            originalAction: 'upload',
+        };
     }
 
     extractDescription(content) {
@@ -1209,6 +1233,110 @@ class SkillsService extends Service {
         }
     }
 
+    async importSkillFile(params = {}, file) {
+        const skillName = String(params.skillName || '').trim();
+        const category = this.normalizeCategory(params.category);
+        const tags = this.normalizePlatformTags(params.tags);
+        const fileName = String((file && file.filename) || '').trim();
+        const filePath = String((file && file.filepath) || '').trim();
+
+        if (!fileName || !filePath) {
+            this.ctx.throw(400, '上传文件无效');
+        }
+        if (!/\.skill$/i.test(fileName)) {
+            this.ctx.throw(400, '仅支持上传 .skill 文件');
+        }
+        if (!fs.existsSync(filePath)) {
+            this.ctx.throw(400, '上传文件不存在或已失效');
+        }
+
+        await this.ensureStorageReady();
+
+        const parsedSource = this.buildUploadSourceMeta(fileName);
+        let sourceRecord = null;
+        let tempDir = '';
+
+        try {
+            sourceRecord = await this.upsertSourceRecord(parsedSource, 'syncing');
+            tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-upload-'));
+
+            try {
+                const zip = new AdmZip(filePath);
+                zip.extractAllTo(tempDir, true);
+            } catch (error) {
+                this.ctx.throw(400, `解析 .skill 文件失败: ${error.message}`);
+            }
+
+            const discoveredSkillDirs = this.discoverSkillDirs(tempDir);
+            if (discoveredSkillDirs.length === 0) {
+                this.ctx.throw(400, '.skill 包内未发现有效技能（缺少 SKILL.md）');
+            }
+
+            let skillRecords = discoveredSkillDirs.map((skillDir) =>
+                this.prepareSkillRecord(skillDir, tempDir, parsedSource, category, tags)
+            );
+
+            skillRecords = this.filterSkillByName(skillRecords, skillName);
+            if (skillRecords.length === 0) {
+                this.ctx.throw(400, '未匹配到指定技能，请检查 skillName 是否正确');
+            }
+
+            const importedSkills = await this.persistSkillsForSource(
+                sourceRecord.id,
+                parsedSource,
+                skillRecords
+            );
+
+            await sourceRecord.update({
+                sync_status: 'idle',
+                sync_error: '',
+                last_synced_at: new Date(),
+            });
+
+            this.invalidateCache();
+            await this.ensureSkillCache();
+
+            return {
+                source: parsedSource.sourceUrl,
+                skillName,
+                category,
+                tags,
+                importedCount: importedSkills.length,
+                refreshedCount: importedSkills.length,
+                importedSkills: importedSkills.map((item) => ({
+                    slug: item.slug,
+                    name: item.name,
+                    sourceRepo: item.sourceRepo,
+                    sourcePath: item.sourcePath,
+                })),
+            };
+        } catch (error) {
+            if (sourceRecord) {
+                try {
+                    await sourceRecord.update({
+                        sync_status: 'failed',
+                        sync_error: String(error.message || error),
+                    });
+                } catch (updateError) {
+                    this.ctx.logger.warn(`[skills] 写入上传失败状态异常: ${updateError.message}`);
+                }
+            }
+
+            if (error.status && error.status >= 400 && error.status < 600) {
+                throw error;
+            }
+            this.ctx.throw(500, `导入失败: ${error.message}`);
+        } finally {
+            if (tempDir && fs.existsSync(tempDir)) {
+                try {
+                    fs.rmSync(tempDir, { recursive: true, force: true });
+                } catch (error) {
+                    this.ctx.logger.warn(`[skills] 清理上传解压目录失败: ${tempDir}, ${error.message}`);
+                }
+            }
+        }
+    }
+
     async persistSkillsForSource(sourceId, sourceMeta, skillRecords = []) {
         const { SkillsItem, SkillsFile } = this.app.model;
         const { Op } = this.app.Sequelize;
@@ -1415,7 +1543,7 @@ class SkillsService extends Service {
             'User-Agent': 'doraemon-skills-market',
         };
 
-        const token = String(process.env.GITHUB_TOKEN || '').trim();
+        const token = this.resolveGitHubToken();
         if (token) {
             headers.Authorization = `Bearer ${token}`;
         }
@@ -1533,14 +1661,20 @@ class SkillsService extends Service {
     }
 
     resolveGitlabToken() {
-        const runtimeToken = String(process.env.GITLAB_TOKEN || '').trim();
-        if (runtimeToken) return runtimeToken;
-        return String(DEFAULT_GITLAB_TOKEN || '').trim();
+        const token = this.getSkillsConfig().gitlabToken;
+        return String(token || '').trim();
+    }
+
+    resolveGitlabHostWhitelist() {
+        const list = this.getSkillsConfig().gitlabHostWhitelist;
+        if (!Array.isArray(list)) return [];
+        return list.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean);
     }
 
     getGitAuthPrefixArgs(remoteUrl = '') {
         const host = this.extractHostFromRemote(remoteUrl);
-        if (host !== 'gitlab.prod.dtstack.cn') {
+        const whitelist = this.resolveGitlabHostWhitelist();
+        if (!host || !whitelist.includes(host)) {
             return [];
         }
 

@@ -1,10 +1,9 @@
 import BasicLayout from '@/layouts/basicLayout';
+import Loadable from 'react-loadable';
 // 文章订阅管理
 import ArticleSubscriptionList from '@/pages/articleSubscription';
 // 配置中心
 import ConfigCenter from '@/pages/configCenter';
-// 配置详情
-import ConfigDetail from '@/pages/configDetail';
 // 环境管理
 import EnvManagement from '@/pages/envManagement';
 import NotFound from '@/pages/exception/404';
@@ -26,11 +25,19 @@ import SkillsMarket from '@/pages/skills';
 import ProxyServer from '@/pages/proxyServer';
 // hosts列表
 import SwitchHostsList from '@/pages/switchHosts';
-// hosts编辑
-import SwitchHostsEdit from '@/pages/switchHosts/editHosts';
 import TagsManagement from '@/pages/tagsManagement';
 // 工具箱
 import Toolbox from '@/pages/toolbox';
+
+const ConfigDetail = Loadable({
+    loader: () => import('@/pages/configDetail'),
+    loading: () => null,
+});
+
+const SwitchHostsEdit = Loadable({
+    loader: () => import('@/pages/switchHosts/editHosts'),
+    loading: () => null,
+});
 
 const urlPrefix = '/page';
 const routes: any = [
