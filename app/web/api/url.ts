@@ -361,6 +361,11 @@ export default {
         method: 'get',
         url: '/api/skills/file-content',
     },
+    // 获取 Skill 安装元信息
+    getSkillInstallMeta: {
+        method: 'get',
+        url: '/api/skills/install-meta',
+    },
     // 下载 Skill 目录压缩包
     downloadSkillArchive: {
         method: 'get',

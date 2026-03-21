@@ -35,3 +35,18 @@ export interface SkillFileContent {
     encoding: 'utf8' | 'base64';
     content: string;
 }
+
+export interface SkillInstallMeta {
+    slug: string;
+    name: string;
+    downloadUrl: string;
+    packageType: string;
+    packageVersion: string;
+    packageRootMode: string;
+    installDirName: string;
+    version: string;
+    sha256: string;
+    sourceRepo: string;
+    installable: boolean;
+    reason: string;
+}

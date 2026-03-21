@@ -31,6 +31,7 @@ import {
 
 import { API } from '@/api';
 import { copyToClipboard } from '@/utils/copyUtils';
+import SkillDetailContent from './detail/SkillDetailContent';
 import { SkillItem, SkillListResponse } from './types';
 import './style.scss';
 
@@ -66,6 +67,8 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
     const [uploadFiles, setUploadFiles] = useState<any[]>([]);
     const [importForm] = Form.useForm();
     const [query, setQuery] = useState(INITIAL_QUERY);
+    const [detailVisible, setDetailVisible] = useState(false);
+    const [activeDetailSlug, setActiveDetailSlug] = useState('');
 
     const fetchSkills = useCallback(async (nextQuery) => {
         setLoading(true);
@@ -97,7 +100,17 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
     };
 
     const handleOpenDetail = (slug: string) => {
-        history.push(`/page/skills/${slug}`);
+        setActiveDetailSlug(slug);
+        setDetailVisible(true);
+    };
+
+    const handleCloseDetailModal = () => {
+        setDetailVisible(false);
+    };
+
+    const handleOpenDetailPage = () => {
+        if (!activeDetailSlug) return;
+        history.push(`/page/skills/${activeDetailSlug}`);
     };
 
     const openImportModal = () => {
@@ -307,6 +320,34 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     </>
                 )}
             </Spin>
+
+            <Modal
+                width={1200}
+                title={null}
+                footer={null}
+                visible={detailVisible}
+                onCancel={handleCloseDetailModal}
+                destroyOnClose
+                className="skill-detail-modal"
+                bodyStyle={{ padding: 0, maxHeight: 'calc(100vh - 160px)', overflow: 'auto' }}
+            >
+                {activeDetailSlug ? (
+                    <div className="skill-detail-modal-inner">
+                        <div className="skill-detail-modal-actions">
+                            <Button type="link" onClick={handleOpenDetailPage}>
+                                打开独立详情页
+                            </Button>
+                        </div>
+                        <SkillDetailContent
+                            slug={activeDetailSlug}
+                            mode="modal"
+                            history={history}
+                            onClose={handleCloseDetailModal}
+                            onOpenSkill={(nextSlug) => setActiveDetailSlug(nextSlug)}
+                        />
+                    </div>
+                ) : null}
+            </Modal>
 
             <Modal
                 title="导入 Skill"

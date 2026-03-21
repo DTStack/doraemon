@@ -102,3 +102,16 @@
         margin-top: 20px;
     }
 }
+
+.skill-detail-modal {
+    .ant-modal-body {
+        background: #F8FAFC;
+    }
+    .skill-detail-modal-inner {
+        .skill-detail-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            padding: 8px 16px 0;
+        }
+    }
+}

@@ -1,5 +1,8 @@
 .page-skill-detail {
     padding: 20px 24px;
+    &.modal-skill-detail {
+        padding-top: 8px;
+    }
     &.loading-wrap {
         display: flex;
         justify-content: center;
@@ -120,6 +123,11 @@
         }
         .runtime-switch {
             margin-bottom: 12px;
+        }
+        .install-tab-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
         .download-buttons {
             display: flex;
