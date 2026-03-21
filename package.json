@@ -28,6 +28,9 @@
         "log": "conventional-changelog --config ./node_modules/vue-cli-plugin-commitlint/lib/log -i CHANGELOG.md -s -r 0",
         "cz": "npm run log && git add . && git cz"
     },
+    "bin": {
+        "doraemon-skills": "bin/doraemon-skills"
+    },
     "dependencies": {
         "@ant-design/icons": "4.5.0",
         "@modelcontextprotocol/sdk": "^1.25.2",
