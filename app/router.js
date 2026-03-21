@@ -153,6 +153,7 @@ module.exports = (app) => {
     app.get('/api/skills/detail', app.controller.skills.getSkillDetail);
     app.get('/api/skills/related', app.controller.skills.getRelatedSkills);
     app.get('/api/skills/file-content', app.controller.skills.getSkillFileContent);
+    app.get('/api/skills/install-meta', app.controller.skills.getSkillInstallMeta);
     app.get('/api/skills/download', app.controller.skills.downloadSkillArchive);
     app.post('/api/skills/import', app.controller.skills.importSkill);
     app.post('/api/skills/import-file', app.controller.skills.importSkillFile);

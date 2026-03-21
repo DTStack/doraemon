@@ -1,5 +1,6 @@
 const Service = require('egg').Service;
 const AdmZip = require('adm-zip');
+const crypto = require('crypto');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
@@ -17,6 +18,7 @@ const MAX_TAG_LENGTH = 20;
 const DISCOVER_DEPTH_LIMIT = 2;
 const SKILLS_ROOT_DISCOVER_DEPTH_LIMIT = 8;
 const DISCOVER_MAX_DIR_COUNT = 3000;
+const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const SKILL_CATEGORY_OPTIONS = [
     '通用',
@@ -350,6 +352,88 @@ class SkillsService extends Service {
         return {
             fileName: `${rootFolder}.zip`,
             content: zip.toBuffer(),
+        };
+    }
+
+    validateSkillSlug(slug) {
+        const value = String(slug || '').trim();
+        if (!value) {
+            this.ctx.throw(400, '缺少技能标识');
+        }
+        if (!SKILL_SLUG_PATTERN.test(value)) {
+            this.ctx.throw(400, '非法技能标识');
+        }
+        return value;
+    }
+
+    buildSkillDownloadUrl(slug) {
+        const encodedSlug = encodeURIComponent(slug);
+        const { protocol, host } = this.ctx;
+        if (protocol && host) {
+            return `${protocol}://${host}/api/skills/download?slug=${encodedSlug}`;
+        }
+        return `/api/skills/download?slug=${encodedSlug}`;
+    }
+
+    async getSkillPackageInstallability(skillId) {
+        const { SkillsFile } = this.app.model;
+        const rows = await SkillsFile.findAll({
+            where: {
+                skill_id: skillId,
+                is_delete: 0,
+            },
+            attributes: [ 'file_path' ],
+            order: [ [ 'file_path', 'ASC' ] ],
+            limit: MAX_FILE_LIST_COUNT,
+        });
+
+        if (rows.length === 0) {
+            return {
+                installable: false,
+                reason: 'skill package has no files',
+            };
+        }
+
+        const hasSkillMd = rows.some((row) => path.basename(row.file_path).toLowerCase() === 'skill.md');
+        if (!hasSkillMd) {
+            return {
+                installable: false,
+                reason: 'skill package missing SKILL.md',
+            };
+        }
+
+        return {
+            installable: true,
+            reason: '',
+        };
+    }
+
+    async getInstallMeta(slug) {
+        await this.ensureSkillCache();
+        const safeSlug = this.validateSkillSlug(slug);
+        const skill = this.getSkillBySlug(safeSlug);
+        const { installable, reason } = await this.getSkillPackageInstallability(skill.id);
+        const downloadUrl = this.buildSkillDownloadUrl(skill.slug);
+
+        let sha256 = '';
+        if (installable) {
+            const { content } = await this.getSkillArchive(skill.slug);
+            sha256 = crypto.createHash('sha256').update(content).digest('hex');
+        }
+
+        return {
+            slug: skill.slug,
+            name: skill.name,
+            downloadUrl,
+            packageType: 'zip',
+            packageVersion: 'v1',
+            packageRootMode: 'find-skill-md',
+            installDirName: skill.slug,
+            version: '',
+            sha256,
+            sourceRepo: skill.sourceRepo || '',
+            installable,
+            reason,
         };
     }
 
