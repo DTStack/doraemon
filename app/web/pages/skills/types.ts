@@ -4,6 +4,7 @@ export interface SkillItem {
     name: string;
     description: string;
     category: string;
+    version: string;
     tags: string[];
     allowedTools: string[];
     stars: number;

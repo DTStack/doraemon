@@ -199,6 +199,7 @@ class SkillsService extends Service {
             await SkillsSource.sync();
             await SkillsItem.sync();
             await SkillsFile.sync();
+            await this.ensureSkillsItemVersionColumn();
             this.storageReady = true;
         })();
 
@@ -207,6 +208,19 @@ class SkillsService extends Service {
         } finally {
             this.storageReadyPromise = null;
         }
+    }
+
+    async ensureSkillsItemVersionColumn() {
+        const queryInterface = this.app.model.getQueryInterface();
+        const table = await queryInterface.describeTable('skills_items');
+        if (table.version) return;
+
+        await queryInterface.addColumn('skills_items', 'version', {
+            type: this.app.Sequelize.STRING(128),
+            allowNull: false,
+            defaultValue: '',
+            comment: '技能版本号',
+        });
     }
 
     parseJsonArray(value) {
@@ -229,6 +243,7 @@ class SkillsService extends Service {
             name: skill.name,
             description: skill.description,
             category: skill.category,
+            version: skill.version || '',
             tags: skill.tags,
             allowedTools: skill.allowedTools,
             stars: skill.stars,
@@ -248,6 +263,7 @@ class SkillsService extends Service {
             name: row.name || '',
             description: row.description || '',
             category: row.category || '通用',
+            version: row.version || '',
             tags: this.parseJsonArray(row.tags),
             allowedTools: this.parseJsonArray(row.allowed_tools),
             stars: Number(row.stars) || 0,
@@ -521,7 +537,7 @@ class SkillsService extends Service {
             packageVersion: 'v1',
             packageRootMode: 'find-skill-md',
             installDirName: skill.installKey || skill.slug,
-            version: '',
+            version: skill.version || '',
             sha256,
             sourceRepo: skill.sourceRepo || '',
             installable,
@@ -1284,6 +1300,7 @@ class SkillsService extends Service {
         const name = String(frontmatter.name || path.basename(skillDir)).trim() || path.basename(skillDir);
         const description =
             String(frontmatter.description || this.extractDescription(body)).trim() || this.extractDescription(content);
+        const version = String(frontmatter.version || '').trim();
         const allowedTools = this.parseArrayLike(
             frontmatter['allowed-tools'] || frontmatter.allowedTools || frontmatter.allowed_tools
         );
@@ -1301,6 +1318,7 @@ class SkillsService extends Service {
             name,
             description,
             category,
+            version,
             tags,
             allowedTools,
             updatedAt: stat.mtime,
@@ -1454,8 +1472,8 @@ class SkillsService extends Service {
         if (!fileName || !filePath) {
             this.ctx.throw(400, '上传文件无效');
         }
-        if (!/\.skill$/i.test(fileName)) {
-            this.ctx.throw(400, '仅支持上传 .skill 文件');
+        if (!/\.zip$/i.test(fileName)) {
+            this.ctx.throw(400, '仅支持上传 .zip 文件');
         }
         if (!fs.existsSync(filePath)) {
             this.ctx.throw(400, '上传文件不存在或已失效');
@@ -1475,22 +1493,21 @@ class SkillsService extends Service {
                 const zip = new AdmZip(filePath);
                 zip.extractAllTo(tempDir, true);
             } catch (error) {
-                this.ctx.throw(400, `解析 .skill 文件失败: ${error.message}`);
+                this.ctx.throw(400, `解析 .zip 文件失败: ${error.message}`);
             }
 
             const discoveredSkillDirs = this.discoverSkillDirs(tempDir);
             if (discoveredSkillDirs.length === 0) {
-                this.ctx.throw(400, '.skill 包内未发现有效技能（缺少 SKILL.md）');
+                this.ctx.throw(400, '.zip 包内未发现有效技能（缺少 SKILL.md）');
             }
 
-            let skillRecords = discoveredSkillDirs.map((skillDir) =>
-                this.prepareSkillRecord(skillDir, tempDir, parsedSource, category, tags)
-            );
-
-            skillRecords = this.filterSkillByName(skillRecords, skillName);
-            if (skillRecords.length === 0) {
-                this.ctx.throw(400, '未匹配到指定技能，请检查 skillName 是否正确');
-            }
+            const skillRecords = discoveredSkillDirs.map((skillDir) => {
+                const record = this.prepareSkillRecord(skillDir, tempDir, parsedSource, category, tags);
+                if (skillName) {
+                    record.name = skillName;
+                }
+                return record;
+            });
 
             const importedSkills = await this.persistSkillsForSource(
                 sourceRecord.id,
@@ -1548,6 +1565,224 @@ class SkillsService extends Service {
         }
     }
 
+    extractSkillRecordsFromZip(filePath, parsedSource, category, tags, skillName = '') {
+        let tempDir = '';
+
+        try {
+            tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-upload-'));
+
+            try {
+                const zip = new AdmZip(filePath);
+                zip.extractAllTo(tempDir, true);
+            } catch (error) {
+                this.ctx.throw(400, `解析 .zip 文件失败: ${error.message}`);
+            }
+
+            const discoveredSkillDirs = this.discoverSkillDirs(tempDir);
+            if (discoveredSkillDirs.length === 0) {
+                this.ctx.throw(400, '.zip 包内未发现有效技能（缺少 SKILL.md）');
+            }
+
+            return discoveredSkillDirs.map((skillDir) => {
+                const record = this.prepareSkillRecord(skillDir, tempDir, parsedSource, category, tags);
+                if (skillName) {
+                    record.name = skillName;
+                }
+                return record;
+            });
+        } finally {
+            if (tempDir && fs.existsSync(tempDir)) {
+                try {
+                    fs.rmSync(tempDir, { recursive: true, force: true });
+                } catch (error) {
+                    this.ctx.logger.warn(`[skills] 清理上传解压目录失败: ${tempDir}, ${error.message}`);
+                }
+            }
+        }
+    }
+
+    validateVersion(value) {
+        return String(value || '').trim().slice(0, 128);
+    }
+
+    async updateSkill(params = {}, file) {
+        const slug = this.validateSkillIdentifier(params.slug);
+        const name = String(params.name || '').trim();
+        const category = this.normalizeCategory(params.category);
+        const version = this.validateVersion(params.version);
+        const tags = this.normalizePlatformTags(params.tags);
+
+        await this.ensureSkillCache();
+        const currentSkill = this.getSkillByIdentifier(slug);
+        await this.ensureStorageReady();
+
+        if (!name) {
+            this.ctx.throw(400, '技能名称不能为空');
+        }
+
+        const hasZipUpload = Boolean(file?.filename && file?.filepath);
+        if (hasZipUpload) {
+            if (!/\.zip$/i.test(String(file.filename || ''))) {
+                this.ctx.throw(400, '仅支持上传 .zip 文件');
+            }
+            if (!fs.existsSync(String(file.filepath || ''))) {
+                this.ctx.throw(400, '上传文件不存在或已失效');
+            }
+        }
+
+        const { SkillsItem, SkillsFile } = this.app.model;
+
+        const result = await this.app.model.transaction(async (transaction) => {
+            const itemRow = await SkillsItem.findOne({
+                where: {
+                    id: currentSkill.id,
+                    is_delete: 0,
+                },
+                transaction,
+            });
+
+            if (!itemRow) {
+                this.ctx.throw(404, '技能不存在');
+            }
+
+            const payload = {
+                name,
+                category,
+                version,
+                tags: JSON.stringify(tags || []),
+            };
+
+            if (!hasZipUpload) {
+                await itemRow.update(payload, { transaction });
+                return {
+                    slug,
+                    updated: true,
+                    replacedArchive: false,
+                };
+            }
+
+            const parsedSource = this.buildUploadSourceMeta(file.filename);
+            const skillRecords = this.extractSkillRecordsFromZip(
+                file.filepath,
+                parsedSource,
+                category,
+                tags.length > 0 ? tags : currentSkill.tags || [],
+                name
+            );
+
+            if (skillRecords.length !== 1) {
+                this.ctx.throw(400, '编辑时上传的 .zip 包必须且只能包含一个技能目录');
+            }
+
+            const nextRecord = skillRecords[0];
+            nextRecord.name = name;
+            nextRecord.category = category;
+            nextRecord.version = version;
+            nextRecord.sourceRepo = currentSkill.sourceRepo || nextRecord.sourceRepo;
+            nextRecord.sourcePath = currentSkill.sourcePath || nextRecord.sourcePath;
+            nextRecord.tags = tags.length > 0 ? tags : currentSkill.tags || [];
+            nextRecord.installCommand =
+                currentSkill.installCommand ||
+                this.getInstallCommand({
+                    sourceRepo: nextRecord.sourceRepo,
+                    sourceUrl: parsedSource.sourceUrl,
+                    name,
+                });
+
+            await itemRow.update(
+                {
+                    ...payload,
+                    description: nextRecord.description,
+                    allowed_tools: JSON.stringify(nextRecord.allowedTools || []),
+                    updated_at_remote: nextRecord.updatedAt,
+                    source_repo: nextRecord.sourceRepo,
+                    source_path: nextRecord.sourcePath,
+                    skill_md: nextRecord.skillMd,
+                    install_command: nextRecord.installCommand,
+                    file_count: nextRecord.files.length,
+                },
+                { transaction }
+            );
+
+            await SkillsFile.destroy({
+                where: {
+                    skill_id: itemRow.id,
+                },
+                transaction,
+            });
+
+            if (nextRecord.files.length > 0) {
+                await SkillsFile.bulkCreate(
+                    nextRecord.files.map((fileItem) => ({
+                        skill_id: itemRow.id,
+                        file_path: fileItem.filePath,
+                        language: fileItem.language,
+                        size: fileItem.size,
+                        is_binary: fileItem.isBinary ? 1 : 0,
+                        encoding: fileItem.encoding,
+                        content: fileItem.content,
+                        updated_at_remote: fileItem.updatedAt,
+                        is_delete: 0,
+                    })),
+                    { transaction }
+                );
+            }
+
+            return {
+                slug,
+                updated: true,
+                replacedArchive: true,
+            };
+        });
+
+        this.invalidateCache();
+        await this.ensureSkillCache();
+        return result;
+    }
+
+    async deleteSkill(params = {}) {
+        const slug = this.validateSkillIdentifier(params.slug);
+        await this.ensureSkillCache();
+        const skill = this.getSkillByIdentifier(slug);
+        await this.ensureStorageReady();
+
+        const { SkillsItem, SkillsFile } = this.app.model;
+
+        await this.app.model.transaction(async (transaction) => {
+            await SkillsItem.update(
+                {
+                    is_delete: 1,
+                },
+                {
+                    where: {
+                        id: skill.id,
+                    },
+                    transaction,
+                }
+            );
+
+            await SkillsFile.update(
+                {
+                    is_delete: 1,
+                },
+                {
+                    where: {
+                        skill_id: skill.id,
+                    },
+                    transaction,
+                }
+            );
+        });
+
+        this.invalidateCache();
+        await this.ensureSkillCache();
+
+        return {
+            slug,
+            deleted: true,
+        };
+    }
+
     async persistSkillsForSource(sourceId, sourceMeta, skillRecords = []) {
         const { SkillsItem, SkillsFile } = this.app.model;
         const { Op } = this.app.Sequelize;
@@ -1601,6 +1836,7 @@ class SkillsService extends Service {
                         name: record.name,
                         description: record.description,
                         category: record.category,
+                        version: record.version || '',
                         tags: JSON.stringify(record.tags || []),
                         allowed_tools: JSON.stringify(record.allowedTools || []),
                         stars: resolvedStars,

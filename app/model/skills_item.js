@@ -32,6 +32,12 @@ module.exports = (app) => {
                 allowNull: false,
                 defaultValue: '通用',
             },
+            version: {
+                type: STRING(128),
+                allowNull: false,
+                defaultValue: '',
+                comment: '技能版本号',
+            },
             tags: {
                 type: TEXT('long'),
                 comment: 'JSON字符串数组',

@@ -46,13 +46,6 @@ class SkillsController extends Controller {
         ctx.body = app.utils.response(true, data);
     }
 
-    async importSkill() {
-        const { app, ctx } = this;
-        const params = ctx.request.body || {};
-        const data = await ctx.service.skills.importSkill(params);
-        ctx.body = app.utils.response(true, data);
-    }
-
     async importSkillFile() {
         const { app, ctx } = this;
         const params = ctx.request.body || {};
@@ -79,6 +72,36 @@ class SkillsController extends Controller {
                 }
             }
         }
+    }
+
+    async updateSkill() {
+        const { app, ctx } = this;
+        const params = ctx.request.body || {};
+        const files = ctx.request.files
+            ? Array.isArray(ctx.request.files)
+                ? ctx.request.files
+                : [ ctx.request.files ]
+            : [];
+        const file = files[0] || null;
+
+        try {
+            const data = await ctx.service.skills.updateSkill(params, file);
+            ctx.body = app.utils.response(true, data, '更新成功');
+        } finally {
+            if (file?.filepath && fs.existsSync(file.filepath)) {
+                try {
+                    fs.unlinkSync(file.filepath);
+                } catch (error) {
+                    ctx.logger.warn(`[skills] 清理更新上传文件失败: ${error.message}`);
+                }
+            }
+        }
+    }
+
+    async deleteSkill() {
+        const { app, ctx } = this;
+        const data = await ctx.service.skills.deleteSkill(ctx.request.body || {});
+        ctx.body = app.utils.response(true, data, '删除成功');
     }
 }
 

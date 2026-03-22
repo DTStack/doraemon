@@ -62,10 +62,35 @@
             justify-content: space-between;
             margin-bottom: 10px;
         }
+        .card-header-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
         .skill-name {
             color: #1F2D3D;
             font-size: 16px;
             font-weight: 600;
+        }
+        .card-edit-trigger {
+            height: 20px;
+            width: 20px;
+            min-width: 20px;
+            padding: 0;
+            color: #667085;
+            font-size: 12px;
+            line-height: 1;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-edit-trigger:hover,
+        .card-edit-trigger:focus {
+            color: #2F7CF6;
+            background: transparent;
         }
         .meta-stars {
             color: #E6A23C;
@@ -96,14 +121,6 @@
         .tag-row {
             min-height: 28px;
             margin-bottom: 10px;
-        }
-        .action-row {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            margin-top: auto;
-            padding-top: 6px;
-            gap: 8px;
         }
     }
     .pagination-wrap {
@@ -154,4 +171,11 @@
     .skill-detail-modal-inner {
         padding: 0;
     }
+}
+
+.skill-edit-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
 }

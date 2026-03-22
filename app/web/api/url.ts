@@ -371,14 +371,19 @@ export default {
         method: 'get',
         url: '/api/skills/download',
     },
-    // 导入 Skill
-    importSkill: {
-        method: 'post',
-        url: '/api/skills/import',
-    },
-    // 上传 .skill 文件导入
+    // 上传 .zip 文件导入
     importSkillFile: {
         method: 'postForm',
         url: '/api/skills/import-file',
+    },
+    // 编辑 Skill
+    updateSkill: {
+        method: 'postForm',
+        url: '/api/skills/update',
+    },
+    // 删除 Skill
+    deleteSkill: {
+        method: 'post',
+        url: '/api/skills/delete',
     },
 };

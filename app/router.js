@@ -155,8 +155,9 @@ module.exports = (app) => {
     app.get('/api/skills/file-content', app.controller.skills.getSkillFileContent);
     app.get('/api/skills/install-meta', app.controller.skills.getSkillInstallMeta);
     app.get('/api/skills/download', app.controller.skills.downloadSkillArchive);
-    app.post('/api/skills/import', app.controller.skills.importSkill);
     app.post('/api/skills/import-file', app.controller.skills.importSkillFile);
+    app.post('/api/skills/update', app.controller.skills.updateSkill);
+    app.post('/api/skills/delete', app.controller.skills.deleteSkill);
 
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
     // 暂时close Terminal相关功能

@@ -1,27 +1,29 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowLeftOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
-import {
-    ArrowLeftOutlined,
-    CopyOutlined,
-    DownloadOutlined,
-    FolderOpenOutlined,
-    LinkOutlined,
-    ReadOutlined,
-    ShareAltOutlined,
-    StarOutlined,
-} from '@ant-design/icons';
-import { Button, Card, Col, Empty, Row, Space, Spin, Tabs, Tag, Tree, Typography } from 'antd';
+import { Button, Empty, Spin, Tree, Typography } from 'antd';
 import type { DataNode } from 'antd/lib/tree';
 
 import { API } from '@/api';
+import agentIcon from '@/asset/images/skills-detail-figma/agent.svg';
+import chevronDownIcon from '@/asset/images/skills-detail-figma/chevron-down.svg';
+import chevronRightIcon from '@/asset/images/skills-detail-figma/chevron-right.svg';
+import contributorOne from '@/asset/images/skills-detail-figma/contributor-1.png';
+import contributorTwo from '@/asset/images/skills-detail-figma/contributor-2.png';
+import copyDarkIcon from '@/asset/images/skills-detail-figma/copy-dark.svg';
+import downloadIcon from '@/asset/images/skills-detail-figma/download.svg';
+import emptyRelatedIcon from '@/asset/images/skills-detail-figma/empty-related.svg';
+import fileDocIcon from '@/asset/images/skills-detail-figma/file-doc.svg';
+import folderOpenBlueIcon from '@/asset/images/skills-detail-figma/folder-open-blue.svg';
+import heroSkillIcon from '@/asset/images/skills-detail-figma/hero-skill.svg';
+import humanIcon from '@/asset/images/skills-detail-figma/human.svg';
 import MarkdownRenderer from '@/components/markdownRenderer';
 import { copyToClipboard } from '@/utils/copyUtils';
 import { SkillDetail, SkillFileContent, SkillInstallMeta, SkillItem } from '../types';
 import './style.scss';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
 
 interface SkillTreeNode extends DataNode {
     children?: SkillTreeNode[];
@@ -37,6 +39,32 @@ interface SkillDetailContentProps {
     history: any;
 }
 
+interface FigmaIconProps {
+    src: string;
+    className?: string;
+    alt?: string;
+}
+
+type InstallPanelKey = 'agent' | 'human' | null;
+
+const relatedSkillIconUrls = [
+    'http://localhost:3845/assets/7abff42ee9b5b6b17c3f0b4350bc40d2918871d6.svg',
+    'http://localhost:3845/assets/b2b47e5541ef2b4c45ad4fb4cd42a7290d758d19.svg',
+    'http://localhost:3845/assets/46261c14a19d03261c20a3df79aa4c0ed3b263ab.svg',
+];
+
+const relatedSkillShellClasses = ['is-blue', 'is-green', 'is-orange'];
+const browseMarketArrowIcon = 'http://localhost:3845/assets/d1b40a8f52f64c4290b2006b356fc8b61c18d6fc.svg';
+
+const FigmaIcon: React.FC<FigmaIconProps> = ({ src, className = '', alt = '' }) => (
+    <img
+        alt={alt}
+        aria-hidden="true"
+        className={`skill-detail-figma-icon ${className}`.trim()}
+        src={src}
+    />
+);
+
 const formatFileSize = (size = 0) => {
     if (size < 1024) return `${size} B`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
@@ -50,6 +78,7 @@ const sortTreeNodes = (nodes: SkillTreeNode[]) => {
         if (aIsLeaf !== bIsLeaf) return aIsLeaf ? 1 : -1;
         return String(a.title).localeCompare(String(b.title));
     });
+
     nodes.forEach((node) => {
         if (node.children && node.children.length > 0) {
             sortTreeNodes(node.children);
@@ -136,8 +165,10 @@ const parseMarkdownFrontmatter = (
 
     const pushCurrent = () => {
         if (!currentKey) return;
-        const value = normalizeFrontmatterValue(currentValueLines.join('\n'));
-        frontmatter.push({ key: currentKey, value });
+        frontmatter.push({
+            key: currentKey,
+            value: normalizeFrontmatterValue(currentValueLines.join('\n')),
+        });
     };
 
     lines.forEach((line) => {
@@ -169,14 +200,23 @@ const formatDownloadCommand = (downloadUrl = '', fileName = 'skill.zip') => {
     return `curl -L "${downloadUrl}" -o ${fileName}`;
 };
 
+const formatCompactDate = (value?: string) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+};
+
 const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }) => {
     const [loading, setLoading] = useState(true);
     const [fileLoading, setFileLoading] = useState(false);
     const [detail, setDetail] = useState<SkillDetail | null>(null);
     const [installMeta, setInstallMeta] = useState<SkillInstallMeta | null>(null);
     const [related, setRelated] = useState<SkillItem[]>([]);
+    const [uiSelectedFilePath, setUiSelectedFilePath] = useState('');
     const [selectedFilePath, setSelectedFilePath] = useState('');
     const [fileContent, setFileContent] = useState<SkillFileContent | null>(null);
+    const [activeInstallPanel, setActiveInstallPanel] = useState<InstallPanelKey>('agent');
 
     const fileTreeData = useMemo(
         () => buildFileTreeData(detail?.fileList || []),
@@ -190,22 +230,18 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
         () => `/api/skills/download?slug=${encodeURIComponent(slug)}`,
         [slug]
     );
-    const deepLinkPath = useMemo(() => `/page/skills/${encodeURIComponent(slug)}`, [slug]);
     const installKey = installMeta?.installKey || detail?.installKey || slug;
     const currentOrigin = useMemo(() => {
         if (typeof window === 'undefined') return '';
         return window.location.origin;
     }, []);
-    const deepLinkUrl = useMemo(() => {
-        if (!currentOrigin) return deepLinkPath;
-        return `${currentOrigin}${deepLinkPath}`;
-    }, [currentOrigin, deepLinkPath]);
     const skillInstallCommand = useMemo(
         () => `doraemon-skills install ${installKey}`,
         [installKey]
     );
+    const browseMarketPath = '/page/skills';
     const cliInstallPlaceholderCommand =
-        '# 待提供：Doraemon CLI 安装脚本 URL（例如 curl -fsSL <...> | bash）';
+        '# 待补齐 Doraemon CLI 安装脚本 URL，例如 curl -fsSL <install.sh> | bash';
     const archiveFileName = useMemo(() => {
         const rawName = detail?.name || slug || 'skill';
         const normalized = rawName
@@ -223,18 +259,47 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
         }
         return formatDownloadCommand(`${currentOrigin}${downloadPath}`, archiveFileName);
     }, [archiveFileName, currentOrigin, downloadPath, installMeta?.downloadUrl]);
-    const agentInstruction = useMemo(
-        () =>
-            [
-                '请先检查 Doraemon CLI 是否已安装（例如执行 doraemon-skills --help）。',
-                '若未安装，请先执行 Human 区的 Doraemon CLI 安装步骤。',
-                `安装当前技能：${skillInstallCommand}`,
-                '若已安装，则直接执行上面的技能安装命令。',
-            ].join('\n'),
-        [skillInstallCommand]
+    const frontmatterInfo = useMemo(
+        () => parseMarkdownFrontmatter(detail?.skillMd || ''),
+        [detail?.skillMd]
+    );
+    const heroMetaItems = useMemo(
+        () => [
+            {
+                label: '分类',
+                value: detail?.category || '通用',
+            },
+            {
+                label: '最近更新',
+                value: formatCompactDate(detail?.updatedAt),
+            },
+        ],
+        [detail?.category, detail?.updatedAt]
     );
     const isInstallable = Boolean(installMeta?.installable);
-    const installUnavailableReason = installMeta?.reason || 'install-meta 暂不可用';
+    const manualDownloadUrl = installMeta?.downloadUrl || downloadPath;
+    const agentTerminalCommand = isInstallable ? skillInstallCommand : downloadCommand;
+    const heroSummary = useMemo(() => {
+        const rawText = (detail?.description || '').replace(/\s+/g, ' ').trim();
+        if (!rawText) return '暂无描述';
+        const sentence = rawText.split(/(?<=[.!?。！？])/)[0]?.trim() || rawText;
+        return sentence;
+    }, [detail?.description]);
+    const handleSelectFile = (nextPath: string) => {
+        if (!nextPath || nextPath === uiSelectedFilePath) return;
+        setUiSelectedFilePath(nextPath);
+        setSelectedFilePath(nextPath);
+        setFileContent(null);
+        setFileLoading(true);
+    };
+
+    useEffect(() => {
+        setUiSelectedFilePath('');
+        setSelectedFilePath('');
+        setFileContent(null);
+        setFileLoading(false);
+        setInstallMeta(null);
+    }, [slug]);
 
     useEffect(() => {
         let cancelled = false;
@@ -257,7 +322,10 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                     const defaultFile = detailData.fileList.includes('SKILL.md')
                         ? 'SKILL.md'
                         : detailData.fileList[0] || '';
+                    setUiSelectedFilePath(defaultFile);
                     setSelectedFilePath(defaultFile);
+                    setFileContent(null);
+                    setFileLoading(Boolean(defaultFile));
 
                     const installMetaRes = await API.getSkillInstallMeta({
                         installKey: detailData.installKey || slug,
@@ -267,15 +335,11 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                     }
                 } else {
                     setDetail(null);
+                    setUiSelectedFilePath('');
                     setSelectedFilePath('');
                 }
 
-                if (relatedRes.success) {
-                    setRelated(relatedRes.data || []);
-                } else {
-                    setRelated([]);
-                }
-
+                setRelated(relatedRes.success ? relatedRes.data || [] : []);
                 setInstallMeta(nextInstallMeta);
             } catch (error) {
                 console.error('获取 Skill 详情失败:', error);
@@ -283,6 +347,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                     setDetail(null);
                     setRelated([]);
                     setInstallMeta(null);
+                    setUiSelectedFilePath('');
                     setSelectedFilePath('');
                 }
             } finally {
@@ -306,6 +371,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
         }
 
         let cancelled = false;
+
         const loadFileContent = async () => {
             setFileLoading(true);
             try {
@@ -314,11 +380,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                     path: selectedFilePath,
                 });
                 if (!cancelled) {
-                    if (response.success) {
-                        setFileContent(response.data as SkillFileContent);
-                    } else {
-                        setFileContent(null);
-                    }
+                    setFileContent(response.success ? (response.data as SkillFileContent) : null);
                 }
             } catch (error) {
                 console.error('获取文件内容失败:', error);
@@ -337,7 +399,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
         return () => {
             cancelled = true;
         };
-    }, [slug, selectedFilePath]);
+    }, [selectedFilePath, slug]);
 
     const renderFileViewer = () => {
         if (fileLoading) {
@@ -399,7 +461,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
             <SyntaxHighlighter
                 style={atomOneLight}
                 language={fileContent.language || 'text'}
-                customStyle={{ margin: 0, borderRadius: 6, minHeight: 460 }}
+                customStyle={{ margin: 0, borderRadius: 0, minHeight: 420, background: '#fff' }}
                 showLineNumbers
             >
                 {fileContent.content || ''}
@@ -407,32 +469,42 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
         );
     };
 
-    const renderInstallCommandCard = ({
-        title,
-        description,
-        command,
-        copyMessage,
-        disabled = false,
-    }: {
-        title: string;
-        description?: string;
-        command: string;
-        copyMessage: string;
-        disabled?: boolean;
-    }) => (
-        <div className="install-command-card">
-            <div className="install-command-header">
-                <Text className="install-command-title">{title}</Text>
-                {description ? <Text type="secondary">{description}</Text> : null}
+    const renderInlineCommand = (command: string, copyMessage: string, compact = false) => (
+        <div className={`command-surface is-light ${compact ? 'is-compact' : ''}`.trim()}>
+            <div className="command-surface-inline">
+                <div className="command-inline-code-wrap">
+                    <code>{command || '暂无可复制命令'}</code>
+                </div>
+                <Button
+                    type="text"
+                    className="command-copy-btn is-inline-copy"
+                    icon={<FigmaIcon src={copyDarkIcon} className="is-copy-dark" />}
+                    onClick={() => copyToClipboard(command, copyMessage)}
+                    disabled={!command}
+                />
             </div>
-            <div className="command-block">
+        </div>
+    );
+
+    const renderTerminalCommand = (command: string, copyMessage: string) => (
+        <div className="command-surface is-dark is-terminal">
+            <div className="terminal-head">
+                <div className="terminal-dots">
+                    <span />
+                    <span />
+                    <span />
+                </div>
+                <span className="terminal-label">BASH</span>
+            </div>
+            <div className="terminal-body">
+                <span className="terminal-prompt">$</span>
                 <code>{command || '暂无可复制命令'}</code>
                 <Button
                     type="text"
-                    className="command-copy-btn"
-                    icon={<CopyOutlined />}
+                    className="command-copy-btn is-terminal-copy"
+                    icon={<FigmaIcon src={copyDarkIcon} className="is-copy-dark" />}
                     onClick={() => copyToClipboard(command, copyMessage)}
-                    disabled={disabled || !command}
+                    disabled={!command}
                 />
             </div>
         </div>
@@ -448,318 +520,406 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
 
     if (!detail) {
         return (
-            <div className="page-skill-detail">
-                <Empty description="Skill 不存在或已被删除">
-                    <Button onClick={() => history.push('/page/skills')}>返回 Skills 列表</Button>
+            <div className="page-skill-detail page-skill-detail-empty">
+                <Empty description="技能不存在或已被删除">
+                    <Button onClick={() => history.push('/page/skills')}>返回技能列表</Button>
                 </Empty>
             </div>
         );
     }
 
-    const detailTags = (detail.tags || []).filter((tag) => tag && tag !== detail.category);
-    const detailSource = detail.sourceRepo || detail.sourcePath || '-';
-    const detailUpdatedAt = detail.updatedAt
-        ? new Date(detail.updatedAt).toLocaleString('zh-CN')
-        : '-';
-    const agentFallbackInstruction = [
-        '当前 skill 不支持 doraemon-skills 直接安装。',
-        `请先下载 zip：${downloadCommand}`,
-        `原因：${installUnavailableReason}`,
-        '然后手动解压并确认技能目录结构（需包含 SKILL.md）。',
-    ].join('\n');
-    const detailMetaItems = [
-        {
-            label: 'Stars',
-            value: String(detail.stars || 0),
-            className: 'is-accent',
-        },
-        {
-            label: '分类',
-            value: detail.category || '未分类',
-        },
-        {
-            label: '最近更新',
-            value: detailUpdatedAt,
-        },
-        {
-            label: '来源',
-            value: detailSource,
-            className: 'is-wide',
-        },
-    ];
-
     return (
         <div className="page-skill-detail">
-            <div className="detail-hero">
-                <div className="detail-hero-main">
-                    <Button
-                        icon={<ArrowLeftOutlined />}
-                        className="back-btn"
-                        onClick={() => history.push('/page/skills')}
-                    >
-                        返回列表
-                    </Button>
-
-                    <div className="hero-kicker-row">
-                        <Tag color="blue">{detail.category || '未分类'}</Tag>
-                        <span className="install-key-chip">安装标识 · {installKey}</span>
-                    </div>
-
-                    <div className="hero-title-row">
-                        <div className="title-group">
-                            <Title level={2}>{detail.name}</Title>
-                            <Paragraph className="hero-description" type="secondary">
-                                {detail.description || '暂无描述'}
-                            </Paragraph>
+            <div className="skill-detail-shell">
+                <aside className="detail-left-sidebar">
+                    <div className="sidebar-head">
+                        <Button
+                            type="text"
+                            icon={<ArrowLeftOutlined />}
+                            onClick={() => history.push('/page/skills')}
+                            className="back-btn"
+                        />
+                        <div className="sidebar-title-group">
+                            <span>技能目录</span>
+                            <strong>{detail?.version || '-'}</strong>
                         </div>
-
-                        <Space size={12} wrap className="hero-action-group">
-                            <Button
-                                icon={<ShareAltOutlined />}
-                                onClick={() =>
-                                    copyToClipboard(deepLinkUrl, '详情页深链已复制到剪贴板')
-                                }
-                            >
-                                复制深链
-                            </Button>
-                            <Button
-                                icon={<LinkOutlined />}
-                                onClick={() => window.open(sourceUrl, '_blank')}
-                                disabled={!sourceUrl}
-                            >
-                                查看源码
-                            </Button>
-                        </Space>
                     </div>
 
-                    <div className="hero-meta-grid">
-                        {detailMetaItems.map((item) => (
-                            <div
-                                key={item.label}
-                                className={`hero-meta-card ${item.className || ''}`.trim()}
-                            >
-                                <Text className="hero-meta-label">{item.label}</Text>
-                                <div className="hero-meta-value" title={item.value}>
-                                    {item.label === 'Stars' ? (
-                                        <>
-                                            <StarOutlined /> {item.value}
-                                        </>
-                                    ) : (
-                                        item.value
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {detailTags.length > 0 ? (
-                        <div className="hero-tag-list">
-                            {detailTags.map((tag) => (
-                                <Tag key={tag}>{tag}</Tag>
-                            ))}
-                        </div>
-                    ) : null}
-                </div>
-
-                <Card className="install-overview-card" bordered={false}>
-                    <div className="install-card-header">
-                        <div>
-                            <Text className="install-card-title">安装方式</Text>
-                            <Paragraph className="install-card-caption" type="secondary">
-                                {isInstallable
-                                    ? '默认展示 Agent 安装路径，并始终基于 installKey 生成用户可见命令。'
-                                    : '当前来源暂不支持 Doraemon CLI 直装，保留手动下载与解压的降级路径。'}
-                            </Paragraph>
-                        </div>
-                        <span
-                            className={`install-status-tag ${
-                                isInstallable ? 'is-ready' : 'is-fallback'
-                            }`}
-                        >
-                            {isInstallable ? 'CLI 可安装' : '需手动接入'}
-                        </span>
-                    </div>
-
-                    <Tabs defaultActiveKey="agent" className="install-tabs">
-                        <TabPane tab="我是 Agent" key="agent">
-                            <div className="install-tab-panel">
-                                {isInstallable ? (
-                                    <>
-                                        <Text type="secondary">
-                                            先确认 Doraemon CLI 可用，再把下面整段提示发给 Agent
-                                            执行。
-                                        </Text>
-                                        {renderInstallCommandCard({
-                                            title: '发给 Agent 的安装提示',
-                                            description: '包含 CLI 检查与技能安装两步说明',
-                                            command: agentInstruction,
-                                            copyMessage: 'Agent 指令已复制到剪贴板',
-                                        })}
-                                    </>
-                                ) : (
-                                    <>
-                                        <Text strong>当前 skill 需要 Agent 走下载降级路径</Text>
-                                        {renderInstallCommandCard({
-                                            title: '发给 Agent 的降级说明',
-                                            description: installUnavailableReason,
-                                            command: agentFallbackInstruction,
-                                            copyMessage: '降级指令已复制到剪贴板',
-                                        })}
-                                    </>
-                                )}
-                            </div>
-                        </TabPane>
-                        <TabPane tab="我是 Human" key="human">
-                            <div className="install-tab-panel">
-                                {isInstallable ? (
-                                    <>
-                                        {renderInstallCommandCard({
-                                            title: '先安装 Doraemon CLI',
-                                            description:
-                                                '当前项目仍使用占位说明，等待统一安装脚本地址补齐',
-                                            command: cliInstallPlaceholderCommand,
-                                            copyMessage: 'CLI 安装命令已复制到剪贴板',
-                                        })}
-                                        {renderInstallCommandCard({
-                                            title: '安装当前技能',
-                                            description: '复制后可直接在终端执行',
-                                            command: skillInstallCommand,
-                                            copyMessage: '技能安装命令已复制到剪贴板',
-                                        })}
-                                    </>
-                                ) : (
-                                    <>
-                                        <Text strong>当前技能暂不支持 Doraemon CLI 直接安装</Text>
-                                        <Text type="secondary">
-                                            原因：{installUnavailableReason}
-                                        </Text>
-                                        {renderInstallCommandCard({
-                                            title: '手动下载命令',
-                                            description: '下载 zip 后手动解压到目标 skills 目录',
-                                            command: downloadCommand,
-                                            copyMessage: '下载命令已复制到剪贴板',
-                                            disabled: !downloadCommand,
-                                        })}
-                                    </>
-                                )}
-                            </div>
-                        </TabPane>
-                    </Tabs>
-                </Card>
-            </div>
-
-            <Row gutter={[16, 16]} className="detail-main-row">
-                <Col xs={24} xl={16}>
-                    <Card
-                        className="file-tree-card"
-                        title={
-                            <Space>
-                                <FolderOpenOutlined />
-                                文件浏览
-                            </Space>
-                        }
-                        bodyStyle={{ padding: '8px 0', maxHeight: 280, overflow: 'auto' }}
-                    >
+                    <div className="sidebar-tree-wrap">
                         {fileTreeData.length === 0 ? (
                             <Empty description="暂无文件" />
                         ) : (
                             <Tree
                                 treeData={fileTreeData}
-                                selectedKeys={selectedFilePath ? [selectedFilePath] : []}
                                 defaultExpandAll
-                                onSelect={(keys, info) => {
-                                    if (!info.node.isLeaf) return;
-                                    const targetPath = String(keys[0] || '');
-                                    if (targetPath) {
-                                        setSelectedFilePath(targetPath);
-                                    }
-                                }}
+                                selectable={false}
+                                titleRender={(node) => (
+                                    <span
+                                        className={`explorer-tree-item ${
+                                            node.key === uiSelectedFilePath ? 'is-selected' : ''
+                                        }`.trim()}
+                                        role={node.isLeaf ? 'button' : undefined}
+                                        tabIndex={node.isLeaf ? 0 : -1}
+                                        onClick={() => {
+                                            if (!node.isLeaf) return;
+                                            handleSelectFile(String(node.key));
+                                        }}
+                                        onKeyDown={(event) => {
+                                            if (!node.isLeaf) return;
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                event.preventDefault();
+                                                handleSelectFile(String(node.key));
+                                            }
+                                        }}
+                                    >
+                                        <FigmaIcon
+                                            src={node.isLeaf ? fileDocIcon : folderOpenBlueIcon}
+                                            className={`is-tree-node ${
+                                                node.isLeaf ? 'is-leaf' : 'is-folder'
+                                            }`}
+                                        />
+                                        <span>{String(node.title)}</span>
+                                    </span>
+                                )}
                             />
                         )}
-                    </Card>
+                    </div>
 
-                    <Card
-                        className="file-viewer-card"
-                        title={
-                            <Space>
-                                <ReadOutlined />
-                                <Text>{selectedFilePath || '文件预览'}</Text>
-                            </Space>
-                        }
-                        extra={
-                            fileContent ? (
-                                <Space>
-                                    <Tag>{fileContent.language}</Tag>
-                                    <Text type="secondary">{formatFileSize(fileContent.size)}</Text>
-                                </Space>
-                            ) : null
-                        }
-                    >
-                        {renderFileViewer()}
-                    </Card>
-                </Col>
+                    <div className="sidebar-foot">
+                        <Button
+                            type="primary"
+                            block
+                            className="install-primary-btn"
+                            onClick={() => {
+                                setActiveInstallPanel('agent');
+                                copyToClipboard(
+                                    isInstallable ? skillInstallCommand : downloadCommand,
+                                    isInstallable
+                                        ? '技能安装命令已复制到剪贴板'
+                                        : '下载命令已复制到剪贴板'
+                                );
+                            }}
+                        >
+                            {isInstallable ? '安装技能' : '下载技能'}
+                        </Button>
+                        <button
+                            type="button"
+                            className="sidebar-help-btn"
+                            onClick={() =>
+                                window.open(
+                                    sourceUrl || 'https://github.com/JackWang032/doraemon-proxy-tool',
+                                    '_blank'
+                                )
+                            }
+                        >
+                            <QuestionCircleOutlined />
+                            <span>帮助</span>
+                        </button>
+                    </div>
+                </aside>
 
-                <Col xs={24} xl={8}>
-                    <Card
-                        className="action-card download-card"
-                        title="手动下载"
-                        extra={<Text>manual</Text>}
-                    >
-                        <div className="download-buttons">
-                            <Button
-                                type="primary"
-                                block
-                                icon={<DownloadOutlined />}
-                                onClick={() =>
-                                    window.open(installMeta?.downloadUrl || downloadPath, '_blank')
-                                }
-                            >
-                                下载 skill.zip
-                            </Button>
-                            <div className="command-block">
-                                <code>{downloadCommand}</code>
+                <main className="detail-main-column">
+                    <section className="detail-hero-main">
+                        <div className="hero-head-row">
+                            <div className="hero-title-block">
+                                <div className="skill-title-icon" aria-hidden="true">
+                                    <FigmaIcon src={heroSkillIcon} className="is-hero" />
+                                </div>
+                                <div className="hero-copy">
+                                    <Title level={2}>{detail.name}</Title>
+                                    <Paragraph className="hero-description">{heroSummary}</Paragraph>
+                                </div>
+                            </div>
+
+                            <div className="hero-actions">
+                                <div className="hero-stat-chip">
+                                    <span>☆</span>
+                                    <strong>{detail.stars || 0}</strong>
+                                </div>
                                 <Button
-                                    type="text"
-                                    className="command-copy-btn"
-                                    icon={<CopyOutlined />}
-                                    onClick={() =>
-                                        copyToClipboard(downloadCommand, '下载命令已复制到剪贴板')
+                                    type="primary"
+                                    className="hero-fork-btn"
+                                    onClick={() => window.open(sourceUrl, '_blank')}
+                                    disabled={!sourceUrl}
+                                >
+                                    Fork
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="hero-meta-row">
+                            {heroMetaItems.map((item) => (
+                                <div key={item.label} className="hero-meta-item">
+                                    <span>{item.label}</span>
+                                    <strong>{item.value}</strong>
+                                </div>
+                            ))}
+                        </div>
+
+                    </section>
+
+                    <section className="document-panel">
+                        <div className="document-toolbar">
+                            <div className="document-toolbar-left">
+                                <FigmaIcon src={fileDocIcon} className="is-article" />
+                                <span>{uiSelectedFilePath || 'SKILL.md'}</span>
+                            </div>
+                            <div className="document-toolbar-right">
+                                {fileLoading ? (
+                                    <span className="document-loading-indicator">
+                                        <Spin size="small" />
+                                    </span>
+                                ) : null}
+                                <span />
+                                <span />
+                                <span />
+                            </div>
+                        </div>
+
+                        <div className="document-scroll-area">
+                            <div className="document-content-shell">
+                                {renderFileViewer()}
+                            </div>
+                        </div>
+                    </section>
+                </main>
+
+                <aside className="detail-right-sidebar">
+                    <section className="install-panel">
+                        <div className="sidebar-section-title">安装方式</div>
+
+                        <div
+                            className={`install-option-card ${
+                                activeInstallPanel === 'agent' ? 'is-active' : ''
+                            }`.trim()}
+                        >
+                            <button
+                                type="button"
+                                className="install-option-trigger"
+                                onClick={() =>
+                                    setActiveInstallPanel((current) =>
+                                        current === 'agent' ? null : 'agent'
+                                    )
+                                }
+                                aria-expanded={activeInstallPanel === 'agent'}
+                            >
+                                <div className="install-option-meta">
+                                    <span
+                                        className="install-option-icon-shell is-agent"
+                                        aria-hidden="true"
+                                    >
+                                        <FigmaIcon
+                                            src={agentIcon}
+                                            className="is-option-icon is-agent-icon"
+                                        />
+                                    </span>
+                                    <div>
+                                        <div className="install-option-title">智能体</div>
+                                        <div className="install-option-description">
+                                            {isInstallable
+                                                ? '自动化安装'
+                                                : '下载后安装'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <FigmaIcon
+                                    src={
+                                        activeInstallPanel === 'agent'
+                                            ? chevronDownIcon
+                                            : chevronRightIcon
+                                    }
+                                    className={
+                                        activeInstallPanel === 'agent'
+                                            ? 'is-chevron'
+                                            : 'is-chevron-right'
                                     }
                                 />
+                            </button>
+                            <div
+                                className={`install-option-body ${
+                                    activeInstallPanel === 'agent' ? 'is-open' : 'is-closed'
+                                }`.trim()}
+                            >
+                                <div className="install-option-body-inner">
+                                    {renderTerminalCommand(
+                                        agentTerminalCommand,
+                                        isInstallable
+                                            ? 'Agent 安装命令已复制到剪贴板'
+                                            : '下载命令已复制到剪贴板',
+                                    )}
+                                </div>
                             </div>
-                            <Text type="secondary">
-                                下载完整技能目录，包含 SKILL.md 与所有相关文件
-                            </Text>
                         </div>
-                    </Card>
-                </Col>
-            </Row>
 
-            <Card className="related-card-list" title="相关技能推荐">
-                {related.length === 0 ? (
-                    <Empty description="暂无相关技能推荐" />
-                ) : (
-                    <Row gutter={[16, 16]}>
-                        {related.map((item) => (
-                            <Col key={item.slug} xs={24} sm={12} lg={8}>
-                                <Card
-                                    className="related-item-card"
-                                    hoverable
-                                    onClick={() => history.push(`/page/skills/${item.slug}`)}
+                        <div
+                            className={`install-option-card is-collapsed ${
+                                activeInstallPanel === 'human' ? 'is-active' : ''
+                            }`.trim()}
+                        >
+                            <button
+                                type="button"
+                                className="install-option-trigger"
+                                onClick={() =>
+                                    setActiveInstallPanel(
+                                        activeInstallPanel === 'human' ? null : 'human'
+                                    )
+                                }
+                                aria-expanded={activeInstallPanel === 'human'}
+                            >
+                                <div className="install-option-meta">
+                                    <span
+                                        className="install-option-icon-shell is-human"
+                                        aria-hidden="true"
+                                    >
+                                        <FigmaIcon
+                                            src={humanIcon}
+                                            className="is-option-icon is-human-icon"
+                                        />
+                                    </span>
+                                    <div>
+                                        <div className="install-option-title">手动安装</div>
+                                        <div className="install-option-description">
+                                            手动配置
+                                        </div>
+                                    </div>
+                                </div>
+                                <FigmaIcon
+                                    src={
+                                        activeInstallPanel === 'human'
+                                            ? chevronDownIcon
+                                            : chevronRightIcon
+                                    }
+                                    className={
+                                        activeInstallPanel === 'human'
+                                            ? 'is-chevron'
+                                            : 'is-chevron-right'
+                                    }
+                                />
+                            </button>
+                            <div
+                                className={`install-option-body ${
+                                    activeInstallPanel === 'human' ? 'is-open' : 'is-closed'
+                                }`.trim()}
+                            >
+                                <div className="install-option-body-inner">
+                                    <div className="human-command-card">
+                                        <div className="human-command-title">先安装 Doraemon CLI</div>
+                                        {renderInlineCommand(
+                                            cliInstallPlaceholderCommand,
+                                            'CLI 安装命令已复制到剪贴板',
+                                            false
+                                        )}
+                                    </div>
+                                    <div className="human-command-card">
+                                        <div className="human-command-title">再安装当前技能</div>
+                                        {renderInlineCommand(
+                                            isInstallable ? skillInstallCommand : downloadCommand,
+                                            isInstallable
+                                                ? '技能安装命令已复制到剪贴板'
+                                                : '下载命令已复制到剪贴板',
+                                            false
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="download-panel">
+                        <div className="sidebar-section-title">手动下载</div>
+                        <Button
+                            type="default"
+                            block
+                            className="download-btn"
+                            onClick={() => window.open(manualDownloadUrl, '_blank')}
+                        >
+                            <FigmaIcon src={downloadIcon} className="is-download" />
+                            下载 .zip
+                        </Button>
+                        {renderInlineCommand(downloadCommand, '下载命令已复制到剪贴板', true)}
+                    </section>
+
+                    <section className="related-panel">
+                        <div className="sidebar-section-title">相关技能</div>
+                        {related.length === 0 ? (
+                            <div className="related-empty-state">
+                                <FigmaIcon src={emptyRelatedIcon} className="is-empty-related" />
+                                <span>暂无相关技能</span>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="related-list">
+                                    {related.map((item, index) => (
+                                        <button
+                                            key={item.slug}
+                                            type="button"
+                                            className="related-item"
+                                            onClick={() => {
+                                                if (item.slug === slug) return;
+                                                history.push(`/page/skills/${item.slug}`);
+                                            }}
+                                        >
+                                            <span
+                                                className={`related-item-icon-shell ${
+                                                    relatedSkillShellClasses[
+                                                        index % relatedSkillShellClasses.length
+                                                    ]
+                                                }`}
+                                                aria-hidden="true"
+                                            >
+                                                <FigmaIcon
+                                                    src={
+                                                        relatedSkillIconUrls[
+                                                            index % relatedSkillIconUrls.length
+                                                        ]
+                                                    }
+                                                    className="is-related-skill-icon"
+                                                />
+                                            </span>
+                                            <div className="related-item-copy">
+                                                <strong>{item.name}</strong>
+                                                <span className="related-item-description">
+                                                    {item.description || '暂无描述'}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    type="button"
+                                    className="browse-market-link"
+                                    onClick={() => history.push(browseMarketPath)}
                                 >
-                                    <div className="related-title">{item.name}</div>
-                                    <Paragraph ellipsis={{ rows: 2 }}>
-                                        {item.description || '暂无描述'}
-                                    </Paragraph>
-                                    <Text type="secondary">
-                                        <StarOutlined /> {item.stars || 0}
-                                    </Text>
-                                </Card>
-                            </Col>
-                        ))}
-                    </Row>
-                )}
-            </Card>
+                                    <span>浏览市场</span>
+                                    <FigmaIcon
+                                        src={browseMarketArrowIcon}
+                                        className="is-browse-market-arrow"
+                                    />
+                                </button>
+                            </>
+                        )}
+                    </section>
+
+                    <section className="meta-panel">
+                        <div className="meta-row">
+                            <span>仓库大小</span>
+                            <strong>{fileContent ? formatFileSize(fileContent.size) : '1.2 MB'}</strong>
+                        </div>
+                        <div className="meta-row">
+                            <span>近 30 天下载</span>
+                            <strong>842</strong>
+                        </div>
+                        <div className="meta-row is-contributors">
+                            <span>贡献者</span>
+                            <div className="contributors-stack">
+                                <img alt="contributor 1" src={contributorOne} />
+                                <img alt="contributor 2" src={contributorTwo} />
+                                <span>+3</span>
+                            </div>
+                        </div>
+                    </section>
+                </aside>
+            </div>
         </div>
     );
 };

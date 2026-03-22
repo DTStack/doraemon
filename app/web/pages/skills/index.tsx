@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    CopyOutlined,
-    EyeOutlined,
+    DeleteOutlined,
     FilterOutlined,
     ImportOutlined,
     SearchOutlined,
@@ -19,7 +18,6 @@ import {
     message,
     Modal,
     Pagination,
-    Radio,
     Row,
     Select,
     Space,
@@ -30,8 +28,6 @@ import {
 } from 'antd';
 
 import { API } from '@/api';
-import { copyToClipboard } from '@/utils/copyUtils';
-import SkillSummaryModalContent from './detail/SkillSummaryModalContent';
 import { SkillItem, SkillListResponse } from './types';
 import './style.scss';
 
@@ -56,6 +52,38 @@ const INITIAL_QUERY = {
     pageSize: 12,
 };
 
+const EditIcon = () => (
+    <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+    >
+        <path
+            d="M9.916 2.334a1.65 1.65 0 1 1 2.334 2.332l-6.27 6.27a1.5 1.5 0 0 1-.707.39l-2.024.45.45-2.025a1.5 1.5 0 0 1 .39-.706l6.27-6.27Z"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        <path
+            d="M8.75 3.5 11.083 5.833"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        <path
+            d="M7.583 11.667h3.5"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+        />
+    </svg>
+);
+
 const SkillsMarket: React.FC<any> = ({ history }) => {
     const [loading, setLoading] = useState(false);
     const [skills, setSkills] = useState<SkillItem[]>([]);
@@ -63,12 +91,14 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
     const [total, setTotal] = useState(0);
     const [importVisible, setImportVisible] = useState(false);
     const [importing, setImporting] = useState(false);
-    const [importMode, setImportMode] = useState<'source' | 'file'>('source');
     const [uploadFiles, setUploadFiles] = useState<any[]>([]);
+    const [editVisible, setEditVisible] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [editUploadFiles, setEditUploadFiles] = useState<any[]>([]);
+    const [editingSkill, setEditingSkill] = useState<SkillItem | null>(null);
     const [importForm] = Form.useForm();
+    const [editForm] = Form.useForm();
     const [query, setQuery] = useState(INITIAL_QUERY);
-    const [detailVisible, setDetailVisible] = useState(false);
-    const [activeDetailSlug, setActiveDetailSlug] = useState('');
 
     const fetchSkills = useCallback(async (nextQuery) => {
         setLoading(true);
@@ -99,61 +129,58 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
         setQuery(next);
     };
 
-    const handleOpenDetail = (slug: string) => {
-        setActiveDetailSlug(slug);
-        setDetailVisible(true);
-    };
-
-    const handleNavigateToDetail = (slug: string) => {
-        history.push(`/page/skills/${slug}`);
-    };
-
-    const buildSkillInstallCommand = (installKey: string) =>
-        `doraemon-skills install ${installKey}`;
-
-    const handleCloseDetailModal = () => {
-        setDetailVisible(false);
-    };
-
     const openImportModal = () => {
         setImportVisible(true);
-        setImportMode('source');
         setUploadFiles([]);
         importForm.setFieldsValue({
             category: '通用',
             tags: [],
-            source: '',
         });
     };
 
     const closeImportModal = () => {
         if (importing) return;
         setImportVisible(false);
-        setImportMode('source');
         setUploadFiles([]);
         importForm.resetFields();
     };
 
+    const openEditModal = (skill: SkillItem) => {
+        setEditingSkill(skill);
+        setEditVisible(true);
+        setEditUploadFiles([]);
+        editForm.setFieldsValue({
+            name: skill.name,
+            category: skill.category || '通用',
+            tags: skill.tags || [],
+            version: skill.version || '',
+        });
+    };
+
+    const closeEditModal = () => {
+        if (editing) return;
+        setEditVisible(false);
+        setEditingSkill(null);
+        setEditUploadFiles([]);
+        editForm.resetFields();
+    };
+
     const handleImportSkill = async () => {
         try {
-            const values = await importForm.validateFields();
+            await importForm.validateFields();
             setImporting(true);
-            let response = null;
-            if (importMode === 'file') {
-                const targetFile = uploadFiles[0]?.originFileObj;
-                if (!targetFile) {
-                    message.error('请先选择 .skill 文件');
-                    return;
-                }
-                response = await API.importSkillFile({
-                    file: targetFile,
-                    skillName: values.skillName || '',
-                    category: values.category,
-                    tags: JSON.stringify(values.tags || []),
-                });
-            } else {
-                response = await API.importSkill(values);
+            const targetFile = uploadFiles[0]?.originFileObj;
+            if (!targetFile) {
+                message.error('请先选择 .zip 文件');
+                return;
             }
+            const values = importForm.getFieldsValue();
+            const response = await API.importSkillFile({
+                file: targetFile,
+                skillName: values.skillName || '',
+                category: values.category,
+                tags: JSON.stringify(values.tags || []),
+            });
 
             if (!response.success) {
                 message.error(response.msg || '导入失败');
@@ -167,17 +194,71 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                 message.success('导入完成，技能可能已存在');
             }
             setImportVisible(false);
-            setImportMode('source');
             setUploadFiles([]);
             importForm.resetFields();
             fetchSkills({ ...query });
         } catch (error) {
             if (error?.errorFields) return;
-            message.error('导入失败，请检查来源地址或网络权限');
+            message.error('导入失败，请检查文件或网络权限');
             console.error('导入 Skill 失败:', error);
         } finally {
             setImporting(false);
         }
+    };
+
+    const handleUpdateSkill = async () => {
+        if (!editingSkill) return;
+
+        try {
+            const values = await editForm.validateFields();
+            setEditing(true);
+            const targetFile = editUploadFiles[0]?.originFileObj;
+            const response = await API.updateSkill({
+                slug: editingSkill.slug,
+                name: values.name,
+                category: values.category,
+                tags: JSON.stringify(values.tags || []),
+                version: values.version || '',
+                file: targetFile,
+            });
+
+            if (!response.success) {
+                message.error(response.msg || '更新失败');
+                return;
+            }
+
+            message.success(targetFile ? '技能已更新并替换 zip 内容' : '技能信息已更新');
+            setEditVisible(false);
+            setEditingSkill(null);
+            setEditUploadFiles([]);
+            editForm.resetFields();
+            fetchSkills({ ...query });
+        } catch (error) {
+            if (error?.errorFields) return;
+            message.error('更新失败，请稍后重试');
+            console.error('更新 Skill 失败:', error);
+        } finally {
+            setEditing(false);
+        }
+    };
+
+    const handleDeleteSkill = (skill: SkillItem) => {
+        Modal.confirm({
+            title: `确认删除「${skill.name}」？`,
+            content: '删除后该技能将不再出现在列表和详情页中。',
+            okText: '删除',
+            okButtonProps: { danger: true },
+            cancelText: '取消',
+            onOk: async () => {
+                const response = await API.deleteSkill({ slug: skill.slug });
+                if (!response.success) {
+                    message.error(response.msg || '删除失败');
+                    return;
+                }
+                message.success('删除成功');
+                fetchSkills({ ...query });
+            },
+        });
     };
 
     return (
@@ -247,21 +328,26 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                                     <Card
                                         className="skill-card"
                                         hoverable
-                                        onClick={() => handleNavigateToDetail(skill.slug)}
-                                        onKeyDown={(event) => {
-                                            if (event.key === 'Enter' || event.key === ' ') {
-                                                event.preventDefault();
-                                                handleNavigateToDetail(skill.slug);
-                                            }
-                                        }}
-                                        role="button"
-                                        tabIndex={0}
+                                        onClick={() => history.push(`/page/skills/${skill.slug}`)}
                                     >
                                         <div className="card-header">
                                             <span className="skill-name">{skill.name}</span>
-                                            <span className="meta-stars">
-                                                <StarOutlined /> {skill.stars || 0}
-                                            </span>
+                                            <div className="card-header-actions">
+                                                <Button
+                                                    size="small"
+                                                    className="card-edit-trigger"
+                                                    aria-label={`编辑 ${skill.name}`}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        openEditModal(skill);
+                                                    }}
+                                                >
+                                                    <EditIcon />
+                                                </Button>
+                                                <span className="meta-stars">
+                                                    <StarOutlined /> {skill.stars || 0}
+                                                </span>
+                                            </div>
                                         </div>
                                         <Paragraph className="skill-desc">
                                             {skill.description || '暂无描述'}
@@ -285,33 +371,6 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                                             {skill.tags.slice(0, 3).map((tag) => (
                                                 <Tag key={tag}>{tag}</Tag>
                                             ))}
-                                        </div>
-                                        <div className="action-row">
-                                            <Button
-                                                type="link"
-                                                icon={<EyeOutlined />}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleOpenDetail(skill.slug);
-                                                }}
-                                            >
-                                                查看详情
-                                            </Button>
-                                            <Button
-                                                type="link"
-                                                icon={<CopyOutlined />}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    copyToClipboard(
-                                                        buildSkillInstallCommand(
-                                                            skill.installKey || skill.slug
-                                                        ),
-                                                        '安装命令已复制'
-                                                    );
-                                                }}
-                                            >
-                                                复制安装命令
-                                            </Button>
                                         </div>
                                     </Card>
                                 </Col>
@@ -338,23 +397,6 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
             </Spin>
 
             <Modal
-                width={1080}
-                title={null}
-                footer={null}
-                visible={detailVisible}
-                onCancel={handleCloseDetailModal}
-                destroyOnClose
-                className="skill-detail-modal"
-                bodyStyle={{ padding: 0, maxHeight: 'calc(100vh - 160px)', overflow: 'auto' }}
-            >
-                {activeDetailSlug ? (
-                    <div className="skill-detail-modal-inner">
-                        <SkillSummaryModalContent slug={activeDetailSlug} history={history} />
-                    </div>
-                ) : null}
-            </Modal>
-
-            <Modal
                 title="导入 Skill"
                 visible={importVisible}
                 confirmLoading={importing}
@@ -365,48 +407,23 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                 destroyOnClose
             >
                 <Form form={importForm} layout="vertical">
-                    <Form.Item label="导入方式">
-                        <Radio.Group
-                            value={importMode}
-                            onChange={(event) => setImportMode(event.target.value)}
-                        >
-                            <Radio.Button value="source">来源地址</Radio.Button>
-                            <Radio.Button value="file">上传 .skill 文件</Radio.Button>
-                        </Radio.Group>
-                    </Form.Item>
                     <Form.Item
-                        name="source"
-                        label="来源地址"
-                        rules={
-                            importMode === 'source'
-                                ? [{ required: true, message: '请输入来源地址' }]
-                                : []
-                        }
+                        label=".zip 文件"
+                        required
+                        extra="上传包含 SKILL.md 的 skill 目录打包文件"
                     >
-                        <Input
-                            disabled={importMode !== 'source'}
-                            placeholder="支持 GitHub / GitLab / 内网 GitLab / tree 子目录 URL"
-                        />
-                    </Form.Item>
-                    {importMode === 'file' && (
-                        <Form.Item
-                            label=".skill 文件"
-                            required
-                            extra="仅支持 skill-creator 打包生成的 .skill（zip）文件"
+                        <Upload
+                            accept=".zip"
+                            maxCount={1}
+                            fileList={uploadFiles}
+                            beforeUpload={() => false}
+                            onChange={(info) => setUploadFiles(info.fileList || [])}
                         >
-                            <Upload
-                                accept=".skill"
-                                maxCount={1}
-                                fileList={uploadFiles}
-                                beforeUpload={() => false}
-                                onChange={(info) => setUploadFiles(info.fileList || [])}
-                            >
-                                <Button icon={<UploadOutlined />}>选择 .skill 文件</Button>
-                            </Upload>
-                        </Form.Item>
-                    )}
-                    <Form.Item name="skillName" label="Skill 名称（可选）">
-                        <Input placeholder="可选，等价于 --skill <name>" />
+                            <Button icon={<UploadOutlined />}>选择 .zip 文件</Button>
+                        </Upload>
+                    </Form.Item>
+                    <Form.Item name="skillName" label="技能名称（可选）">
+                        <Input placeholder="作为项目名称使用，不参与过滤" />
                     </Form.Item>
                     <Form.Item
                         name="category"
@@ -446,15 +463,103 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                         />
                     </Form.Item>
                 </Form>
-                {importMode === 'source' ? (
-                    <Text type="secondary">
-                        示例：`https://github.com/openclaw/openclaw/tree/main/skills/himalaya`
-                    </Text>
-                ) : (
-                    <Text type="secondary">
-                        提示：`.skill` 本质是 zip 包，内部应包含 `技能目录/SKILL.md`
-                    </Text>
-                )}
+                <Text type="secondary">
+                    提示：.zip 包内部应包含 `技能目录/SKILL.md`
+                </Text>
+            </Modal>
+
+            <Modal
+                title="编辑 Skill"
+                visible={editVisible}
+                onCancel={closeEditModal}
+                destroyOnClose
+                footer={
+                    <div className="skill-edit-modal-footer">
+                        <Button
+                            danger
+                            icon={<DeleteOutlined />}
+                            disabled={!editingSkill || editing}
+                            onClick={() => {
+                                if (!editingSkill) return;
+                                closeEditModal();
+                                handleDeleteSkill(editingSkill);
+                            }}
+                        >
+                            删除
+                        </Button>
+                        <Space>
+                            <Button onClick={closeEditModal} disabled={editing}>
+                                取消
+                            </Button>
+                            <Button type="primary" loading={editing} onClick={handleUpdateSkill}>
+                                保存
+                            </Button>
+                        </Space>
+                    </div>
+                }
+            >
+                <Form form={editForm} layout="vertical">
+                    <Form.Item
+                        name="name"
+                        label="技能名称"
+                        rules={[{ required: true, message: '请输入技能名称' }]}
+                    >
+                        <Input placeholder="请输入技能名称" maxLength={255} />
+                    </Form.Item>
+                    <Form.Item
+                        name="category"
+                        label="分类"
+                        rules={[{ required: true, message: '请选择分类' }]}
+                    >
+                        <Select placeholder="请选择分类">
+                            {FIXED_CATEGORY_OPTIONS.map((item) => (
+                                <Option key={item} value={item}>
+                                    {item}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name="tags"
+                        label="标签（可选）"
+                        extra="最多 5 个标签，可自定义输入，回车或逗号分隔"
+                        rules={[
+                            {
+                                validator: (_, value = []) => {
+                                    if (!Array.isArray(value)) return Promise.resolve();
+                                    if (value.length > 5) {
+                                        return Promise.reject(new Error('标签最多 5 个'));
+                                    }
+                                    return Promise.resolve();
+                                },
+                            },
+                        ]}
+                    >
+                        <Select
+                            mode="tags"
+                            tokenSeparators={[',', '，']}
+                            placeholder="例如：邮件, 效率, 命令行"
+                            maxTagCount={5}
+                        />
+                    </Form.Item>
+                    <Form.Item name="version" label="版本号">
+                        <Input placeholder="例如：V2.4.0-STABLE" maxLength={128} />
+                    </Form.Item>
+                    <Form.Item
+                        label="重新上传 .zip（可选）"
+                        extra="上传后会替换当前技能文件内容；要求 zip 中只包含一个技能目录"
+                    >
+                        <Upload
+                            accept=".zip"
+                            maxCount={1}
+                            fileList={editUploadFiles}
+                            beforeUpload={() => false}
+                            onChange={(info) => setEditUploadFiles(info.fileList || [])}
+                        >
+                            <Button icon={<UploadOutlined />}>选择新的 .zip 文件</Button>
+                        </Upload>
+                    </Form.Item>
+                </Form>
             </Modal>
         </div>
     );
