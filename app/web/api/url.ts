@@ -386,4 +386,19 @@ export default {
         method: 'post',
         url: '/api/skills/delete',
     },
+    // 点赞
+    likeSkill: {
+        method: 'post',
+        url: '/api/skills/like',
+    },
+    // 取消点赞
+    unlikeSkill: {
+        method: 'post',
+        url: '/api/skills/unlike',
+    },
+    // 获取点赞状态
+    getSkillLikeStatus: {
+        method: 'get',
+        url: '/api/skills/like-status',
+    },
 };

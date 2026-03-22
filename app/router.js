@@ -158,6 +158,9 @@ module.exports = (app) => {
     app.post('/api/skills/import-file', app.controller.skills.importSkillFile);
     app.post('/api/skills/update', app.controller.skills.updateSkill);
     app.post('/api/skills/delete', app.controller.skills.deleteSkill);
+    app.post('/api/skills/like', app.controller.skillLike.like);
+    app.post('/api/skills/unlike', app.controller.skillLike.unlike);
+    app.get('/api/skills/like-status', app.controller.skillLike.getLikeStatus);
 
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
     // 暂时close Terminal相关功能

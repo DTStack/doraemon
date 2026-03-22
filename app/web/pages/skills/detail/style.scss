@@ -69,8 +69,8 @@
         }
 
         &.is-related-skill-icon {
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
         }
 
         &.is-browse-market-arrow {
@@ -117,8 +117,8 @@
     }
 
     .sidebar-head {
-        padding: 16px;
-        border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+        padding: 16px 16px 17px;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.5);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -144,9 +144,13 @@
 
         span,
         strong {
+            display: inline-flex;
+            align-items: center;
+            min-height: 16px;
             font-size: 10px;
+            line-height: 16px;
             font-weight: 600;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.5px;
         }
 
         span {
@@ -155,6 +159,7 @@
 
         strong {
             color: #2563eb;
+            text-transform: uppercase;
         }
     }
 
@@ -247,6 +252,13 @@
         font-weight: 600;
         background: #1658d5;
         border-color: #1658d5;
+        &.is-disabled,
+        &:disabled,
+        &[disabled] {
+            background: #e5e7eb !important;
+            border-color: #d1d5db !important;
+            color: #9ca3af !important;
+        }
     }
 
     .sidebar-help-btn {
@@ -358,13 +370,86 @@
         font-size: 14px;
     }
 
-    .hero-fork-btn {
+    .like-btn.ant-btn {
+        min-width: 64px;
         height: 32px;
-        padding: 0 16px;
-        border-radius: 4px;
+        padding: 0 12px;
+        border: 1px solid #dbe5f0;
+        border-radius: 8px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        color: #334155;
+        font-size: 14px;
         font-weight: 600;
-        background: #0053db;
-        border-color: #0053db;
+        line-height: 1;
+        transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease,
+            box-shadow 0.2s ease, transform 0.2s ease;
+
+        .anticon {
+            width: 14px;
+            font-size: 14px;
+            color: #64748b;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+
+        span:last-child {
+            min-width: 8px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ant-btn-loading-icon {
+            margin-right: 0;
+        }
+
+        &:hover,
+        &:focus {
+            border-color: #bfd3f8;
+            background: linear-gradient(180deg, #ffffff 0%, #edf4ff 100%);
+            color: #174ea6;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.12);
+
+            .anticon {
+                color: #174ea6;
+            }
+        }
+
+        &:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.1);
+        }
+
+        &[disabled],
+        &[disabled]:hover,
+        &[disabled]:focus {
+            border-color: #dbe5f0;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            color: #334155;
+            opacity: 1;
+
+            .anticon {
+                color: #64748b;
+            }
+        }
+
+        &.is-liked {
+            border-color: rgba(22, 88, 213, 0.24);
+            background: linear-gradient(180deg, #f5f9ff 0%, #e9f1ff 100%);
+            color: #1658d5;
+            box-shadow: 0 4px 12px rgba(22, 88, 213, 0.12);
+
+            .anticon {
+                color: #1658d5;
+            }
+        }
     }
 
     .hero-meta-row {
@@ -568,6 +653,21 @@
         font-size: 10px;
         font-weight: 600;
         letter-spacing: 0.14em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .install-soon-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 6px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #c2410c;
+        background: #fed7aa;
+        border-radius: 4px;
     }
 
     .install-option-card {
@@ -948,7 +1048,7 @@
         min-height: 0;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 0;
         overflow-y: auto;
         overflow-x: hidden;
         padding-right: 4px;
@@ -959,15 +1059,21 @@
     .related-item {
         width: 100%;
         min-width: 0;
-        padding: 0;
+        min-height: 72px;
+        padding: 10px 0;
         border: 0;
         background: transparent;
         text-align: left;
         display: flex;
-        align-items: flex-start;
-        gap: 12px;
+        align-items: center;
+        gap: 14px;
         cursor: pointer;
         white-space: normal;
+
+        & + .related-item {
+            margin-top: 8px;
+            padding-top: 18px;
+        }
 
         &:hover,
         &:focus {
@@ -979,17 +1085,19 @@
             flex: 1 1 0;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: flex-start;
-            gap: 2px;
+            gap: 6px;
         }
 
         strong {
             display: block;
             width: 100%;
-            color: #2a3439;
-            font-size: 12px;
-            font-weight: 500;
-            line-height: 16px;
+            color: #24313a;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 18px;
+            letter-spacing: 0.01em;
             word-break: break-word;
             white-space: nowrap;
             overflow: hidden;
@@ -999,9 +1107,9 @@
         .related-item-description {
             display: block;
             width: 100%;
-            color: #64748b;
-            font-size: 10px;
-            line-height: 16.25px;
+            color: #6b7b8c;
+            font-size: 11px;
+            line-height: 17px;
             word-break: break-word;
             white-space: normal;
             overflow: hidden;
@@ -1012,16 +1120,15 @@
     }
 
     .related-item-icon-shell {
-        width: 40px;
-        height: 40px;
-        border-radius: 4px;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
         border: 1px solid transparent;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         flex: 0 0 auto;
         align-self: center;
-        transform: translateY(6px);
 
         &.is-blue {
             border-color: rgba(219, 234, 254, 0.5);

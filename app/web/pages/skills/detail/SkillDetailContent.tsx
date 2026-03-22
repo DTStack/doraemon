@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeftOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DislikeOutlined, LikeOutlined, QuestionCircleOutlined, StarOutlined } from '@ant-design/icons';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { Button, Empty, Spin, Tree, Typography } from 'antd';
@@ -217,6 +217,8 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
     const [selectedFilePath, setSelectedFilePath] = useState('');
     const [fileContent, setFileContent] = useState<SkillFileContent | null>(null);
     const [activeInstallPanel, setActiveInstallPanel] = useState<InstallPanelKey>('agent');
+    const [likeStatus, setLikeStatus] = useState({ liked: false, likeCount: 0 });
+    const [likeLoading, setLikeLoading] = useState(false);
 
     const fileTreeData = useMemo(
         () => buildFileTreeData(detail?.fileList || []),
@@ -293,6 +295,42 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
         setFileLoading(true);
     };
 
+    const fetchLikeStatus = async () => {
+        try {
+            const res = await API.getSkillLikeStatus({ slug });
+            if (res.success) {
+                setLikeStatus({
+                    liked: res.data.liked,
+                    likeCount: res.data.likeCount,
+                });
+            }
+        } catch (error) {
+            console.error('获取点赞状态失败:', error);
+        }
+    };
+
+    const handleLike = async () => {
+        if (likeLoading) return;
+        setLikeLoading(true);
+        try {
+            if (likeStatus.liked) {
+                const res = await API.unlikeSkill({ slug });
+                if (res.success) {
+                    setLikeStatus({ liked: false, likeCount: res.data.likeCount });
+                }
+            } else {
+                const res = await API.likeSkill({ slug });
+                if (res.success) {
+                    setLikeStatus({ liked: true, likeCount: res.data.likeCount });
+                }
+            }
+        } catch (error) {
+            console.error('点赞操作失败:', error);
+        } finally {
+            setLikeLoading(false);
+        }
+    };
+
     useEffect(() => {
         setUiSelectedFilePath('');
         setSelectedFilePath('');
@@ -358,6 +396,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
         };
 
         loadDetail();
+        fetchLikeStatus();
 
         return () => {
             cancelled = true;
@@ -589,7 +628,8 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                         <Button
                             type="primary"
                             block
-                            className="install-primary-btn"
+                            disabled={isInstallable}
+                            className={`install-primary-btn ${isInstallable ? 'is-disabled' : ''}`}
                             onClick={() => {
                                 setActiveInstallPanel('agent');
                                 copyToClipboard(
@@ -600,7 +640,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                                 );
                             }}
                         >
-                            {isInstallable ? '安装技能' : '下载技能'}
+                            {isInstallable ? '变更日志' : '下载技能'}
                         </Button>
                         <button
                             type="button"
@@ -632,17 +672,15 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                             </div>
 
                             <div className="hero-actions">
-                                <div className="hero-stat-chip">
-                                    <span>☆</span>
-                                    <strong>{detail.stars || 0}</strong>
-                                </div>
                                 <Button
-                                    type="primary"
-                                    className="hero-fork-btn"
-                                    onClick={() => window.open(sourceUrl, '_blank')}
-                                    disabled={!sourceUrl}
+                                    type="text"
+                                    onClick={handleLike}
+                                    className={`like-btn ${likeStatus.liked ? 'is-liked' : ''}`}
+                                    aria-pressed={likeStatus.liked}
+                                    disabled={likeLoading}
                                 >
-                                    Fork
+                                    {likeStatus.liked ? <LikeOutlined /> : <StarOutlined />}
+                                    {likeStatus.likeCount}
                                 </Button>
                             </div>
                         </div>
@@ -686,7 +724,10 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
 
                 <aside className="detail-right-sidebar">
                     <section className="install-panel">
-                        <div className="sidebar-section-title">安装方式</div>
+                        <div className="sidebar-section-title">
+                            安装方式
+                            <span className="install-soon-badge">SOON</span>
+                        </div>
 
                         <div
                             className={`install-option-card ${
