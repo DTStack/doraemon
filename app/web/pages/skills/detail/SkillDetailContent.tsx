@@ -11,19 +11,7 @@ import {
     ShareAltOutlined,
     StarOutlined,
 } from '@ant-design/icons';
-import {
-    Button,
-    Card,
-    Col,
-    Empty,
-    Row,
-    Space,
-    Spin,
-    Tabs,
-    Tag,
-    Tree,
-    Typography,
-} from 'antd';
+import { Button, Card, Col, Empty, Row, Space, Spin, Tabs, Tag, Tree, Typography } from 'antd';
 import type { DataNode } from 'antd/lib/tree';
 
 import { API } from '@/api';
@@ -46,10 +34,7 @@ interface FrontmatterItem {
 
 interface SkillDetailContentProps {
     slug: string;
-    mode?: 'page' | 'modal';
-    history?: any;
-    onClose?: () => void;
-    onOpenSkill?: (nextSlug: string) => void;
+    history: any;
 }
 
 const formatFileSize = (size = 0) => {
@@ -131,7 +116,9 @@ const normalizeFrontmatterValue = (value: string) => {
     return trimmed;
 };
 
-const parseMarkdownFrontmatter = (markdown = ''): { frontmatter: FrontmatterItem[]; body: string } => {
+const parseMarkdownFrontmatter = (
+    markdown = ''
+): { frontmatter: FrontmatterItem[]; body: string } => {
     const content = String(markdown || '');
     const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
     if (!match) {
@@ -182,13 +169,7 @@ const formatDownloadCommand = (downloadUrl = '', fileName = 'skill.zip') => {
     return `curl -L "${downloadUrl}" -o ${fileName}`;
 };
 
-const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
-    slug,
-    mode = 'page',
-    history,
-    onClose,
-    onOpenSkill,
-}) => {
+const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }) => {
     const [loading, setLoading] = useState(true);
     const [fileLoading, setFileLoading] = useState(false);
     const [detail, setDetail] = useState<SkillDetail | null>(null);
@@ -197,11 +178,20 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
     const [selectedFilePath, setSelectedFilePath] = useState('');
     const [fileContent, setFileContent] = useState<SkillFileContent | null>(null);
 
-    const isModal = mode === 'modal';
-    const fileTreeData = useMemo(() => buildFileTreeData(detail?.fileList || []), [detail?.fileList]);
-    const sourceUrl = useMemo(() => normalizeSourceUrl(detail?.sourceRepo || ''), [detail?.sourceRepo]);
-    const downloadPath = useMemo(() => `/api/skills/download?slug=${encodeURIComponent(slug)}`, [slug]);
+    const fileTreeData = useMemo(
+        () => buildFileTreeData(detail?.fileList || []),
+        [detail?.fileList]
+    );
+    const sourceUrl = useMemo(
+        () => normalizeSourceUrl(detail?.sourceRepo || ''),
+        [detail?.sourceRepo]
+    );
+    const downloadPath = useMemo(
+        () => `/api/skills/download?slug=${encodeURIComponent(slug)}`,
+        [slug]
+    );
     const deepLinkPath = useMemo(() => `/page/skills/${encodeURIComponent(slug)}`, [slug]);
+    const installKey = installMeta?.installKey || detail?.installKey || slug;
     const currentOrigin = useMemo(() => {
         if (typeof window === 'undefined') return '';
         return window.location.origin;
@@ -210,10 +200,9 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
         if (!currentOrigin) return deepLinkPath;
         return `${currentOrigin}${deepLinkPath}`;
     }, [currentOrigin, deepLinkPath]);
-    const serverArg = currentOrigin || '<current origin>';
     const skillInstallCommand = useMemo(
-        () => `doraemon-skills install ${slug} --server ${serverArg}`,
-        [slug, serverArg]
+        () => `doraemon-skills install ${installKey}`,
+        [installKey]
     );
     const cliInstallPlaceholderCommand =
         '# 待提供：Doraemon CLI 安装脚本 URL（例如 curl -fsSL <...> | bash）';
@@ -238,9 +227,9 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
         () =>
             [
                 '请先检查 Doraemon CLI 是否已安装（例如执行 doraemon-skills --help）。',
-                '若未安装，请先执行 Human 区的 Doraemon CLI 安装步骤（当前安装脚本 URL 待提供）。',
+                '若未安装，请先执行 Human 区的 Doraemon CLI 安装步骤。',
                 `安装当前技能：${skillInstallCommand}`,
-                '若安装目录不明确，请先询问用户，可使用 --dir <path> 指定目标目录。',
+                '若已安装，则直接执行上面的技能安装命令。',
             ].join('\n'),
         [skillInstallCommand]
     );
@@ -253,13 +242,14 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
         const loadDetail = async () => {
             setLoading(true);
             try {
-                const [detailRes, relatedRes, installMetaRes] = await Promise.all([
+                const [detailRes, relatedRes] = await Promise.all([
                     API.getSkillDetail({ slug }),
                     API.getRelatedSkills({ slug, limit: 6 }),
-                    API.getSkillInstallMeta({ slug }),
                 ]);
 
                 if (cancelled) return;
+
+                let nextInstallMeta: SkillInstallMeta | null = null;
 
                 if (detailRes.success) {
                     const detailData = detailRes.data as SkillDetail;
@@ -268,6 +258,13 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
                         ? 'SKILL.md'
                         : detailData.fileList[0] || '';
                     setSelectedFilePath(defaultFile);
+
+                    const installMetaRes = await API.getSkillInstallMeta({
+                        installKey: detailData.installKey || slug,
+                    });
+                    if (!cancelled && installMetaRes.success) {
+                        nextInstallMeta = installMetaRes.data as SkillInstallMeta;
+                    }
                 } else {
                     setDetail(null);
                     setSelectedFilePath('');
@@ -279,11 +276,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
                     setRelated([]);
                 }
 
-                if (installMetaRes.success) {
-                    setInstallMeta(installMetaRes.data as SkillInstallMeta);
-                } else {
-                    setInstallMeta(null);
-                }
+                setInstallMeta(nextInstallMeta);
             } catch (error) {
                 console.error('获取 Skill 详情失败:', error);
                 if (!cancelled) {
@@ -414,9 +407,40 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
         );
     };
 
+    const renderInstallCommandCard = ({
+        title,
+        description,
+        command,
+        copyMessage,
+        disabled = false,
+    }: {
+        title: string;
+        description?: string;
+        command: string;
+        copyMessage: string;
+        disabled?: boolean;
+    }) => (
+        <div className="install-command-card">
+            <div className="install-command-header">
+                <Text className="install-command-title">{title}</Text>
+                {description ? <Text type="secondary">{description}</Text> : null}
+            </div>
+            <div className="command-block">
+                <code>{command || '暂无可复制命令'}</code>
+                <Button
+                    type="text"
+                    className="command-copy-btn"
+                    icon={<CopyOutlined />}
+                    onClick={() => copyToClipboard(command, copyMessage)}
+                    disabled={disabled || !command}
+                />
+            </div>
+        </div>
+    );
+
     if (loading) {
         return (
-            <div className={`page-skill-detail${isModal ? ' modal-skill-detail' : ''} loading-wrap`}>
+            <div className="page-skill-detail loading-wrap">
                 <Spin size="large" />
             </div>
         );
@@ -424,22 +448,50 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
 
     if (!detail) {
         return (
-            <div className={`page-skill-detail${isModal ? ' modal-skill-detail' : ''}`}>
+            <div className="page-skill-detail">
                 <Empty description="Skill 不存在或已被删除">
-                    {isModal ? (
-                        <Button onClick={onClose}>关闭</Button>
-                    ) : (
-                        <Button onClick={() => history.push('/page/skills')}>返回 Skills 列表</Button>
-                    )}
+                    <Button onClick={() => history.push('/page/skills')}>返回 Skills 列表</Button>
                 </Empty>
             </div>
         );
     }
 
+    const detailTags = (detail.tags || []).filter((tag) => tag && tag !== detail.category);
+    const detailSource = detail.sourceRepo || detail.sourcePath || '-';
+    const detailUpdatedAt = detail.updatedAt
+        ? new Date(detail.updatedAt).toLocaleString('zh-CN')
+        : '-';
+    const agentFallbackInstruction = [
+        '当前 skill 不支持 doraemon-skills 直接安装。',
+        `请先下载 zip：${downloadCommand}`,
+        `原因：${installUnavailableReason}`,
+        '然后手动解压并确认技能目录结构（需包含 SKILL.md）。',
+    ].join('\n');
+    const detailMetaItems = [
+        {
+            label: 'Stars',
+            value: String(detail.stars || 0),
+            className: 'is-accent',
+        },
+        {
+            label: '分类',
+            value: detail.category || '未分类',
+        },
+        {
+            label: '最近更新',
+            value: detailUpdatedAt,
+        },
+        {
+            label: '来源',
+            value: detailSource,
+            className: 'is-wide',
+        },
+    ];
+
     return (
-        <div className={`page-skill-detail${isModal ? ' modal-skill-detail' : ''}`}>
-            <div className="detail-header">
-                {!isModal ? (
+        <div className="page-skill-detail">
+            <div className="detail-hero">
+                <div className="detail-hero-main">
                     <Button
                         icon={<ArrowLeftOutlined />}
                         className="back-btn"
@@ -447,31 +499,154 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
                     >
                         返回列表
                     </Button>
-                ) : null}
-                <div className="title-group">
-                    <Title level={2}>{detail.name}</Title>
-                    <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                        {detail.description || '暂无描述'}
-                    </Paragraph>
-                    <Text type="secondary">slug: {detail.slug}</Text>
-                </div>
-            </div>
 
-            <Card className="meta-card">
-                <Space size={20} wrap>
-                    <Text>
-                        <StarOutlined /> Stars: {detail.stars || 0}
-                    </Text>
-                    <Text>分类: {detail.category || '未分类'}</Text>
-                    <Text>更新: {new Date(detail.updatedAt).toLocaleString('zh-CN')}</Text>
-                    <Text>来源: {detail.sourceRepo || detail.sourcePath}</Text>
-                </Space>
-                <div className="tags-wrap">
-                    {(detail.tags || []).map((tag) => (
-                        <Tag key={tag}>{tag}</Tag>
-                    ))}
+                    <div className="hero-kicker-row">
+                        <Tag color="blue">{detail.category || '未分类'}</Tag>
+                        <span className="install-key-chip">安装标识 · {installKey}</span>
+                    </div>
+
+                    <div className="hero-title-row">
+                        <div className="title-group">
+                            <Title level={2}>{detail.name}</Title>
+                            <Paragraph className="hero-description" type="secondary">
+                                {detail.description || '暂无描述'}
+                            </Paragraph>
+                        </div>
+
+                        <Space size={12} wrap className="hero-action-group">
+                            <Button
+                                icon={<ShareAltOutlined />}
+                                onClick={() =>
+                                    copyToClipboard(deepLinkUrl, '详情页深链已复制到剪贴板')
+                                }
+                            >
+                                复制深链
+                            </Button>
+                            <Button
+                                icon={<LinkOutlined />}
+                                onClick={() => window.open(sourceUrl, '_blank')}
+                                disabled={!sourceUrl}
+                            >
+                                查看源码
+                            </Button>
+                        </Space>
+                    </div>
+
+                    <div className="hero-meta-grid">
+                        {detailMetaItems.map((item) => (
+                            <div
+                                key={item.label}
+                                className={`hero-meta-card ${item.className || ''}`.trim()}
+                            >
+                                <Text className="hero-meta-label">{item.label}</Text>
+                                <div className="hero-meta-value" title={item.value}>
+                                    {item.label === 'Stars' ? (
+                                        <>
+                                            <StarOutlined /> {item.value}
+                                        </>
+                                    ) : (
+                                        item.value
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {detailTags.length > 0 ? (
+                        <div className="hero-tag-list">
+                            {detailTags.map((tag) => (
+                                <Tag key={tag}>{tag}</Tag>
+                            ))}
+                        </div>
+                    ) : null}
                 </div>
-            </Card>
+
+                <Card className="install-overview-card" bordered={false}>
+                    <div className="install-card-header">
+                        <div>
+                            <Text className="install-card-title">安装方式</Text>
+                            <Paragraph className="install-card-caption" type="secondary">
+                                {isInstallable
+                                    ? '默认展示 Agent 安装路径，并始终基于 installKey 生成用户可见命令。'
+                                    : '当前来源暂不支持 Doraemon CLI 直装，保留手动下载与解压的降级路径。'}
+                            </Paragraph>
+                        </div>
+                        <span
+                            className={`install-status-tag ${
+                                isInstallable ? 'is-ready' : 'is-fallback'
+                            }`}
+                        >
+                            {isInstallable ? 'CLI 可安装' : '需手动接入'}
+                        </span>
+                    </div>
+
+                    <Tabs defaultActiveKey="agent" className="install-tabs">
+                        <TabPane tab="我是 Agent" key="agent">
+                            <div className="install-tab-panel">
+                                {isInstallable ? (
+                                    <>
+                                        <Text type="secondary">
+                                            先确认 Doraemon CLI 可用，再把下面整段提示发给 Agent
+                                            执行。
+                                        </Text>
+                                        {renderInstallCommandCard({
+                                            title: '发给 Agent 的安装提示',
+                                            description: '包含 CLI 检查与技能安装两步说明',
+                                            command: agentInstruction,
+                                            copyMessage: 'Agent 指令已复制到剪贴板',
+                                        })}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text strong>当前 skill 需要 Agent 走下载降级路径</Text>
+                                        {renderInstallCommandCard({
+                                            title: '发给 Agent 的降级说明',
+                                            description: installUnavailableReason,
+                                            command: agentFallbackInstruction,
+                                            copyMessage: '降级指令已复制到剪贴板',
+                                        })}
+                                    </>
+                                )}
+                            </div>
+                        </TabPane>
+                        <TabPane tab="我是 Human" key="human">
+                            <div className="install-tab-panel">
+                                {isInstallable ? (
+                                    <>
+                                        {renderInstallCommandCard({
+                                            title: '先安装 Doraemon CLI',
+                                            description:
+                                                '当前项目仍使用占位说明，等待统一安装脚本地址补齐',
+                                            command: cliInstallPlaceholderCommand,
+                                            copyMessage: 'CLI 安装命令已复制到剪贴板',
+                                        })}
+                                        {renderInstallCommandCard({
+                                            title: '安装当前技能',
+                                            description: '复制后可直接在终端执行',
+                                            command: skillInstallCommand,
+                                            copyMessage: '技能安装命令已复制到剪贴板',
+                                        })}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text strong>当前技能暂不支持 Doraemon CLI 直接安装</Text>
+                                        <Text type="secondary">
+                                            原因：{installUnavailableReason}
+                                        </Text>
+                                        {renderInstallCommandCard({
+                                            title: '手动下载命令',
+                                            description: '下载 zip 后手动解压到目标 skills 目录',
+                                            command: downloadCommand,
+                                            copyMessage: '下载命令已复制到剪贴板',
+                                            disabled: !downloadCommand,
+                                        })}
+                                    </>
+                                )}
+                            </div>
+                        </TabPane>
+                    </Tabs>
+                </Card>
+            </div>
 
             <Row gutter={[16, 16]} className="detail-main-row">
                 <Col xs={24} xl={16}>
@@ -525,124 +700,11 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
                 </Col>
 
                 <Col xs={24} xl={8}>
-                    <Card className="action-card" title="安装方式">
-                        <Tabs defaultActiveKey="human">
-                            <TabPane tab="我是 Human" key="human">
-                                {isInstallable ? (
-                                    <div className="install-tab-panel">
-                                        <Text type="secondary">先安装 Doraemon CLI（脚本地址当前待提供）</Text>
-                                        <div className="command-block">
-                                            <code>{cliInstallPlaceholderCommand}</code>
-                                            <Button
-                                                type="text"
-                                                className="command-copy-btn"
-                                                icon={<CopyOutlined />}
-                                                onClick={() =>
-                                                    copyToClipboard(
-                                                        cliInstallPlaceholderCommand,
-                                                        'CLI 安装说明已复制到剪贴板'
-                                                    )
-                                                }
-                                            />
-                                        </div>
-                                        <Text type="secondary">安装当前技能</Text>
-                                        <div className="command-block">
-                                            <code>{skillInstallCommand}</code>
-                                            <Button
-                                                type="text"
-                                                className="command-copy-btn"
-                                                icon={<CopyOutlined />}
-                                                onClick={() =>
-                                                    copyToClipboard(
-                                                        skillInstallCommand,
-                                                        '技能安装命令已复制到剪贴板'
-                                                    )
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="install-tab-panel">
-                                        <Text strong>当前技能暂不支持 Doraemon CLI 直接安装</Text>
-                                        <Text type="secondary">
-                                            {`原因：${installUnavailableReason}`}
-                                        </Text>
-                                        <div className="command-block">
-                                            <code>{downloadCommand}</code>
-                                            <Button
-                                                type="text"
-                                                className="command-copy-btn"
-                                                icon={<CopyOutlined />}
-                                                onClick={() =>
-                                                    copyToClipboard(
-                                                        downloadCommand,
-                                                        '下载命令已复制到剪贴板'
-                                                    )
-                                                }
-                                                disabled={!downloadCommand}
-                                            />
-                                        </div>
-                                        <Text type="secondary">
-                                            请下载 zip 后手动解压到目标 skills 目录，再按本地流程接入。
-                                        </Text>
-                                    </div>
-                                )}
-                            </TabPane>
-                            <TabPane tab="我是 Agent" key="agent">
-                                {isInstallable ? (
-                                    <div className="install-tab-panel">
-                                        <Text type="secondary">复制以下指令给 Agent 执行</Text>
-                                        <div className="command-block">
-                                            <code>{agentInstruction}</code>
-                                            <Button
-                                                type="text"
-                                                className="command-copy-btn"
-                                                icon={<CopyOutlined />}
-                                                onClick={() =>
-                                                    copyToClipboard(
-                                                        agentInstruction,
-                                                        'Agent 指令已复制到剪贴板'
-                                                    )
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="install-tab-panel">
-                                        <Text strong>Agent 请走降级路径</Text>
-                                        <div className="command-block">
-                                            <code>
-                                                {[
-                                                    '当前 skill 不支持 doraemon-skills 直接安装。',
-                                                    `请先下载 zip：${downloadCommand}`,
-                                                    `原因：${installUnavailableReason}`,
-                                                    '然后手动解压并确认技能目录结构（需包含 SKILL.md）。',
-                                                ].join('\n')}
-                                            </code>
-                                            <Button
-                                                type="text"
-                                                className="command-copy-btn"
-                                                icon={<CopyOutlined />}
-                                                onClick={() =>
-                                                    copyToClipboard(
-                                                        [
-                                                            '当前 skill 不支持 doraemon-skills 直接安装。',
-                                                            `请先下载 zip：${downloadCommand}`,
-                                                            `原因：${installUnavailableReason}`,
-                                                            '然后手动解压并确认技能目录结构（需包含 SKILL.md）。',
-                                                        ].join('\n'),
-                                                        '降级指令已复制到剪贴板'
-                                                    )
-                                                }
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </TabPane>
-                        </Tabs>
-                    </Card>
-
-                    <Card className="action-card" title="$ download --local" extra={<Text>manual</Text>}>
+                    <Card
+                        className="action-card download-card"
+                        title="手动下载"
+                        extra={<Text>manual</Text>}
+                    >
                         <div className="download-buttons">
                             <Button
                                 type="primary"
@@ -670,28 +732,6 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
                             </Text>
                         </div>
                     </Card>
-
-                    <Card className="action-card" title="源码与分享">
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                            <Button
-                                block
-                                icon={<LinkOutlined />}
-                                onClick={() => window.open(sourceUrl, '_blank')}
-                                disabled={!sourceUrl}
-                            >
-                                源码跳转
-                            </Button>
-                            <Button
-                                block
-                                icon={<ShareAltOutlined />}
-                                onClick={() =>
-                                    copyToClipboard(deepLinkUrl, '详情页深链已复制到剪贴板')
-                                }
-                            >
-                                复制深链
-                            </Button>
-                        </Space>
-                    </Card>
                 </Col>
             </Row>
 
@@ -705,15 +745,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
                                 <Card
                                     className="related-item-card"
                                     hoverable
-                                                onClick={() => {
-                                                    if (isModal && onOpenSkill) {
-                                                        onOpenSkill(item.slug);
-                                                        return;
-                                                    }
-                                                    if (history) {
-                                                        history.push(`/page/skills/${item.slug}`);
-                                                    }
-                                                }}
+                                    onClick={() => history.push(`/page/skills/${item.slug}`)}
                                 >
                                     <div className="related-title">{item.name}</div>
                                     <Paragraph ellipsis={{ rows: 2 }}>

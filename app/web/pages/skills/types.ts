@@ -1,5 +1,6 @@
 export interface SkillItem {
     slug: string;
+    installKey: string;
     name: string;
     description: string;
     category: string;
@@ -38,6 +39,7 @@ export interface SkillFileContent {
 
 export interface SkillInstallMeta {
     slug: string;
+    installKey: string;
     name: string;
     downloadUrl: string;
     packageType: string;

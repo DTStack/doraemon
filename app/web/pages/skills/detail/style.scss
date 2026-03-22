@@ -1,45 +1,235 @@
 .page-skill-detail {
     padding: 20px 24px;
-    &.modal-skill-detail {
-        padding-top: 8px;
-    }
+    background: linear-gradient(180deg, #F5F8FC 0%, #F8FAFC 100%);
     &.loading-wrap {
         display: flex;
         justify-content: center;
         align-items: center;
         min-height: 420px;
     }
-    .detail-header {
+    .detail-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    .detail-hero-main,
+    .install-overview-card,
+    .file-tree-card,
+    .file-viewer-card,
+    .action-card,
+    .related-card-list {
+        border: 1px solid #E4ECF5;
+        border-radius: 18px;
+        background: #FFF;
+        box-shadow: 0 16px 36px rgba(31, 45, 61, 0.06);
+    }
+    .detail-hero-main {
+        padding: 24px;
+        background: linear-gradient(145deg, #FFF 0%, #F5F9FF 100%);
+    }
+    .back-btn {
+        margin-bottom: 18px;
+        border-radius: 10px;
+        border-color: #D8E4F1;
+        color: #35506B;
+        background: #FFF;
+    }
+    .hero-kicker-row {
         display: flex;
-        align-items: flex-start;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+    .install-key-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid #D6E3F1;
+        background: #F5F9FF;
+        color: #42607B;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    .hero-title-row {
+        display: flex;
         justify-content: space-between;
-        gap: 14px;
-        margin-bottom: 16px;
-        .back-btn {
-            margin-top: 4px;
-        }
+        gap: 20px;
+        margin-bottom: 18px;
         .title-group {
             flex: 1;
             min-width: 0;
         }
-    }
-    .meta-card {
-        margin-bottom: 16px;
-        .tags-wrap {
-            margin-top: 12px;
+        .ant-typography {
+            margin-bottom: 0;
+        }
+        h2.ant-typography {
+            margin-bottom: 12px;
+            color: #1F2D3D;
+            font-size: 32px;
+            line-height: 1.2;
         }
     }
+    .hero-description {
+        max-width: 760px;
+        margin-bottom: 0;
+        color: #5C7086;
+        font-size: 15px;
+        line-height: 1.75;
+    }
+    .hero-action-group {
+        justify-content: flex-end;
+        align-self: flex-start;
+        max-width: 320px;
+        .ant-btn {
+            border-radius: 10px;
+        }
+    }
+    .hero-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+    .hero-meta-card {
+        padding: 16px 18px;
+        border-radius: 14px;
+        border: 1px solid #E7EEF6;
+        background: linear-gradient(180deg, #FFF 0%, #F7FAFD 100%);
+        min-width: 0;
+        &.is-accent {
+            background: linear-gradient(135deg, #EAF3FF 0%, #F7FAFF 100%);
+            border-color: #D7E6FA;
+        }
+        &.is-wide {
+            grid-column: span 2;
+        }
+    }
+    .hero-meta-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #8A9AAE;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .hero-meta-value {
+        color: #23384D;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.6;
+        word-break: break-word;
+        .anticon {
+            margin-right: 6px;
+            color: #D9A441;
+        }
+    }
+    .hero-tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+    }
+    .install-overview-card {
+        padding: 24px;
+        overflow: hidden;
+        .ant-card-body {
+            padding: 0;
+        }
+    }
+    .install-card-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+    .install-card-title {
+        display: block;
+        margin-bottom: 8px;
+        color: #1F2D3D;
+        font-size: 20px;
+        font-weight: 700;
+    }
+    .install-card-caption {
+        margin-bottom: 0;
+        color: #60748A;
+        line-height: 1.7;
+    }
+    .install-status-tag {
+        display: inline-flex;
+        align-items: center;
+        height: 32px;
+        padding: 0 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        &.is-ready {
+            color: #1F5FA6;
+            background: #E8F2FF;
+            border: 1px solid #CFE0F7;
+        }
+        &.is-fallback {
+            color: #9A6414;
+            background: #FFF5E8;
+            border: 1px solid #F4DFC0;
+        }
+    }
+    .install-tabs {
+        .ant-tabs-nav {
+            margin-bottom: 16px;
+        }
+        .ant-tabs-tab {
+            padding: 10px 0;
+            font-weight: 600;
+        }
+        .ant-tabs-ink-bar {
+            height: 3px;
+            border-radius: 999px;
+            background: #2F7BFF;
+        }
+    }
+    .install-tab-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .install-command-card {
+        padding: 14px;
+        border: 1px solid #E6EDF5;
+        border-radius: 14px;
+        background: #F7FAFD;
+    }
+    .install-command-header {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 10px;
+    }
+    .install-command-title {
+        color: #29415A;
+        font-size: 14px;
+        font-weight: 600;
+    }
     .detail-main-row {
-        margin-bottom: 16px;
+        margin-bottom: 20px;
     }
     .file-tree-card {
         margin-bottom: 16px;
+        .ant-card-head {
+            border-bottom-color: #EEF3F8;
+        }
         .ant-tree {
-            padding: 4px 8px 8px;
+            padding: 4px 10px 10px;
         }
     }
     .file-viewer-card {
         min-height: 560px;
+        .ant-card-head {
+            border-bottom-color: #EEF3F8;
+        }
         .ant-card-body {
             max-height: 640px;
             overflow: auto;
@@ -49,10 +239,10 @@
         .frontmatter-table-wrap {
             margin-bottom: 16px;
             border: 1px solid #E5EDF6;
-            border-radius: 10px;
+            border-radius: 14px;
             overflow: hidden;
             background: #FFF;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
         }
         .frontmatter-table {
             width: 100%;
@@ -98,15 +288,15 @@
             }
             .frontmatter-code {
                 margin: 0;
+                padding: 10px 12px;
+                border: 1px solid #E4EAF1;
+                border-radius: 8px;
+                background: #F7FAFC;
+                color: #1F2D3D;
                 font-size: 14px;
                 line-height: 1.55;
                 white-space: pre-wrap;
                 word-break: break-word;
-                color: #1F2D3D;
-                background: #F7FAFC;
-                border: 1px solid #E4EAF1;
-                border-radius: 8px;
-                padding: 10px 12px;
             }
         }
     }
@@ -121,44 +311,49 @@
         &:last-child {
             margin-bottom: 0;
         }
-        .runtime-switch {
-            margin-bottom: 12px;
+        .ant-card-head {
+            border-bottom-color: #EEF3F8;
         }
-        .install-tab-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+    }
+    .download-card {
+        .ant-card-extra {
+            color: #7B8EA3;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
-        .download-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+    }
+    .download-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
     .command-block {
         display: flex;
         align-items: stretch;
         justify-content: space-between;
-        gap: 8px;
-        padding: 10px 12px;
-        border-radius: 6px;
-        border: 1px solid #E5E7EB;
-        background: #F8FAFC;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid #E2EAF3;
+        background: #FFF;
         code {
             flex: 1;
+            color: #1F2D3D;
             white-space: pre-wrap;
             word-break: break-all;
-            color: #1F2D3D;
+            font-size: 13px;
+            line-height: 1.7;
         }
         .command-copy-btn {
             flex: 0 0 auto;
-            align-self: center;
+            align-self: flex-start;
             min-width: 40px;
             height: 40px;
             border: 1px solid #D7E1EC;
-            border-radius: 8px;
+            border-radius: 10px;
             background: #FFF;
-            color: #1F2D3D;
+            color: #2E4A66;
             &:hover,
             &:focus {
                 color: #2F7BFF;
@@ -172,13 +367,57 @@
         }
     }
     .related-card-list {
+        .ant-card-head {
+            border-bottom-color: #EEF3F8;
+        }
         .related-item-card {
             height: 100%;
+            border-radius: 14px;
+            border: 1px solid #E7EDF5;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            &:hover {
+                border-color: #BFD6F2;
+                box-shadow: 0 12px 24px rgba(31, 45, 61, 0.08);
+                transform: translateY(-2px);
+            }
             .related-title {
                 margin-bottom: 8px;
                 color: #1F2D3D;
                 font-size: 16px;
                 font-weight: 600;
+            }
+        }
+    }
+
+    @media (max-width: 1100px) {
+        .detail-hero {
+            grid-template-columns: 1fr;
+        }
+        .hero-title-row {
+            flex-direction: column;
+        }
+        .hero-action-group {
+            max-width: none;
+            justify-content: flex-start;
+        }
+    }
+
+    @media (max-width: 768px) {
+        padding: 16px;
+        .detail-hero-main,
+        .install-overview-card {
+            padding: 18px;
+        }
+        .hero-meta-grid {
+            grid-template-columns: 1fr;
+        }
+        .hero-meta-card.is-wide {
+            grid-column: span 1;
+        }
+        .command-block {
+            flex-direction: column;
+            .command-copy-btn {
+                align-self: flex-end;
             }
         }
     }

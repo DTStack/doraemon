@@ -31,7 +31,7 @@ import {
 
 import { API } from '@/api';
 import { copyToClipboard } from '@/utils/copyUtils';
-import SkillDetailContent from './detail/SkillDetailContent';
+import SkillSummaryModalContent from './detail/SkillSummaryModalContent';
 import { SkillItem, SkillListResponse } from './types';
 import './style.scss';
 
@@ -104,13 +104,15 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
         setDetailVisible(true);
     };
 
-    const handleCloseDetailModal = () => {
-        setDetailVisible(false);
+    const handleNavigateToDetail = (slug: string) => {
+        history.push(`/page/skills/${slug}`);
     };
 
-    const handleOpenDetailPage = () => {
-        if (!activeDetailSlug) return;
-        history.push(`/page/skills/${activeDetailSlug}`);
+    const buildSkillInstallCommand = (installKey: string) =>
+        `doraemon-skills install ${installKey}`;
+
+    const handleCloseDetailModal = () => {
+        setDetailVisible(false);
     };
 
     const openImportModal = () => {
@@ -198,7 +200,11 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     onSearch={(value) => updateQueryAndFetch({ keyword: value, pageNum: 1 })}
                 />
                 <Space size={12}>
-                    <Button icon={<ImportOutlined />} className="import-btn" onClick={openImportModal}>
+                    <Button
+                        icon={<ImportOutlined />}
+                        className="import-btn"
+                        onClick={openImportModal}
+                    >
                         导入技能
                     </Button>
                     <Select
@@ -241,7 +247,15 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                                     <Card
                                         className="skill-card"
                                         hoverable
-                                        onClick={() => handleOpenDetail(skill.slug)}
+                                        onClick={() => handleNavigateToDetail(skill.slug)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                event.preventDefault();
+                                                handleNavigateToDetail(skill.slug);
+                                            }
+                                        }}
+                                        role="button"
+                                        tabIndex={0}
                                     >
                                         <div className="card-header">
                                             <span className="skill-name">{skill.name}</span>
@@ -289,7 +303,9 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     copyToClipboard(
-                                                        skill.installCommand,
+                                                        buildSkillInstallCommand(
+                                                            skill.installKey || skill.slug
+                                                        ),
                                                         '安装命令已复制'
                                                     );
                                                 }}
@@ -322,7 +338,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
             </Spin>
 
             <Modal
-                width={1200}
+                width={1080}
                 title={null}
                 footer={null}
                 visible={detailVisible}
@@ -333,18 +349,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
             >
                 {activeDetailSlug ? (
                     <div className="skill-detail-modal-inner">
-                        <div className="skill-detail-modal-actions">
-                            <Button type="link" onClick={handleOpenDetailPage}>
-                                打开独立详情页
-                            </Button>
-                        </div>
-                        <SkillDetailContent
-                            slug={activeDetailSlug}
-                            mode="modal"
-                            history={history}
-                            onClose={handleCloseDetailModal}
-                            onOpenSkill={(nextSlug) => setActiveDetailSlug(nextSlug)}
-                        />
+                        <SkillSummaryModalContent slug={activeDetailSlug} history={history} />
                     </div>
                 ) : null}
             </Modal>
@@ -435,7 +440,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     >
                         <Select
                             mode="tags"
-                            tokenSeparators={[ ',', '，' ]}
+                            tokenSeparators={[',', '，']}
                             placeholder="例如：邮件, 效率, 命令行"
                             maxTagCount={5}
                         />
