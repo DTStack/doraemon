@@ -89,3 +89,73 @@ test('getInstallMeta returns installKey and installDirName aligned to user-facin
     assert.equal(meta.installDirName, 'skill-creator');
     assert.equal(meta.downloadUrl, 'https://doraemon.test/api/skills/download?slug=upload-skill-creator-default-skill-creator');
 });
+
+test('buildUploadSourceMeta keeps same zip with different custom names isolated', () => {
+    const service = Object.create(SkillsService.prototype);
+    service.hashString = SkillsService.prototype.hashString;
+    service.sanitizeSlugSegment = SkillsService.prototype.sanitizeSlugSegment;
+
+    const first = service.buildUploadSourceMeta('skill-creator.zip', 'skill-creator-a');
+    const second = service.buildUploadSourceMeta('skill-creator.zip', 'skill-creator-b');
+
+    assert.notEqual(first.sourceUrl, second.sourceUrl);
+    assert.notEqual(first.repoPath, second.repoPath);
+});
+
+test('assertSkillNamesUnique rejects duplicated names in one import batch', async () => {
+    const service = Object.create(SkillsService.prototype);
+    service.ctx = {
+        throw(status, message) {
+            const error = new Error(message);
+            error.status = status;
+            throw error;
+        },
+    };
+    service.app = {
+        model: {
+            SkillsItem: {
+                findOne: async () => null,
+            },
+        },
+        Sequelize: {
+            Op: {
+                in: 'in',
+                ne: 'ne',
+            },
+        },
+    };
+
+    await assert.rejects(
+        () => service.assertSkillNamesUnique([ 'skill-a', 'skill-a' ]),
+        (error) => error.status === 400 && error.message === '导入失败：技能名称不能重复'
+    );
+});
+
+test('assertSkillNamesUnique rejects existing skill name', async () => {
+    const service = Object.create(SkillsService.prototype);
+    service.ctx = {
+        throw(status, message) {
+            const error = new Error(message);
+            error.status = status;
+            throw error;
+        },
+    };
+    service.app = {
+        model: {
+            SkillsItem: {
+                findOne: async () => ({ id: 9, name: 'skill-creator' }),
+            },
+        },
+        Sequelize: {
+            Op: {
+                in: 'in',
+                ne: 'ne',
+            },
+        },
+    };
+
+    await assert.rejects(
+        () => service.assertSkillNamesUnique([ 'skill-creator' ]),
+        (error) => error.status === 400 && error.message === '技能名称“skill-creator”已存在，请更换名称'
+    );
+});

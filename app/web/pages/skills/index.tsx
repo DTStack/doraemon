@@ -321,8 +321,8 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                 {skills.length === 0 ? (
                     <Empty description="没有符合条件的 Skills" />
                 ) : (
-                    <>
-                        <Row gutter={[16, 16]}>
+                    <div className="skills-list-section">
+                        <Row gutter={[16, 16]} className="skills-grid">
                             {skills.map((skill) => (
                                 <Col key={skill.slug} xs={24} sm={12} lg={8}>
                                     <Card
@@ -392,7 +392,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                                 }
                             />
                         </div>
-                    </>
+                    </div>
                 )}
             </Spin>
 
@@ -422,8 +422,18 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                             <Button icon={<UploadOutlined />}>选择 .zip 文件</Button>
                         </Upload>
                     </Form.Item>
-                    <Form.Item name="skillName" label="技能名称（可选）">
-                        <Input placeholder="作为项目名称使用，不参与过滤" />
+                    <Form.Item
+                        name="skillName"
+                        label="技能名称（可选）"
+                        extra="填写后将作为该技能卡片的唯一名称；留空则使用压缩包中的默认名称"
+                        rules={[
+                            {
+                                max: 255,
+                                message: '技能名称不能超过 255 个字符',
+                            },
+                        ]}
+                    >
+                        <Input placeholder="例如：skill-creator-prod" />
                     </Form.Item>
                     <Form.Item
                         name="category"
@@ -502,9 +512,12 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     <Form.Item
                         name="name"
                         label="技能名称"
-                        rules={[{ required: true, message: '请输入技能名称' }]}
+                        rules={[
+                            { required: true, message: '请输入技能名称' },
+                            { max: 255, message: '技能名称不能超过 255 个字符' },
+                        ]}
                     >
-                        <Input placeholder="请输入技能名称" maxLength={255} />
+                        <Input placeholder="请输入技能名称" />
                     </Form.Item>
                     <Form.Item
                         name="category"

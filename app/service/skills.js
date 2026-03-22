@@ -103,6 +103,21 @@ function resolveSkillIdentifier(identifier, indexes = {}) {
     return null;
 }
 
+function createUniqueSkillNames(skillNames = []) {
+    const values = [];
+    const seen = new Set();
+
+    skillNames.forEach((item) => {
+        const name = String(item || '').trim();
+        if (!name) return;
+        if (seen.has(name)) return;
+        seen.add(name);
+        values.push(name);
+    });
+
+    return values;
+}
+
 const SKILL_CATEGORY_OPTIONS = [
     '通用',
     '前端',
@@ -267,7 +282,7 @@ class SkillsService extends Service {
             tags: this.parseJsonArray(row.tags),
             allowedTools: this.parseJsonArray(row.allowed_tools),
             stars: Number(row.stars) || 0,
-            updatedAt: (row.updated_at_remote || row.updated_at || row.created_at || new Date()).toISOString(),
+            updatedAt: (row.updated_at || row.updated_at_remote || row.created_at || new Date()).toISOString(),
             sourceRepo: row.source_repo || '',
             sourcePath: row.source_path || '',
             skillMd: row.skill_md || '',
@@ -712,20 +727,35 @@ class SkillsService extends Service {
         return `npx skills add ${source} --skill "${name}"`;
     }
 
-    buildUploadSourceMeta(fileName = '') {
-        const baseName = path.basename(String(fileName || '').trim(), '.skill');
+    buildUploadSourceMeta(fileName = '', identityKey = '') {
+        const parsedName = path.parse(String(fileName || '').trim());
+        const baseName = parsedName.name || parsedName.base || 'uploaded-skill';
         const normalizedName = this.sanitizeSlugSegment(baseName) || 'uploaded-skill';
+        const identityText = String(identityKey || '').trim();
+        const normalizedIdentity = this.sanitizeSlugSegment(identityText);
+        const identityHash = identityText ? this.hashString(identityText).slice(0, 8) : '';
+        const sourceKey = [ normalizedName, normalizedIdentity, identityHash ].filter(Boolean).join('-') || normalizedName;
         return {
-            sourceUrl: `upload://${normalizedName}.skill`,
+            sourceUrl: `upload://${sourceKey}.skill`,
             sourceType: 'upload',
             cloneUrl: '',
             sourceRepo: '',
             ref: '',
             subpath: '',
             repoHost: 'upload',
-            repoPath: normalizedName,
+            repoPath: sourceKey,
             originalAction: 'upload',
         };
+    }
+
+    getUploadIdentityKey(skillRecords = [], preferredName = '') {
+        const name = String(preferredName || '').trim();
+        if (name) return name;
+        return skillRecords
+            .map((item) => String(item?.name || '').trim())
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b))
+            .join('|');
     }
 
     extractDescription(content) {
@@ -1368,6 +1398,46 @@ class SkillsService extends Service {
         return await SkillsSource.create(payload);
     }
 
+    async assertSkillNamesUnique(skillNames = [], options = {}) {
+        const names = createUniqueSkillNames(skillNames);
+        if (names.length === 0) return;
+
+        if (names.length !== skillNames.map((item) => String(item || '').trim()).filter(Boolean).length) {
+            this.ctx.throw(400, '导入失败：技能名称不能重复');
+        }
+
+        const { SkillsItem } = this.app.model;
+        const { Op } = this.app.Sequelize;
+        const where = {
+            is_delete: 0,
+            name: {
+                [Op.in]: names,
+            },
+        };
+
+        if (options.excludeSkillId) {
+            where.id = {
+                [Op.ne]: options.excludeSkillId,
+            };
+        }
+
+        if (options.excludeSourceId) {
+            where.source_id = {
+                [Op.ne]: options.excludeSourceId,
+            };
+        }
+
+        const existing = await SkillsItem.findOne({
+            where,
+            attributes: [ 'id', 'name' ],
+            transaction: options.transaction,
+        });
+
+        if (existing) {
+            this.ctx.throw(400, `技能名称“${existing.name}”已存在，请更换名称`);
+        }
+    }
+
     async importSkill(params = {}) {
         const source = String(params.source || '').trim();
         const skillName = String(params.skillName || '').trim();
@@ -1409,6 +1479,11 @@ class SkillsService extends Service {
             if (skillRecords.length === 0) {
                 this.ctx.throw(400, '未匹配到指定技能，请检查 skillName 是否正确');
             }
+
+            await this.assertSkillNamesUnique(
+                skillRecords.map((item) => item.name),
+                { excludeSourceId: sourceRecord.id }
+            );
 
             const importedSkills = await this.persistSkillsForSource(sourceRecord.id, parsedSource, skillRecords);
 
@@ -1481,12 +1556,10 @@ class SkillsService extends Service {
 
         await this.ensureStorageReady();
 
-        const parsedSource = this.buildUploadSourceMeta(fileName);
         let sourceRecord = null;
         let tempDir = '';
 
         try {
-            sourceRecord = await this.upsertSourceRecord(parsedSource, 'syncing');
             tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-upload-'));
 
             try {
@@ -1501,6 +1574,12 @@ class SkillsService extends Service {
                 this.ctx.throw(400, '.zip 包内未发现有效技能（缺少 SKILL.md）');
             }
 
+            if (skillName && discoveredSkillDirs.length !== 1) {
+                this.ctx.throw(400, '填写技能名称时，.zip 包必须且只能包含一个技能目录');
+            }
+
+            const parsedSource = this.buildUploadSourceMeta(fileName, skillName);
+
             const skillRecords = discoveredSkillDirs.map((skillDir) => {
                 const record = this.prepareSkillRecord(skillDir, tempDir, parsedSource, category, tags);
                 if (skillName) {
@@ -1509,9 +1588,17 @@ class SkillsService extends Service {
                 return record;
             });
 
+            await this.assertSkillNamesUnique(skillRecords.map((item) => item.name));
+
+            const uploadSourceMeta = this.buildUploadSourceMeta(
+                fileName,
+                this.getUploadIdentityKey(skillRecords, skillName)
+            );
+            sourceRecord = await this.upsertSourceRecord(uploadSourceMeta, 'syncing');
+
             const importedSkills = await this.persistSkillsForSource(
                 sourceRecord.id,
-                parsedSource,
+                uploadSourceMeta,
                 skillRecords
             );
 
@@ -1644,6 +1731,11 @@ class SkillsService extends Service {
             if (!itemRow) {
                 this.ctx.throw(404, '技能不存在');
             }
+
+            await this.assertSkillNamesUnique([ name ], {
+                excludeSkillId: itemRow.id,
+                transaction,
+            });
 
             const payload = {
                 name,
@@ -2203,3 +2295,4 @@ class SkillsService extends Service {
 module.exports = SkillsService;
 module.exports.createInstallKeyMap = createInstallKeyMap;
 module.exports.resolveSkillIdentifier = resolveSkillIdentifier;
+module.exports.createUniqueSkillNames = createUniqueSkillNames;

@@ -1,9 +1,15 @@
 .page-skills {
+    height: 100%;
+    min-height: 0;
     padding: 20px 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
     .skills-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-shrink: 0;
     }
     .title-group {
         .page-title {
@@ -23,6 +29,7 @@
         align-items: center;
         gap: 16px;
         margin-top: 18px;
+        flex-shrink: 0;
         .keyword-search {
             width: 620px;
             max-width: 100%;
@@ -123,10 +130,38 @@
             margin-bottom: 10px;
         }
     }
+    > .ant-divider {
+        flex-shrink: 0;
+    }
+    > .ant-spin-nested-loading {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    > .ant-spin-nested-loading > .ant-spin-container {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .skills-list-section {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 16px;
+    }
+    .skills-grid {
+        flex-shrink: 0;
+    }
     .pagination-wrap {
         display: flex;
         justify-content: flex-end;
-        margin-top: 20px;
+        flex-shrink: 0;
+        margin-top: auto;
+        padding-bottom: 4px;
     }
 }
 
