@@ -20,6 +20,89 @@ const SKILLS_ROOT_DISCOVER_DEPTH_LIMIT = 8;
 const DISCOVER_MAX_DIR_COUNT = 3000;
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+function sanitizeInstallKeySegment(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .replace(/-{2,}/g, '-');
+}
+
+function createInstallKeyCandidates(skill = {}) {
+    const candidates = [];
+    const pushCandidate = (value) => {
+        const normalized = sanitizeInstallKeySegment(value);
+        if (normalized && !candidates.includes(normalized)) {
+            candidates.push(normalized);
+        }
+    };
+
+    pushCandidate(skill.name);
+
+    const sourcePath = String(skill.sourcePath || '').trim().replace(/\\/g, '/');
+    if (sourcePath) {
+        const segments = sourcePath.split('/').filter(Boolean);
+        if (segments.length > 0) {
+            pushCandidate(segments[segments.length - 1]);
+        }
+    }
+
+    pushCandidate(skill.slug);
+    pushCandidate('skill');
+    return candidates;
+}
+
+function createInstallKeyMap(skills = []) {
+    const bySlug = new Map();
+    const byInstallKey = new Map();
+    const counts = new Map();
+    const list = skills.map((skill) => {
+        const candidates = createInstallKeyCandidates(skill);
+        let installKey = candidates.find((candidate) => !byInstallKey.has(candidate)) || '';
+
+        if (!installKey) {
+            const baseKey = candidates[0] || 'skill';
+            const nextCount = (counts.get(baseKey) || 1) + 1;
+            counts.set(baseKey, nextCount);
+            installKey = `${baseKey}-${nextCount}`;
+            while (byInstallKey.has(installKey)) {
+                const currentCount = (counts.get(baseKey) || nextCount) + 1;
+                counts.set(baseKey, currentCount);
+                installKey = `${baseKey}-${currentCount}`;
+            }
+        } else {
+            const baseKey = candidates[0] || installKey;
+            counts.set(baseKey, Math.max(counts.get(baseKey) || 1, 1));
+        }
+
+        const normalizedSkill = {
+            ...skill,
+            installKey,
+        };
+        bySlug.set(normalizedSkill.slug, normalizedSkill);
+        byInstallKey.set(installKey, normalizedSkill);
+        return normalizedSkill;
+    });
+
+    return {
+        list,
+        bySlug,
+        byInstallKey,
+    };
+}
+
+function resolveSkillIdentifier(identifier, indexes = {}) {
+    const value = String(identifier || '').trim();
+    if (!value) return null;
+    if (indexes.bySlug instanceof Map && indexes.bySlug.has(value)) {
+        return indexes.bySlug.get(value);
+    }
+    if (indexes.byInstallKey instanceof Map && indexes.byInstallKey.has(value)) {
+        return indexes.byInstallKey.get(value);
+    }
+    return null;
+}
+
 const SKILL_CATEGORY_OPTIONS = [
     '通用',
     '前端',
@@ -142,6 +225,7 @@ class SkillsService extends Service {
     toPublicSkill(skill) {
         return {
             slug: skill.slug,
+            installKey: skill.installKey || skill.slug,
             name: skill.name,
             description: skill.description,
             category: skill.category,
@@ -160,6 +244,7 @@ class SkillsService extends Service {
             id: row.id,
             sourceId: row.source_id,
             slug: row.slug,
+            installKey: row.slug,
             name: row.name || '',
             description: row.description || '',
             category: row.category || '通用',
@@ -190,13 +275,15 @@ class SkillsService extends Service {
             ],
         });
 
-        const skills = rows.map((row) => this.toSkillDto(row));
+        const rawSkills = rows.map((row) => this.toSkillDto(row));
+        const installKeyMap = createInstallKeyMap(rawSkills);
         const categories = this.getSkillCategoryOptions();
         this.skillCache = {
             loadedAt: Date.now(),
-            skills,
+            skills: installKeyMap.list,
             categories,
-            bySlug: new Map(skills.map((item) => [ item.slug, item ])),
+            bySlug: installKeyMap.bySlug,
+            byInstallKey: installKeyMap.byInstallKey,
         };
 
         return this.skillCache;
@@ -257,13 +344,17 @@ class SkillsService extends Service {
         return this.getSkillList(params);
     }
 
-    getSkillBySlug(slug) {
-        const value = String(slug || '').trim();
+    getSkillByIdentifier(identifier) {
+        const value = String(identifier || '').trim();
         if (!value) {
             this.ctx.throw(400, '缺少技能标识');
         }
 
-        const skill = this.skillCache.bySlug.get(value);
+        if (!SKILL_SLUG_PATTERN.test(value)) {
+            this.ctx.throw(400, '非法技能标识');
+        }
+
+        const skill = resolveSkillIdentifier(value, this.skillCache);
         if (!skill) {
             this.ctx.throw(404, '技能不存在');
         }
@@ -273,7 +364,7 @@ class SkillsService extends Service {
 
     async getSkillDetail(slug) {
         await this.ensureSkillCache();
-        const skill = this.getSkillBySlug(slug);
+        const skill = this.getSkillByIdentifier(slug);
         const { SkillsFile } = this.app.model;
 
         const rows = await SkillsFile.findAll({
@@ -295,7 +386,7 @@ class SkillsService extends Service {
 
     async getSkillFileContent(slug, filePath) {
         await this.ensureSkillCache();
-        const skill = this.getSkillBySlug(slug);
+        const skill = this.getSkillByIdentifier(slug);
         const normalizedPath = this.normalizeRelativePath(filePath);
         const { SkillsFile } = this.app.model;
 
@@ -329,7 +420,7 @@ class SkillsService extends Service {
 
     async getSkillArchive(slug) {
         await this.ensureSkillCache();
-        const skill = this.getSkillBySlug(slug);
+        const skill = this.getSkillByIdentifier(slug);
         const { SkillsFile } = this.app.model;
         const rows = await SkillsFile.findAll({
             where: {
@@ -355,7 +446,7 @@ class SkillsService extends Service {
         };
     }
 
-    validateSkillSlug(slug) {
+    validateSkillIdentifier(slug) {
         const value = String(slug || '').trim();
         if (!value) {
             this.ctx.throw(400, '缺少技能标识');
@@ -410,8 +501,8 @@ class SkillsService extends Service {
 
     async getInstallMeta(slug) {
         await this.ensureSkillCache();
-        const safeSlug = this.validateSkillSlug(slug);
-        const skill = this.getSkillBySlug(safeSlug);
+        const safeIdentifier = this.validateSkillIdentifier(slug);
+        const skill = this.getSkillByIdentifier(safeIdentifier);
         const { installable, reason } = await this.getSkillPackageInstallability(skill.id);
         const downloadUrl = this.buildSkillDownloadUrl(skill.slug);
 
@@ -423,12 +514,13 @@ class SkillsService extends Service {
 
         return {
             slug: skill.slug,
+            installKey: skill.installKey || skill.slug,
             name: skill.name,
             downloadUrl,
             packageType: 'zip',
             packageVersion: 'v1',
             packageRootMode: 'find-skill-md',
-            installDirName: skill.slug,
+            installDirName: skill.installKey || skill.slug,
             version: '',
             sha256,
             sourceRepo: skill.sourceRepo || '',
@@ -525,7 +617,7 @@ class SkillsService extends Service {
 
     async getRelatedSkills(slug, limit = 6) {
         await this.ensureSkillCache();
-        const target = this.skillCache.bySlug.get(String(slug || '').trim());
+        const target = this.getSkillByIdentifier(slug);
         if (!target) {
             this.ctx.throw(404, '技能不存在');
         }
@@ -1873,3 +1965,5 @@ class SkillsService extends Service {
 }
 
 module.exports = SkillsService;
+module.exports.createInstallKeyMap = createInstallKeyMap;
+module.exports.resolveSkillIdentifier = resolveSkillIdentifier;

@@ -41,8 +41,8 @@ class SkillsController extends Controller {
 
     async getSkillInstallMeta() {
         const { app, ctx } = this;
-        const { slug } = ctx.query;
-        const data = await ctx.service.skills.getInstallMeta(slug);
+        const identifier = ctx.query.installKey || ctx.query.slug;
+        const data = await ctx.service.skills.getInstallMeta(identifier);
         ctx.body = app.utils.response(true, data);
     }
 
