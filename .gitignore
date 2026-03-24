@@ -7,3 +7,6 @@ cache
 public
 resources
 app/view
+
+# Research docs (working notes, not for commit)
+docs/research
