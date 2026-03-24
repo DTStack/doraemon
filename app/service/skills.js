@@ -1292,11 +1292,16 @@ class SkillsService extends Service {
                 try {
                     const stat = fs.statSync(fullPath);
                     const size = Number(stat.size) || 0;
-                    const buffer = size > MAX_STORED_FILE_CONTENT_SIZE ? null : fs.readFileSync(fullPath);
-                    const isBinary = buffer ? this.isLikelyBinary(buffer) : false;
+                    if (size > MAX_STORED_FILE_CONTENT_SIZE) {
+                        this.ctx.throw(
+                            400,
+                            `文件 ${relativePath} 超过 ${Math.floor(MAX_STORED_FILE_CONTENT_SIZE / 1024 / 1024)}MB 限制，拒绝导入`
+                        );
+                    }
+                    const buffer = fs.readFileSync(fullPath);
+                    const isBinary = this.isLikelyBinary(buffer);
                     const encoding = isBinary ? 'base64' : 'utf8';
-                    const content =
-                        !buffer ? null : isBinary ? buffer.toString('base64') : buffer.toString('utf8');
+                    const content = isBinary ? buffer.toString('base64') : buffer.toString('utf8');
 
                     files.push({
                         filePath: relativePath,
@@ -1308,6 +1313,9 @@ class SkillsService extends Service {
                         updatedAt: stat.mtime,
                     });
                 } catch (error) {
+                    if (error.status) {
+                        throw error;
+                    }
                     // 忽略不可读取文件，避免单文件损坏阻塞整次导入。
                 }
             });
