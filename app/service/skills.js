@@ -1886,7 +1886,7 @@ class SkillsService extends Service {
                     source_id: sourceId,
                     is_delete: 0,
                 },
-                attributes: [ 'id', 'stars' ],
+                attributes: [ 'id', 'slug', 'stars' ],
                 order: [ [ 'stars', 'DESC' ], [ 'id', 'DESC' ] ],
                 transaction,
             });
@@ -1896,52 +1896,47 @@ class SkillsService extends Service {
                 typeof repoStars === 'number' && Number.isFinite(repoStars) && repoStars >= 0
                     ? repoStars
                     : fallbackStars;
-
-            if (oldRows.length > 0) {
-                const oldIds = oldRows.map((item) => item.id);
-                await SkillsFile.destroy({
-                    where: {
-                        skill_id: {
-                            [Op.in]: oldIds,
-                        },
-                    },
-                    transaction,
-                });
-            }
-
-            await SkillsItem.destroy({
-                where: {
-                    source_id: sourceId,
-                },
-                transaction,
-            });
+            const oldRowMap = new Map(oldRows.map((item) => [ item.slug, item ]));
 
             const usedSlugs = new Set();
             const createdSkills = [];
 
             for (const record of skillRecords) {
                 const slug = this.buildSkillSlug(sourceMeta, record.sourcePath, record.name, usedSlugs);
-                const itemRow = await SkillsItem.create(
-                    {
-                        source_id: sourceId,
-                        slug,
-                        name: record.name,
-                        description: record.description,
-                        category: record.category,
-                        version: record.version || '',
-                        tags: JSON.stringify(record.tags || []),
-                        allowed_tools: JSON.stringify(record.allowedTools || []),
-                        stars: resolvedStars,
-                        updated_at_remote: record.updatedAt,
-                        source_repo: record.sourceRepo,
-                        source_path: record.sourcePath,
-                        skill_md: record.skillMd,
-                        install_command: record.installCommand,
-                        file_count: record.files.length,
-                        is_delete: 0,
+                const payload = {
+                    source_id: sourceId,
+                    slug,
+                    name: record.name,
+                    description: record.description,
+                    category: record.category,
+                    version: record.version || '',
+                    tags: JSON.stringify(record.tags || []),
+                    allowed_tools: JSON.stringify(record.allowedTools || []),
+                    stars: resolvedStars,
+                    updated_at_remote: record.updatedAt,
+                    source_repo: record.sourceRepo,
+                    source_path: record.sourcePath,
+                    skill_md: record.skillMd,
+                    install_command: record.installCommand,
+                    file_count: record.files.length,
+                    is_delete: 0,
+                };
+                const existingRow = oldRowMap.get(slug);
+
+                let itemRow = existingRow;
+                if (existingRow) {
+                    await existingRow.update(payload, { transaction });
+                    oldRowMap.delete(slug);
+                } else {
+                    itemRow = await SkillsItem.create(payload, { transaction });
+                }
+
+                await SkillsFile.destroy({
+                    where: {
+                        skill_id: itemRow.id,
                     },
-                    { transaction }
-                );
+                    transaction,
+                });
 
                 if (record.files.length > 0) {
                     const fileRows = record.files.map((fileItem) => ({
@@ -1965,6 +1960,31 @@ class SkillsService extends Service {
                     sourceRepo: record.sourceRepo,
                     sourcePath: record.sourcePath,
                 });
+            }
+
+            const removedIds = Array.from(oldRowMap.values()).map((item) => item.id);
+            if (removedIds.length > 0) {
+                await SkillsFile.destroy({
+                    where: {
+                        skill_id: {
+                            [Op.in]: removedIds,
+                        },
+                    },
+                    transaction,
+                });
+                await SkillsItem.update(
+                    {
+                        is_delete: 1,
+                    },
+                    {
+                        where: {
+                            id: {
+                                [Op.in]: removedIds,
+                            },
+                        },
+                        transaction,
+                    }
+                );
             }
 
             return createdSkills;

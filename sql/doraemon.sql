@@ -292,4 +292,99 @@ CREATE TABLE IF NOT EXISTS `mcp_servers` (
     `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_server_id` (`server_id`)
-  ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8 COLLATE = utf8_bin
+  ) ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8 COLLATE = utf8_bin;
+
+-- ----------------------------
+-- Table structure for skills_sources
+-- ----------------------------
+DROP TABLE IF EXISTS `skills_sources`;
+CREATE TABLE `skills_sources` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `source_url` varchar(512) NOT NULL COMMENT '用户输入的来源地址',
+  `source_type` varchar(32) NOT NULL DEFAULT 'git' COMMENT '来源类型 github/gitlab/git/local',
+  `clone_url` varchar(1000) NOT NULL COMMENT '用于 clone 的仓库地址',
+  `source_repo` varchar(1000) NOT NULL COMMENT '用于安装命令展示的仓库地址',
+  `ref` varchar(255) DEFAULT NULL COMMENT '分支或标签',
+  `subpath` varchar(1000) DEFAULT NULL COMMENT '仓库内相对子目录',
+  `repo_host` varchar(255) DEFAULT NULL COMMENT '仓库域名',
+  `repo_path` varchar(500) DEFAULT NULL COMMENT '仓库路径 owner/repo 或 group/subgroup/repo',
+  `sync_status` varchar(32) NOT NULL DEFAULT 'idle' COMMENT '同步状态 idle/syncing/failed',
+  `sync_error` text COMMENT '最近一次同步错误',
+  `last_synced_at` datetime DEFAULT NULL COMMENT '最近同步时间',
+  `is_delete` tinyint NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_skills_source_url` (`source_url`),
+  KEY `idx_skills_repo_host` (`repo_host`),
+  KEY `idx_skills_repo_path` (`repo_path`),
+  KEY `idx_skills_sync_status` (`sync_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='技能来源表';
+
+-- ----------------------------
+-- Table structure for skills_items
+-- ----------------------------
+DROP TABLE IF EXISTS `skills_items`;
+CREATE TABLE `skills_items` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `source_id` int NOT NULL COMMENT '来源记录ID',
+  `slug` varchar(255) NOT NULL COMMENT '详情页唯一标识',
+  `name` varchar(255) NOT NULL,
+  `description` text,
+  `category` varchar(64) NOT NULL DEFAULT '通用',
+  `version` varchar(128) NOT NULL DEFAULT '' COMMENT '技能版本号',
+  `tags` longtext COMMENT 'JSON字符串数组',
+  `allowed_tools` longtext COMMENT 'JSON字符串数组',
+  `stars` int NOT NULL DEFAULT '0',
+  `updated_at_remote` datetime DEFAULT NULL COMMENT '源仓库文件更新时间',
+  `source_repo` varchar(1000) DEFAULT NULL COMMENT '仓库地址',
+  `source_path` varchar(1000) DEFAULT NULL COMMENT '仓库内 skill 相对路径',
+  `skill_md` longtext COMMENT 'SKILL.md 原文',
+  `install_command` text COMMENT '推荐安装命令',
+  `file_count` int NOT NULL DEFAULT '0',
+  `is_delete` tinyint NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_skills_slug` (`slug`),
+  KEY `idx_skills_source_id` (`source_id`),
+  KEY `idx_skills_category` (`category`),
+  KEY `idx_skills_stars` (`stars`),
+  KEY `idx_skills_updated_at_remote` (`updated_at_remote`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='技能条目表';
+
+-- ----------------------------
+-- Table structure for skills_files
+-- ----------------------------
+DROP TABLE IF EXISTS `skills_files`;
+CREATE TABLE `skills_files` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `skill_id` int NOT NULL COMMENT 'skills_items.id',
+  `file_path` varchar(512) NOT NULL COMMENT '文件相对路径',
+  `language` varchar(64) NOT NULL DEFAULT 'text',
+  `size` int NOT NULL DEFAULT '0',
+  `is_binary` tinyint NOT NULL DEFAULT '0',
+  `encoding` varchar(16) NOT NULL DEFAULT 'utf8',
+  `content` longtext COMMENT '文本内容或base64内容',
+  `updated_at_remote` datetime DEFAULT NULL COMMENT '源仓库文件更新时间',
+  `is_delete` tinyint NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_skills_file_skill_id` (`skill_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='技能文件表';
+
+-- ----------------------------
+-- Table structure for skill_likes
+-- ----------------------------
+DROP TABLE IF EXISTS `skill_likes`;
+CREATE TABLE `skill_likes` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `skill_id` int NOT NULL COMMENT '技能ID',
+  `ip` varchar(64) NOT NULL COMMENT '点赞用户IP',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_skill_like_skill_ip` (`skill_id`, `ip`),
+  KEY `idx_skill_like_skill_id` (`skill_id`),
+  KEY `idx_skill_like_ip` (`ip`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='技能点赞表';
