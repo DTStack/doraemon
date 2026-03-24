@@ -14,9 +14,6 @@ function mapUrlObjToFuncObj(urlObj: any) {
                 typeof (http as any)[rawMethod] === 'function'
                     ? rawMethod
                     : rawMethod.toLowerCase();
-            if (typeof (http as any)[methodName] !== 'function') {
-                throw new Error(`Unsupported API method: ${item.method}`);
-            }
             // eslint-disable-next-line no-return-await
             return await (http as any)[methodName](item.url, params);
         };
