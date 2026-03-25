@@ -2,31 +2,26 @@
     height: 100vh;
     padding-top: 64px;
     box-sizing: border-box;
-
     .logo_img {
         width: 30px;
         height: 30px;
         margin: 0 8px 8px 12px;
     }
-
     .system-title {
         font-size: 21px;
         font-weight: 700;
         color: #FFF;
     }
-
     .local-ip {
         color: #FFF;
         font-size: 16px;
     }
-
     .main-content {
         height: 100%;
         display: flex;
         flex: 1;
         background: #F2F7FA;
     }
-
     .context_container {
         flex: 1;
         min-height: 0;
@@ -34,10 +29,8 @@
         width: 100%;
         overflow: auto;
     }
-
     &.is-skill-detail-layout {
         overflow: hidden;
-
         .main-content {
             flex: 1;
             height: 0;
@@ -45,7 +38,6 @@
             background: #F2F7FA;
             overflow: hidden;
         }
-
         .context_container {
             height: 100%;
             padding: 0;

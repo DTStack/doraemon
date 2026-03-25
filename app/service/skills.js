@@ -39,7 +39,9 @@ function createInstallKeyCandidates(skill = {}) {
 
     pushCandidate(skill.name);
 
-    const sourcePath = String(skill.sourcePath || '').trim().replace(/\\/g, '/');
+    const sourcePath = String(skill.sourcePath || '')
+        .trim()
+        .replace(/\\/g, '/');
     if (sourcePath) {
         const segments = sourcePath.split('/').filter(Boolean);
         if (segments.length > 0) {
@@ -174,7 +176,7 @@ class SkillsService extends Service {
     }
 
     getSkillCategoryOptions() {
-        return [ ...SKILL_CATEGORY_OPTIONS ];
+        return [...SKILL_CATEGORY_OPTIONS];
     }
 
     getSkillsConfig() {
@@ -282,7 +284,12 @@ class SkillsService extends Service {
             tags: this.parseJsonArray(row.tags),
             allowedTools: this.parseJsonArray(row.allowed_tools),
             stars: Number(row.stars) || 0,
-            updatedAt: (row.updated_at || row.updated_at_remote || row.created_at || new Date()).toISOString(),
+            updatedAt: (
+                row.updated_at ||
+                row.updated_at_remote ||
+                row.created_at ||
+                new Date()
+            ).toISOString(),
             sourceRepo: row.source_repo || '',
             sourcePath: row.source_path || '',
             skillMd: row.skill_md || '',
@@ -299,10 +306,10 @@ class SkillsService extends Service {
         const rows = await SkillsItem.findAll({
             where: { is_delete: 0 },
             order: [
-                [ 'stars', 'DESC' ],
-                [ 'updated_at_remote', 'DESC' ],
-                [ 'updated_at', 'DESC' ],
-                [ 'id', 'DESC' ],
+                ['stars', 'DESC'],
+                ['updated_at_remote', 'DESC'],
+                ['updated_at', 'DESC'],
+                ['id', 'DESC'],
             ],
         });
 
@@ -333,7 +340,7 @@ class SkillsService extends Service {
         const safePageSize = Math.max(parseInt(pageSize, 10) || 20, 1);
         const { skills, categories } = this.skillCache;
 
-        let list = [ ...skills ];
+        let list = [...skills];
         if (keyword) {
             const value = String(keyword).toLowerCase();
             list = list.filter(
@@ -359,7 +366,9 @@ class SkillsService extends Service {
 
         const total = list.length;
         const offset = (safePageNum - 1) * safePageSize;
-        const pageList = list.slice(offset, offset + safePageSize).map((item) => this.toPublicSkill(item));
+        const pageList = list
+            .slice(offset, offset + safePageSize)
+            .map((item) => this.toPublicSkill(item));
 
         return {
             list: pageList,
@@ -403,8 +412,8 @@ class SkillsService extends Service {
                 skill_id: skill.id,
                 is_delete: 0,
             },
-            attributes: [ 'file_path' ],
-            order: [ [ 'file_path', 'ASC' ] ],
+            attributes: ['file_path'],
+            order: [['file_path', 'ASC']],
             limit: MAX_FILE_LIST_COUNT,
         });
 
@@ -458,7 +467,7 @@ class SkillsService extends Service {
                 skill_id: skill.id,
                 is_delete: 0,
             },
-            order: [ [ 'file_path', 'ASC' ] ],
+            order: [['file_path', 'ASC']],
             limit: MAX_FILE_LIST_COUNT,
         });
 
@@ -504,8 +513,8 @@ class SkillsService extends Service {
                 skill_id: skillId,
                 is_delete: 0,
             },
-            attributes: [ 'file_path' ],
-            order: [ [ 'file_path', 'ASC' ] ],
+            attributes: ['file_path'],
+            order: [['file_path', 'ASC']],
             limit: MAX_FILE_LIST_COUNT,
         });
 
@@ -516,7 +525,9 @@ class SkillsService extends Service {
             };
         }
 
-        const hasSkillMd = rows.some((row) => path.basename(row.file_path).toLowerCase() === 'skill.md');
+        const hasSkillMd = rows.some(
+            (row) => path.basename(row.file_path).toLowerCase() === 'skill.md'
+        );
         if (!hasSkillMd) {
             return {
                 installable: false,
@@ -578,10 +589,7 @@ class SkillsService extends Service {
             this.ctx.throw(400, '缺少文件路径');
         }
 
-        const normalized = path
-            .normalize(value)
-            .replace(/\\/g, '/')
-            .replace(/^\/+/, '');
+        const normalized = path.normalize(value).replace(/\\/g, '/').replace(/^\/+/, '');
 
         if (!normalized || normalized === '.' || normalized.startsWith('..')) {
             this.ctx.throw(400, '非法文件路径');
@@ -625,7 +633,9 @@ class SkillsService extends Service {
     }
 
     buildSkillSlug(sourceMeta, relativeSkillPath, skillName, usedSlugs = new Set()) {
-        const sourceKey = `${sourceMeta.repoHost || 'local'}-${sourceMeta.repoPath || sourceMeta.sourceUrl || ''}-${sourceMeta.ref || 'default'}`;
+        const sourceKey = `${sourceMeta.repoHost || 'local'}-${
+            sourceMeta.repoPath || sourceMeta.sourceUrl || ''
+        }-${sourceMeta.ref || 'default'}`;
         const relativeKey = String(relativeSkillPath || skillName || 'skill').replace(/\\/g, '/');
         const base = this.sanitizeSlugSegment(`${sourceKey}-${relativeKey}`) || 'skill';
         let slug = base;
@@ -637,7 +647,8 @@ class SkillsService extends Service {
         let index = 2;
         while (usedSlugs.has(slug)) {
             const suffix = `-${index}`;
-            const head = slug.length + suffix.length > 255 ? slug.slice(0, 255 - suffix.length) : slug;
+            const head =
+                slug.length + suffix.length > 255 ? slug.slice(0, 255 - suffix.length) : slug;
             slug = `${head}${suffix}`;
             index += 1;
         }
@@ -734,7 +745,9 @@ class SkillsService extends Service {
         const identityText = String(identityKey || '').trim();
         const normalizedIdentity = this.sanitizeSlugSegment(identityText);
         const identityHash = identityText ? this.hashString(identityText).slice(0, 8) : '';
-        const sourceKey = [ normalizedName, normalizedIdentity, identityHash ].filter(Boolean).join('-') || normalizedName;
+        const sourceKey =
+            [normalizedName, normalizedIdentity, identityHash].filter(Boolean).join('-') ||
+            normalizedName;
         return {
             sourceUrl: `upload://${sourceKey}.skill`,
             sourceType: 'upload',
@@ -860,7 +873,9 @@ class SkillsService extends Service {
     }
 
     parseSshGitSource(source) {
-        const match = String(source || '').trim().match(/^git@([^:]+):(.+?)(?:\.git)?$/i);
+        const match = String(source || '')
+            .trim()
+            .match(/^git@([^:]+):(.+?)(?:\.git)?$/i);
         if (!match) return null;
         const host = match[1];
         const repoPath = match[2].replace(/^\/+|\/+$/g, '');
@@ -941,15 +956,19 @@ class SkillsService extends Service {
         let actionTail = [];
 
         const dashIndex = segments.indexOf('-');
-        if (dashIndex > 0 && [ 'tree', 'blob' ].includes(segments[dashIndex + 1])) {
+        if (dashIndex > 0 && ['tree', 'blob'].includes(segments[dashIndex + 1])) {
             repoSegments = segments.slice(0, dashIndex);
             action = segments[dashIndex + 1];
             actionTail = segments.slice(dashIndex + 2);
-        } else if ([ 'tree', 'blob' ].includes(segments[2])) {
+        } else if (['tree', 'blob'].includes(segments[2])) {
             repoSegments = segments.slice(0, 2);
             action = segments[2];
             actionTail = segments.slice(3);
-        } else if (String(url.hostname || '').toLowerCase().includes('github')) {
+        } else if (
+            String(url.hostname || '')
+                .toLowerCase()
+                .includes('github')
+        ) {
             repoSegments = segments.slice(0, 2);
         } else {
             repoSegments = segments;
@@ -959,7 +978,7 @@ class SkillsService extends Service {
             this.ctx.throw(400, `无法识别仓库路径: ${value}`);
         }
 
-        const normalizedRepoSegments = [ ...repoSegments ];
+        const normalizedRepoSegments = [...repoSegments];
         normalizedRepoSegments[normalizedRepoSegments.length - 1] = normalizedRepoSegments[
             normalizedRepoSegments.length - 1
         ].replace(/\.git$/i, '');
@@ -1027,7 +1046,7 @@ class SkillsService extends Service {
         try {
             const { stdout } = await this.runCommand(
                 'git',
-                [ ...authArgs, 'ls-remote', '--heads', cloneUrl ],
+                [...authArgs, 'ls-remote', '--heads', cloneUrl],
                 GIT_COMMAND_TIMEOUT_MS,
                 process.cwd(),
                 env
@@ -1058,24 +1077,39 @@ class SkillsService extends Service {
 
         // 子目录导入优先使用 sparse clone，避免大仓库全量 clone 导致长时间卡顿。
         if (hasSubpath) {
-            const sparseCloneArgs = [ ...authArgs, 'clone', '--depth', '1', '--filter=blob:none', '--sparse' ];
+            const sparseCloneArgs = [
+                ...authArgs,
+                'clone',
+                '--depth',
+                '1',
+                '--filter=blob:none',
+                '--sparse',
+            ];
             if (parsedSource.ref) {
                 sparseCloneArgs.push('--branch', parsedSource.ref);
             }
             sparseCloneArgs.push(parsedSource.cloneUrl, targetDir);
 
             try {
-                await this.runCommand('git', sparseCloneArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
                 await this.runCommand(
                     'git',
-                    [ '-C', targetDir, 'sparse-checkout', 'set', parsedSource.subpath ],
+                    sparseCloneArgs,
+                    GIT_COMMAND_TIMEOUT_MS,
+                    process.cwd(),
+                    env
+                );
+                await this.runCommand(
+                    'git',
+                    ['-C', targetDir, 'sparse-checkout', 'set', parsedSource.subpath],
                     GIT_COMMAND_TIMEOUT_MS,
                     process.cwd(),
                     env
                 );
                 return;
             } catch (error) {
-                this.ctx.logger.warn(`[skills] sparse clone 失败，回退普通 clone: ${error.message}`);
+                this.ctx.logger.warn(
+                    `[skills] sparse clone 失败，回退普通 clone: ${error.message}`
+                );
                 if (fs.existsSync(targetDir)) {
                     try {
                         fs.rmSync(targetDir, { recursive: true, force: true });
@@ -1089,7 +1123,7 @@ class SkillsService extends Service {
             }
         }
 
-        const cloneArgs = [ ...authArgs, 'clone', '--depth', '1' ];
+        const cloneArgs = [...authArgs, 'clone', '--depth', '1'];
         if (parsedSource.ref) {
             cloneArgs.push('--branch', parsedSource.ref);
         }
@@ -1145,12 +1179,17 @@ class SkillsService extends Service {
     }
 
     shouldSkipDirName(dirName) {
-        return dirName === '.git' || dirName === 'node_modules' || dirName === '.idea' || dirName === '.vscode';
+        return (
+            dirName === '.git' ||
+            dirName === 'node_modules' ||
+            dirName === '.idea' ||
+            dirName === '.vscode'
+        );
     }
 
     findSkillsRootDirs(baseDir, maxDepth = SKILLS_ROOT_DISCOVER_DEPTH_LIMIT) {
         const roots = [];
-        const queue = [ { dir: baseDir, depth: 0 } ];
+        const queue = [{ dir: baseDir, depth: 0 }];
         const visited = new Set();
         let visitCount = 0;
 
@@ -1187,7 +1226,7 @@ class SkillsService extends Service {
 
     findSkillDirsWithin(baseDir, maxDepth = DISCOVER_DEPTH_LIMIT) {
         const result = [];
-        const queue = [ { dir: baseDir, depth: 0 } ];
+        const queue = [{ dir: baseDir, depth: 0 }];
         const visited = new Set();
         let visitCount = 0;
 
@@ -1228,13 +1267,13 @@ class SkillsService extends Service {
             if (path.basename(selectedPath) !== 'SKILL.md') {
                 this.ctx.throw(400, '文件来源仅支持 SKILL.md');
             }
-            return [ path.dirname(selectedPath) ];
+            return [path.dirname(selectedPath)];
         }
 
         const selectedDir = path.resolve(selectedPath);
 
         if (this.containsSkillMd(selectedDir)) {
-            return [ selectedDir ];
+            return [selectedDir];
         }
 
         const roots = this.findSkillsRootDirs(selectedDir, SKILLS_ROOT_DISCOVER_DEPTH_LIMIT);
@@ -1261,7 +1300,7 @@ class SkillsService extends Service {
 
     collectSkillFiles(skillDir) {
         const files = [];
-        const queue = [ skillDir ];
+        const queue = [skillDir];
         const visited = new Set();
 
         while (queue.length > 0) {
@@ -1295,7 +1334,9 @@ class SkillsService extends Service {
                     if (size > MAX_STORED_FILE_CONTENT_SIZE) {
                         this.ctx.throw(
                             400,
-                            `文件 ${relativePath} 超过 ${Math.floor(MAX_STORED_FILE_CONTENT_SIZE / 1024 / 1024)}MB 限制，拒绝导入`
+                            `文件 ${relativePath} 超过 ${Math.floor(
+                                MAX_STORED_FILE_CONTENT_SIZE / 1024 / 1024
+                            )}MB 限制，拒绝导入`
                         );
                     }
                     const buffer = fs.readFileSync(fullPath);
@@ -1335,9 +1376,11 @@ class SkillsService extends Service {
         const frontmatter = this.parseFrontmatter(content);
         const body = frontmatter.__body || content;
 
-        const name = String(frontmatter.name || path.basename(skillDir)).trim() || path.basename(skillDir);
+        const name =
+            String(frontmatter.name || path.basename(skillDir)).trim() || path.basename(skillDir);
         const description =
-            String(frontmatter.description || this.extractDescription(body)).trim() || this.extractDescription(content);
+            String(frontmatter.description || this.extractDescription(body)).trim() ||
+            this.extractDescription(content);
         const version = String(frontmatter.version || '').trim();
         const allowedTools = this.parseArrayLike(
             frontmatter['allowed-tools'] || frontmatter.allowedTools || frontmatter.allowed_tools
@@ -1369,12 +1412,18 @@ class SkillsService extends Service {
     }
 
     filterSkillByName(skills, skillName) {
-        const expected = String(skillName || '').trim().toLowerCase();
+        const expected = String(skillName || '')
+            .trim()
+            .toLowerCase();
         if (!expected) return skills;
 
         return skills.filter((item) => {
-            const name = String(item.name || '').trim().toLowerCase();
-            const folderName = String(path.basename(item.sourcePath || '')).trim().toLowerCase();
+            const name = String(item.name || '')
+                .trim()
+                .toLowerCase();
+            const folderName = String(path.basename(item.sourcePath || ''))
+                .trim()
+                .toLowerCase();
             return name === expected || folderName === expected;
         });
     }
@@ -1410,7 +1459,10 @@ class SkillsService extends Service {
         const names = createUniqueSkillNames(skillNames);
         if (names.length === 0) return;
 
-        if (names.length !== skillNames.map((item) => String(item || '').trim()).filter(Boolean).length) {
+        if (
+            names.length !==
+            skillNames.map((item) => String(item || '').trim()).filter(Boolean).length
+        ) {
             this.ctx.throw(400, '导入失败：技能名称不能重复');
         }
 
@@ -1437,7 +1489,7 @@ class SkillsService extends Service {
 
         const existing = await SkillsItem.findOne({
             where,
-            attributes: [ 'id', 'name' ],
+            attributes: ['id', 'name'],
             transaction: options.transaction,
         });
 
@@ -1493,7 +1545,11 @@ class SkillsService extends Service {
                 { excludeSourceId: sourceRecord.id }
             );
 
-            const importedSkills = await this.persistSkillsForSource(sourceRecord.id, parsedSource, skillRecords);
+            const importedSkills = await this.persistSkillsForSource(
+                sourceRecord.id,
+                parsedSource,
+                skillRecords
+            );
 
             await sourceRecord.update({
                 sync_status: 'idle',
@@ -1589,7 +1645,13 @@ class SkillsService extends Service {
             const parsedSource = this.buildUploadSourceMeta(fileName, skillName);
 
             const skillRecords = discoveredSkillDirs.map((skillDir) => {
-                const record = this.prepareSkillRecord(skillDir, tempDir, parsedSource, category, tags);
+                const record = this.prepareSkillRecord(
+                    skillDir,
+                    tempDir,
+                    parsedSource,
+                    category,
+                    tags
+                );
                 if (skillName) {
                     record.name = skillName;
                 }
@@ -1654,7 +1716,9 @@ class SkillsService extends Service {
                 try {
                     fs.rmSync(tempDir, { recursive: true, force: true });
                 } catch (error) {
-                    this.ctx.logger.warn(`[skills] 清理上传解压目录失败: ${tempDir}, ${error.message}`);
+                    this.ctx.logger.warn(
+                        `[skills] 清理上传解压目录失败: ${tempDir}, ${error.message}`
+                    );
                 }
             }
         }
@@ -1679,7 +1743,13 @@ class SkillsService extends Service {
             }
 
             return discoveredSkillDirs.map((skillDir) => {
-                const record = this.prepareSkillRecord(skillDir, tempDir, parsedSource, category, tags);
+                const record = this.prepareSkillRecord(
+                    skillDir,
+                    tempDir,
+                    parsedSource,
+                    category,
+                    tags
+                );
                 if (skillName) {
                     record.name = skillName;
                 }
@@ -1690,14 +1760,18 @@ class SkillsService extends Service {
                 try {
                     fs.rmSync(tempDir, { recursive: true, force: true });
                 } catch (error) {
-                    this.ctx.logger.warn(`[skills] 清理上传解压目录失败: ${tempDir}, ${error.message}`);
+                    this.ctx.logger.warn(
+                        `[skills] 清理上传解压目录失败: ${tempDir}, ${error.message}`
+                    );
                 }
             }
         }
     }
 
     validateVersion(value) {
-        return String(value || '').trim().slice(0, 128);
+        return String(value || '')
+            .trim()
+            .slice(0, 128);
     }
 
     async updateSkill(params = {}, file) {
@@ -1740,7 +1814,7 @@ class SkillsService extends Service {
                 this.ctx.throw(404, '技能不存在');
             }
 
-            await this.assertSkillNamesUnique([ name ], {
+            await this.assertSkillNamesUnique([name], {
                 excludeSkillId: itemRow.id,
                 transaction,
             });
@@ -1894,8 +1968,11 @@ class SkillsService extends Service {
                     source_id: sourceId,
                     is_delete: 0,
                 },
-                attributes: [ 'id', 'slug', 'stars' ],
-                order: [ [ 'stars', 'DESC' ], [ 'id', 'DESC' ] ],
+                attributes: ['id', 'slug', 'stars'],
+                order: [
+                    ['stars', 'DESC'],
+                    ['id', 'DESC'],
+                ],
                 transaction,
             });
 
@@ -1904,13 +1981,18 @@ class SkillsService extends Service {
                 typeof repoStars === 'number' && Number.isFinite(repoStars) && repoStars >= 0
                     ? repoStars
                     : fallbackStars;
-            const oldRowMap = new Map(oldRows.map((item) => [ item.slug, item ]));
+            const oldRowMap = new Map(oldRows.map((item) => [item.slug, item]));
 
             const usedSlugs = new Set();
             const createdSkills = [];
 
             for (const record of skillRecords) {
-                const slug = this.buildSkillSlug(sourceMeta, record.sourcePath, record.name, usedSlugs);
+                const slug = this.buildSkillSlug(
+                    sourceMeta,
+                    record.sourcePath,
+                    record.name,
+                    usedSlugs
+                );
                 const payload = {
                     source_id: sourceId,
                     slug,
@@ -2094,7 +2176,9 @@ class SkillsService extends Service {
             const html = await response.text();
             return this.extractStarsFromGitHubHtml(html);
         } catch (error) {
-            this.ctx.logger.warn(`[skills] HTML兜底获取 stars 异常: ${repoFullName}, ${error.message}`);
+            this.ctx.logger.warn(
+                `[skills] HTML兜底获取 stars 异常: ${repoFullName}, ${error.message}`
+            );
             return null;
         } finally {
             clearTimeout(timer);
@@ -2140,7 +2224,9 @@ class SkillsService extends Service {
             if (!Number.isFinite(stars) || stars < 0) return null;
             return stars;
         } catch (error) {
-            this.ctx.logger.warn(`[skills] 获取 GitHub stars 异常: ${repoFullName}, ${error.message}`);
+            this.ctx.logger.warn(
+                `[skills] 获取 GitHub stars 异常: ${repoFullName}, ${error.message}`
+            );
             return null;
         } finally {
             clearTimeout(timer);
@@ -2215,11 +2301,16 @@ class SkillsService extends Service {
             return env;
         }
 
-        [ 'http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY' ].forEach(
-            (key) => {
-                delete env[key];
-            }
-        );
+        [
+            'http_proxy',
+            'https_proxy',
+            'HTTP_PROXY',
+            'HTTPS_PROXY',
+            'all_proxy',
+            'ALL_PROXY',
+        ].forEach((key) => {
+            delete env[key];
+        });
 
         const noProxyValue = this.appendNoProxyHost(env.NO_PROXY || env.no_proxy || '', host);
         env.NO_PROXY = noProxyValue;
@@ -2235,7 +2326,13 @@ class SkillsService extends Service {
     resolveGitlabHostWhitelist() {
         const list = this.getSkillsConfig().gitlabHostWhitelist;
         if (!Array.isArray(list)) return [];
-        return list.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean);
+        return list
+            .map((item) =>
+                String(item || '')
+                    .trim()
+                    .toLowerCase()
+            )
+            .filter(Boolean);
     }
 
     getGitAuthPrefixArgs(remoteUrl = '') {
@@ -2251,10 +2348,7 @@ class SkillsService extends Service {
         }
 
         const basicToken = Buffer.from(`oauth2:${token}`).toString('base64');
-        return [
-            '-c',
-            `http.https://${host}/.extraHeader=Authorization: Basic ${basicToken}`,
-        ];
+        return ['-c', `http.https://${host}/.extraHeader=Authorization: Basic ${basicToken}`];
     }
 
     runCommand(

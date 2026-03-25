@@ -19,10 +19,13 @@ test('resolveServer falls back to bootstrap-written config when option and env a
         'utf8'
     );
 
-    const server = cliLib.resolveServer({}, {
-        env: {},
-        homedir: () => tempHome,
-    });
+    const server = cliLib.resolveServer(
+        {},
+        {
+            env: {},
+            homedir: () => tempHome,
+        }
+    );
 
     assert.equal(server, 'https://doraemon.example.com/');
 });
@@ -32,7 +35,10 @@ test('buildInstallMetaUrl queries install-meta with installKey instead of exposi
 
     const metaUrl = cliLib.buildInstallMetaUrl('https://doraemon.example.com', 'skill-creator');
 
-    assert.equal(metaUrl.toString(), 'https://doraemon.example.com/api/skills/install-meta?installKey=skill-creator');
+    assert.equal(
+        metaUrl.toString(),
+        'https://doraemon.example.com/api/skills/install-meta?installKey=skill-creator'
+    );
     assert.equal(metaUrl.searchParams.get('installKey'), 'skill-creator');
     assert.equal(metaUrl.searchParams.get('slug'), null);
 });

@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomOneLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import {
     ArrowLeftOutlined,
-    DislikeOutlined,
     LikeOutlined,
     QuestionCircleOutlined,
     StarOutlined,
 } from '@ant-design/icons';
-import SyntaxHighlighter from 'react-syntax-highlighter';
-import { atomOneLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { Button, Empty, Spin, Tree, Typography } from 'antd';
 import type { DataNode } from 'antd/lib/tree';
 
@@ -20,16 +19,20 @@ import contributorTwo from '@/asset/images/skills-detail-figma/contributor-2.png
 import copyDarkIcon from '@/asset/images/skills-detail-figma/copy-dark.svg';
 import downloadIcon from '@/asset/images/skills-detail-figma/download.svg';
 import emptyRelatedIcon from '@/asset/images/skills-detail-figma/empty-related.svg';
+import externalLinkXsIcon from '@/asset/images/skills-detail-figma/external-link-xs.svg';
 import fileDocIcon from '@/asset/images/skills-detail-figma/file-doc.svg';
 import folderOpenBlueIcon from '@/asset/images/skills-detail-figma/folder-open-blue.svg';
 import heroSkillIcon from '@/asset/images/skills-detail-figma/hero-skill.svg';
 import humanIcon from '@/asset/images/skills-detail-figma/human.svg';
+import relatedSkillDocsIcon from '@/asset/images/skills-detail-figma/related-skill-docs.svg';
+import relatedSkillSecurityIcon from '@/asset/images/skills-detail-figma/related-skill-security.svg';
+import relatedSkillSqlIcon from '@/asset/images/skills-detail-figma/related-skill-sql.svg';
 import MarkdownRenderer from '@/components/markdownRenderer';
 import { copyToClipboard } from '@/utils/copyUtils';
 import { SkillDetail, SkillFileContent, SkillInstallMeta, SkillItem } from '../types';
 import './style.scss';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
 interface SkillTreeNode extends DataNode {
     children?: SkillTreeNode[];
@@ -53,15 +56,10 @@ interface FigmaIconProps {
 
 type InstallPanelKey = 'agent' | 'human' | null;
 
-const relatedSkillIconUrls = [
-    'http://localhost:3845/assets/7abff42ee9b5b6b17c3f0b4350bc40d2918871d6.svg',
-    'http://localhost:3845/assets/b2b47e5541ef2b4c45ad4fb4cd42a7290d758d19.svg',
-    'http://localhost:3845/assets/46261c14a19d03261c20a3df79aa4c0ed3b263ab.svg',
-];
+const relatedSkillIconUrls = [relatedSkillSqlIcon, relatedSkillSecurityIcon, relatedSkillDocsIcon];
 
 const relatedSkillShellClasses = ['is-blue', 'is-green', 'is-orange'];
-const browseMarketArrowIcon =
-    'http://localhost:3845/assets/d1b40a8f52f64c4290b2006b356fc8b61c18d6fc.svg';
+const browseMarketArrowIcon = externalLinkXsIcon;
 
 const FigmaIcon: React.FC<FigmaIconProps> = ({ src, className = '', alt = '' }) => (
     <img
@@ -268,10 +266,6 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
         }
         return formatDownloadCommand(`${currentOrigin}${downloadPath}`, archiveFileName);
     }, [archiveFileName, currentOrigin, downloadPath, installMeta?.downloadUrl]);
-    const frontmatterInfo = useMemo(
-        () => parseMarkdownFrontmatter(detail?.skillMd || ''),
-        [detail?.skillMd]
-    );
     const heroMetaItems = useMemo(
         () => [
             {

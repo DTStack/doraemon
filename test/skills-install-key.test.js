@@ -20,10 +20,22 @@ test('createInstallKeyMap derives user-facing install keys and keeps them unique
         },
     ]);
 
-    assert.equal(result.bySlug.get('upload-skill-creator-default-skill-creator').installKey, 'skill-creator');
-    assert.equal(result.bySlug.get('upload-skill-creator-default-skill-creator-2').installKey, 'skill-creator-alt');
-    assert.equal(result.byInstallKey.get('skill-creator').slug, 'upload-skill-creator-default-skill-creator');
-    assert.equal(result.byInstallKey.get('skill-creator-alt').slug, 'upload-skill-creator-default-skill-creator-2');
+    assert.equal(
+        result.bySlug.get('upload-skill-creator-default-skill-creator').installKey,
+        'skill-creator'
+    );
+    assert.equal(
+        result.bySlug.get('upload-skill-creator-default-skill-creator-2').installKey,
+        'skill-creator-alt'
+    );
+    assert.equal(
+        result.byInstallKey.get('skill-creator').slug,
+        'upload-skill-creator-default-skill-creator'
+    );
+    assert.equal(
+        result.byInstallKey.get('skill-creator-alt').slug,
+        'upload-skill-creator-default-skill-creator-2'
+    );
 });
 
 test('resolveSkillIdentifier accepts installKey without exposing internal slug', () => {
@@ -70,7 +82,8 @@ test('getInstallMeta returns installKey and installDirName aligned to user-facin
     service.ensureSkillCache = async () => {};
     service.getSkillPackageInstallability = async () => ({ installable: true, reason: '' });
     service.getSkillArchive = async () => ({ content: Buffer.from('zip-content') });
-    service.buildSkillDownloadUrl = (slug) => `https://doraemon.test/api/skills/download?slug=${slug}`;
+    service.buildSkillDownloadUrl = (slug) =>
+        `https://doraemon.test/api/skills/download?slug=${slug}`;
 
     const skill = {
         id: 1,
@@ -87,7 +100,10 @@ test('getInstallMeta returns installKey and installDirName aligned to user-facin
     assert.equal(meta.slug, 'upload-skill-creator-default-skill-creator');
     assert.equal(meta.installKey, 'skill-creator');
     assert.equal(meta.installDirName, 'skill-creator');
-    assert.equal(meta.downloadUrl, 'https://doraemon.test/api/skills/download?slug=upload-skill-creator-default-skill-creator');
+    assert.equal(
+        meta.downloadUrl,
+        'https://doraemon.test/api/skills/download?slug=upload-skill-creator-default-skill-creator'
+    );
 });
 
 test('buildUploadSourceMeta keeps same zip with different custom names isolated', () => {
@@ -126,7 +142,7 @@ test('assertSkillNamesUnique rejects duplicated names in one import batch', asyn
     };
 
     await assert.rejects(
-        () => service.assertSkillNamesUnique([ 'skill-a', 'skill-a' ]),
+        () => service.assertSkillNamesUnique(['skill-a', 'skill-a']),
         (error) => error.status === 400 && error.message === '导入失败：技能名称不能重复'
     );
 });
@@ -155,7 +171,8 @@ test('assertSkillNamesUnique rejects existing skill name', async () => {
     };
 
     await assert.rejects(
-        () => service.assertSkillNamesUnique([ 'skill-creator' ]),
-        (error) => error.status === 400 && error.message === '技能名称“skill-creator”已存在，请更换名称'
+        () => service.assertSkillNamesUnique(['skill-creator']),
+        (error) =>
+            error.status === 400 && error.message === '技能名称“skill-creator”已存在，请更换名称'
     );
 });

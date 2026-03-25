@@ -1,5 +1,6 @@
-import BasicLayout from '@/layouts/basicLayout';
 import Loadable from 'react-loadable';
+
+import BasicLayout from '@/layouts/basicLayout';
 // 文章订阅管理
 import ArticleSubscriptionList from '@/pages/articleSubscription';
 // 配置中心
@@ -19,10 +20,10 @@ import McpServerInspector from '@/pages/mcpServer/inspector';
 import McpServerManagement from '@/pages/mcpServer/management';
 import McpServerMarket from '@/pages/mcpServer/mcpMarket';
 import McpServerRegistryCenter from '@/pages/mcpServer/registryCenter';
-import SkillDetail from '@/pages/skills/detail';
-import SkillsMarket from '@/pages/skills';
 // 代理服务
 import ProxyServer from '@/pages/proxyServer';
+import SkillsMarket from '@/pages/skills';
+import SkillDetail from '@/pages/skills/detail';
 // hosts列表
 import SwitchHostsList from '@/pages/switchHosts';
 import TagsManagement from '@/pages/tagsManagement';

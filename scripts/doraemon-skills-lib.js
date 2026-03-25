@@ -10,7 +10,9 @@ function fail(message) {
 
 function normalizeServerUrl(server) {
     if (!server) {
-        fail('Server is required. Provide --server <url>, set DORAEMON_SKILLS_SERVER, or configure ~/.doraemon/skills.json.');
+        fail(
+            'Server is required. Provide --server <url>, set DORAEMON_SKILLS_SERVER, or configure ~/.doraemon/skills.json.'
+        );
     }
     try {
         const parsed = new URL(server);
@@ -69,7 +71,8 @@ function readBootstrapConfigServer({ homedir = os.homedir } = {}) {
 }
 
 function resolveServer(options = {}, { env = process.env, homedir = os.homedir } = {}) {
-    const value = options.server || env.DORAEMON_SKILLS_SERVER || readBootstrapConfigServer({ homedir });
+    const value =
+        options.server || env.DORAEMON_SKILLS_SERVER || readBootstrapConfigServer({ homedir });
     return normalizeServerUrl(value);
 }
 
@@ -116,9 +119,10 @@ async function requestInstallMeta(server, installKey) {
 
     const payload = await readJsonResponse(response);
     if (!response.ok) {
-        const message = payload && (payload.message || payload.msg)
-            ? payload.message || payload.msg
-            : `Request failed with status ${response.status}.`;
+        const message =
+            payload && (payload.message || payload.msg)
+                ? payload.message || payload.msg
+                : `Request failed with status ${response.status}.`;
         fail(message);
     }
 
