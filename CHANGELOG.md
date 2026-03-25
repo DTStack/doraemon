@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.7.2...v1.8.0) (2026-03-25)
+
+
+### Features
+
+* add MCP ([46b6b99](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/46b6b99228c5fe6d5de290193da885ceae7063fe))
+
+
+### Bug Fixes
+
+* [#81](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/81) sql file sync with the db model ([1f58698](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/1f586982a6929c78d0bc1fb4a96b06f2071e3f6a))
+
 ### [1.7.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.7.1...v1.7.2) (2024-12-04)
 
 
