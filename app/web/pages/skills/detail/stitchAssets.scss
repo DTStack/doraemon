@@ -1,0 +1,63 @@
+@font-face {
+    font-family: SkillDetailMaterialSymbols;
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src:
+        url("../../../asset/font/material-symbols/material-symbols-outlined-subset.woff2")
+        format("woff2");
+}
+
+@font-face {
+    font-family: SkillDetailInter;
+    font-style: normal;
+    font-weight: 400 600;
+    font-display: swap;
+    src: url("../../../asset/font/material-symbols/inter-latin.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: SkillDetailManrope;
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url("../../../asset/font/material-symbols/manrope-latin.woff2") format("woff2");
+}
+
+.page-skill-detail {
+    --skill-detail-font-body:
+        "PingFang SC",
+        "Hiragino Sans GB",
+        "Microsoft YaHei",
+        -apple-system,
+        blinkmacsystemfont,
+        "Segoe UI",
+        sans-serif;
+    --skill-detail-font-display:
+        "PingFang SC",
+        "Hiragino Sans GB",
+        "Microsoft YaHei",
+        -apple-system,
+        blinkmacsystemfont,
+        "Segoe UI",
+        sans-serif;
+    --skill-detail-font-icon: "SkillDetailMaterialSymbols";
+}
+
+.skill-detail-material-symbol {
+    font-family: var(--skill-detail-font-icon);
+    font-style: normal;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "liga";
+}

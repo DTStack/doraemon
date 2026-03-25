@@ -337,4 +337,68 @@ export default {
         method: 'post',
         url: '/api/mcp-servers/sync-info',
     },
+
+    /**
+     * Skills 市场
+     */
+    // 获取 Skills 列表
+    getSkillList: {
+        method: 'get',
+        url: '/api/skills/list',
+    },
+    // 获取 Skill 详情
+    getSkillDetail: {
+        method: 'get',
+        url: '/api/skills/detail',
+    },
+    // 获取相关 Skills
+    getRelatedSkills: {
+        method: 'get',
+        url: '/api/skills/related',
+    },
+    // 获取 Skill 文件内容
+    getSkillFileContent: {
+        method: 'get',
+        url: '/api/skills/file-content',
+    },
+    // 获取 Skill 安装元信息
+    getSkillInstallMeta: {
+        method: 'get',
+        url: '/api/skills/install-meta',
+    },
+    // 下载 Skill 目录压缩包
+    downloadSkillArchive: {
+        method: 'get',
+        url: '/api/skills/download',
+    },
+    // 上传 .zip 文件导入
+    importSkillFile: {
+        method: 'postForm',
+        url: '/api/skills/import-file',
+    },
+    // 编辑 Skill
+    updateSkill: {
+        method: 'postForm',
+        url: '/api/skills/update',
+    },
+    // 删除 Skill
+    deleteSkill: {
+        method: 'post',
+        url: '/api/skills/delete',
+    },
+    // 点赞
+    likeSkill: {
+        method: 'post',
+        url: '/api/skills/like',
+    },
+    // 取消点赞
+    unlikeSkill: {
+        method: 'post',
+        url: '/api/skills/unlike',
+    },
+    // 获取点赞状态
+    getSkillLikeStatus: {
+        method: 'get',
+        url: '/api/skills/like-status',
+    },
 };

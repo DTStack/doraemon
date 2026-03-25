@@ -76,7 +76,8 @@ class Http {
             .then(authAfterRes)
             .catch((err: any) => {
                 console.error('错误信息：', JSON.stringify(err));
-                this.handleExcept(err); // 开发环境可讲此方法注视
+                this.handleExcept(err);
+                throw err; // 传播错误，让调用方能 catch 到
             });
     }
     handleExcept(e: any) {

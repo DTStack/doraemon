@@ -1,6 +1,7 @@
 .layout-basic {
     height: 100vh;
     padding-top: 64px;
+    box-sizing: border-box;
     .logo_img {
         width: 30px;
         height: 30px;
@@ -27,5 +28,20 @@
         padding: 20px;
         width: 100%;
         overflow: auto;
+    }
+    &.is-skill-detail-layout {
+        overflow: hidden;
+        .main-content {
+            flex: 1;
+            height: 0;
+            min-height: 0;
+            background: #F2F7FA;
+            overflow: hidden;
+        }
+        .context_container {
+            height: 100%;
+            padding: 0;
+            overflow: hidden;
+        }
     }
 }

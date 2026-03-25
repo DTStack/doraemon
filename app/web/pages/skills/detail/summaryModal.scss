@@ -1,0 +1,339 @@
+.skill-summary-modal {
+    padding: 24px;
+    background: transparent;
+    &.skill-summary-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 420px;
+    }
+    .skill-summary-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(320px, 1fr);
+        gap: 22px;
+    }
+    .summary-hero-card,
+    .summary-install-card {
+        border: 1px solid #E4ECF5;
+        border-radius: 22px;
+        background: #FFF;
+        box-shadow: 0 18px 36px rgba(31, 45, 61, 0.08);
+    }
+    .summary-hero-card {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px;
+        background: linear-gradient(180deg, #FFF 0%, #F7FAFD 100%);
+    }
+    .summary-hero-main,
+    .summary-hero-section {
+        border: 1px solid #E7EEF6;
+        border-radius: 18px;
+        background: linear-gradient(145deg, #FFF 0%, #F5F9FF 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+    .summary-hero-main {
+        padding: 24px;
+    }
+    .summary-hero-section {
+        padding: 16px 18px 18px;
+    }
+    .summary-tags-section {
+        background: linear-gradient(180deg, #FFF 0%, #F9FBFE 100%);
+    }
+    .summary-section-label {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 12px;
+        color: #6E849C;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .summary-kicker-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+    .summary-install-key {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid #D6E3F1;
+        background: #F5F9FF;
+        color: #42607B;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    .summary-title-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+    }
+    .summary-title-group {
+        flex: 1;
+        min-width: 0;
+        .ant-typography {
+            margin-bottom: 0;
+        }
+        h2.ant-typography {
+            margin-bottom: 12px;
+            color: #1F2D3D;
+            font-size: 30px;
+            line-height: 1.2;
+        }
+    }
+    .summary-description {
+        max-width: 700px;
+        margin-bottom: 0;
+        color: #5C7086;
+        font-size: 15px;
+        line-height: 1.75;
+    }
+    .summary-action-panel {
+        flex: 0 0 214px;
+        padding: 14px;
+        border: 1px solid #DEE8F3;
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, #F3F8FE 100%);
+    }
+    .summary-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        .ant-btn {
+            width: 100%;
+            height: 36px;
+            border-radius: 10px;
+        }
+    }
+    .summary-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+    .summary-meta-card {
+        padding: 16px 18px;
+        border-radius: 14px;
+        border: 1px solid #E7EEF6;
+        background: linear-gradient(180deg, #FFF 0%, #F7FAFD 100%);
+        min-width: 0;
+        &.is-accent {
+            background: linear-gradient(135deg, #EAF3FF 0%, #F7FAFF 100%);
+            border-color: #D7E6FA;
+        }
+        &.is-wide {
+            grid-column: span 2;
+        }
+    }
+    .summary-meta-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #8A9AAE;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .summary-meta-value {
+        color: #23384D;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.6;
+        word-break: break-word;
+        .anticon {
+            margin-right: 6px;
+            color: #D9A441;
+        }
+    }
+    .summary-tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        .ant-tag {
+            margin-right: 0;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border-color: #DBE6F2;
+            color: #48627B;
+            background: #F7FAFD;
+        }
+    }
+    .summary-install-card {
+        padding: 24px;
+        .ant-tabs-nav {
+            margin-bottom: 16px;
+        }
+        .ant-tabs-tab {
+            padding: 10px 0;
+            font-weight: 600;
+        }
+        .ant-tabs-ink-bar {
+            height: 3px;
+            border-radius: 999px;
+            background: #2F7BFF;
+        }
+    }
+    .summary-install-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+    .summary-install-title {
+        display: block;
+        margin-bottom: 8px;
+        color: #1F2D3D;
+        font-size: 20px;
+        font-weight: 700;
+    }
+    .summary-install-caption {
+        margin-bottom: 0;
+        color: #60748A;
+        line-height: 1.7;
+    }
+    .summary-status-tag {
+        display: inline-flex;
+        align-items: center;
+        height: 32px;
+        padding: 0 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        &.is-ready {
+            color: #1F5FA6;
+            background: #E8F2FF;
+            border: 1px solid #CFE0F7;
+        }
+        &.is-fallback {
+            color: #9A6414;
+            background: #FFF5E8;
+            border: 1px solid #F4DFC0;
+        }
+    }
+    .summary-install-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .summary-command-card {
+        padding: 16px;
+        border: 1px solid #E6EDF5;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #F8FBFE 0%, #F3F8FD 100%);
+    }
+    .summary-command-header {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 10px;
+        .ant-typography-secondary {
+            color: #62778E;
+        }
+    }
+    .summary-command-title {
+        color: #29415A;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .summary-command-block {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        min-height: 58px;
+        padding: 8px 8px 8px 14px;
+        border-radius: 13px;
+        border: 1px solid #E2EAF3;
+        background: rgba(255, 255, 255, 0.98);
+        code {
+            flex: 1;
+            color: #1F2D3D;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 13px;
+            line-height: 1.65;
+        }
+    }
+    .summary-command-copy-btn {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        min-width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 1px solid #D7E1EC;
+        border-radius: 9px;
+        background: linear-gradient(180deg, #FFF 0%, #F6FAFE 100%);
+        color: #2E4A66;
+        box-shadow: 0 4px 10px rgba(31, 45, 61, 0.06);
+        &:hover,
+        &:focus {
+            color: #2F7BFF;
+            border-color: #2F7BFF;
+            background: #F4F9FF;
+        }
+        &[disabled] {
+            border-color: #E5E7EB;
+            background: #F8FAFC;
+        }
+    }
+
+    @media (max-width: 1100px) {
+        .skill-summary-shell {
+            grid-template-columns: 1fr;
+        }
+        .summary-title-row {
+            flex-direction: column;
+        }
+        .summary-action-panel {
+            flex-basis: auto;
+            width: 100%;
+        }
+        .summary-actions {
+            flex-flow: row wrap;
+            .ant-btn {
+                width: auto;
+                min-width: 156px;
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        padding: 16px;
+        .summary-hero-card,
+        .summary-install-card {
+            padding: 18px;
+        }
+        .summary-meta-grid {
+            grid-template-columns: 1fr;
+        }
+        .summary-meta-card.is-wide {
+            grid-column: span 1;
+        }
+        .summary-actions {
+            flex-direction: column;
+            align-items: stretch;
+            .ant-btn {
+                width: 100%;
+            }
+        }
+        .summary-install-header {
+            flex-direction: column;
+        }
+        .summary-command-block {
+            grid-template-columns: 1fr;
+        }
+        .summary-command-copy-btn {
+            justify-self: end;
+        }
+    }
+}

@@ -146,6 +146,22 @@ module.exports = (app) => {
     app.post('/api/mcp-servers/health/:serverId', app.controller.mcp.checkMCPServerHealth);
     app.post('/api/mcp-servers/health/all', app.controller.mcp.checkAllMCPServersHealth);
 
+    /**
+     * Skills 市场
+     */
+    app.get('/api/skills/list', app.controller.skills.getSkillList);
+    app.get('/api/skills/detail', app.controller.skills.getSkillDetail);
+    app.get('/api/skills/related', app.controller.skills.getRelatedSkills);
+    app.get('/api/skills/file-content', app.controller.skills.getSkillFileContent);
+    app.get('/api/skills/install-meta', app.controller.skills.getSkillInstallMeta);
+    app.get('/api/skills/download', app.controller.skills.downloadSkillArchive);
+    app.post('/api/skills/import-file', app.controller.skills.importSkillFile);
+    app.post('/api/skills/update', app.controller.skills.updateSkill);
+    app.post('/api/skills/delete', app.controller.skills.deleteSkill);
+    app.post('/api/skills/like', app.controller.skillLike.like);
+    app.post('/api/skills/unlike', app.controller.skillLike.unlike);
+    app.get('/api/skills/like-status', app.controller.skillLike.getLikeStatus);
+
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
     // 暂时close Terminal相关功能
     // io.of('/').route('loginServer',  io.controller.home.loginServer)

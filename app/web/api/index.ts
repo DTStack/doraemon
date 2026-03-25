@@ -9,8 +9,13 @@ function mapUrlObjToFuncObj(urlObj: any) {
         const item = urlObj[key];
         URL[key] = item.url;
         API[key] = async function (params: any) {
+            const rawMethod = String(item.method || 'get');
+            const methodName =
+                typeof (http as any)[rawMethod] === 'function'
+                    ? rawMethod
+                    : rawMethod.toLowerCase();
             // eslint-disable-next-line no-return-await
-            return await http[item.method.toLowerCase()](item.url, params);
+            return await (http as any)[methodName](item.url, params);
         };
     });
     return { API, URL };

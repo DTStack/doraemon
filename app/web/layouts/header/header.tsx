@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
     AppstoreOutlined,
+    BookOutlined,
     CloudOutlined,
     CloudServerOutlined,
     DesktopOutlined,
@@ -48,6 +49,12 @@ const navMenuList: any = [
             'mcp-server-detail',
             'mcp-server-inspector',
         ],
+    },
+    {
+        name: 'Skills',
+        path: '/page/skills',
+        icon: <BookOutlined />,
+        routers: ['skills'],
     },
     {
         name: '主机管理',
