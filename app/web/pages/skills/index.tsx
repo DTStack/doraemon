@@ -75,12 +75,7 @@ const EditIcon = () => (
             strokeLinecap="round"
             strokeLinejoin="round"
         />
-        <path
-            d="M7.583 11.667h3.5"
-            stroke="currentColor"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-        />
+        <path d="M7.583 11.667h3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
 );
 
@@ -473,9 +468,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                         />
                     </Form.Item>
                 </Form>
-                <Text type="secondary">
-                    提示：.zip 包内部应包含 `技能目录/SKILL.md`
-                </Text>
+                <Text type="secondary">提示：.zip 包内部应包含 `技能目录/SKILL.md`</Text>
             </Modal>
 
             <Modal

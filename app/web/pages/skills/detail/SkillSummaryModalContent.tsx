@@ -234,16 +234,16 @@ const SkillSummaryModalContent: React.FC<SkillSummaryModalContentProps> = ({ slu
                             <div className="summary-action-panel">
                                 <Text className="summary-section-label">快捷操作</Text>
                                 <div className="summary-actions">
-                                    <Button type="primary" onClick={() => history.push(deepLinkPath)}>
+                                    <Button
+                                        type="primary"
+                                        onClick={() => history.push(deepLinkPath)}
+                                    >
                                         打开独立详情页
                                     </Button>
                                     <Button
                                         icon={<ShareAltOutlined />}
                                         onClick={() =>
-                                            copyToClipboard(
-                                                deepLinkUrl,
-                                                '详情页深链已复制到剪贴板'
-                                            )
+                                            copyToClipboard(deepLinkUrl, '详情页深链已复制到剪贴板')
                                         }
                                     >
                                         复制深链

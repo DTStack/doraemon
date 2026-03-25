@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeftOutlined, DislikeOutlined, LikeOutlined, QuestionCircleOutlined, StarOutlined } from '@ant-design/icons';
+import {
+    ArrowLeftOutlined,
+    DislikeOutlined,
+    LikeOutlined,
+    QuestionCircleOutlined,
+    StarOutlined,
+} from '@ant-design/icons';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { Button, Empty, Spin, Tree, Typography } from 'antd';
@@ -54,7 +60,8 @@ const relatedSkillIconUrls = [
 ];
 
 const relatedSkillShellClasses = ['is-blue', 'is-green', 'is-orange'];
-const browseMarketArrowIcon = 'http://localhost:3845/assets/d1b40a8f52f64c4290b2006b356fc8b61c18d6fc.svg';
+const browseMarketArrowIcon =
+    'http://localhost:3845/assets/d1b40a8f52f64c4290b2006b356fc8b61c18d6fc.svg';
 
 const FigmaIcon: React.FC<FigmaIconProps> = ({ src, className = '', alt = '' }) => (
     <img
@@ -647,7 +654,8 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                             className="sidebar-help-btn"
                             onClick={() =>
                                 window.open(
-                                    sourceUrl || 'https://github.com/JackWang032/doraemon-proxy-tool',
+                                    sourceUrl ||
+                                        'https://github.com/JackWang032/doraemon-proxy-tool',
                                     '_blank'
                                 )
                             }
@@ -667,7 +675,9 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                                 </div>
                                 <div className="hero-copy">
                                     <Title level={2}>{detail.name}</Title>
-                                    <Paragraph className="hero-description">{heroSummary}</Paragraph>
+                                    <Paragraph className="hero-description">
+                                        {heroSummary}
+                                    </Paragraph>
                                 </div>
                             </div>
 
@@ -693,7 +703,6 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                                 </div>
                             ))}
                         </div>
-
                     </section>
 
                     <section className="document-panel">
@@ -715,9 +724,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                         </div>
 
                         <div className="document-scroll-area">
-                            <div className="document-content-shell">
-                                {renderFileViewer()}
-                            </div>
+                            <div className="document-content-shell">{renderFileViewer()}</div>
                         </div>
                     </section>
                 </main>
@@ -757,9 +764,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                                     <div>
                                         <div className="install-option-title">智能体</div>
                                         <div className="install-option-description">
-                                            {isInstallable
-                                                ? '自动化安装'
-                                                : '下载后安装'}
+                                            {isInstallable ? '自动化安装' : '下载后安装'}
                                         </div>
                                     </div>
                                 </div>
@@ -786,7 +791,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                                         agentTerminalCommand,
                                         isInstallable
                                             ? 'Agent 安装命令已复制到剪贴板'
-                                            : '下载命令已复制到剪贴板',
+                                            : '下载命令已复制到剪贴板'
                                     )}
                                 </div>
                             </div>
@@ -819,9 +824,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                                     </span>
                                     <div>
                                         <div className="install-option-title">手动安装</div>
-                                        <div className="install-option-description">
-                                            手动配置
-                                        </div>
+                                        <div className="install-option-description">手动配置</div>
                                     </div>
                                 </div>
                                 <FigmaIcon
@@ -844,7 +847,9 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                             >
                                 <div className="install-option-body-inner">
                                     <div className="human-command-card">
-                                        <div className="human-command-title">先安装 Doraemon CLI</div>
+                                        <div className="human-command-title">
+                                            先安装 Doraemon CLI
+                                        </div>
                                         {renderInlineCommand(
                                             cliInstallPlaceholderCommand,
                                             'CLI 安装命令已复制到剪贴板',
@@ -944,7 +949,9 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                     <section className="meta-panel">
                         <div className="meta-row">
                             <span>仓库大小</span>
-                            <strong>{fileContent ? formatFileSize(fileContent.size) : '1.2 MB'}</strong>
+                            <strong>
+                                {fileContent ? formatFileSize(fileContent.size) : '1.2 MB'}
+                            </strong>
                         </div>
                         <div className="meta-row">
                             <span>近 30 天下载</span>

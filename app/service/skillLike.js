@@ -11,10 +11,11 @@ class SkillLikeService extends Service {
 
     resolveClientIp() {
         const headers = this.ctx.request.headers;
-        const ip = headers['x-forwarded-for']?.split(',')[0]?.trim()
-            || headers['x-real-ip']
-            || this.ctx.ip
-            || '';
+        const ip =
+            headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+            headers['x-real-ip'] ||
+            this.ctx.ip ||
+            '';
         return String(ip).trim();
     }
 

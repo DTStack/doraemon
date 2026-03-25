@@ -69,9 +69,7 @@ module.exports = (app) => {
             timestamps: true,
             createdAt: 'created_at',
             updatedAt: 'updated_at',
-            indexes: [
-                { fields: ['skill_id'] },
-            ],
+            indexes: [{ fields: ['skill_id'] }],
         }
     );
 

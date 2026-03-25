@@ -52,7 +52,7 @@ class SkillsController extends Controller {
         const files = ctx.request.files
             ? Array.isArray(ctx.request.files)
                 ? ctx.request.files
-                : [ ctx.request.files ]
+                : [ctx.request.files]
             : [];
         const file = files[0];
 
@@ -80,7 +80,7 @@ class SkillsController extends Controller {
         const files = ctx.request.files
             ? Array.isArray(ctx.request.files)
                 ? ctx.request.files
-                : [ ctx.request.files ]
+                : [ctx.request.files]
             : [];
         const file = files[0] || null;
 
