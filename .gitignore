@@ -10,3 +10,20 @@ app/view
 
 # Research docs (working notes, not for commit)
 docs/research
+
+# Local Agent configuration & test skill folder
+.agents/
+test-cli-skill/
+
+# Universal/Dev tools ignores
+dist/
+build/
+*.log
+.env*
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
+

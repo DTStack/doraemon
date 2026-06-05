@@ -57,8 +57,8 @@ const SkillSummaryModalContent: React.FC<SkillSummaryModalContentProps> = ({ slu
         return `${currentOrigin}${deepLinkPath}`;
     }, [currentOrigin, deepLinkPath]);
     const skillInstallCommand = useMemo(
-        () => `doraemon-skills install ${installKey}`,
-        [installKey]
+        () => `npx dt-skill install ${installKey} --registry ${currentOrigin}`,
+        [installKey, currentOrigin]
     );
     const cliInstallPlaceholderCommand =
         '# 待提供：Doraemon CLI 安装脚本 URL（例如 curl -fsSL <...> | bash）';

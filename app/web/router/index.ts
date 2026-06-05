@@ -123,6 +123,10 @@ const routes: any = [
                 component: McpServerManagement,
             },
             {
+                path: `${urlPrefix}/skills/:parentSlug/:slug`,
+                component: SkillDetail,
+            },
+            {
                 path: `${urlPrefix}/skills/:slug`,
                 component: SkillDetail,
             },

@@ -1,15 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+    CopyOutlined,
     DeleteOutlined,
     FilterOutlined,
     ImportOutlined,
     SearchOutlined,
-    StarOutlined,
     UploadOutlined,
 } from '@ant-design/icons';
 import {
     Button,
-    Card,
     Col,
     Divider,
     Empty,
@@ -22,18 +21,19 @@ import {
     Select,
     Space,
     Spin,
-    Tag,
     Typography,
     Upload,
 } from 'antd';
 
 import { API } from '@/api';
 import { SkillItem, SkillListResponse } from './types';
+import { SkillCard } from '@/components/skills/SkillCard';
+import '@/components/skills/SkillCard.scss';
 import './style.scss';
 
 const { Search } = Input;
 const { Option } = Select;
-const { Paragraph, Text } = Typography;
+const { Text } = Typography;
 const FIXED_CATEGORY_OPTIONS = [
     '通用',
     '前端',
@@ -52,32 +52,6 @@ const INITIAL_QUERY = {
     pageSize: 12,
 };
 
-const EditIcon = () => (
-    <svg
-        width="14"
-        height="14"
-        viewBox="0 0 14 14"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-    >
-        <path
-            d="M9.916 2.334a1.65 1.65 0 1 1 2.334 2.332l-6.27 6.27a1.5 1.5 0 0 1-.707.39l-2.024.45.45-2.025a1.5 1.5 0 0 1 .39-.706l6.27-6.27Z"
-            stroke="currentColor"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        />
-        <path
-            d="M8.75 3.5 11.083 5.833"
-            stroke="currentColor"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        />
-        <path d="M7.583 11.667h3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-);
 
 const SkillsMarket: React.FC<any> = ({ history }) => {
     const [loading, setLoading] = useState(false);
@@ -94,6 +68,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
     const [importForm] = Form.useForm();
     const [editForm] = Form.useForm();
     const [query, setQuery] = useState(INITIAL_QUERY);
+    const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
 
     const fetchSkills = useCallback(async (nextQuery) => {
         setLoading(true);
@@ -122,6 +97,54 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
     const updateQueryAndFetch = (patch: Partial<typeof query>) => {
         const next = { ...query, ...patch };
         setQuery(next);
+        setSelectedSlugs(new Set());
+    };
+
+    const handleSelect = (skill: SkillItem, selected: boolean) => {
+        setSelectedSlugs((prev) => {
+            const next = new Set(prev);
+            if (selected) {
+                next.add(skill.slug);
+            } else {
+                next.delete(skill.slug);
+            }
+            return next;
+        });
+    };
+
+    const copyToClipboard = (text: string): boolean => {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).catch(() => {});
+            return true;
+        }
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        let success = false;
+        try {
+            success = document.execCommand('copy');
+        } catch {}
+        document.body.removeChild(textarea);
+        return success;
+    };
+
+    const handleCopyCommand = () => {
+        if (selectedSlugs.size === 0) return;
+        const selectedSkills = skills.filter((s) => selectedSlugs.has(s.slug));
+        const installKeys = selectedSkills.map((s) => s.installKey || s.slug).join(' ');
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const command = `npx dt-skill install ${installKeys} --registry ${origin}`;
+        const success = copyToClipboard(command);
+        if (success) {
+            message.success('安装命令已复制到剪贴板');
+        } else {
+            message.error('复制失败，请手动复制');
+        }
     };
 
     const openImportModal = () => {
@@ -277,6 +300,13 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                 />
                 <Space size={12}>
                     <Button
+                        icon={<CopyOutlined />}
+                        disabled={selectedSlugs.size === 0}
+                        onClick={handleCopyCommand}
+                    >
+                        复制命令{selectedSlugs.size > 0 ? ` (${selectedSlugs.size})` : ''}
+                    </Button>
+                    <Button
                         icon={<ImportOutlined />}
                         className="import-btn"
                         onClick={openImportModal}
@@ -320,54 +350,15 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                         <Row gutter={[16, 16]} className="skills-grid">
                             {skills.map((skill) => (
                                 <Col key={skill.slug} xs={24} sm={12} lg={8}>
-                                    <Card
-                                        className="skill-card"
-                                        hoverable
-                                        onClick={() => history.push(`/page/skills/${skill.slug}`)}
-                                    >
-                                        <div className="card-header">
-                                            <span className="skill-name">{skill.name}</span>
-                                            <div className="card-header-actions">
-                                                <Button
-                                                    size="small"
-                                                    className="card-edit-trigger"
-                                                    aria-label={`编辑 ${skill.name}`}
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        openEditModal(skill);
-                                                    }}
-                                                >
-                                                    <EditIcon />
-                                                </Button>
-                                                <span className="meta-stars">
-                                                    <StarOutlined /> {skill.stars || 0}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <Paragraph className="skill-desc">
-                                            {skill.description || '暂无描述'}
-                                        </Paragraph>
-                                        <div className="meta-row">
-                                            <Text type="secondary">来源:</Text>
-                                            <Text className="meta-value" ellipsis>
-                                                {skill.sourceRepo || skill.sourcePath}
-                                            </Text>
-                                        </div>
-                                        <div className="meta-row">
-                                            <Text type="secondary">更新:</Text>
-                                            <Text className="meta-value">
-                                                {new Date(skill.updatedAt).toLocaleDateString(
-                                                    'zh-CN'
-                                                )}
-                                            </Text>
-                                        </div>
-                                        <div className="tag-row">
-                                            <Tag color="blue">{skill.category || '未分类'}</Tag>
-                                            {skill.tags.slice(0, 3).map((tag) => (
-                                                <Tag key={tag}>{tag}</Tag>
-                                            ))}
-                                        </div>
-                                    </Card>
+                                    <SkillCard
+                                        skill={skill}
+                                        selected={selectedSlugs.has(skill.slug)}
+                                        onSelect={handleSelect}
+                                        onClick={(s) => history.push(`/page/skills/${s.slug}`)}
+                                        onEdit={openEditModal}
+                                        showMeta={true}
+                                        showChildrenPreview={skill.isPackage === 1}
+                                    />
                                 </Col>
                             ))}
                         </Row>

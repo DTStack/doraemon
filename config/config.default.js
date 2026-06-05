@@ -63,21 +63,16 @@ module.exports = (app) => {
         // 文件上传
         fileSize: '200mb',
         mode: 'file', // 使用文件模式，直接保存到临时文件
-        fileExtensions: ['.zip', '.tar', '.gz', '.tgz', '.skill'], // 允许的文件扩展名
         tmpdir: path.join(app.baseDir, 'cache/uploads'), // 临时文件目录
         fields: 100, // 允许的最多字段数量
         cleanSchedule: {
             // 清理上传的临时文件
             cron: '0 30 4 * * *', // 每天4:30清理
         },
-        whitelist: [
-            // 允许的文件类型
-            '.zip',
-            '.tar',
-            '.gz',
-            '.tgz',
-            '.skill',
-        ],
+        whitelist: (filename) => {
+            // 允许所有类型的文件上传（Clawhub 技能包含各种代码/配置文件与说明文档）
+            return true;
+        },
     };
 
     exports.io = {

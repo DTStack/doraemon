@@ -7,7 +7,7 @@ import {
     QuestionCircleOutlined,
     StarOutlined,
 } from '@ant-design/icons';
-import { Button, Empty, Spin, Tree, Typography } from 'antd';
+import { Breadcrumb, Button, Col, Empty, Row, Spin, Tree, Typography } from 'antd';
 import type { DataNode } from 'antd/lib/tree';
 
 import { API } from '@/api';
@@ -28,6 +28,7 @@ import relatedSkillDocsIcon from '@/asset/images/skills-detail-figma/related-ski
 import relatedSkillSecurityIcon from '@/asset/images/skills-detail-figma/related-skill-security.svg';
 import relatedSkillSqlIcon from '@/asset/images/skills-detail-figma/related-skill-sql.svg';
 import MarkdownRenderer from '@/components/markdownRenderer';
+import { SkillCard } from '@/components/skills/SkillCard';
 import { copyToClipboard } from '@/utils/copyUtils';
 import { SkillDetail, SkillFileContent, SkillInstallMeta, SkillItem } from '../types';
 import './style.scss';
@@ -45,6 +46,7 @@ interface FrontmatterItem {
 
 interface SkillDetailContentProps {
     slug: string;
+    parentSlug?: string;
     history: any;
 }
 
@@ -212,7 +214,11 @@ const formatCompactDate = (value?: string) => {
     return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
 };
 
-const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }) => {
+const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
+    slug,
+    parentSlug: routeParentSlug,
+    history,
+}) => {
     const [loading, setLoading] = useState(true);
     const [fileLoading, setFileLoading] = useState(false);
     const [detail, setDetail] = useState<SkillDetail | null>(null);
@@ -243,8 +249,8 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
         return window.location.origin;
     }, []);
     const skillInstallCommand = useMemo(
-        () => `doraemon-skills install ${installKey}`,
-        [installKey]
+        () => `npx dt-skill install ${installKey} --registry ${currentOrigin}`,
+        [installKey, currentOrigin]
     );
     const browseMarketPath = '/page/skills';
     const cliInstallPlaceholderCommand =
@@ -570,97 +576,129 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
 
     return (
         <div className="page-skill-detail">
-            <div className="skill-detail-shell">
-                <aside className="detail-left-sidebar">
-                    <div className="sidebar-head">
-                        <Button
-                            type="text"
-                            icon={<ArrowLeftOutlined />}
-                            onClick={() => history.push('/page/skills')}
-                            className="back-btn"
-                        />
-                        <div className="sidebar-title-group">
-                            <span>技能目录</span>
-                            <strong>{detail?.version || '-'}</strong>
-                        </div>
-                    </div>
-
-                    <div className="sidebar-tree-wrap">
-                        {fileTreeData.length === 0 ? (
-                            <Empty description="暂无文件" />
-                        ) : (
-                            <Tree
-                                treeData={fileTreeData}
-                                defaultExpandAll
-                                selectable={false}
-                                titleRender={(node) => (
-                                    <span
-                                        className={`explorer-tree-item ${
-                                            node.key === uiSelectedFilePath ? 'is-selected' : ''
-                                        }`.trim()}
-                                        role={node.isLeaf ? 'button' : undefined}
-                                        tabIndex={node.isLeaf ? 0 : -1}
-                                        onClick={() => {
-                                            if (!node.isLeaf) return;
-                                            handleSelectFile(String(node.key));
-                                        }}
-                                        onKeyDown={(event) => {
-                                            if (!node.isLeaf) return;
-                                            if (event.key === 'Enter' || event.key === ' ') {
-                                                event.preventDefault();
-                                                handleSelectFile(String(node.key));
-                                            }
-                                        }}
-                                    >
-                                        <FigmaIcon
-                                            src={node.isLeaf ? fileDocIcon : folderOpenBlueIcon}
-                                            className={`is-tree-node ${
-                                                node.isLeaf ? 'is-leaf' : 'is-folder'
-                                            }`}
-                                        />
-                                        <span>{String(node.title)}</span>
-                                    </span>
-                                )}
+            <div className={`skill-detail-shell ${detail.isPackage === 1 ? 'is-package' : ''}`}>
+                {detail.isPackage !== 1 && (
+                    <aside className="detail-left-sidebar">
+                        <div className="sidebar-head">
+                            <Button
+                                type="text"
+                                icon={<ArrowLeftOutlined />}
+                                onClick={() => {
+                                    const parent = detail?.parentSlug || routeParentSlug;
+                                    if (parent) {
+                                        history.push(`/page/skills/${parent}`);
+                                    } else {
+                                        history.push('/page/skills');
+                                    }
+                                }}
+                                className="back-btn"
                             />
+                            <div className="sidebar-title-group">
+                                <span>技能目录</span>
+                                <strong>{detail?.version || '-'}</strong>
+                            </div>
+                        </div>
+
+                        <div className="sidebar-tree-wrap">
+                            {fileTreeData.length === 0 ? (
+                                <Empty description="暂无文件" />
+                            ) : (
+                                <Tree
+                                    treeData={fileTreeData}
+                                    defaultExpandAll
+                                    selectable={false}
+                                    titleRender={(node) => (
+                                        <span
+                                            className={`explorer-tree-item ${
+                                                node.key === uiSelectedFilePath ? 'is-selected' : ''
+                                            }`.trim()}
+                                            role={node.isLeaf ? 'button' : undefined}
+                                            tabIndex={node.isLeaf ? 0 : -1}
+                                            onClick={() => {
+                                                if (!node.isLeaf) return;
+                                                handleSelectFile(String(node.key));
+                                            }}
+                                            onKeyDown={(event) => {
+                                                if (!node.isLeaf) return;
+                                                if (event.key === 'Enter' || event.key === ' ') {
+                                                    event.preventDefault();
+                                                    handleSelectFile(String(node.key));
+                                                }
+                                            }}
+                                        >
+                                            <FigmaIcon
+                                                src={node.isLeaf ? fileDocIcon : folderOpenBlueIcon}
+                                                className={`is-tree-node ${
+                                                    node.isLeaf ? 'is-leaf' : 'is-folder'
+                                                }`}
+                                            />
+                                            <span>{String(node.title)}</span>
+                                        </span>
+                                    )}
+                                />
+                            )}
+                        </div>
+
+                        <div className="sidebar-foot">
+                            <Button
+                                type="primary"
+                                block
+                                disabled={isInstallable}
+                                className={`install-primary-btn ${
+                                    isInstallable ? 'is-disabled' : ''
+                                }`}
+                                onClick={() => {
+                                    setActiveInstallPanel('agent');
+                                    copyToClipboard(
+                                        isInstallable ? skillInstallCommand : downloadCommand,
+                                        isInstallable
+                                            ? '技能安装命令已复制到剪贴板'
+                                            : '下载命令已复制到剪贴板'
+                                    );
+                                }}
+                            >
+                                {isInstallable ? '变更日志' : '下载技能'}
+                            </Button>
+                            <button
+                                type="button"
+                                className="sidebar-help-btn"
+                                onClick={() =>
+                                    window.open(
+                                        sourceUrl ||
+                                            'https://github.com/JackWang032/doraemon-proxy-tool',
+                                        '_blank'
+                                    )
+                                }
+                            >
+                                <QuestionCircleOutlined />
+                                <span>帮助</span>
+                            </button>
+                        </div>
+                    </aside>
+                )}
+
+                <main
+                    className={`detail-main-column ${detail.isPackage === 1 ? 'is-package' : ''}`}
+                >
+                    <Breadcrumb className="skill-breadcrumb">
+                        {detail.parentSlug ? (
+                            <Breadcrumb.Item
+                                className="breadcrumb-link"
+                                onClick={() => history.push(`/page/skills/${detail.parentSlug}`)}
+                            >
+                                {detail.parentSlug}
+                            </Breadcrumb.Item>
+                        ) : (
+                            <Breadcrumb.Item
+                                className="breadcrumb-link"
+                                onClick={() => history.push('/page/skills')}
+                            >
+                                技能列表
+                            </Breadcrumb.Item>
                         )}
-                    </div>
+                        <Breadcrumb.Item>{detail.name}</Breadcrumb.Item>
+                    </Breadcrumb>
 
-                    <div className="sidebar-foot">
-                        <Button
-                            type="primary"
-                            block
-                            disabled={isInstallable}
-                            className={`install-primary-btn ${isInstallable ? 'is-disabled' : ''}`}
-                            onClick={() => {
-                                setActiveInstallPanel('agent');
-                                copyToClipboard(
-                                    isInstallable ? skillInstallCommand : downloadCommand,
-                                    isInstallable
-                                        ? '技能安装命令已复制到剪贴板'
-                                        : '下载命令已复制到剪贴板'
-                                );
-                            }}
-                        >
-                            {isInstallable ? '变更日志' : '下载技能'}
-                        </Button>
-                        <button
-                            type="button"
-                            className="sidebar-help-btn"
-                            onClick={() =>
-                                window.open(
-                                    sourceUrl ||
-                                        'https://github.com/JackWang032/doraemon-proxy-tool',
-                                    '_blank'
-                                )
-                            }
-                        >
-                            <QuestionCircleOutlined />
-                            <span>帮助</span>
-                        </button>
-                    </div>
-                </aside>
-
-                <main className="detail-main-column">
                     <section className="detail-hero-main">
                         <div className="hero-head-row">
                             <div className="hero-title-block">
@@ -699,268 +737,303 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({ slug, history }
                         </div>
                     </section>
 
-                    <section className="document-panel">
-                        <div className="document-toolbar">
-                            <div className="document-toolbar-left">
-                                <FigmaIcon src={fileDocIcon} className="is-article" />
-                                <span>{uiSelectedFilePath || 'SKILL.md'}</span>
+                    {detail.isPackage === 1 && detail.children && detail.children.length > 0 ? (
+                        <section className="package-children-section">
+                            <div className="package-children-header">
+                                <span className="package-badge">📦</span>
+                                <span className="package-title">
+                                    包含 {detail.children.length} 个子技能
+                                </span>
                             </div>
-                            <div className="document-toolbar-right">
-                                {fileLoading ? (
-                                    <span className="document-loading-indicator">
-                                        <Spin size="small" />
-                                    </span>
-                                ) : null}
-                                <span />
-                                <span />
-                                <span />
+                            <Row gutter={[16, 16]}>
+                                {detail.children.map((child) => (
+                                    <Col key={child.slug} xs={24} sm={12} lg={8}>
+                                        <SkillCard
+                                            skill={child}
+                                            onClick={(s) =>
+                                                history.push(`/page/skills/${slug}/${s.slug}`)
+                                            }
+                                            showMeta={false}
+                                            size="compact"
+                                        />
+                                    </Col>
+                                ))}
+                            </Row>
+                        </section>
+                    ) : (
+                        <section className="document-panel">
+                            <div className="document-toolbar">
+                                <div className="document-toolbar-left">
+                                    <FigmaIcon src={fileDocIcon} className="is-article" />
+                                    <span>{uiSelectedFilePath || 'SKILL.md'}</span>
+                                </div>
+                                <div className="document-toolbar-right">
+                                    {fileLoading ? (
+                                        <span className="document-loading-indicator">
+                                            <Spin size="small" />
+                                        </span>
+                                    ) : null}
+                                    <span />
+                                    <span />
+                                    <span />
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="document-scroll-area">
-                            <div className="document-content-shell">{renderFileViewer()}</div>
-                        </div>
-                    </section>
+                            <div className="document-scroll-area">
+                                <div className="document-content-shell">{renderFileViewer()}</div>
+                            </div>
+                        </section>
+                    )}
                 </main>
 
-                <aside className="detail-right-sidebar">
-                    <section className="install-panel">
-                        <div className="sidebar-section-title">
-                            安装方式
-                            <span className="install-soon-badge">SOON</span>
-                        </div>
+                {detail.isPackage !== 1 && (
+                    <aside className="detail-right-sidebar">
+                        <section className="install-panel">
+                            <div className="sidebar-section-title">
+                                安装方式
+                                <span className="install-soon-badge">SOON</span>
+                            </div>
 
-                        <div
-                            className={`install-option-card ${
-                                activeInstallPanel === 'agent' ? 'is-active' : ''
-                            }`.trim()}
-                        >
-                            <button
-                                type="button"
-                                className="install-option-trigger"
-                                onClick={() =>
-                                    setActiveInstallPanel((current) =>
-                                        current === 'agent' ? null : 'agent'
-                                    )
-                                }
-                                aria-expanded={activeInstallPanel === 'agent'}
-                            >
-                                <div className="install-option-meta">
-                                    <span
-                                        className="install-option-icon-shell is-agent"
-                                        aria-hidden="true"
-                                    >
-                                        <FigmaIcon
-                                            src={agentIcon}
-                                            className="is-option-icon is-agent-icon"
-                                        />
-                                    </span>
-                                    <div>
-                                        <div className="install-option-title">智能体</div>
-                                        <div className="install-option-description">
-                                            {isInstallable ? '自动化安装' : '下载后安装'}
-                                        </div>
-                                    </div>
-                                </div>
-                                <FigmaIcon
-                                    src={
-                                        activeInstallPanel === 'agent'
-                                            ? chevronDownIcon
-                                            : chevronRightIcon
-                                    }
-                                    className={
-                                        activeInstallPanel === 'agent'
-                                            ? 'is-chevron'
-                                            : 'is-chevron-right'
-                                    }
-                                />
-                            </button>
                             <div
-                                className={`install-option-body ${
-                                    activeInstallPanel === 'agent' ? 'is-open' : 'is-closed'
+                                className={`install-option-card ${
+                                    activeInstallPanel === 'agent' ? 'is-active' : ''
                                 }`.trim()}
                             >
-                                <div className="install-option-body-inner">
-                                    {renderTerminalCommand(
-                                        agentTerminalCommand,
-                                        isInstallable
-                                            ? 'Agent 安装命令已复制到剪贴板'
-                                            : '下载命令已复制到剪贴板'
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div
-                            className={`install-option-card is-collapsed ${
-                                activeInstallPanel === 'human' ? 'is-active' : ''
-                            }`.trim()}
-                        >
-                            <button
-                                type="button"
-                                className="install-option-trigger"
-                                onClick={() =>
-                                    setActiveInstallPanel(
-                                        activeInstallPanel === 'human' ? null : 'human'
-                                    )
-                                }
-                                aria-expanded={activeInstallPanel === 'human'}
-                            >
-                                <div className="install-option-meta">
-                                    <span
-                                        className="install-option-icon-shell is-human"
-                                        aria-hidden="true"
-                                    >
-                                        <FigmaIcon
-                                            src={humanIcon}
-                                            className="is-option-icon is-human-icon"
-                                        />
-                                    </span>
-                                    <div>
-                                        <div className="install-option-title">手动安装</div>
-                                        <div className="install-option-description">手动配置</div>
-                                    </div>
-                                </div>
-                                <FigmaIcon
-                                    src={
-                                        activeInstallPanel === 'human'
-                                            ? chevronDownIcon
-                                            : chevronRightIcon
-                                    }
-                                    className={
-                                        activeInstallPanel === 'human'
-                                            ? 'is-chevron'
-                                            : 'is-chevron-right'
-                                    }
-                                />
-                            </button>
-                            <div
-                                className={`install-option-body ${
-                                    activeInstallPanel === 'human' ? 'is-open' : 'is-closed'
-                                }`.trim()}
-                            >
-                                <div className="install-option-body-inner">
-                                    <div className="human-command-card">
-                                        <div className="human-command-title">
-                                            先安装 Doraemon CLI
-                                        </div>
-                                        {renderInlineCommand(
-                                            cliInstallPlaceholderCommand,
-                                            'CLI 安装命令已复制到剪贴板',
-                                            false
-                                        )}
-                                    </div>
-                                    <div className="human-command-card">
-                                        <div className="human-command-title">再安装当前技能</div>
-                                        {renderInlineCommand(
-                                            isInstallable ? skillInstallCommand : downloadCommand,
-                                            isInstallable
-                                                ? '技能安装命令已复制到剪贴板'
-                                                : '下载命令已复制到剪贴板',
-                                            false
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section className="download-panel">
-                        <div className="sidebar-section-title">手动下载</div>
-                        <Button
-                            type="default"
-                            block
-                            className="download-btn"
-                            onClick={() => window.open(manualDownloadUrl, '_blank')}
-                        >
-                            <FigmaIcon src={downloadIcon} className="is-download" />
-                            下载 .zip
-                        </Button>
-                        {renderInlineCommand(downloadCommand, '下载命令已复制到剪贴板', true)}
-                    </section>
-
-                    <section className="related-panel">
-                        <div className="sidebar-section-title">相关技能</div>
-                        {related.length === 0 ? (
-                            <div className="related-empty-state">
-                                <FigmaIcon src={emptyRelatedIcon} className="is-empty-related" />
-                                <span>暂无相关技能</span>
-                            </div>
-                        ) : (
-                            <>
-                                <div className="related-list">
-                                    {related.map((item, index) => (
-                                        <button
-                                            key={item.slug}
-                                            type="button"
-                                            className="related-item"
-                                            onClick={() => {
-                                                if (item.slug === slug) return;
-                                                history.push(`/page/skills/${item.slug}`);
-                                            }}
-                                        >
-                                            <span
-                                                className={`related-item-icon-shell ${
-                                                    relatedSkillShellClasses[
-                                                        index % relatedSkillShellClasses.length
-                                                    ]
-                                                }`}
-                                                aria-hidden="true"
-                                            >
-                                                <FigmaIcon
-                                                    src={
-                                                        relatedSkillIconUrls[
-                                                            index % relatedSkillIconUrls.length
-                                                        ]
-                                                    }
-                                                    className="is-related-skill-icon"
-                                                />
-                                            </span>
-                                            <div className="related-item-copy">
-                                                <strong>{item.name}</strong>
-                                                <span className="related-item-description">
-                                                    {item.description || '暂无描述'}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
                                 <button
                                     type="button"
-                                    className="browse-market-link"
-                                    onClick={() => history.push(browseMarketPath)}
+                                    className="install-option-trigger"
+                                    onClick={() =>
+                                        setActiveInstallPanel((current) =>
+                                            current === 'agent' ? null : 'agent'
+                                        )
+                                    }
+                                    aria-expanded={activeInstallPanel === 'agent'}
                                 >
-                                    <span>浏览市场</span>
+                                    <div className="install-option-meta">
+                                        <span
+                                            className="install-option-icon-shell is-agent"
+                                            aria-hidden="true"
+                                        >
+                                            <FigmaIcon
+                                                src={agentIcon}
+                                                className="is-option-icon is-agent-icon"
+                                            />
+                                        </span>
+                                        <div>
+                                            <div className="install-option-title">智能体</div>
+                                            <div className="install-option-description">
+                                                {isInstallable ? '自动化安装' : '下载后安装'}
+                                            </div>
+                                        </div>
+                                    </div>
                                     <FigmaIcon
-                                        src={browseMarketArrowIcon}
-                                        className="is-browse-market-arrow"
+                                        src={
+                                            activeInstallPanel === 'agent'
+                                                ? chevronDownIcon
+                                                : chevronRightIcon
+                                        }
+                                        className={
+                                            activeInstallPanel === 'agent'
+                                                ? 'is-chevron'
+                                                : 'is-chevron-right'
+                                        }
                                     />
                                 </button>
-                            </>
-                        )}
-                    </section>
-
-                    <section className="meta-panel">
-                        <div className="meta-row">
-                            <span>仓库大小</span>
-                            <strong>
-                                {fileContent ? formatFileSize(fileContent.size) : '1.2 MB'}
-                            </strong>
-                        </div>
-                        <div className="meta-row">
-                            <span>近 30 天下载</span>
-                            <strong>842</strong>
-                        </div>
-                        <div className="meta-row is-contributors">
-                            <span>贡献者</span>
-                            <div className="contributors-stack">
-                                <img alt="contributor 1" src={contributorOne} />
-                                <img alt="contributor 2" src={contributorTwo} />
-                                <span>+3</span>
+                                <div
+                                    className={`install-option-body ${
+                                        activeInstallPanel === 'agent' ? 'is-open' : 'is-closed'
+                                    }`.trim()}
+                                >
+                                    <div className="install-option-body-inner">
+                                        {renderTerminalCommand(
+                                            agentTerminalCommand,
+                                            isInstallable
+                                                ? 'Agent 安装命令已复制到剪贴板'
+                                                : '下载命令已复制到剪贴板'
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </section>
-                </aside>
+
+                            <div
+                                className={`install-option-card is-collapsed ${
+                                    activeInstallPanel === 'human' ? 'is-active' : ''
+                                }`.trim()}
+                            >
+                                <button
+                                    type="button"
+                                    className="install-option-trigger"
+                                    onClick={() =>
+                                        setActiveInstallPanel(
+                                            activeInstallPanel === 'human' ? null : 'human'
+                                        )
+                                    }
+                                    aria-expanded={activeInstallPanel === 'human'}
+                                >
+                                    <div className="install-option-meta">
+                                        <span
+                                            className="install-option-icon-shell is-human"
+                                            aria-hidden="true"
+                                        >
+                                            <FigmaIcon
+                                                src={humanIcon}
+                                                className="is-option-icon is-human-icon"
+                                            />
+                                        </span>
+                                        <div>
+                                            <div className="install-option-title">手动安装</div>
+                                            <div className="install-option-description">
+                                                手动配置
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <FigmaIcon
+                                        src={
+                                            activeInstallPanel === 'human'
+                                                ? chevronDownIcon
+                                                : chevronRightIcon
+                                        }
+                                        className={
+                                            activeInstallPanel === 'human'
+                                                ? 'is-chevron'
+                                                : 'is-chevron-right'
+                                        }
+                                    />
+                                </button>
+                                <div
+                                    className={`install-option-body ${
+                                        activeInstallPanel === 'human' ? 'is-open' : 'is-closed'
+                                    }`.trim()}
+                                >
+                                    <div className="install-option-body-inner">
+                                        <div className="human-command-card">
+                                            <div className="human-command-title">
+                                                先安装 Doraemon CLI
+                                            </div>
+                                            {renderInlineCommand(
+                                                cliInstallPlaceholderCommand,
+                                                'CLI 安装命令已复制到剪贴板',
+                                                false
+                                            )}
+                                        </div>
+                                        <div className="human-command-card">
+                                            <div className="human-command-title">
+                                                再安装当前技能
+                                            </div>
+                                            {renderInlineCommand(
+                                                isInstallable
+                                                    ? skillInstallCommand
+                                                    : downloadCommand,
+                                                isInstallable
+                                                    ? '技能安装命令已复制到剪贴板'
+                                                    : '下载命令已复制到剪贴板',
+                                                false
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="download-panel">
+                            <div className="sidebar-section-title">手动下载</div>
+                            <Button
+                                type="default"
+                                block
+                                className="download-btn"
+                                onClick={() => window.open(manualDownloadUrl, '_blank')}
+                            >
+                                <FigmaIcon src={downloadIcon} className="is-download" />
+                                下载 .zip
+                            </Button>
+                            {renderInlineCommand(downloadCommand, '下载命令已复制到剪贴板', true)}
+                        </section>
+
+                        <section className="related-panel">
+                            <div className="sidebar-section-title">相关技能</div>
+                            {related.length === 0 ? (
+                                <div className="related-empty-state">
+                                    <FigmaIcon
+                                        src={emptyRelatedIcon}
+                                        className="is-empty-related"
+                                    />
+                                    <span>暂无相关技能</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="related-list">
+                                        {related.map((item, index) => (
+                                            <button
+                                                key={item.slug}
+                                                type="button"
+                                                className="related-item"
+                                                onClick={() => {
+                                                    if (item.slug === slug) return;
+                                                    history.push(`/page/skills/${item.slug}`);
+                                                }}
+                                            >
+                                                <span
+                                                    className={`related-item-icon-shell ${
+                                                        relatedSkillShellClasses[
+                                                            index % relatedSkillShellClasses.length
+                                                        ]
+                                                    }`}
+                                                    aria-hidden="true"
+                                                >
+                                                    <FigmaIcon
+                                                        src={
+                                                            relatedSkillIconUrls[
+                                                                index % relatedSkillIconUrls.length
+                                                            ]
+                                                        }
+                                                        className="is-related-skill-icon"
+                                                    />
+                                                </span>
+                                                <div className="related-item-copy">
+                                                    <strong>{item.name}</strong>
+                                                    <span className="related-item-description">
+                                                        {item.description || '暂无描述'}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="browse-market-link"
+                                        onClick={() => history.push(browseMarketPath)}
+                                    >
+                                        <span>浏览市场</span>
+                                        <FigmaIcon
+                                            src={browseMarketArrowIcon}
+                                            className="is-browse-market-arrow"
+                                        />
+                                    </button>
+                                </>
+                            )}
+                        </section>
+
+                        <section className="meta-panel">
+                            <div className="meta-row">
+                                <span>仓库大小</span>
+                                <strong>
+                                    {fileContent ? formatFileSize(fileContent.size) : '1.2 MB'}
+                                </strong>
+                            </div>
+                            <div className="meta-row">
+                                <span>近 30 天下载</span>
+                                <strong>842</strong>
+                            </div>
+                            <div className="meta-row is-contributors">
+                                <span>贡献者</span>
+                                <div className="contributors-stack">
+                                    <img alt="contributor 1" src={contributorOne} />
+                                    <img alt="contributor 2" src={contributorTwo} />
+                                    <span>+3</span>
+                                </div>
+                            </div>
+                        </section>
+                    </aside>
+                )}
             </div>
         </div>
     );

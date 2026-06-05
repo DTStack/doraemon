@@ -162,6 +162,24 @@ module.exports = (app) => {
     app.post('/api/skills/unlike', app.controller.skillLike.unlike);
     app.get('/api/skills/like-status', app.controller.skillLike.getLikeStatus);
 
+    /**
+     * Clawhub Registry API (v1)
+     */
+    app.get('/.well-known/clawhub.json', app.controller.clawhub.registryMetadata);
+    app.get('/api/v1/search', app.controller.clawhub.search);
+    app.get('/api/v1/skills', app.controller.clawhub.list);
+    app.get('/api/v1/skills/:slug', app.controller.clawhub.detail);
+    app.get('/api/v1/skills/:slug/versions', app.controller.clawhub.versions);
+    app.get('/api/v1/skills/:slug/versions/:version', app.controller.clawhub.versionDetail);
+    app.get('/api/v1/skills/:slug/file', app.controller.clawhub.fileContent);
+    app.get('/api/v1/download', app.controller.clawhub.download);
+    app.get('/api/v1/resolve', app.controller.clawhub.resolve);
+    app.post('/api/v1/skills', app.controller.clawhub.publish);
+    app.delete('/api/v1/skills/:slug', app.controller.clawhub.delete);
+    app.post('/api/v1/skills/:slug/undelete', app.controller.clawhub.undelete);
+    app.post('/api/v1/stars/:slug', app.controller.clawhub.star);
+    app.delete('/api/v1/stars/:slug', app.controller.clawhub.unstar);
+
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
     // 暂时close Terminal相关功能
     // io.of('/').route('loginServer',  io.controller.home.loginServer)

@@ -6,6 +6,13 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const fetch = require('node-fetch');
+const {
+    createInstallKeyMap,
+    resolveSkillIdentifier,
+    createUniqueSkillNames,
+} = require('../utils/skill-install-key');
+const GitHubStarsClient = require('../utils/github-stars');
+const CommandRunner = require('../utils/command-runner');
 
 const CACHE_TTL_MS = 60 * 1000;
 const MAX_FILE_LIST_COUNT = 2000;
@@ -19,106 +26,6 @@ const DISCOVER_DEPTH_LIMIT = 2;
 const SKILLS_ROOT_DISCOVER_DEPTH_LIMIT = 8;
 const DISCOVER_MAX_DIR_COUNT = 3000;
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-function sanitizeInstallKeySegment(value) {
-    return String(value || '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .replace(/-{2,}/g, '-');
-}
-
-function createInstallKeyCandidates(skill = {}) {
-    const candidates = [];
-    const pushCandidate = (value) => {
-        const normalized = sanitizeInstallKeySegment(value);
-        if (normalized && !candidates.includes(normalized)) {
-            candidates.push(normalized);
-        }
-    };
-
-    pushCandidate(skill.name);
-
-    const sourcePath = String(skill.sourcePath || '')
-        .trim()
-        .replace(/\\/g, '/');
-    if (sourcePath) {
-        const segments = sourcePath.split('/').filter(Boolean);
-        if (segments.length > 0) {
-            pushCandidate(segments[segments.length - 1]);
-        }
-    }
-
-    pushCandidate(skill.slug);
-    pushCandidate('skill');
-    return candidates;
-}
-
-function createInstallKeyMap(skills = []) {
-    const bySlug = new Map();
-    const byInstallKey = new Map();
-    const counts = new Map();
-    const list = skills.map((skill) => {
-        const candidates = createInstallKeyCandidates(skill);
-        let installKey = candidates.find((candidate) => !byInstallKey.has(candidate)) || '';
-
-        if (!installKey) {
-            const baseKey = candidates[0] || 'skill';
-            const nextCount = (counts.get(baseKey) || 1) + 1;
-            counts.set(baseKey, nextCount);
-            installKey = `${baseKey}-${nextCount}`;
-            while (byInstallKey.has(installKey)) {
-                const currentCount = (counts.get(baseKey) || nextCount) + 1;
-                counts.set(baseKey, currentCount);
-                installKey = `${baseKey}-${currentCount}`;
-            }
-        } else {
-            const baseKey = candidates[0] || installKey;
-            counts.set(baseKey, Math.max(counts.get(baseKey) || 1, 1));
-        }
-
-        const normalizedSkill = {
-            ...skill,
-            installKey,
-        };
-        bySlug.set(normalizedSkill.slug, normalizedSkill);
-        byInstallKey.set(installKey, normalizedSkill);
-        return normalizedSkill;
-    });
-
-    return {
-        list,
-        bySlug,
-        byInstallKey,
-    };
-}
-
-function resolveSkillIdentifier(identifier, indexes = {}) {
-    const value = String(identifier || '').trim();
-    if (!value) return null;
-    if (indexes.bySlug instanceof Map && indexes.bySlug.has(value)) {
-        return indexes.bySlug.get(value);
-    }
-    if (indexes.byInstallKey instanceof Map && indexes.byInstallKey.has(value)) {
-        return indexes.byInstallKey.get(value);
-    }
-    return null;
-}
-
-function createUniqueSkillNames(skillNames = []) {
-    const values = [];
-    const seen = new Set();
-
-    skillNames.forEach((item) => {
-        const name = String(item || '').trim();
-        if (!name) return;
-        if (seen.has(name)) return;
-        seen.add(name);
-        values.push(name);
-    });
-
-    return values;
-}
 
 const SKILL_CATEGORY_OPTIONS = [
     '通用',
@@ -173,6 +80,7 @@ class SkillsService extends Service {
         this.skillCache = null;
         this.storageReady = false;
         this.storageReadyPromise = null;
+        this.commandRunner = new CommandRunner({ defaultTimeout: GIT_COMMAND_TIMEOUT_MS });
     }
 
     getSkillCategoryOptions() {
@@ -217,6 +125,7 @@ class SkillsService extends Service {
             await SkillsItem.sync();
             await SkillsFile.sync();
             await this.ensureSkillsItemVersionColumn();
+            await this.ensureSkillsItemPackageColumns();
             this.storageReady = true;
         })();
 
@@ -238,6 +147,26 @@ class SkillsService extends Service {
             defaultValue: '',
             comment: '技能版本号',
         });
+    }
+
+    async ensureSkillsItemPackageColumns() {
+        const queryInterface = this.app.model.getQueryInterface();
+        const table = await queryInterface.describeTable('skills_items');
+        if (!table.is_package) {
+            await queryInterface.addColumn('skills_items', 'is_package', {
+                type: this.app.Sequelize.TINYINT,
+                allowNull: false,
+                defaultValue: 0,
+                comment: '是否是技能包',
+            });
+        }
+        if (!table.parent_slug) {
+            await queryInterface.addColumn('skills_items', 'parent_slug', {
+                type: this.app.Sequelize.STRING(255),
+                allowNull: true,
+                comment: '所属技能包的 slug',
+            });
+        }
     }
 
     parseJsonArray(value) {
@@ -268,6 +197,8 @@ class SkillsService extends Service {
             sourceRepo: skill.sourceRepo,
             sourcePath: skill.sourcePath,
             installCommand: skill.installCommand,
+            isPackage: skill.isPackage ? 1 : 0,
+            parentSlug: skill.parentSlug || null,
         };
     }
 
@@ -295,6 +226,8 @@ class SkillsService extends Service {
             skillMd: row.skill_md || '',
             installCommand: row.install_command || '',
             fileCount: Number(row.file_count) || 0,
+            isPackage: Number(row.is_package) || 0,
+            parentSlug: row.parent_slug || null,
         };
     }
 
@@ -340,7 +273,23 @@ class SkillsService extends Service {
         const safePageSize = Math.max(parseInt(pageSize, 10) || 20, 1);
         const { skills, categories } = this.skillCache;
 
-        let list = [...skills];
+        // Aggregate child stars by parent slug for package star totals
+        const childStarsByParent = new Map();
+        for (const item of skills) {
+            if (item.parentSlug) {
+                const current = childStarsByParent.get(item.parentSlug) || 0;
+                childStarsByParent.set(item.parentSlug, current + (Number(item.stars) || 0));
+            }
+        }
+
+        let list = [...skills]
+            .filter((item) => !item.parentSlug)
+            .map((item) => {
+                if (item.isPackage === 1 && childStarsByParent.has(item.slug)) {
+                    return { ...item, stars: childStarsByParent.get(item.slug) };
+                }
+                return item;
+            });
         if (keyword) {
             const value = String(keyword).toLowerCase();
             list = list.filter(
@@ -405,7 +354,7 @@ class SkillsService extends Service {
     async getSkillDetail(slug) {
         await this.ensureSkillCache();
         const skill = this.getSkillByIdentifier(slug);
-        const { SkillsFile } = this.app.model;
+        const { SkillsFile, SkillsItem } = this.app.model;
 
         const rows = await SkillsFile.findAll({
             where: {
@@ -417,11 +366,33 @@ class SkillsService extends Service {
             limit: MAX_FILE_LIST_COUNT,
         });
 
-        return {
+        const detail = {
             ...this.toPublicSkill(skill),
             skillMd: skill.skillMd,
             fileList: rows.map((row) => row.file_path),
         };
+
+        if (skill.isPackage === 1) {
+            const children = await SkillsItem.findAll({
+                where: {
+                    parent_slug: skill.slug,
+                    is_delete: 0,
+                },
+                order: [
+                    ['stars', 'DESC'],
+                    ['updated_at_remote', 'DESC'],
+                    ['updated_at', 'DESC'],
+                    ['id', 'DESC'],
+                ],
+            });
+            detail.children = children.map((row) => this.toPublicSkill(this.toSkillDto(row)));
+            detail.stars = detail.children.reduce(
+                (sum, child) => sum + (Number(child.stars) || 0),
+                0
+            );
+        }
+
+        return detail;
     }
 
     async getSkillFileContent(slug, filePath) {
@@ -461,24 +432,50 @@ class SkillsService extends Service {
     async getSkillArchive(slug) {
         await this.ensureSkillCache();
         const skill = this.getSkillByIdentifier(slug);
-        const { SkillsFile } = this.app.model;
-        const rows = await SkillsFile.findAll({
-            where: {
-                skill_id: skill.id,
-                is_delete: 0,
-            },
-            order: [['file_path', 'ASC']],
-            limit: MAX_FILE_LIST_COUNT,
-        });
-
+        const { SkillsItem, SkillsFile } = this.app.model;
         const zip = new AdmZip();
         const rootFolder = this.sanitizeFileName(skill.name || skill.slug || 'skill');
-        rows.forEach((row) => {
-            const safeRelativePath = this.normalizeRelativePath(row.file_path);
-            const zipPath = path.posix.join(rootFolder, safeRelativePath);
-            const buffer = this.decodeStoredFileContent(row.content, Boolean(row.is_binary));
-            zip.addFile(zipPath, buffer);
-        });
+
+        if (skill.isPackage === 1) {
+            const children = await SkillsItem.findAll({
+                where: {
+                    parent_slug: skill.slug,
+                    is_delete: 0,
+                },
+            });
+            for (const child of children) {
+                const childFolder = this.sanitizeFileName(child.name || child.slug || 'sub-skill');
+                const childFiles = await SkillsFile.findAll({
+                    where: {
+                        skill_id: child.id,
+                        is_delete: 0,
+                    },
+                    order: [['file_path', 'ASC']],
+                    limit: MAX_FILE_LIST_COUNT,
+                });
+                childFiles.forEach((row) => {
+                    const safeRelativePath = this.normalizeRelativePath(row.file_path);
+                    const zipPath = path.posix.join(rootFolder, childFolder, safeRelativePath);
+                    const buffer = this.decodeStoredFileContent(row.content, Boolean(row.is_binary));
+                    zip.addFile(zipPath, buffer);
+                });
+            }
+        } else {
+            const rows = await SkillsFile.findAll({
+                where: {
+                    skill_id: skill.id,
+                    is_delete: 0,
+                },
+                order: [['file_path', 'ASC']],
+                limit: MAX_FILE_LIST_COUNT,
+            });
+            rows.forEach((row) => {
+                const safeRelativePath = this.normalizeRelativePath(row.file_path);
+                const zipPath = path.posix.join(rootFolder, safeRelativePath);
+                const buffer = this.decodeStoredFileContent(row.content, Boolean(row.is_binary));
+                zip.addFile(zipPath, buffer);
+            });
+        }
 
         return {
             fileName: `${rootFolder}.zip`,
@@ -600,11 +597,14 @@ class SkillsService extends Service {
 
     isLikelyBinary(buffer) {
         if (!buffer || buffer.length === 0) return false;
-        const sampleLength = Math.min(buffer.length, 1024);
-        for (let i = 0; i < sampleLength; i += 1) {
-            if (buffer[i] === 0) return true;
+        const sample = buffer.subarray(0, Math.min(buffer.length, 4096));
+        if (sample.includes(0)) return true;
+        try {
+            new TextDecoder('utf-8', { fatal: true }).decode(sample);
+            return false;
+        } catch {
+            return true;
         }
-        return false;
     }
 
     sanitizeFileName(fileName) {
@@ -633,11 +633,20 @@ class SkillsService extends Service {
     }
 
     buildSkillSlug(sourceMeta, relativeSkillPath, skillName, usedSlugs = new Set()) {
-        const sourceKey = `${sourceMeta.repoHost || 'local'}-${
-            sourceMeta.repoPath || sourceMeta.sourceUrl || ''
-        }-${sourceMeta.ref || 'default'}`;
-        const relativeKey = String(relativeSkillPath || skillName || 'skill').replace(/\\/g, '/');
-        const base = this.sanitizeSlugSegment(`${sourceKey}-${relativeKey}`) || 'skill';
+        const isUpload = sourceMeta && (sourceMeta.repoHost === 'upload' || sourceMeta.sourceType === 'upload');
+        const relativeKey = String(
+            (relativeSkillPath && relativeSkillPath !== '.') ? relativeSkillPath : (skillName || 'skill')
+        ).replace(/\\/g, '/');
+
+        let base;
+        if (isUpload) {
+            base = this.sanitizeSlugSegment(relativeKey) || 'skill';
+        } else {
+            const sourceKey = `${sourceMeta.repoHost || 'local'}-${
+                sourceMeta.repoPath || sourceMeta.sourceUrl || ''
+            }-${sourceMeta.ref || 'default'}`;
+            base = this.sanitizeSlugSegment(`${sourceKey}-${relativeKey}`) || 'skill';
+        }
         let slug = base;
 
         if (slug.length > 220) {
@@ -745,9 +754,14 @@ class SkillsService extends Service {
         const identityText = String(identityKey || '').trim();
         const normalizedIdentity = this.sanitizeSlugSegment(identityText);
         const identityHash = identityText ? this.hashString(identityText).slice(0, 8) : '';
-        const sourceKey =
-            [normalizedName, normalizedIdentity, identityHash].filter(Boolean).join('-') ||
-            normalizedName;
+
+        // repoPath 用于包名展示，保持简洁可读：有 identityKey 时直接用，否则 fallback 到文件名
+        const repoPath = normalizedIdentity || normalizedName;
+        // sourceUrl 用于数据库 source 去重，可带 hash 确保唯一性
+        const sourceKey = normalizedIdentity
+            ? `${normalizedIdentity}-${identityHash}`
+            : normalizedName;
+
         return {
             sourceUrl: `upload://${sourceKey}.skill`,
             sourceType: 'upload',
@@ -756,7 +770,7 @@ class SkillsService extends Service {
             ref: '',
             subpath: '',
             repoHost: 'upload',
-            repoPath: sourceKey,
+            repoPath,
             originalAction: 'upload',
         };
     }
@@ -764,11 +778,7 @@ class SkillsService extends Service {
     getUploadIdentityKey(skillRecords = [], preferredName = '') {
         const name = String(preferredName || '').trim();
         if (name) return name;
-        return skillRecords
-            .map((item) => String(item?.name || '').trim())
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b))
-            .join('|');
+        return '';
     }
 
     extractDescription(content) {
@@ -1091,14 +1101,14 @@ class SkillsService extends Service {
             sparseCloneArgs.push(parsedSource.cloneUrl, targetDir);
 
             try {
-                await this.runCommand(
+                await this.commandRunner.runCommand(
                     'git',
                     sparseCloneArgs,
                     GIT_COMMAND_TIMEOUT_MS,
                     process.cwd(),
                     env
                 );
-                await this.runCommand(
+                await this.commandRunner.runCommand(
                     'git',
                     ['-C', targetDir, 'sparse-checkout', 'set', parsedSource.subpath],
                     GIT_COMMAND_TIMEOUT_MS,
@@ -1130,7 +1140,7 @@ class SkillsService extends Service {
         cloneArgs.push(parsedSource.cloneUrl, targetDir);
 
         try {
-            await this.runCommand('git', cloneArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
+            await this.commandRunner.runCommand('git', cloneArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
         } catch (error) {
             if (!parsedSource.ref) {
                 throw error;
@@ -1145,7 +1155,7 @@ class SkillsService extends Service {
                 parsedSource.cloneUrl,
                 targetDir,
             ];
-            await this.runCommand('git', fallbackArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
+            await this.commandRunner.runCommand('git', fallbackArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
         }
     }
 
@@ -1487,9 +1497,15 @@ class SkillsService extends Service {
             };
         }
 
+        if (options.excludeSlugs && options.excludeSlugs.length > 0) {
+            where.slug = {
+                [Op.notIn]: options.excludeSlugs,
+            };
+        }
+
         const existing = await SkillsItem.findOne({
             where,
-            attributes: ['id', 'name'],
+            attributes: ['id', 'name', 'slug'],
             transaction: options.transaction,
         });
 
@@ -1603,6 +1619,7 @@ class SkillsService extends Service {
 
     async importSkillFile(params = {}, file) {
         const skillName = String(params.skillName || '').trim();
+        const packageName = String(params.packageName || '').trim();
         const category = this.normalizeCategory(params.category);
         const tags = this.normalizePlatformTags(params.tags);
         const fileName = String((file && file.filename) || '').trim();
@@ -1638,11 +1655,14 @@ class SkillsService extends Service {
                 this.ctx.throw(400, '.zip 包内未发现有效技能（缺少 SKILL.md）');
             }
 
+            // skillName 仅用于覆盖单技能的名称；packageName 用于多技能时指定包名
             if (skillName && discoveredSkillDirs.length !== 1) {
                 this.ctx.throw(400, '填写技能名称时，.zip 包必须且只能包含一个技能目录');
             }
 
-            const parsedSource = this.buildUploadSourceMeta(fileName, skillName);
+            // 多技能时优先使用 packageName 作为 identityKey，回退到 skillName
+            const identityKey = packageName || skillName;
+            const parsedSource = this.buildUploadSourceMeta(fileName, identityKey);
 
             const skillRecords = discoveredSkillDirs.map((skillDir) => {
                 const record = this.prepareSkillRecord(
@@ -1658,18 +1678,34 @@ class SkillsService extends Service {
                 return record;
             });
 
-            await this.assertSkillNamesUnique(skillRecords.map((item) => item.name));
+            const tempUsedSlugs = new Set();
+            const excludeSlugs = skillRecords.map((record) =>
+                this.buildSkillSlug(
+                    parsedSource,
+                    record.sourcePath,
+                    record.name,
+                    tempUsedSlugs
+                )
+            );
+
+            await this.assertSkillNamesUnique(
+                skillRecords.map((item) => item.name),
+                {
+                    excludeSlugs,
+                }
+            );
 
             const uploadSourceMeta = this.buildUploadSourceMeta(
                 fileName,
-                this.getUploadIdentityKey(skillRecords, skillName)
+                this.getUploadIdentityKey(skillRecords, identityKey)
             );
             sourceRecord = await this.upsertSourceRecord(uploadSourceMeta, 'syncing');
 
             const importedSkills = await this.persistSkillsForSource(
                 sourceRecord.id,
                 uploadSourceMeta,
-                skillRecords
+                skillRecords,
+                packageName
             );
 
             await sourceRecord.update({
@@ -1957,7 +1993,7 @@ class SkillsService extends Service {
         };
     }
 
-    async persistSkillsForSource(sourceId, sourceMeta, skillRecords = []) {
+    async persistSkillsForSource(sourceId, sourceMeta, skillRecords = [], preferredPackageName = '') {
         const { SkillsItem, SkillsFile } = this.app.model;
         const { Op } = this.app.Sequelize;
         const repoStars = await this.fetchStarsBySourceRepo(sourceMeta.sourceRepo);
@@ -1986,6 +2022,68 @@ class SkillsService extends Service {
             const usedSlugs = new Set();
             const createdSkills = [];
 
+            let parentSlug = '';
+            if (skillRecords.length > 1) {
+                let parentName = '';
+                if (preferredPackageName) {
+                    // CLI 批量上传时使用用户指定的包名
+                    parentName = preferredPackageName;
+                } else if (sourceMeta.repoHost === 'upload' || sourceMeta.sourceType === 'upload') {
+                    parentName = sourceMeta.repoPath || 'uploaded-skills-package';
+                } else {
+                    const parts = (sourceMeta.repoPath || '').split('/');
+                    parentName = parts[parts.length - 1] || 'git-skills-package';
+                }
+                parentSlug = this.buildSkillSlug(
+                    sourceMeta,
+                    '.',
+                    parentName,
+                    usedSlugs
+                );
+
+                const parentPayload = {
+                    source_id: sourceId,
+                    slug: parentSlug,
+                    name: parentName,
+                    description: `技能包，包含以下子技能：\n${skillRecords.map((r) => `- **${r.name}**: ${r.description || ''}`).join('\n')}`,
+                    category: skillRecords[0].category || '通用',
+                    version: '1.0.0',
+                    tags: JSON.stringify(Array.from(new Set(skillRecords.flatMap((r) => r.tags || [])))),
+                    allowed_tools: JSON.stringify(Array.from(new Set(skillRecords.flatMap((r) => r.allowedTools || [])))),
+                    stars: resolvedStars,
+                    updated_at_remote: new Date(),
+                    source_repo: sourceMeta.sourceRepo || '',
+                    source_path: '.',
+                    skill_md: `# ${parentName}\n\n这是一个技能包，包含以下子技能：\n${skillRecords.map((r) => `- **${r.name}**: ${r.description || ''}`).join('\n')}`,
+                    install_command: '',
+                    file_count: skillRecords.reduce((acc, r) => acc + (r.files || []).length, 0),
+                    is_delete: 0,
+                    is_package: 1,
+                    parent_slug: null,
+                };
+
+                const globalExistingParent = await SkillsItem.findOne({
+                    where: { slug: parentSlug },
+                    transaction,
+                });
+
+                let parentRow;
+                if (globalExistingParent) {
+                    parentRow = globalExistingParent;
+                    await globalExistingParent.update(parentPayload, { transaction });
+                    oldRowMap.delete(parentSlug);
+                } else {
+                    parentRow = await SkillsItem.create(parentPayload, { transaction });
+                }
+
+                createdSkills.push({
+                    slug: parentSlug,
+                    name: parentName,
+                    sourceRepo: sourceMeta.sourceRepo || '',
+                    sourcePath: '.',
+                });
+            }
+
             for (const record of skillRecords) {
                 const slug = this.buildSkillSlug(
                     sourceMeta,
@@ -2010,12 +2108,23 @@ class SkillsService extends Service {
                     install_command: record.installCommand,
                     file_count: record.files.length,
                     is_delete: 0,
+                    is_package: 0,
+                    parent_slug: parentSlug || null,
                 };
-                const existingRow = oldRowMap.get(slug);
+                const globalExisting = await SkillsItem.findOne({
+                    where: { slug },
+                    transaction,
+                });
 
-                let itemRow = existingRow;
-                if (existingRow) {
-                    await existingRow.update(payload, { transaction });
+                if (globalExisting && globalExisting.is_delete === 0 && globalExisting.name !== record.name) {
+                    this.ctx.throw(400, 'slug 已存在');
+                }
+
+                const targetRow = globalExisting || oldRowMap.get(slug);
+                let itemRow;
+                if (targetRow) {
+                    itemRow = targetRow;
+                    await targetRow.update(payload, { transaction });
                     oldRowMap.delete(slug);
                 } else {
                     itemRow = await SkillsItem.create(payload, { transaction });
@@ -2082,155 +2191,12 @@ class SkillsService extends Service {
     }
 
     async fetchStarsBySourceRepo(sourceRepo = '') {
-        const repoFullName = this.extractGitHubRepoFullName(sourceRepo);
-        if (!repoFullName) return null;
-        return await this.fetchGitHubRepoStars(repoFullName);
-    }
-
-    extractGitHubRepoFullName(sourceRepo = '') {
-        const raw = String(sourceRepo || '').trim();
-        if (!raw) return '';
-        const normalized = raw.replace(/^git\+/, '').replace(/\.git$/, '');
-        const sshMatch = normalized.match(/^git@github\.com:([^/]+)\/([^/]+)$/i);
-        if (sshMatch) {
-            return `${sshMatch[1]}/${sshMatch[2]}`;
-        }
-        const httpsMatch = normalized.match(/^https?:\/\/github\.com\/([^/]+)\/([^/#?]+)/i);
-        if (httpsMatch) {
-            return `${httpsMatch[1]}/${httpsMatch[2]}`;
-        }
-        return '';
-    }
-
-    parseCompactNumber(input) {
-        const raw = String(input || '')
-            .trim()
-            .replace(/,/g, '')
-            .toLowerCase();
-        if (!raw) return null;
-
-        const match = raw.match(/^(\d+(?:\.\d+)?)\s*([kmb])?$/i);
-        if (!match) return null;
-
-        const value = Number(match[1]);
-        if (!Number.isFinite(value)) return null;
-
-        const suffix = (match[2] || '').toLowerCase();
-        if (!suffix) return Math.round(value);
-        if (suffix === 'k') return Math.round(value * 1000);
-        if (suffix === 'm') return Math.round(value * 1000 * 1000);
-        if (suffix === 'b') return Math.round(value * 1000 * 1000 * 1000);
-        return null;
-    }
-
-    extractStarsFromGitHubHtml(html = '') {
-        const content = String(html || '');
-        if (!content) return null;
-
-        const titleMatch = content.match(/id="repo-stars-counter-star"[^>]*title="([^"]+)"/i);
-        if (titleMatch) {
-            const stars = this.parseCompactNumber(titleMatch[1]);
-            if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) return stars;
-        }
-
-        const ariaMatch = content.match(/id="repo-stars-counter-star"[^>]*aria-label="([^"]+)"/i);
-        if (ariaMatch) {
-            const numberLike = ariaMatch[1].match(/[\d,.]+\s*[kmb]?/i);
-            if (numberLike) {
-                const stars = this.parseCompactNumber(numberLike[0]);
-                if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) return stars;
-            }
-        }
-
-        const textMatch = content.match(/id="repo-stars-counter-star"[^>]*>([^<]+)</i);
-        if (textMatch) {
-            const stars = this.parseCompactNumber(textMatch[1]);
-            if (typeof stars === 'number' && Number.isFinite(stars) && stars >= 0) return stars;
-        }
-
-        return null;
-    }
-
-    async fetchGitHubRepoStarsFromHtml(repoFullName) {
-        const url = `https://github.com/${repoFullName}`;
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), GITHUB_API_TIMEOUT_MS);
-
-        try {
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'User-Agent': 'doraemon-skills-market',
-                    Accept: 'text/html',
-                },
-                signal: controller.signal,
-            });
-
-            if (!response.ok) {
-                this.ctx.logger.warn(
-                    `[skills] HTML兜底获取 stars 失败: ${repoFullName}, status=${response.status}`
-                );
-                return null;
-            }
-
-            const html = await response.text();
-            return this.extractStarsFromGitHubHtml(html);
-        } catch (error) {
-            this.ctx.logger.warn(
-                `[skills] HTML兜底获取 stars 异常: ${repoFullName}, ${error.message}`
-            );
-            return null;
-        } finally {
-            clearTimeout(timer);
-        }
-    }
-
-    async fetchGitHubRepoStars(repoFullName) {
-        if (!repoFullName) return null;
-
-        const url = `https://api.github.com/repos/${repoFullName}`;
-        const headers = {
-            Accept: 'application/vnd.github+json',
-            'User-Agent': 'doraemon-skills-market',
-        };
-
-        const token = this.resolveGitHubToken();
-        if (token) {
-            headers.Authorization = `Bearer ${token}`;
-        }
-
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), GITHUB_API_TIMEOUT_MS);
-
-        try {
-            const response = await fetch(url, {
-                method: 'GET',
-                headers,
-                signal: controller.signal,
-            });
-
-            if (!response.ok) {
-                this.ctx.logger.warn(
-                    `[skills] 获取 GitHub stars 失败: ${repoFullName}, status=${response.status}`
-                );
-                if (response.status === 403 || response.status === 429) {
-                    return await this.fetchGitHubRepoStarsFromHtml(repoFullName);
-                }
-                return null;
-            }
-
-            const data = await response.json();
-            const stars = Number(data.stargazers_count);
-            if (!Number.isFinite(stars) || stars < 0) return null;
-            return stars;
-        } catch (error) {
-            this.ctx.logger.warn(
-                `[skills] 获取 GitHub stars 异常: ${repoFullName}, ${error.message}`
-            );
-            return null;
-        } finally {
-            clearTimeout(timer);
-        }
+        const client = new GitHubStarsClient({
+            token: this.resolveGitHubToken(),
+            timeoutMs: GITHUB_API_TIMEOUT_MS,
+            logger: this.ctx.logger,
+        });
+        return client.fetchByRepoUrl(sourceRepo);
     }
 
     extractHostFromRemote(remoteUrl = '') {
@@ -2351,70 +2317,11 @@ class SkillsService extends Service {
         return ['-c', `http.https://${host}/.extraHeader=Authorization: Basic ${basicToken}`];
     }
 
-    runCommand(
-        command,
-        args = [],
-        timeout = GIT_COMMAND_TIMEOUT_MS,
-        cwd = process.cwd(),
-        env = process.env
-    ) {
-        return new Promise((resolve, reject) => {
-            const child = spawn(command, args, {
-                cwd,
-                env,
-            });
-
-            let stdout = '';
-            let stderr = '';
-            let timedOut = false;
-
-            const timer = setTimeout(() => {
-                timedOut = true;
-                child.kill('SIGTERM');
-            }, timeout);
-
-            child.stdout.on('data', (chunk) => {
-                stdout += chunk.toString();
-            });
-
-            child.stderr.on('data', (chunk) => {
-                stderr += chunk.toString();
-            });
-
-            child.on('error', (error) => {
-                clearTimeout(timer);
-                reject(error);
-            });
-
-            child.on('close', (code) => {
-                clearTimeout(timer);
-
-                if (timedOut) {
-                    reject(new Error(`命令执行超时（${timeout}ms）: ${command}`));
-                    return;
-                }
-
-                if (code !== 0) {
-                    const detail = this.trimCommandOutput(stderr || stdout);
-                    reject(new Error(detail || `命令退出码: ${code}`));
-                    return;
-                }
-
-                resolve({ stdout, stderr });
-            });
-        });
-    }
-
-    trimCommandOutput(content = '') {
-        const value = String(content || '').trim();
-        if (!value) return '';
-        const maxLength = 3000;
-        if (value.length <= maxLength) return value;
-        return value.slice(value.length - maxLength);
-    }
 }
 
+const installKeyModule = require('../utils/skill-install-key');
+
 module.exports = SkillsService;
-module.exports.createInstallKeyMap = createInstallKeyMap;
-module.exports.resolveSkillIdentifier = resolveSkillIdentifier;
-module.exports.createUniqueSkillNames = createUniqueSkillNames;
+module.exports.createInstallKeyMap = installKeyModule.createInstallKeyMap;
+module.exports.resolveSkillIdentifier = installKeyModule.resolveSkillIdentifier;
+module.exports.createUniqueSkillNames = installKeyModule.createUniqueSkillNames;

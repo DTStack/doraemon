@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "basic-markdown-pair",
+      "files": [
+        { "path": "SKILL.md", "content": "# demo", "encoding": "utf8" },
+        { "path": "README.md", "content": "hello", "encoding": "utf8" }
+      ],
+      "fingerprint": "0dca25768cadcc32a50ae7a7ef5a19887353bf96086d18cd40203bc1877560eb"
+    },
+    {
+      "name": "text-file-set-filtering",
+      "files": [
+        { "path": "SKILL.md", "content": "# demo", "encoding": "utf8" },
+        { "path": "README.md", "content": "hello", "encoding": "utf8" },
+        { "path": "Makefile", "content": "build:\n\techo ok", "encoding": "utf8" },
+        { "path": "notes.", "content": "trailing dot", "encoding": "utf8" },
+        { "path": "assets/logo.png", "content": "aW1hZ2U=", "encoding": "base64", "isBinary": true },
+        { "path": ".private/notes.md", "content": "secret", "encoding": "utf8" },
+        { "path": "docs/archive.bin", "content": "ignored", "encoding": "utf8" },
+        { "path": "binary-no-extension", "content": "AAE=", "encoding": "base64", "isBinary": true }
+      ]
+    },
+    {
+      "name": "stored-ignore-files",
+      "ignoreFiles": [
+        { "path": ".gitignore", "content": "ignored.md\nbuild/\n" },
+        { "path": ".clawhubignore", "content": "private.txt\n" }
+      ],
+      "files": [
+        { "path": "SKILL.md", "content": "# demo", "encoding": "utf8" },
+        { "path": "ignored.md", "content": "ignored", "encoding": "utf8" },
+        { "path": "build/output.md", "content": "ignored build", "encoding": "utf8" },
+        { "path": "private.txt", "content": "ignored private", "encoding": "utf8" },
+        { "path": "docs/kept.md", "content": "kept", "encoding": "utf8" }
+      ]
+    }
+  ]
+}

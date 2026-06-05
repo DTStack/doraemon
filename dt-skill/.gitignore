@@ -1,0 +1,5 @@
+.claude/
+.codex/
+.cursor/
+dist/
+node_modules/
