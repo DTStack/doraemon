@@ -1,8 +1,14 @@
 import { createRequire } from "node:module";
+import { dirname, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
+const currentDir = dirname(fileURLToPath(import.meta.url));
+const contractPath = currentDir.endsWith(`${sep}src${sep}schema`)
+  ? resolve(currentDir, "../../dist/contracts/skill-fingerprint/index.cjs")
+  : resolve(currentDir, "../contracts/skill-fingerprint/index.cjs");
 
-const contract = require("../../../contracts/skill-fingerprint/index.js");
+const contract = require(contractPath);
 
 export const TEXT_FILE_EXTENSIONS = contract.TEXT_FILE_EXTENSIONS as readonly string[];
 export const TEXT_FILE_EXTENSION_SET = contract.TEXT_FILE_EXTENSION_SET as ReadonlySet<string>;

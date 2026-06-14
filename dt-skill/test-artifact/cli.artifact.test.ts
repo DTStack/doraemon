@@ -1,7 +1,7 @@
 /* @vitest-environment node */
 
 import { spawnSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -54,9 +54,30 @@ describe('built CLI artifact', () => {
         expect(result.stdout).toContain('dt-skill CLI');
     });
 
-    it('publishes a local code plugin in dry-run json mode from built output', async () => {
+    it('loads the fingerprint contract from the built package', async () => {
+        const isolatedPackage = await makeTmpDir('clawhub-artifact-package-');
+        await cp(join(packageRoot, 'bin'), join(isolatedPackage, 'bin'), { recursive: true });
+        await cp(join(packageRoot, 'dist'), join(isolatedPackage, 'dist'), { recursive: true });
+        await cp(join(packageRoot, 'package.json'), join(isolatedPackage, 'package.json'));
+
+        const result = spawnSync(
+            'node',
+            [
+                '--input-type=module',
+                '--eval',
+                `import('${join(isolatedPackage, 'dist/schema/skillFingerprintContract.js').replaceAll('\\', '\\\\')}')`,
+            ],
+            { encoding: 'utf8' }
+        );
+
+        expect(result.status).toBe(0);
+        expect(result.stderr).toBe('');
+    });
+
+    it('packs a local code plugin in json mode from built output', async () => {
         const root = await makeTmpDir('clawhub-artifact-');
         const pluginDir = join(root, 'demo-plugin');
+        const packDestination = join(root, 'packs');
         await mkdir(join(pluginDir, 'src'), { recursive: true });
         await writeFile(
             join(pluginDir, 'package.json'),
@@ -107,25 +128,22 @@ describe('built CLI artifact', () => {
             [
                 binPath,
                 'package',
-                'publish',
+                'pack',
                 pluginDir,
-                '--dry-run',
                 '--json',
-                '--registry',
-                'https://clawhub.ai',
-                '--site',
-                'https://clawhub.ai',
+                '--pack-destination',
+                packDestination,
             ],
             { NPM_CONFIG_CACHE: join(root, '.npm-cache') }
         );
 
-        expect(result.status).toBe(0);
+        expect(result.status, result.stderr || result.stdout).toBe(0);
         expect(result.stderr).toBe('');
         const output = JSON.parse(result.stdout.trim()) as Record<string, unknown>;
         expect(output.name).toBe('@openclaw/demo-plugin');
-        expect(output.family).toBe('code-plugin');
         expect(output.version).toBe('1.0.0');
-        expect(output.commit).toBeTypeOf('string');
+        expect(output.path).toBeTypeOf('string');
+        expect(output.sha256).toBeTypeOf('string');
     });
 
     it('keeps the built dist free of compiled test files', async () => {

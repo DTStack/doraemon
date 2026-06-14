@@ -1,6 +1,6 @@
 {
   "name": "dt-skill",
-  "version": "0.18.2",
+  "version": "0.18.3",
   "description": "ClawHub CLI \\u2014 install, update, search, and publish skills plus OpenClaw packages.",
   "homepage": "https://clawhub.ai",
   "bugs": {
@@ -31,7 +31,7 @@
     "prepublishOnly": "npm run build",
     "test": "bun run test:src",
     "test:artifact": "bun run build && vitest run -c vitest.artifact.config.ts",
-    "test:src": "vitest run -c vitest.config.ts",
+    "test:src": "node ./scripts/build.mjs && vitest run -c vitest.config.ts",
     "verify": "bun run test:src && bun run verify:build && bun run test:artifact",
     "verify:build": "tsc -p tsconfig.json --noEmit"
   },
