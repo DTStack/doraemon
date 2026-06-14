@@ -2,9 +2,7 @@
 
 import * as fsPromises from "node:fs/promises";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  createAuthTokenModuleMocks,
-  createHttpModuleMocks,
+import {  createHttpModuleMocks,
   createRegistryModuleMocks,
   createUiModuleMocks,
   makeGlobalOpts,
@@ -30,13 +28,11 @@ vi.mock("node:fs/promises", async () => {
 const mocked = <T>(value: T) => value as T & Record<string, unknown>;
 Object.assign(vi as object, { mocked });
 
-const authTokenMocks = createAuthTokenModuleMocks();
 const registryMocks = createRegistryModuleMocks();
 const httpMocks = createHttpModuleMocks();
 const uiMocks = createUiModuleMocks();
 const mockApiRequest = httpMocks.apiRequest;
 const mockDownloadZip = httpMocks.downloadZip;
-const mockGetOptionalAuthToken = authTokenMocks.getOptionalAuthToken;
 const mockSpinner = uiMocks.spinner;
 const mockIsInteractive = vi.fn(() => false);
 const mockPromptConfirm = vi.fn(async () => false);
@@ -47,7 +43,6 @@ const mockSearchMultiselect = vi.fn();
 
 vi.mock("../../http.js", () => httpMocks.moduleFactory());
 vi.mock("../registry.js", () => registryMocks.moduleFactory());
-vi.mock("../authToken.js", () => authTokenMocks.moduleFactory());
 vi.mock("../ui.js", () => ({
   createSpinner: vi.fn(() => mockSpinner),
   fail: (message: string) => uiMocks.fail(message),
@@ -97,7 +92,6 @@ beforeEach(() => {
   readSkillOriginMock.mockResolvedValue(null);
   writeLockfileMock.mockResolvedValue(undefined);
   writeSkillOriginMock.mockResolvedValue(undefined);
-  mockGetOptionalAuthToken.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -116,7 +110,6 @@ afterAll(() => {
 
 describe("cmdInstall with packages", () => {
   it("installs single non-package skill directly", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue("tkn");
     mockApiRequest.mockResolvedValue({
       skill: {
         slug: "single-skill",
@@ -143,7 +136,6 @@ describe("cmdInstall with packages", () => {
   });
 
   it("installs multiple skills in batch", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue("tkn");
     mockApiRequest.mockImplementation(async (_registry, request) => {
       const slug = (request as any).path?.split("/").pop();
       return {
@@ -162,7 +154,6 @@ describe("cmdInstall with packages", () => {
   });
 
   it("installs skill when latestVersion is null", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue("tkn");
     mockApiRequest.mockResolvedValue({
       skill: {
         slug: "no-version-skill",
@@ -189,7 +180,6 @@ describe("cmdInstall with packages", () => {
   });
 
   it("continues batch install when one skill fails", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue("tkn");
     let callCount = 0;
     mockApiRequest.mockImplementation(async (_registry, request) => {
       callCount++;
@@ -213,7 +203,6 @@ describe("cmdInstall with packages", () => {
   });
 
   it("continues batch install when fail() is triggered for one skill", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue("tkn");
     mockApiRequest.mockImplementation(async (_registry, request) => {
       const slug = (request as any).path?.split("/").pop();
       return {
@@ -343,7 +332,6 @@ describe("cmdInstall with packages", () => {
       workdir: "/mock/.claude",
       dir: "/mock/.claude/skills",
     });
-    mockGetOptionalAuthToken.mockResolvedValue("tkn");
     mockApiRequest.mockImplementation(async (_registry, request) => {
       const slug = (request as any).path?.split("/").pop();
       return {

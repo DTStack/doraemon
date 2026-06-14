@@ -54,7 +54,7 @@ describe("registry resolution", () => {
   });
 
   it("ignores legacy registry and updates cache from discovery", async () => {
-    readGlobalConfig.mockResolvedValue({ registry: "https://auth.clawdhub.com", token: "tkn" });
+    readGlobalConfig.mockResolvedValue({ registry: "https://auth.clawdhub.com" });
     discoverRegistryFromSite.mockResolvedValue({ apiBase: "http://10.0.0.8:7001" });
 
     const registry = await getRegistry(makeOpts({ site: "http://10.0.0.8:7001" }), { cache: true });
@@ -62,12 +62,11 @@ describe("registry resolution", () => {
     expect(registry).toBe("http://10.0.0.8:7001");
     expect(writeGlobalConfig).toHaveBeenCalledWith({
       registry: "http://10.0.0.8:7001",
-      token: "tkn",
     });
   });
 
   it("fails clearly when no explicit, cached, or discoverable registry exists", async () => {
-    readGlobalConfig.mockResolvedValue({ registry: "https://registry.clawhub.ai", token: "tkn" });
+    readGlobalConfig.mockResolvedValue({ registry: "https://registry.clawhub.ai" });
     discoverRegistryFromSite.mockResolvedValue(null);
 
     await expect(getRegistry(makeOpts(), { cache: true })).rejects.toThrow(
@@ -87,7 +86,6 @@ describe("registry resolution", () => {
     expect(registry).toBe("http://10.0.0.8:7001");
     expect(writeGlobalConfig).toHaveBeenCalledWith({
       registry: "http://10.0.0.8:7001",
-      token: undefined,
     });
   });
 });

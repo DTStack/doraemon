@@ -66,7 +66,6 @@ export async function writeGlobalConfig(config: GlobalConfig) {
   await mkdir(dir, { recursive: true, mode: 0o700 });
 
   // Write file with restricted permissions (owner read/write only)
-  // This protects API tokens from being read by other users
   await writeFile(path, `${JSON.stringify(config, null, 2)}\n`, {
     encoding: "utf8",
     mode: 0o600,

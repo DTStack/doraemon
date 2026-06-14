@@ -736,16 +736,3 @@ export const ApiV1PackageTrustedPublisherResponseSchema = type({
 });
 export type ApiV1PackageTrustedPublisherResponse =
   (typeof ApiV1PackageTrustedPublisherResponseSchema)[inferred];
-
-export const PublishTokenMintRequestSchema = type({
-  packageName: "string",
-  version: "string",
-  githubOidcToken: "string",
-});
-export type PublishTokenMintRequest = (typeof PublishTokenMintRequestSchema)[inferred];
-
-export const ApiV1PublishTokenMintResponseSchema = type({
-  token: "string",
-  expiresAt: "number",
-});
-export type ApiV1PublishTokenMintResponse = (typeof ApiV1PublishTokenMintResponseSchema)[inferred];

@@ -34,7 +34,6 @@ describe("discovery", () => {
     );
     await expect(discoverRegistryFromSite("https://example.com")).resolves.toEqual({
       apiBase: "https://example.convex.site",
-      authBase: undefined,
       minCliVersion: undefined,
     });
   });
@@ -47,7 +46,6 @@ describe("discovery", () => {
           new Response(
             JSON.stringify({
               apiBase: "https://api.example.com",
-              authBase: "https://auth.example.com",
               minCliVersion: "1.2.3",
             }),
             {
@@ -59,7 +57,6 @@ describe("discovery", () => {
     );
     await expect(discoverRegistryFromSite("https://example.com")).resolves.toEqual({
       apiBase: "https://api.example.com",
-      authBase: "https://auth.example.com",
       minCliVersion: "1.2.3",
     });
   });

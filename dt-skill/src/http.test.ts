@@ -2,7 +2,6 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { createHttpClient, detectHttpRuntime, registryUrl, shouldUseProxyFromEnv } from "./http.js";
-import { ApiV1WhoamiResponseSchema } from "./schema/index.js";
 
 function createNodeClient(options?: {
   fetchImpl?: typeof fetch;
@@ -102,22 +101,21 @@ describe("registryUrl", () => {
 });
 
 describe("node http client", () => {
-  it("adds bearer token and parses json", async () => {
+  it("parses json without adding authorization", async () => {
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ user: { handle: null } }),
     });
     const client = createNodeClient({ fetchImpl: fetchImpl as unknown as typeof fetch });
 
-    const result = await client.apiRequest(
-      "https://example.com",
-      { method: "GET", path: "/x", token: "clh_token" },
-      ApiV1WhoamiResponseSchema,
-    );
+    const result = await client.apiRequest<{ user: { handle: null } }>("https://example.com", {
+      method: "GET",
+      path: "/x",
+    });
 
     expect(result.user.handle).toBeNull();
     const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
-    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer clh_token");
+    expect((init.headers as Record<string, string>).Authorization).toBeUndefined();
   });
 
   it("posts json body", async () => {
@@ -289,7 +287,7 @@ describe("node http client", () => {
 
     await expect(
       client.apiRequest("https://example.com", { method: "GET", path: "/auth" }),
-    ).rejects.toThrow(/clawhub login.*deleted, banned, or disabled/i);
+    ).rejects.toThrow(/authentication required/i);
     await expect(
       client.apiRequest("https://example.com", { method: "GET", path: "/forbidden" }),
     ).rejects.toThrow(/account does not have access.*not in good standing/i);
@@ -315,7 +313,6 @@ describe("node http client", () => {
     const bytes = await client.downloadZip("https://example.com", {
       slug: "demo",
       version: "1.0.0",
-      token: "clh_token",
     });
     expect(Array.from(bytes)).toEqual([1, 2, 3]);
 
@@ -366,13 +363,12 @@ describe("node http client", () => {
     const result = await successClient.apiRequestForm("https://example.com", {
       method: "POST",
       path: "/upload",
-      token: "clh_token",
       form,
     });
     expect(result).toEqual({ ok: true });
     const [, init] = successFetch.mock.calls[0] as [string, RequestInit];
     expect(init.body).toBe(form);
-    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer clh_token");
+    expect((init.headers as Record<string, string>).Authorization).toBeUndefined();
 
     const rateLimitedFetch = vi.fn().mockResolvedValue({
       ok: false,

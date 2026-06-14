@@ -4,23 +4,19 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  createAuthTokenModuleMocks,
-  createHttpModuleMocks,
+import {  createHttpModuleMocks,
   createRegistryModuleMocks,
   createUiModuleMocks,
   makeGlobalOpts,
 } from "../../../test/cliCommandTestKit.js";
 import { MAX_CLAWSCAN_NOTE_CHARS } from "../../schema/index.js";
 
-const authTokenMocks = createAuthTokenModuleMocks();
 const registryMocks = createRegistryModuleMocks();
 const httpMocks = createHttpModuleMocks();
 const uiMocks = createUiModuleMocks({ interactive: true });
 
 const mockSearchMultiselect = vi.fn();
 
-vi.mock("../authToken.js", () => authTokenMocks.moduleFactory());
 vi.mock("../registry.js", () => registryMocks.moduleFactory());
 vi.mock("../../http.js", () => httpMocks.moduleFactory());
 vi.mock("../ui.js", () => uiMocks.moduleFactory());
@@ -79,7 +75,6 @@ describe("cmdPublish", () => {
         return req?.path === "/api/v1/skills";
       });
       if (!publishCall) throw new Error("Missing publish call");
-      expect(authTokenMocks.requireAuthToken).not.toHaveBeenCalled();
       expect(publishCall[1]).not.toHaveProperty("token");
       const publishForm = (publishCall[1] as { form?: FormData }).form as FormData;
       const payloadEntry = publishForm.get("payload");
@@ -246,7 +241,6 @@ describe("cmdPublish", () => {
       ).rejects.toThrow(
         'This looks like a plugin. Use "clawhub package publish <source>" instead.',
       );
-      expect(authTokenMocks.requireAuthToken).not.toHaveBeenCalled();
       expect(httpMocks.apiRequestForm).not.toHaveBeenCalled();
     } finally {
       await rm(workdir, { recursive: true, force: true });

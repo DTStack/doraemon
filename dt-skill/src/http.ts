@@ -35,23 +35,21 @@ type RequestArgs =
   | {
       method: "GET" | "POST" | "DELETE";
       path: string;
-      token?: string;
       body?: unknown;
       retryCount?: number;
     }
   | {
       method: "GET" | "POST" | "DELETE";
       url: string;
-      token?: string;
       body?: unknown;
       retryCount?: number;
     };
 
 type FormRequestArgs =
-  | { method: "POST"; path: string; token?: string; form: FormData; retryCount?: number }
-  | { method: "POST"; url: string; token?: string; form: FormData; retryCount?: number };
+  | { method: "POST"; path: string; form: FormData; retryCount?: number }
+  | { method: "POST"; url: string; form: FormData; retryCount?: number };
 
-type TextRequestArgs = { path: string; token?: string } | { url: string; token?: string };
+type TextRequestArgs = { path: string } | { url: string };
 
 type HeaderSource = Headers | Record<string, string> | null | undefined;
 
@@ -93,7 +91,7 @@ type HttpClient = {
   fetchBinary(registry: string, args: TextRequestArgs): Promise<Uint8Array>;
   downloadZip(
     registry: string,
-    args: { slug: string; version?: string; token?: string },
+    args: { slug: string; version?: string },
   ): Promise<Uint8Array>;
 };
 
@@ -162,7 +160,6 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
       }
 
       const headers: Record<string, string> = { Accept: "application/json" };
-      if (args.token) headers.Authorization = `Bearer ${args.token}`;
       let body: string | undefined;
       if (args.body !== undefined || args.method === "POST") {
         headers["Content-Type"] = "application/json";
@@ -199,7 +196,6 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
       }
 
       const headers: Record<string, string> = { Accept: "application/json" };
-      if (args.token) headers.Authorization = `Bearer ${args.token}`;
       const response = await fetchWithTimeout(
         deps,
         url,
@@ -228,11 +224,10 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
     const url = "url" in args ? args.url : registryUrl(args.path, registry).toString();
     return await runWithRetries(async () => {
       if (deps.runtime === "bun") {
-        return await fetchTextViaCurl(deps, url, args);
+        return await fetchTextViaCurl(deps, url);
       }
 
       const headers: Record<string, string> = { Accept: "text/plain" };
-      if (args.token) headers.Authorization = `Bearer ${args.token}`;
       const response = await fetchWithTimeout(deps, url, { method: "GET", headers });
       const text = await response.text();
       if (!response.ok) {
@@ -246,11 +241,10 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
     const url = "url" in args ? args.url : registryUrl(args.path, registry).toString();
     return await runWithRetries(async () => {
       if (deps.runtime === "bun") {
-        return await fetchBinaryViaCurl(deps, url, args.token);
+        return await fetchBinaryViaCurl(deps, url);
       }
 
       const headers: Record<string, string> = {};
-      if (args.token) headers.Authorization = `Bearer ${args.token}`;
       const response = await fetchWithTimeout(deps, url, { method: "GET", headers });
       if (!response.ok) {
         throwHttpStatusError(
@@ -266,18 +260,17 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
 
   async function downloadZipRequest(
     registry: string,
-    args: { slug: string; version?: string; token?: string },
+    args: { slug: string; version?: string },
   ) {
     const url = registryUrl(ApiRoutes.download, registry);
     url.searchParams.set("slug", args.slug);
     if (args.version) url.searchParams.set("version", args.version);
     return await runWithRetries(async () => {
       if (deps.runtime === "bun") {
-        return await fetchBinaryViaCurl(deps, url.toString(), args.token);
+        return await fetchBinaryViaCurl(deps, url.toString());
       }
 
       const headers: Record<string, string> = {};
-      if (args.token) headers.Authorization = `Bearer ${args.token}`;
       const response = await fetchWithTimeout(deps, url.toString(), { method: "GET", headers });
       if (!response.ok) {
         throwHttpStatusError(
@@ -363,7 +356,7 @@ export async function fetchBinary(registry: string, args: TextRequestArgs): Prom
 
 export async function downloadZip(
   registry: string,
-  args: { slug: string; version?: string; token?: string },
+  args: { slug: string; version?: string },
 ) {
   return await defaultHttpClient.downloadZip(registry, args);
 }
@@ -490,7 +483,7 @@ function normalizeHttpErrorBody(status: number, text: string): string {
     return body;
   }
   if (status === 401) {
-    return "Authentication failed. Run `clawhub login` again. Deleted, banned, or disabled ClawHub accounts cannot use API tokens.";
+    return "Authentication required for this operation.";
   }
   if (status === 403) {
     return "Permission denied. This account does not have access to this operation, or the account is not in good standing.";
@@ -588,7 +581,6 @@ async function fetchJsonViaCurl(
   args: RequestArgs,
 ) {
   const headers = ["-H", "Accept: application/json"];
-  if (args.token) headers.push("-H", `Authorization: Bearer ${args.token}`);
   const curlArgs = [
     "--silent",
     "--show-error",
@@ -633,7 +625,6 @@ async function fetchJsonFormViaCurl(
   args: FormRequestArgs,
 ) {
   const headers = ["-H", "Accept: application/json"];
-  if (args.token) headers.push("-H", `Authorization: Bearer ${args.token}`);
 
   const tempDir = await deps.mkdtempImpl(join(deps.tmpdirPath, "clawhub-upload-"));
   try {
@@ -683,10 +674,8 @@ async function fetchJsonFormViaCurl(
 async function fetchTextViaCurl(
   deps: Pick<HttpClientDeps, "spawnSyncImpl" | "now">,
   url: string,
-  args: { token?: string },
 ) {
   const headers = ["-H", "Accept: text/plain"];
-  if (args.token) headers.push("-H", `Authorization: Bearer ${args.token}`);
   const curlArgs = [
     "--silent",
     "--show-error",
@@ -717,13 +706,11 @@ async function fetchBinaryViaCurl(
     "spawnSyncImpl" | "mkdtempImpl" | "readFileImpl" | "rmImpl" | "tmpdirPath" | "now"
   >,
   url: string,
-  token?: string,
 ) {
   const tempDir = await deps.mkdtempImpl(join(deps.tmpdirPath, "clawhub-download-"));
   const filePath = join(tempDir, "payload.bin");
   try {
     const headers: string[] = [];
-    if (token) headers.push("-H", `Authorization: Bearer ${token}`);
 
     const curlArgs = [
       "--silent",

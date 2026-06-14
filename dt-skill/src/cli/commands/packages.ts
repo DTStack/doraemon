@@ -1,58 +1,33 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
-import ignore from "ignore";
-import mime from "mime";
 import semver from "semver";
 import { parseClawPack } from "../../clawpack.js";
-import { apiRequest, apiRequestForm, fetchBinary, fetchText, registryUrl } from "../../http.js";
+import { apiRequest, fetchBinary, fetchText, registryUrl } from "../../http.js";
 import {
   ApiRoutes,
-  ApiV1DeleteResponseSchema,
   ApiV1PackageArtifactResponseSchema,
   ApiV1PackageListResponseSchema,
-  ApiV1PackageModerationStatusResponseSchema,
-  ApiV1PackagePublishResponseSchema,
   ApiV1PackageReadinessResponseSchema,
-  ApiV1PackageReportResponseSchema,
   ApiV1PackageResponseSchema,
   ApiV1PackageSearchResponseSchema,
-  ApiV1PackageTransferResponseSchema,
-  ApiV1PackageTrustedPublisherResponseSchema,
   ApiV1PackageVersionListResponseSchema,
   ApiV1PackageVersionResponseSchema,
-  ApiV1PublishTokenMintResponseSchema,
-  normalizeClawScanNote,
-  normalizeOpenClawExternalPluginCompatibility,
   type PackageArtifactSummary,
   type PackageCapabilitySummary,
   type PackageCompatibility,
   type PackageFamily,
-  type PackageTrustedPublisher,
   type PackageVerificationSummary,
   validateOpenClawExternalCodePluginPackageContents,
   validateOpenClawExternalCodePluginPackageJson,
 } from "../../schema/index.js";
-import { getOptionalAuthToken, requireAuthToken } from "../authToken.js";
 import { getRegistry } from "../registry.js";
-import { titleCase } from "../slug.js";
 import type { GlobalOpts } from "../types.js";
-import { createSpinner, fail, formatError, isInteractive, promptConfirm } from "../ui.js";
-import {
-  fetchGitHubSource,
-  normalizeGitHubRepo,
-  resolveLocalGitInfo,
-  resolveSourceInput,
-} from "./github.js";
+import { createSpinner, fail, formatError } from "../ui.js";
+import { resolveSourceInput } from "./github.js";
 
-const DOT_DIR = ".clawhub";
-const LEGACY_DOT_DIR = ".clawdhub";
-const DOT_IGNORE = ".clawhubignore";
-const LEGACY_DOT_IGNORE = ".clawdhubignore";
 const MAX_CLAWPACK_BYTES = 120 * 1024 * 1024;
-const PACKAGE_PUBLISH_RETRY_COUNT = 5;
 
 type PackageInspectOptions = {
   version?: string;
@@ -85,26 +60,6 @@ type PackageExploreOptions = {
   json?: boolean;
 };
 
-type PackagePublishOptions = {
-  family?: "code-plugin" | "bundle-plugin";
-  name?: string;
-  displayName?: string;
-  owner?: string;
-  version?: string;
-  changelog?: string;
-  clawscanNote?: string;
-  manualOverrideReason?: string;
-  tags?: string;
-  bundleFormat?: string;
-  hostTargets?: string;
-  sourceRepo?: string;
-  sourceCommit?: string;
-  sourceRef?: string;
-  sourcePath?: string;
-  dryRun?: boolean;
-  json?: boolean;
-};
-
 type PackagePackOptions = {
   packDestination?: string;
   json?: boolean;
@@ -128,91 +83,16 @@ type PackageVerifyOptions = {
   json?: boolean;
 };
 
-type PackageReportOptions = {
-  version?: string;
-  reason?: string;
-  json?: boolean;
-};
-
-type PackageModerationStatusOptions = {
-  json?: boolean;
-};
-
 type PackageReadinessOptions = {
   json?: boolean;
 };
 
 type PackageMigrationStatusOptions = PackageReadinessOptions;
 
-type PackageTrustedPublisherGetOptions = {
-  json?: boolean;
-};
-
-type PackageDeleteOptions = {
-  yes?: boolean;
-  json?: boolean;
-};
-
-type PackageUndeleteOptions = PackageDeleteOptions;
-
-type PackageTransferOptions = {
-  to: string;
-  reason?: string;
-  json?: boolean;
-};
-
 type PackageFile = {
   relPath: string;
   bytes: Uint8Array;
   contentType?: string;
-};
-
-type InferredPublishSource = {
-  repo?: string;
-  commit?: string;
-  ref?: string;
-  path?: string;
-  url?: string;
-};
-
-type PackagePublishSource = ReturnType<typeof buildSource>;
-
-type PackagePublishPayload = {
-  name: string;
-  displayName: string;
-  ownerHandle?: string;
-  family: "code-plugin" | "bundle-plugin";
-  version: string;
-  changelog: string;
-  clawScanNote?: string;
-  manualOverrideReason?: string;
-  tags: string[];
-  source?: NonNullable<PackagePublishSource>;
-  bundle?: {
-    format?: string;
-    hostTargets: string[];
-  };
-};
-
-type PackagePublishPlan = {
-  folder: string;
-  cleanup?: () => Promise<void>;
-  filesOnDisk: PackageFile[];
-  clawpackOnDisk?: PackageFile;
-  packageJson?: unknown;
-  payload: PackagePublishPayload;
-  compatibility?: PackageCompatibility;
-  sourceLabel: string;
-  output: {
-    source: string;
-    name: string;
-    displayName: string;
-    family: "code-plugin" | "bundle-plugin";
-    version: string;
-    commit?: string;
-    files: number;
-    totalBytes: number;
-  };
 };
 
 type PackedClawPack = {
@@ -261,7 +141,6 @@ export async function cmdExplorePackages(
   options: PackageExploreOptions = {},
 ) {
   const trimmedQuery = query.trim();
-  const token = await getOptionalAuthToken();
   const registry = await getRegistry(opts, { cache: true });
   const spinner = createSpinner(trimmedQuery ? "Searching packages" : "Listing packages");
   try {
@@ -278,7 +157,7 @@ export async function cmdExplorePackages(
       appendPackageExploreFilters(url, options);
       const result = await apiRequest(
         registry,
-        { method: "GET", url: url.toString(), token },
+        { method: "GET", url: url.toString() },
         ApiV1PackageSearchResponseSchema,
       );
       spinner.stop();
@@ -312,7 +191,7 @@ export async function cmdExplorePackages(
     appendPackageExploreFilters(url, options);
     const result = await apiRequest(
       registry,
-      { method: "GET", url: url.toString(), token },
+      { method: "GET", url: url.toString() },
       ApiV1PackageListResponseSchema,
     );
     spinner.stop();
@@ -340,12 +219,10 @@ export async function cmdInspectPackage(
 ) {
   const trimmed = normalizePackageNameOrFail(packageName);
   if (options.version && options.tag) fail("Use either --version or --tag");
-
-  const token = await getOptionalAuthToken();
   const registry = await getRegistry(opts, { cache: true });
   const spinner = createSpinner("Fetching package");
   try {
-    const detail = await apiRequestPackageDetail(registry, trimmed, token);
+    const detail = await apiRequestPackageDetail(registry, trimmed);
     if (!detail.package) {
       spinner.fail("Package not found");
       return;
@@ -365,14 +242,14 @@ export async function cmdInspectPackage(
       const targetVersion = requestedVersion ?? latestVersion;
       if (!targetVersion) fail("Could not resolve latest version");
       spinner.text = `Fetching ${trimmed}@${targetVersion}`;
-      versionResult = await apiRequestPackageVersion(registry, trimmed, targetVersion, token);
+      versionResult = await apiRequestPackageVersion(registry, trimmed, targetVersion);
     }
 
     let versionsList: Awaited<ReturnType<typeof apiRequestPackageVersions>> | null = null;
     if (options.versions) {
       const limit = clampLimit(options.limit ?? 25, 100);
       spinner.text = `Fetching versions (${limit})`;
-      versionsList = await apiRequestPackageVersions(registry, trimmed, limit, token);
+      versionsList = await apiRequestPackageVersions(registry, trimmed, limit);
     }
 
     let fileContent: string | null = null;
@@ -390,7 +267,7 @@ export async function cmdInspectPackage(
         url.searchParams.set("version", latestVersion);
       }
       spinner.text = `Fetching ${options.file}`;
-      fileContent = await fetchText(registry, { url: url.toString(), token });
+      fileContent = await fetchText(registry, { url: url.toString() });
     }
 
     spinner.stop();
@@ -456,33 +333,6 @@ export async function cmdInspectPackage(
       process.stdout.write(fileContent);
       if (!fileContent.endsWith("\n")) process.stdout.write("\n");
     }
-  } catch (error) {
-    spinner.fail(formatError(error));
-    throw error;
-  }
-}
-
-export async function cmdGetPackageTrustedPublisher(
-  opts: GlobalOpts,
-  packageName: string,
-  options: PackageTrustedPublisherGetOptions = {},
-) {
-  const trimmed = normalizePackageNameOrFail(packageName);
-  const token = await getOptionalAuthToken();
-  const registry = await getRegistry(opts, { cache: true });
-  const spinner = createSpinner("Fetching trusted publisher");
-  try {
-    const result = await apiRequestPackageTrustedPublisher(registry, trimmed, token);
-    spinner.stop();
-    if (options.json) {
-      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-      return;
-    }
-    if (!result.trustedPublisher) {
-      console.log("No trusted publisher configured.");
-      return;
-    }
-    printTrustedPublisher(result.trustedPublisher);
   } catch (error) {
     spinner.fail(formatError(error));
     throw error;
@@ -615,112 +465,6 @@ async function createClawPackFromFolder(options: {
   };
 }
 
-export async function cmdPublishPackage(
-  opts: GlobalOpts,
-  sourceArg: string,
-  options: PackagePublishOptions = {},
-) {
-  if (!sourceArg?.trim()) fail("Path required");
-
-  let plan: PackagePublishPlan | undefined;
-  try {
-    plan = await preparePackagePublishPlan(opts, sourceArg, options);
-
-    if (options.dryRun) {
-      if (options.json) {
-        process.stdout.write(`${JSON.stringify(plan.output, null, 2)}\n`);
-      } else {
-        printPackageDryRun({
-          source: plan.sourceLabel,
-          family: plan.payload.family,
-          name: plan.payload.name,
-          displayName: plan.payload.displayName,
-          version: plan.payload.version,
-          commit: plan.payload.source?.commit,
-          compatibility: plan.compatibility,
-          tags: plan.payload.tags,
-          files: plan.filesOnDisk,
-        });
-      }
-      return;
-    }
-
-    if (plan.payload.family === "code-plugin") {
-      const validation = validateOpenClawExternalCodePluginPackageContents(
-        plan.packageJson,
-        plan.filesOnDisk.map((file) => file.relPath),
-      );
-      if (validation.issues.length > 0) {
-        fail(validation.issues.map((issue) => issue.message).join(" "));
-      }
-    }
-
-    const registry = await getRegistry(opts, { cache: true });
-    const spinner = options.json
-      ? null
-      : createSpinner(`Preparing ${plan.payload.name}@${plan.payload.version}`);
-    try {
-      const publishToken = await resolvePackagePublishToken({
-        registry,
-        packageName: plan.payload.name,
-        version: plan.payload.version,
-        manualOverrideReason: plan.payload.manualOverrideReason,
-        spinner,
-      });
-      const form = new FormData();
-      form.set("payload", JSON.stringify(plan.payload));
-
-      if (plan.clawpackOnDisk) {
-        if (spinner) spinner.text = `Uploading ${plan.clawpackOnDisk.relPath}`;
-        const blob = new Blob([Buffer.from(plan.clawpackOnDisk.bytes)], {
-          type: "application/octet-stream",
-        });
-        form.append("clawpack", blob, plan.clawpackOnDisk.relPath);
-      } else {
-        let index = 0;
-        for (const file of plan.filesOnDisk) {
-          index += 1;
-          if (spinner) {
-            spinner.text = `Uploading ${file.relPath} (${index}/${plan.filesOnDisk.length})`;
-          }
-          const blob = new Blob([Buffer.from(file.bytes)], {
-            type: file.contentType ?? "application/octet-stream",
-          });
-          form.append("files", blob, file.relPath);
-        }
-      }
-
-      if (spinner) spinner.text = `Publishing ${plan.payload.name}@${plan.payload.version}`;
-      const result = await apiRequestForm(
-        registry,
-        {
-          method: "POST",
-          path: ApiRoutes.packages,
-          token: publishToken,
-          form,
-          retryCount: PACKAGE_PUBLISH_RETRY_COUNT,
-        },
-        ApiV1PackagePublishResponseSchema,
-      );
-
-      if (options.json) {
-        process.stdout.write(
-          `${JSON.stringify({ ...plan.output, releaseId: result.releaseId }, null, 2)}\n`,
-        );
-      } else {
-        spinner?.succeed(
-          `OK. Published ${plan.payload.name}@${plan.payload.version} (${result.releaseId})`,
-        );
-      }
-    } catch (error) {
-      spinner?.fail(formatError(error));
-      throw error;
-    }
-  } finally {
-    await plan?.cleanup?.();
-  }
-}
-
 export async function cmdDownloadPackage(
   opts: GlobalOpts,
   packageName: string,
@@ -728,22 +472,18 @@ export async function cmdDownloadPackage(
 ) {
   const trimmed = normalizePackageNameOrFail(packageName);
   if (options.version && options.tag) fail("Use either --version or --tag");
-
-  const token = await getOptionalAuthToken();
   const registry = await getRegistry(opts, { cache: true });
   const spinner = options.json ? null : createSpinner("Resolving package artifact");
   try {
     const targetVersion = await resolvePackageVersion(registry, trimmed, {
-      token,
       version: options.version,
       tag: options.tag,
     });
     spinnerText(spinner, `Resolving ${trimmed}@${targetVersion}`);
-    const artifactResult = await apiRequestPackageArtifact(registry, trimmed, targetVersion, token);
+    const artifactResult = await apiRequestPackageArtifact(registry, trimmed, targetVersion);
     spinnerText(spinner, `Downloading ${trimmed}@${targetVersion}`);
     const bytes = await fetchBinary(registry, {
       url: artifactResult.artifact.downloadUrl,
-      token,
     });
     const identity = computeArtifactIdentity(bytes);
     validateDownloadedArtifact(trimmed, artifactResult, bytes, identity);
@@ -800,15 +540,13 @@ export async function cmdVerifyPackage(
 
     if (options.packageName?.trim()) {
       const packageName = normalizePackageNameOrFail(options.packageName);
-      const token = await getOptionalAuthToken();
       const registry = await getRegistry(opts, { cache: true });
       spinnerText(spinner, `Resolving ${packageName}`);
       const targetVersion = await resolvePackageVersion(registry, packageName, {
-        token,
         version: options.version,
         tag: options.tag,
       });
-      artifactResult = await apiRequestPackageArtifact(registry, packageName, targetVersion, token);
+      artifactResult = await apiRequestPackageArtifact(registry, packageName, targetVersion);
       validateDownloadedArtifact(packageName, artifactResult, bytes, identity);
     }
 
@@ -858,223 +596,18 @@ export async function cmdVerifyPackage(
   }
 }
 
-export async function cmdDeletePackage(
-  opts: GlobalOpts,
-  nameArg: string,
-  options: PackageDeleteOptions = {},
-  inputAllowed = true,
-) {
-  const name = nameArg.trim();
-  if (!name) fail("Package name required");
-
-  if (!options.yes) {
-    if (!isInteractive() || inputAllowed === false) fail("Pass --yes (no input)");
-    const ok = await promptConfirm(`Delete ${name}? (soft delete package and all releases)`);
-    if (!ok) return undefined;
-  }
-
-  const token = await requireAuthToken();
-  const registry = await getRegistry(opts, { cache: true });
-  const spinner = createSpinner(`Deleting ${name}`);
-  try {
-    const result = await apiRequest(
-      registry,
-      {
-        method: "DELETE",
-        path: `${ApiRoutes.packages}/${encodeURIComponent(name)}`,
-        token,
-      },
-      ApiV1DeleteResponseSchema,
-    );
-    spinner.succeed(`OK. Deleted ${name}`);
-    if (options.json) {
-      console.log(JSON.stringify(result, null, 2));
-    }
-    return result;
-  } catch (error) {
-    spinner.fail(formatError(error));
-    throw error;
-  }
-}
-
-export async function cmdUndeletePackage(
-  opts: GlobalOpts,
-  nameArg: string,
-  options: PackageUndeleteOptions = {},
-  inputAllowed = true,
-) {
-  const name = nameArg.trim();
-  if (!name) fail("Package name required");
-
-  if (!options.yes) {
-    if (!isInteractive() || inputAllowed === false) fail("Pass --yes (no input)");
-    const ok = await promptConfirm(`Restore ${name}? (restore package and releases)`);
-    if (!ok) return undefined;
-  }
-
-  const token = await requireAuthToken();
-  const registry = await getRegistry(opts, { cache: true });
-  const spinner = createSpinner(`Restoring ${name}`);
-  try {
-    const result = await apiRequest(
-      registry,
-      {
-        method: "POST",
-        path: `${ApiRoutes.packages}/${encodeURIComponent(name)}/undelete`,
-        token,
-      },
-      ApiV1DeleteResponseSchema,
-    );
-    spinner.succeed(`OK. Restored ${name}`);
-    if (options.json) {
-      console.log(JSON.stringify(result, null, 2));
-    }
-    return result;
-  } catch (error) {
-    spinner.fail(formatError(error));
-    throw error;
-  }
-}
-
-export async function cmdTransferPackage(
-  opts: GlobalOpts,
-  nameArg: string,
-  options: PackageTransferOptions,
-) {
-  const name = normalizePackageNameOrFail(nameArg);
-  const toOwner = options.to?.trim().replace(/^@+/, "").toLowerCase();
-  if (!toOwner) fail("--to required");
-  const reason = options.reason?.trim();
-
-  const token = await requireAuthToken();
-  const registry = await getRegistry(opts, { cache: true });
-  const spinner = createSpinner(`Transferring ${name} to @${toOwner}`);
-  try {
-    const result = await apiRequest(
-      registry,
-      {
-        method: "POST",
-        path: `${ApiRoutes.packages}/${encodeURIComponent(name)}/transfer`,
-        token,
-        body: {
-          toOwner,
-          ...(reason ? { reason } : {}),
-        },
-      },
-      ApiV1PackageTransferResponseSchema,
-    );
-    spinner.succeed(`OK. Transferred ${name} to @${toOwner}`);
-    if (options.json) {
-      console.log(JSON.stringify(result, null, 2));
-    }
-    return result;
-  } catch (error) {
-    spinner.fail(formatError(error));
-    throw error;
-  }
-}
-
-export async function cmdReportPackage(
-  opts: GlobalOpts,
-  packageName: string,
-  options: PackageReportOptions = {},
-) {
-  const trimmed = normalizePackageNameOrFail(packageName);
-  const reason = options.reason?.trim();
-  const version = options.version?.trim();
-  if (!reason) fail("--reason required");
-
-  const token = await requireAuthToken();
-  const registry = await getRegistry(opts, { cache: true });
-  const spinner = options.json ? null : createSpinner(`Reporting ${trimmed}`);
-  try {
-    const result = await apiRequest(
-      registry,
-      {
-        method: "POST",
-        path: `${ApiRoutes.packages}/${encodeURIComponent(trimmed)}/report`,
-        token,
-        body: {
-          reason,
-          ...(version ? { version } : {}),
-        },
-      },
-      ApiV1PackageReportResponseSchema,
-    );
-    spinner?.stop();
-    if (options.json) {
-      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-      return;
-    }
-    if (result.alreadyReported) {
-      console.log(`Already reported ${trimmed}.`);
-      return;
-    }
-    const versionSuffix = version ? `@${version}` : "";
-    console.log(`OK. Reported ${trimmed}${versionSuffix} for moderator review.`);
-  } catch (error) {
-    spinner?.fail(formatError(error));
-    throw error;
-  }
-}
-
-export async function cmdPackageModerationStatus(
-  opts: GlobalOpts,
-  packageName: string,
-  options: PackageModerationStatusOptions = {},
-) {
-  const trimmed = normalizePackageNameOrFail(packageName);
-  const token = await requireAuthToken();
-  const registry = await getRegistry(opts, { cache: true });
-  const result = await apiRequest(
-    registry,
-    {
-      method: "GET",
-      path: `${ApiRoutes.packages}/${encodeURIComponent(trimmed)}/moderation`,
-      token,
-    },
-    ApiV1PackageModerationStatusResponseSchema,
-  );
-
-  if (options.json) {
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-    return;
-  }
-
-  console.log(`${result.package.name} moderation`);
-  console.log(`  package scan: ${result.package.scanStatus ?? "unknown"}`);
-  console.log(`  open reports: ${result.package.reportCount}`);
-  if (!result.latestRelease) {
-    console.log("  latest release: none");
-    return;
-  }
-  const state = result.latestRelease.moderationState ?? "none";
-  console.log(`  latest: ${result.latestRelease.version}`);
-  console.log(`  release scan: ${result.latestRelease.scanStatus}`);
-  console.log(`  manual state: ${state}`);
-  console.log(`  blocked: ${result.latestRelease.blockedFromDownload ? "yes" : "no"}`);
-  if (result.latestRelease.reasons.length > 0) {
-    console.log(`  reasons: ${result.latestRelease.reasons.join(", ")}`);
-  }
-  if (result.latestRelease.moderationReason) {
-    console.log(`  note: ${result.latestRelease.moderationReason}`);
-  }
-}
-
 export async function cmdPackageReadiness(
   opts: GlobalOpts,
   packageName: string,
   options: PackageReadinessOptions = {},
 ) {
   const trimmed = normalizePackageNameOrFail(packageName);
-  const token = await getOptionalAuthToken();
   const registry = await getRegistry(opts, { cache: true });
   const result = await apiRequest(
     registry,
     {
       method: "GET",
       path: `${ApiRoutes.packages}/${encodeURIComponent(trimmed)}/readiness`,
-      token,
     },
     ApiV1PackageReadinessResponseSchema,
   );
@@ -1099,14 +632,12 @@ export async function cmdPackageMigrationStatus(
   options: PackageMigrationStatusOptions = {},
 ) {
   const trimmed = normalizePackageNameOrFail(packageName);
-  const token = await getOptionalAuthToken();
   const registry = await getRegistry(opts, { cache: true });
   const result = await apiRequest(
     registry,
     {
       method: "GET",
       path: `${ApiRoutes.packages}/${encodeURIComponent(trimmed)}/readiness`,
-      token,
     },
     ApiV1PackageReadinessResponseSchema,
   );
@@ -1128,10 +659,10 @@ export async function cmdPackageMigrationStatus(
   }
 }
 
-async function apiRequestPackageDetail(registry: string, name: string, token?: string) {
+async function apiRequestPackageDetail(registry: string, name: string) {
   return await apiRequest(
     registry,
-    { method: "GET", path: `${ApiRoutes.packages}/${encodeURIComponent(name)}`, token },
+    { method: "GET", path: `${ApiRoutes.packages}/${encodeURIComponent(name)}` },
     ApiV1PackageResponseSchema,
   );
 }
@@ -1140,28 +671,14 @@ async function apiRequestPackageArtifact(
   registry: string,
   name: string,
   version: string,
-  token?: string,
 ) {
   return await apiRequest(
     registry,
     {
       method: "GET",
       path: `${ApiRoutes.packages}/${encodeURIComponent(name)}/versions/${encodeURIComponent(version)}/artifact`,
-      token,
     },
     ApiV1PackageArtifactResponseSchema,
-  );
-}
-
-async function apiRequestPackageTrustedPublisher(registry: string, name: string, token?: string) {
-  return await apiRequest(
-    registry,
-    {
-      method: "GET",
-      path: `${ApiRoutes.packages}/${encodeURIComponent(name)}/trusted-publisher`,
-      token,
-    },
-    ApiV1PackageTrustedPublisherResponseSchema,
   );
 }
 
@@ -1169,14 +686,12 @@ async function apiRequestPackageVersion(
   registry: string,
   name: string,
   version: string,
-  token?: string,
 ) {
   return await apiRequest(
     registry,
     {
       method: "GET",
       path: `${ApiRoutes.packages}/${encodeURIComponent(name)}/versions/${encodeURIComponent(version)}`,
-      token,
     },
     ApiV1PackageVersionResponseSchema,
   );
@@ -1186,13 +701,12 @@ async function apiRequestPackageVersions(
   registry: string,
   name: string,
   limit: number,
-  token?: string,
 ) {
   const url = registryUrl(`${ApiRoutes.packages}/${encodeURIComponent(name)}/versions`, registry);
   url.searchParams.set("limit", String(limit));
   return await apiRequest(
     registry,
-    { method: "GET", url: url.toString(), token },
+    { method: "GET", url: url.toString() },
     ApiV1PackageVersionListResponseSchema,
   );
 }
@@ -1200,10 +714,10 @@ async function apiRequestPackageVersions(
 async function resolvePackageVersion(
   registry: string,
   name: string,
-  args: { token?: string; version?: string; tag?: string },
+  args: { version?: string; tag?: string },
 ) {
   if (args.version?.trim()) return args.version.trim();
-  const detail = await apiRequestPackageDetail(registry, name, args.token);
+  const detail = await apiRequestPackageDetail(registry, name);
   if (!detail.package) fail("Package not found");
   const tags = normalizeTags(detail.package.tags);
   if (args.tag?.trim()) {
@@ -1371,30 +885,12 @@ function printVersionSummary(version: NonNullable<PackageVersionResponse["versio
   if (version.changelog.trim()) console.log(`Changelog: ${truncate(version.changelog, 120)}`);
 }
 
-function printTrustedPublisher(trustedPublisher: PackageTrustedPublisher) {
-  console.log(`Provider: ${trustedPublisher.provider}`);
-  console.log(`Repository: ${trustedPublisher.repository}`);
-  console.log(`Workflow: ${trustedPublisher.workflowFilename}`);
-  if (trustedPublisher.environment) {
-    console.log(`Environment: ${trustedPublisher.environment}`);
-  }
-}
-
 function printCompatibility(compatibility: PackageCompatibility | null | undefined) {
   if (!compatibility) return;
-  const entries = formatCompatibilityEntries(compatibility);
-  if (entries.length > 0) console.log(`Compatibility: ${entries.join(", ")}`);
-}
-
-function formatCompatibilityEntries(compatibility: PackageCompatibility) {
-  return [
-    compatibility.pluginApiRange ? `pluginApi=${compatibility.pluginApiRange}` : null,
-    compatibility.builtWithOpenClawVersion
-      ? `builtWith=${compatibility.builtWithOpenClawVersion}`
-      : null,
-    compatibility.pluginSdkVersion ? `sdk=${compatibility.pluginSdkVersion}` : null,
-    compatibility.minGatewayVersion ? `minGateway=${compatibility.minGatewayVersion}` : null,
-  ].filter(Boolean);
+  const entries = Object.entries(compatibility)
+    .filter(([, value]) => value !== undefined && value !== null)
+    .map(([key, value]) => `${key}=${Array.isArray(value) ? value.join(",") : String(value)}`);
+  if (entries.length > 0) console.log(`Compatibility: ${entries.join("; ")}`);
 }
 
 function printCapabilities(capabilities: PackageCapabilitySummary | null | undefined) {
@@ -1529,547 +1025,8 @@ function assertClawPackSize(size: number, label: string) {
   }
 }
 
-const REAL_BUNDLE_MANIFESTS = [
-  { path: ".codex-plugin/plugin.json", format: "codex" },
-  { path: ".claude-plugin/plugin.json", format: "claude" },
-  { path: ".cursor-plugin/plugin.json", format: "cursor" },
-] as const;
-
-function hasRealBundleMarker(fileSet: Set<string>) {
-  return (
-    REAL_BUNDLE_MANIFESTS.some((marker) => fileSet.has(marker.path)) ||
-    Array.from(fileSet).some(
-      (path) =>
-        path.startsWith("skills/") ||
-        path.startsWith("commands/") ||
-        path.startsWith("agents/") ||
-        path === "hooks/hooks.json" ||
-        path === ".mcp.json" ||
-        path === ".lsp.json" ||
-        path === "settings.json",
-    )
-  );
-}
-
-function detectPackageFamily(
-  fileSet: Set<string>,
-  explicit?: "code-plugin" | "bundle-plugin",
-): "code-plugin" | "bundle-plugin" {
-  if (explicit) return explicit;
-  if (hasRealBundleMarker(fileSet)) return "bundle-plugin";
-  if (fileSet.has("openclaw.plugin.json")) return "code-plugin";
-  return fail("Could not detect package family. Use --family.");
-}
-
-async function readBundleManifestInfo(
-  filesOnDisk: PackageFile[],
-  folder: string,
-  parsedClawpack: ReturnType<typeof parseClawPack> | undefined,
-) {
-  for (const marker of REAL_BUNDLE_MANIFESTS) {
-    const manifest =
-      readJsonEntry(filesOnDisk, marker.path) ??
-      (parsedClawpack ? null : await readJsonFile(join(folder, marker.path)));
-    if (manifest) return { manifest, format: marker.format };
-  }
-  return { manifest: null, format: undefined };
-}
-
-function parseTags(value: string) {
-  return value
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-}
-
-function parseCsv(value: string | undefined) {
-  if (!value) return [];
-  return value
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-}
-
-function applyGitHubSourcePath(
-  source: Awaited<ReturnType<typeof resolveSourceInput>>,
-  sourcePath: string | undefined,
-) {
-  const explicitPath = sourcePath?.trim();
-  if (!explicitPath || source.kind !== "github") return source;
-  return { ...source, path: explicitPath };
-}
-
-async function preparePackagePublishPlan(
-  opts: GlobalOpts,
-  sourceArg: string,
-  options: PackagePublishOptions,
-): Promise<PackagePublishPlan> {
-  const resolvedSource = await resolveSourceInput(sourceArg, {
-    workdir: opts.workdir,
-    localWorkdirs: [process.cwd(), opts.workdir],
-  });
-  const sourceForFetch = applyGitHubSourcePath(resolvedSource, options.sourcePath);
-  let folder = sourceForFetch.kind === "local" ? sourceForFetch.path : "";
-  let cleanup: (() => Promise<void>) | undefined;
-  let inferredSource: InferredPublishSource | undefined;
-  let clawpackOnDisk: PackageFile | undefined;
-  let parsedClawpack: ReturnType<typeof parseClawPack> | undefined;
-  const addCleanup = (next: () => Promise<void>) => {
-    const previous = cleanup;
-    cleanup = async () => {
-      await next();
-      await previous?.();
-    };
-  };
-
-  if (sourceForFetch.kind === "github") {
-    const fetchSpinner = options.json
-      ? null
-      : createSpinner(`Fetching ${sourceForFetch.owner}/${sourceForFetch.repo}`);
-    try {
-      const fetched = await fetchGitHubSource(sourceForFetch);
-      folder = fetched.dir;
-      cleanup = fetched.cleanup;
-      inferredSource = fetched.source;
-      fetchSpinner?.stop();
-    } catch (error) {
-      fetchSpinner?.fail(formatError(error));
-      throw error;
-    }
-  } else {
-    const folderStat = await stat(folder).catch(() => null);
-    if (!folderStat) fail("Path must be a folder or ClawPack .tgz");
-    if (folderStat.isFile()) {
-      if (!folder.endsWith(".tgz")) fail("ClawPack publish files must end in .tgz");
-      const bytes = new Uint8Array(await readFile(folder));
-      assertClawPackSize(bytes.byteLength, basename(folder));
-      parsedClawpack = parseClawPack(bytes);
-      clawpackOnDisk = {
-        relPath: basename(folder),
-        bytes,
-        contentType: "application/octet-stream",
-      };
-    } else if (!folderStat.isDirectory()) {
-      fail("Path must be a folder or ClawPack .tgz");
-    }
-
-    const localGitInfo = folderStat.isDirectory() ? resolveLocalGitInfo(folder) : null;
-    if (localGitInfo) {
-      inferredSource = {
-        repo: localGitInfo.repo,
-        commit: localGitInfo.commit,
-        ref: localGitInfo.ref,
-        path: localGitInfo.path,
-        ...(localGitInfo.repo ? { url: `https://github.com/${localGitInfo.repo}` } : {}),
-      };
-    }
-  }
-
-  let filesOnDisk = parsedClawpack
-    ? parsedClawpack.entries.map((entry) => ({
-        relPath: entry.path,
-        bytes: entry.bytes,
-        contentType: mime.getType(entry.path) ?? "application/octet-stream",
-      }))
-    : await listPackageFiles(folder);
-  if (filesOnDisk.length === 0) fail("No files found");
-
-  const fileSet = new Set(filesOnDisk.map((file) => file.relPath.toLowerCase()));
-  const packageJson =
-    parsedClawpack?.packageJson ?? (await readJsonFile(join(folder, "package.json")));
-  const pluginManifest =
-    readJsonEntry(filesOnDisk, "openclaw.plugin.json") ??
-    (parsedClawpack ? null : await readJsonFile(join(folder, "openclaw.plugin.json")));
-  const bundleManifestInfo = await readBundleManifestInfo(filesOnDisk, folder, parsedClawpack);
-  const bundleManifest = bundleManifestInfo.manifest;
-  const family = detectPackageFamily(fileSet, options.family);
-  const name =
-    options.name?.trim() ||
-    parsedClawpack?.packageName ||
-    packageJsonString(packageJson, "name") ||
-    packageJsonString(pluginManifest, "id") ||
-    packageJsonString(bundleManifest, "id") ||
-    basename(folder).trim().toLowerCase();
-  const displayName =
-    options.displayName?.trim() ||
-    packageJsonString(packageJson, "displayName") ||
-    packageJsonString(pluginManifest, "name") ||
-    packageJsonString(bundleManifest, "name") ||
-    titleCase(basename(folder));
-  const ownerHandle = options.owner?.trim().replace(/^@+/, "");
-  const version =
-    options.version?.trim() ||
-    parsedClawpack?.packageVersion ||
-    packageJsonString(packageJson, "version");
-  const changelog = options.changelog ?? "";
-  let clawScanNote: string | undefined;
-  try {
-    clawScanNote = normalizeClawScanNote(options.clawscanNote);
-  } catch (error) {
-    fail(formatError(error));
-  }
-  const tags = parseTags(options.tags ?? "latest");
-  const source = buildSource(options, inferredSource);
-
-  if (!name) fail("--name required");
-  if (!displayName) fail("--display-name required");
-  if (!version) fail("--version required");
-  if (!fileSet.has("openclaw.plugin.json")) fail("openclaw.plugin.json required");
-  if (family === "code-plugin" && !semver.valid(version)) {
-    fail("--version must be valid semver for code plugins");
-  }
-  if (family === "code-plugin") {
-    if (!fileSet.has("package.json")) fail("package.json required");
-    if (!source) fail("--source-repo and --source-commit required for code plugins");
-    const validation = validateOpenClawExternalCodePluginPackageJson(packageJson);
-    if (validation.issues.length > 0) {
-      fail(validation.issues.map((issue) => issue.message).join(" "));
-    }
-  }
-
-  if (family === "code-plugin" && !clawpackOnDisk) {
-    const packDestination = await mkdtemp(join(tmpdir(), "clawhub-clawpack-"));
-    let packed: PackedClawPack;
-    try {
-      packed = await createClawPackFromFolder({
-        sourcePath: folder,
-        packDestination,
-        cwd: opts.workdir,
-      });
-      if (packed.parsed.packageName !== name) {
-        fail(`ClawPack package name mismatch: expected ${name}, got ${packed.parsed.packageName}`);
-      }
-      if (packed.parsed.packageVersion !== version) {
-        fail(
-          `ClawPack package version mismatch: expected ${version}, got ${packed.parsed.packageVersion}`,
-        );
-      }
-    } catch (error) {
-      await rm(packDestination, { recursive: true, force: true });
-      throw error;
-    }
-    addCleanup(async () => {
-      await rm(packDestination, { recursive: true, force: true });
-    });
-    parsedClawpack = packed.parsed;
-    clawpackOnDisk = packed.file;
-    filesOnDisk = packed.parsed.entries.map((entry) => ({
-      relPath: entry.path,
-      bytes: entry.bytes,
-      contentType: mime.getType(entry.path) ?? "application/octet-stream",
-    }));
-  }
-
-  const payload: PackagePublishPayload = {
-    name,
-    displayName,
-    ...(ownerHandle ? { ownerHandle } : {}),
-    family,
-    version,
-    changelog,
-    ...(clawScanNote ? { clawScanNote } : {}),
-    ...(options.manualOverrideReason?.trim()
-      ? { manualOverrideReason: options.manualOverrideReason.trim() }
-      : {}),
-    tags,
-    ...(source ? { source } : {}),
-    ...(family === "bundle-plugin"
-      ? {
-          bundle: {
-            format: options.bundleFormat?.trim() || bundleManifestInfo.format,
-            hostTargets: parseCsv(options.hostTargets),
-          },
-        }
-      : {}),
-  };
-  const sourceLabel = describePublishSource(sourceForFetch, source, folder);
-
-  return {
-    folder,
-    cleanup,
-    filesOnDisk,
-    clawpackOnDisk,
-    packageJson,
-    payload,
-    compatibility:
-      family === "code-plugin"
-        ? normalizeOpenClawExternalPluginCompatibility(packageJson)
-        : undefined,
-    sourceLabel,
-    output: {
-      source: sourceLabel,
-      name,
-      displayName,
-      family,
-      version,
-      ...(source?.commit ? { commit: source.commit } : {}),
-      files: filesOnDisk.length,
-      totalBytes: clawpackOnDisk
-        ? clawpackOnDisk.bytes.byteLength
-        : filesOnDisk.reduce((sum, file) => sum + file.bytes.byteLength, 0),
-    },
-  };
-}
-
-function readJsonEntry(files: PackageFile[], path: string) {
-  const file = files.find((entry) => entry.relPath.toLowerCase() === path.toLowerCase());
-  if (!file) return null;
-  try {
-    const parsed = JSON.parse(new TextDecoder().decode(file.bytes)) as unknown;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-function hasGitHubActionsOidcEnv(env: NodeJS.ProcessEnv = process.env) {
-  return Boolean(env.ACTIONS_ID_TOKEN_REQUEST_URL && env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
-}
-
-async function requestGitHubActionsOidcToken(
-  audience: string,
-  options: {
-    env?: NodeJS.ProcessEnv;
-    fetchImpl?: typeof fetch;
-  } = {},
-) {
-  const env = options.env ?? process.env;
-  const fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
-  const requestUrl = env.ACTIONS_ID_TOKEN_REQUEST_URL?.trim();
-  const requestToken = env.ACTIONS_ID_TOKEN_REQUEST_TOKEN?.trim();
-  if (!requestUrl || !requestToken) {
-    throw new Error("GitHub Actions OIDC is not available in this environment.");
-  }
-
-  const url = new URL(requestUrl);
-  url.searchParams.set("audience", audience);
-  const response = await fetchImpl(url, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${requestToken}`,
-    },
-  });
-  const responseText = await response.text();
-  if (!response.ok) {
-    throw new Error(
-      `GitHub OIDC token request failed (${response.status}): ${responseText || response.statusText}`,
-    );
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(responseText);
-  } catch {
-    throw new Error("GitHub OIDC token request returned invalid JSON.");
-  }
-
-  const token = (parsed as { value?: unknown }).value;
-  if (typeof token !== "string" || !token.trim()) {
-    throw new Error("GitHub OIDC token response did not include a token value.");
-  }
-  return token;
-}
-
-async function mintPackagePublishToken(
-  registry: string,
-  packageName: string,
-  version: string,
-  githubOidcToken: string,
-) {
-  const response = await apiRequest(
-    registry,
-    {
-      method: "POST",
-      path: ApiRoutes.publishTokenMint,
-      body: {
-        packageName,
-        version,
-        githubOidcToken,
-      },
-    },
-    ApiV1PublishTokenMintResponseSchema,
-  );
-  return response.token;
-}
-
-async function resolvePackagePublishToken(params: {
-  registry: string;
-  packageName: string;
-  version: string;
-  manualOverrideReason?: string;
-  spinner: ReturnType<typeof createSpinner> | null;
-}) {
-  if (params.manualOverrideReason?.trim()) {
-    return await requireAuthToken();
-  }
-
-  if (!hasGitHubActionsOidcEnv()) {
-    return await requireAuthToken();
-  }
-
-  if (params.spinner) {
-    params.spinner.text = "Requesting GitHub Actions OIDC token";
-  }
-  try {
-    const githubOidcToken = await requestGitHubActionsOidcToken("clawhub");
-    if (params.spinner) {
-      params.spinner.text = "Minting short-lived ClawHub publish token";
-    }
-    return await mintPackagePublishToken(
-      params.registry,
-      params.packageName,
-      params.version,
-      githubOidcToken,
-    );
-  } catch (error) {
-    const status =
-      typeof error === "object" && error !== null && "status" in error
-        ? (error as { status?: unknown }).status
-        : undefined;
-    if (status !== undefined && status !== 400 && status !== 403 && status !== 404) {
-      throw error;
-    }
-    if (params.spinner) {
-      params.spinner.text = "Trusted publishing unavailable, falling back to ClawHub token";
-    }
-    return await requireAuthToken();
-  }
-}
-
-function buildSource(options: PackagePublishOptions, inferred?: InferredPublishSource) {
-  const rawRepo = options.sourceRepo?.trim() || inferred?.repo?.trim();
-  const rawCommit = options.sourceCommit?.trim() || inferred?.commit?.trim();
-  const rawRef = options.sourceRef?.trim() || inferred?.ref?.trim();
-  const explicitPath = options.sourcePath?.trim();
-  const rawPath = explicitPath !== undefined ? explicitPath : inferred?.path?.trim();
-  if (!rawRepo && !rawCommit && !rawRef && !rawPath) return undefined;
-  if (!rawRepo || !rawCommit) fail("--source-repo and --source-commit must be set together");
-  const repo = normalizeGitHubRepo(rawRepo);
-  if (!repo) fail("--source-repo must be a GitHub repo or URL");
-  const explicitRepo = options.sourceRepo?.trim();
-  const url = explicitRepo
-    ? explicitRepo.startsWith("http")
-      ? explicitRepo
-      : `https://github.com/${repo}`
-    : inferred?.url || `https://github.com/${repo}`;
-  return {
-    kind: "github" as const,
-    url,
-    repo,
-    ref: rawRef || rawCommit,
-    commit: rawCommit,
-    path: rawPath || ".",
-    importedAt: Date.now(),
-  };
-}
-
-function describePublishSource(
-  sourceInput: Awaited<ReturnType<typeof resolveSourceInput>>,
-  source: ReturnType<typeof buildSource>,
-  folder: string,
-) {
-  if (source) {
-    return `github:${source.repo}@${source.ref}${source.path !== "." ? `:${source.path}` : ""}`;
-  }
-  if (sourceInput.kind === "github") {
-    const repo = `${sourceInput.owner}/${sourceInput.repo}`;
-    return `github:${repo}@${sourceInput.ref ?? "HEAD"}${
-      sourceInput.path !== "." ? `:${sourceInput.path}` : ""
-    }`;
-  }
-  return `local:${folder}`;
-}
-
-function printPackageDryRun(params: {
-  source: string;
-  family: PackageFamily;
-  name: string;
-  displayName: string;
-  version: string;
-  commit?: string;
-  compatibility?: PackageCompatibility;
-  tags: string[];
-  files: PackageFile[];
-}) {
-  console.log("Dry run - nothing will be published.");
-  console.log("");
-  console.log(`Source:    ${params.source}`);
-  console.log(`Family:    ${params.family}`);
-  console.log(`Name:      ${params.name}`);
-  console.log(`Display:   ${params.displayName}`);
-  console.log(`Version:   ${params.version}`);
-  if (params.commit) console.log(`Commit:    ${params.commit}`);
-  if (params.compatibility) {
-    console.log(`Compat:    ${formatCompatibilityEntries(params.compatibility).join(", ")}`);
-  }
-  console.log(
-    `Files:     ${params.files.length} files (${formatByteCount(
-      params.files.reduce((sum, file) => sum + file.bytes.byteLength, 0),
-    )})`,
-  );
-  console.log(`Tags:      ${params.tags.join(", ")}`);
-  console.log("");
-  console.log("Files:");
-  for (const file of params.files) {
-    console.log(`  ${file.relPath.padEnd(28)} ${formatByteCount(file.bytes.byteLength)}`);
-  }
-}
-
 function formatByteCount(value: number) {
   if (value < 1024) return `${value} B`;
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-async function listPackageFiles(root: string) {
-  const files: PackageFile[] = [];
-  const absRoot = resolve(root);
-  const ig = ignore();
-  ig.add([".git/", "node_modules/", `${DOT_DIR}/`, `${LEGACY_DOT_DIR}/`]);
-  await addIgnoreFile(ig, join(absRoot, DOT_IGNORE));
-  await addIgnoreFile(ig, join(absRoot, LEGACY_DOT_IGNORE));
-  await walk(absRoot, async (absPath) => {
-    const relPath = normalizePath(relative(absRoot, absPath));
-    if (!relPath || ig.ignores(relPath)) return;
-    const bytes = new Uint8Array(await readFile(absPath));
-    files.push({
-      relPath,
-      bytes,
-      contentType: mime.getType(relPath) ?? "application/octet-stream",
-    });
-  });
-  return files;
-}
-
-function normalizePath(path: string) {
-  return path
-    .split(sep)
-    .join("/")
-    .replace(/^\.\/+/, "");
-}
-
-async function walk(dir: string, onFile: (path: string) => Promise<void>) {
-  const entries = await readdir(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    if (entry.name === ".git" || entry.name === "node_modules") continue;
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      await walk(full, onFile);
-      continue;
-    }
-    if (!entry.isFile()) continue;
-    await onFile(full);
-  }
-}
-
-async function addIgnoreFile(ig: ReturnType<typeof ignore>, path: string) {
-  try {
-    const raw = await readFile(path, "utf8");
-    ig.add(raw.split(/\r?\n/));
-  } catch {
-    // optional
-  }
 }

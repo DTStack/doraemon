@@ -41,7 +41,7 @@ export async function getRegistry(opts: GlobalOpts, params?: { cache?: boolean }
     !cached ||
     isLegacyRegistry(cached) ||
     cached !== registry;
-  if (shouldUpdate) await writeGlobalConfig({ registry, token: cfg?.token });
+  if (shouldUpdate) await writeGlobalConfig({ registry });
   return registry;
 }
 

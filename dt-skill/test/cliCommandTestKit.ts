@@ -57,20 +57,6 @@ export function createRegistryModuleMocks() {
   };
 }
 
-export function createAuthTokenModuleMocks() {
-  const requireAuthToken = vi.fn(async () => "tkn");
-  const getOptionalAuthToken = vi.fn(async () => undefined as string | undefined);
-
-  return {
-    requireAuthToken,
-    getOptionalAuthToken,
-    moduleFactory: () => ({
-      requireAuthToken: () => requireAuthToken(),
-      getOptionalAuthToken: () => getOptionalAuthToken(),
-    }),
-  };
-}
-
 export function createUiModuleMocks(options?: { interactive?: boolean }) {
   const spinner = {
     stop: vi.fn(),

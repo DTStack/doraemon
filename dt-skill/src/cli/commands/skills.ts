@@ -6,9 +6,6 @@ import {
   ApiRoutes,
   ApiV1SearchResponseSchema,
   ApiV1SkillListResponseSchema,
-  ApiV1SkillReportListResponseSchema,
-  ApiV1SkillReportResponseSchema,
-  ApiV1SkillReportTriageResponseSchema,
   ApiV1SkillResolveResponseSchema,
   ApiV1SkillResponseSchema,
   ApiV1SkillVersionResponseSchema,
@@ -16,12 +13,6 @@ import {
   type ApiV1SkillListResponse,
   type ApiV1SkillResponse,
   type ApiV1SkillResolveResponse,
-  type ApiV1SkillReportResponse,
-  type ApiV1SkillReportListResponse,
-  type ApiV1SkillReportTriageResponse,
-  type SkillReportFinalAction,
-  type SkillReportListStatus,
-  type SkillReportStatus,
 } from "../../schema/index.js";
 import {
   extractZipToDir,
@@ -33,7 +24,6 @@ import {
   writeLockfile,
   writeSkillOrigin,
 } from "../../skills.js";
-import { requireAuthToken } from "../authToken.js";
 import { getRegistry } from "../registry.js";
 import type { GlobalOpts, ResolveResult } from "../types.js";
 import {
@@ -45,32 +35,9 @@ import {
   selectAgent,
   selectScope,
 } from "../ui.js";
-import { presentModerationPlan, reportModerationPlan } from "./moderationPlan.js";
 import { searchMultiselect, cancelSymbol } from "../prompts/search-multiselect.js";
 import { getAgentLabel, resolveAgentWorkdir } from "../agents.js";
 import type { AgentName } from "../agents.js";
-
-type SkillReportOptions = {
-  version?: string;
-  reason?: string;
-  json?: boolean;
-};
-
-type SkillReportListOptions = {
-  status?: SkillReportListStatus;
-  cursor?: string;
-  limit?: number;
-  json?: boolean;
-};
-
-type SkillReportTriageOptions = {
-  status?: SkillReportStatus;
-  action?: SkillReportFinalAction;
-  finalAction?: SkillReportFinalAction;
-  note?: string;
-  json?: boolean;
-  yes?: boolean;
-};
 
 function normalizeSkillSlugOrFail(raw: string) {
   const slug = raw.trim();
@@ -293,7 +260,10 @@ export async function cmdInstall(
 
         const subSpinner = createSpinner(`Downloading sub-skill ${subSlug}@${subVersion}`);
         try {
-          const zip = await downloadZip(registry, { slug: subSlug, version: subVersion });
+          const zip = await downloadZip(registry, {
+            slug: subSlug,
+            version: subVersion,
+          });
           await extractZipToDir(zip, subTarget);
           const installedFiles = await listTextFiles(subTarget);
           const installedFingerprint =
@@ -361,7 +331,10 @@ export async function cmdInstall(
     }
 
     spinner.text = `Downloading ${trimmed}@${resolvedVersion}`;
-    const zip = await downloadZip(registry, { slug: trimmed, version: resolvedVersion });
+    const zip = await downloadZip(registry, {
+      slug: trimmed,
+      version: resolvedVersion,
+    });
     await extractZipToDir(zip, target);
     const installedFiles = await listTextFiles(target);
     const installedFingerprint =
@@ -562,7 +535,10 @@ export async function cmdUpdate(
         spinner.start(`Updating ${entry} -> ${targetVersion}`);
       }
       await rm(target, { recursive: true, force: true });
-      const zip = await downloadZip(registry, { slug: entry, version: targetVersion });
+      const zip = await downloadZip(registry, {
+        slug: entry,
+        version: targetVersion,
+      });
       await extractZipToDir(zip, target);
       const installedFiles = await listTextFiles(target);
       const installedFingerprint =
@@ -810,134 +786,6 @@ export function formatExploreLine(item: {
 export function clampLimit(limit: number, fallback = 25) {
   if (!Number.isFinite(limit)) return fallback;
   return Math.min(Math.max(1, limit), 200);
-}
-
-export async function cmdReportSkill(
-  opts: GlobalOpts,
-  slug: string,
-  options: SkillReportOptions = {},
-) {
-  const trimmed = normalizeSkillSlugOrFail(slug);
-  const reason = options.reason?.trim();
-  if (!reason) fail("--reason required");
-
-  const token = await requireAuthToken();
-  const registry = await getRegistry(opts, { cache: true });
-  const result = await apiRequest<ApiV1SkillReportResponse>(
-    registry,
-    {
-      method: "POST",
-      path: `${ApiRoutes.skills}/${encodeURIComponent(trimmed)}/report`,
-      token,
-      body: {
-        reason,
-        ...(options.version?.trim() ? { version: options.version.trim() } : {}),
-      },
-    },
-    ApiV1SkillReportResponseSchema,
-  );
-
-  if (options.json) {
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-    return;
-  }
-  if (result.alreadyReported) {
-    console.log(`Already reported ${trimmed}.`);
-  } else {
-    console.log(`OK. Reported ${trimmed} (${result.reportId}).`);
-  }
-}
-
-export async function cmdListSkillReports(opts: GlobalOpts, options: SkillReportListOptions = {}) {
-  const status = options.status?.trim() || "open";
-  if (!["open", "confirmed", "dismissed", "all"].includes(status)) {
-    fail("--status must be open, confirmed, dismissed, or all");
-  }
-
-  const token = await requireAuthToken();
-  const registry = await getRegistry(opts, { cache: true });
-  const url = registryUrl(`${ApiRoutes.skills}/-/reports`, registry);
-  url.searchParams.set("status", status);
-  if (options.cursor?.trim()) url.searchParams.set("cursor", options.cursor.trim());
-  url.searchParams.set("limit", String(clampLimit(options.limit ?? 25, 25)));
-  const result = await apiRequest<ApiV1SkillReportListResponse>(
-    registry,
-    { method: "GET", url: url.toString(), token },
-    ApiV1SkillReportListResponseSchema,
-  );
-
-  if (options.json) {
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-    return;
-  }
-  if (result.items.length === 0) {
-    console.log("No skill reports found.");
-  } else {
-    for (const item of result.items) {
-      const reporter = item.reporter.handle ?? item.reporter.userId;
-      console.log(`${item.reportId} ${item.status} ${item.slug}`);
-      console.log(`  reporter: ${reporter}`);
-      if (item.reason) console.log(`  reason: ${item.reason}`);
-      if (item.triageNote) console.log(`  note: ${item.triageNote}`);
-    }
-  }
-  if (!result.done && result.nextCursor) console.log(`Next cursor: ${result.nextCursor}`);
-}
-
-export async function cmdTriageSkillReport(
-  opts: GlobalOpts,
-  reportId: string,
-  options: SkillReportTriageOptions = {},
-) {
-  const trimmed = reportId.trim();
-  if (!trimmed) fail("Report id required");
-  const statusValue = options.status?.trim();
-  if (!statusValue || !["open", "confirmed", "dismissed"].includes(statusValue)) {
-    fail("--status must be open, confirmed, or dismissed");
-  }
-  const status = statusValue as SkillReportStatus;
-  const finalAction = (options.finalAction ?? options.action)?.trim() as
-    | SkillReportFinalAction
-    | undefined;
-  if (finalAction && !["none", "hide"].includes(finalAction)) {
-    fail("--action must be none or hide");
-  }
-  const note = options.note?.trim();
-  if (status !== "open" && !note) fail("--note required unless reopening");
-
-  const token = await requireAuthToken();
-  const registry = await getRegistry(opts, { cache: true });
-  await presentModerationPlan(
-    reportModerationPlan({
-      entityLabel: "skill",
-      reportId: trimmed,
-      status,
-      finalAction: finalAction ?? "none",
-    }),
-    options,
-  );
-  const result = await apiRequest<ApiV1SkillReportTriageResponse>(
-    registry,
-    {
-      method: "POST",
-      path: `${ApiRoutes.skills}/-/reports/${encodeURIComponent(trimmed)}/triage`,
-      token,
-      body: {
-        status,
-        ...(note ? { note } : {}),
-        ...(finalAction ? { finalAction } : {}),
-      },
-    },
-    ApiV1SkillReportTriageResponseSchema,
-  );
-
-  if (options.json) {
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-    return;
-  }
-  const actionSuffix =
-    result.actionTaken && result.actionTaken !== "none" ? `; action ${result.actionTaken}` : "";
-  console.log(`OK. Skill report ${trimmed} set to ${result.status}${actionSuffix}.`);
 }
 
 function formatRelativeTime(timestamp: number): string {

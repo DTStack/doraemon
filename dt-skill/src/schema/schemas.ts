@@ -2,17 +2,14 @@ import { type inferred, type } from "arktype";
 
 export const GlobalConfigSchema = type({
   registry: "string",
-  token: "string?",
 });
 export type GlobalConfig = (typeof GlobalConfigSchema)[inferred];
 
 export const WellKnownConfigSchema = type({
   apiBase: "string",
-  authBase: "string?",
   minCliVersion: "string?",
 }).or({
   registry: "string",
-  authBase: "string?",
   minCliVersion: "string?",
 });
 export type WellKnownConfig = (typeof WellKnownConfigSchema)[inferred];
@@ -29,12 +26,6 @@ export const LockfileSchema = type({
   },
 });
 export type Lockfile = (typeof LockfileSchema)[inferred];
-
-export const ApiCliWhoamiResponseSchema = type({
-  user: {
-    handle: "string|null",
-  },
-});
 
 export const ApiSearchResponseSchema = type({
   results: type({

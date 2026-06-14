@@ -2,9 +2,7 @@
 
 import * as fsPromises from "node:fs/promises";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  createAuthTokenModuleMocks,
-  createHttpModuleMocks,
+import {  createHttpModuleMocks,
   createRegistryModuleMocks,
   createUiModuleMocks,
   makeGlobalOpts,
@@ -31,19 +29,16 @@ vi.mock("node:fs/promises", async () => {
 const mocked = <T>(value: T) => value as T & Record<string, unknown>;
 Object.assign(vi as object, { mocked });
 
-const authTokenMocks = createAuthTokenModuleMocks();
 const registryMocks = createRegistryModuleMocks();
 const httpMocks = createHttpModuleMocks();
 const uiMocks = createUiModuleMocks();
 const mockApiRequest = httpMocks.apiRequest;
 const mockDownloadZip = httpMocks.downloadZip;
-const mockGetOptionalAuthToken = authTokenMocks.getOptionalAuthToken;
 const mockSpinner = uiMocks.spinner;
 const mockIsInteractive = vi.fn(() => false);
 const mockPromptConfirm = vi.fn(async () => false);
 vi.mock("../../http.js", () => httpMocks.moduleFactory());
 vi.mock("../registry.js", () => registryMocks.moduleFactory());
-vi.mock("../authToken.js", () => authTokenMocks.moduleFactory());
 const mockSelectAgent = vi.fn(async () => null);
 vi.mock("../ui.js", () => ({
   createSpinner: vi.fn(() => mockSpinner),
@@ -69,13 +64,7 @@ const {
   clampLimit,
   cmdExplore,
   cmdInstall,
-  cmdList,
-  cmdListSkillReports,
-  cmdPin,
-  cmdReportSkill,
-  cmdSearch,
-  cmdTriageSkillReport,
-  cmdUninstall,
+  cmdList,  cmdPin,  cmdSearch,  cmdUninstall,
   cmdUnpin,
   cmdUpdate,
   formatExploreLine,
@@ -155,13 +144,11 @@ describe("explore helpers", () => {
 
 describe("cmdExplore", () => {
   it("does not attach a stored auth token to apiRequest", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue("tkn");
     mockApiRequest.mockResolvedValue({ items: [] });
 
     await cmdExplore(makeOpts(), { limit: 25 });
 
     const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
-    expect(mockGetOptionalAuthToken).not.toHaveBeenCalled();
     expect(requestArgs?.token).toBeUndefined();
   });
 
@@ -227,18 +214,15 @@ describe("cmdExplore", () => {
 
 describe("cmdSearch", () => {
   it("does not attach a stored auth token to apiRequest", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue("tkn");
     mockApiRequest.mockResolvedValue({ results: [] });
 
     await cmdSearch(makeOpts(), "demo");
 
     const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
-    expect(mockGetOptionalAuthToken).not.toHaveBeenCalled();
     expect(requestArgs?.token).toBeUndefined();
   });
 
   it("defaults limit to 25 when not specified", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue(undefined);
     mockApiRequest.mockResolvedValue({ results: [] });
 
     await cmdSearch(makeOpts(), "stock price");
@@ -249,7 +233,6 @@ describe("cmdSearch", () => {
   });
 
   it("uses explicit limit when provided", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue(undefined);
     mockApiRequest.mockResolvedValue({ results: [] });
 
     await cmdSearch(makeOpts(), "stock price", 5);
@@ -260,7 +243,6 @@ describe("cmdSearch", () => {
   });
 
   it("prints skill owners in search results", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue(undefined);
     mockApiRequest.mockResolvedValue({
       results: [
         {
@@ -284,99 +266,6 @@ describe("cmdSearch", () => {
 
     expect(mockLog).toHaveBeenCalledWith("demo v1.2.3  @openclaw  Demo Skill  (0.988)");
     expect(mockLog).toHaveBeenCalledWith("legacy  Legacy Owner  Legacy Skill  (0.500)");
-  });
-});
-
-describe("skill moderation commands", () => {
-  it("submits skill reports", async () => {
-    mockApiRequest.mockResolvedValueOnce({
-      ok: true,
-      reported: true,
-      alreadyReported: false,
-      reportId: "skillReports:1",
-      skillId: "skills:1",
-      reportCount: 1,
-    });
-
-    await cmdReportSkill(makeOpts(), "demo", { version: "1.0.0", reason: "suspicious files" });
-
-    expect(mockApiRequest).toHaveBeenCalledWith(
-      "https://clawhub.ai",
-      {
-        method: "POST",
-        path: "/api/v1/skills/demo/report",
-        token: "tkn",
-        body: { reason: "suspicious files", version: "1.0.0" },
-      },
-      expect.anything(),
-    );
-    expect(mockLog).toHaveBeenCalledWith("OK. Reported demo (skillReports:1).");
-  });
-
-  it("lists skill reports", async () => {
-    mockApiRequest.mockResolvedValueOnce({
-      items: [
-        {
-          reportId: "skillReports:1",
-          skillId: "skills:1",
-          skillVersionId: "skillVersions:1",
-          slug: "demo",
-          displayName: "Demo",
-          version: "1.0.0",
-          reason: "suspicious",
-          status: "open",
-          createdAt: 1,
-          reporter: { userId: "users:reporter", handle: "reporter", displayName: "Reporter" },
-          triagedAt: null,
-          triagedBy: null,
-          triageNote: null,
-        },
-      ],
-      nextCursor: null,
-      done: true,
-    });
-
-    await cmdListSkillReports(makeOpts(), { status: "open", limit: 10 });
-
-    const request = mockApiRequest.mock.calls[0]?.[1] as { url?: string } | undefined;
-    const url = new URL(String(request?.url));
-    expect(url.pathname).toBe("/api/v1/skills/-/reports");
-    expect(url.searchParams.get("status")).toBe("open");
-    expect(url.searchParams.get("limit")).toBe("10");
-    expect(mockLog).toHaveBeenCalledWith("skillReports:1 open demo");
-  });
-
-  it("triages skill reports", async () => {
-    mockApiRequest.mockResolvedValueOnce({
-      ok: true,
-      reportId: "skillReports:1",
-      skillId: "skills:1",
-      status: "confirmed",
-      reportCount: 0,
-      actionTaken: "hide",
-    });
-
-    await cmdTriageSkillReport(makeOpts(), "skillReports:1", {
-      status: "confirmed",
-      note: "handled",
-      action: "hide",
-      yes: true,
-    });
-
-    expect(mockApiRequest).toHaveBeenCalledWith(
-      "https://clawhub.ai",
-      {
-        method: "POST",
-        path: "/api/v1/skills/-/reports/skillReports%3A1/triage",
-        token: "tkn",
-        body: { status: "confirmed", note: "handled", finalAction: "hide" },
-      },
-      expect.anything(),
-    );
-    expect(mockLog).toHaveBeenCalledWith(
-      "OK. Skill report skillReports:1 set to confirmed; action hide.",
-    );
-    expect(mockLog).toHaveBeenCalledWith("  - Hide the skill from public availability.");
   });
 });
 
@@ -591,7 +480,6 @@ describe("cmdList", () => {
 
 describe("cmdInstall", () => {
   it("does not attach a stored auth token to API or download requests", async () => {
-    mockGetOptionalAuthToken.mockResolvedValue("tkn");
     mockApiRequest.mockResolvedValue({
       skill: {
         slug: "demo",
@@ -617,7 +505,6 @@ describe("cmdInstall", () => {
     await cmdInstall(makeOpts(), "demo");
 
     const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
-    expect(mockGetOptionalAuthToken).not.toHaveBeenCalled();
     expect(requestArgs?.token).toBeUndefined();
     const [, zipArgs] = mockDownloadZip.mock.calls[0] ?? [];
     expect(zipArgs?.token).toBeUndefined();

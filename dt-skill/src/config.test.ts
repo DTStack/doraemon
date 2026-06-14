@@ -56,7 +56,7 @@ afterEach(() => {
 
 describe("writeGlobalConfig", () => {
   it("writes config with restricted modes", async () => {
-    await writeGlobalConfig({ registry: "https://example.com", token: "clh_test" });
+    await writeGlobalConfig({ registry: "https://example.com" });
 
     expect(fsMocks.mkdir).toHaveBeenCalledWith("/tmp/clawhub-config-test", {
       recursive: true,
@@ -64,7 +64,7 @@ describe("writeGlobalConfig", () => {
     });
     expect(fsMocks.writeFile).toHaveBeenCalledWith(
       testConfigPath,
-      expect.stringContaining('"token": "clh_test"'),
+      expect.stringContaining('"registry": "https://example.com"'),
       {
         encoding: "utf8",
         mode: 0o600,

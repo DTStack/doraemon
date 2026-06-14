@@ -15,7 +15,6 @@ export async function discoverRegistryFromSite(siteUrl: string) {
     if (!apiBase) return null;
     return {
       apiBase,
-      authBase: parsed.authBase,
       minCliVersion: parsed.minCliVersion,
     };
   }

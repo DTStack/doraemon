@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { isCancel, multiselect } from "@clack/prompts";
 import semver from "semver";
 import { resolveHome } from "../../homedir.js";
-import { apiRequest, downloadZip } from "../../http.js";
+import { apiRequest, downloadZip, registryUrl } from "../../http.js";
 import {
   ApiCliTelemetrySyncResponseSchema,
   ApiRoutes,
@@ -160,7 +160,10 @@ export async function checkRegistrySyncState(
     };
   }
 
-  const zip = await downloadZip(registry, { slug: skill.slug, version: latestVersion });
+  const zip = await downloadZip(registry, {
+    slug: skill.slug,
+    version: latestVersion,
+  });
   const remote = hashSkillZip(zip).fingerprint;
   const matchVersion = remote === skill.fingerprint ? latestVersion : null;
 

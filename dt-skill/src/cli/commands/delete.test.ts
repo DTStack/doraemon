@@ -2,19 +2,16 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  createAuthTokenModuleMocks,
   createHttpModuleMocks,
   createRegistryModuleMocks,
   createUiModuleMocks,
   makeGlobalOpts,
 } from "../../../test/cliCommandTestKit.js";
 
-const authTokenMocks = createAuthTokenModuleMocks();
 const registryMocks = createRegistryModuleMocks();
 const httpMocks = createHttpModuleMocks();
 const uiMocks = createUiModuleMocks();
 
-vi.mock("../authToken.js", () => authTokenMocks.moduleFactory());
 vi.mock("../registry.js", () => registryMocks.moduleFactory());
 vi.mock("../../http.js", () => httpMocks.moduleFactory());
 vi.mock("../ui.js", () => uiMocks.moduleFactory());
@@ -41,7 +38,6 @@ describe("delete/undelete", () => {
       expect.not.objectContaining({ token: expect.anything() }),
       expect.anything(),
     );
-    expect(authTokenMocks.requireAuthToken).not.toHaveBeenCalled();
   });
 
   it("prints the slug reservation expiry returned by delete", async () => {

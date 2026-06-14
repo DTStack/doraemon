@@ -11,25 +11,16 @@ import {
   cmdUnhideSkill,
 } from "./cli/commands/delete.js";
 import { cmdInspect } from "./cli/commands/inspect.js";
-import { cmdMergeSkill, cmdRenameSkill } from "./cli/commands/ownership.js";
 import {
-  cmdDeletePackage,
   cmdDownloadPackage,
   cmdExplorePackages,
-  cmdGetPackageTrustedPublisher,
   cmdInspectPackage,
-  cmdPackageModerationStatus,
   cmdPackageMigrationStatus,
   cmdPackageReadiness,
   cmdPackPackage,
-  cmdPublishPackage,
-  cmdReportPackage,
-  cmdTransferPackage,
-  cmdUndeletePackage,
   cmdVerifyPackage,
 } from "./cli/commands/packages.js";
 import { cmdPublish } from "./cli/commands/publish.js";
-import { cmdCreatePublisher } from "./cli/commands/publishers.js";
 import {
   cmdExplore,
   cmdInstall,
@@ -42,13 +33,6 @@ import {
 } from "./cli/commands/skills.js";
 import { cmdStarSkill } from "./cli/commands/star.js";
 import { cmdSync } from "./cli/commands/sync.js";
-import {
-  cmdTransferAccept,
-  cmdTransferCancel,
-  cmdTransferList,
-  cmdTransferReject,
-  cmdTransferRequest,
-} from "./cli/commands/transfer.js";
 import { cmdUnstarSkill } from "./cli/commands/unstar.js";
 import { isAgentName, listAgentNames, resolveAgentWorkdir } from "./cli/agents.js";
 import { configureCommanderHelp, styleEnvBlock, styleTitle } from "./cli/helpStyle.js";
@@ -361,23 +345,8 @@ registerCommand(skill, ["skill", "publish"])
     await cmdPublish(opts, folder, options);
   });
 
-const publisherCmd = registerCommandGroup(program, ["publisher"])
-  .description("Publisher organization commands")
-  .showHelpAfterError()
-  .showSuggestionAfterError();
-
-registerCommand(publisherCmd, ["publisher", "create"])
-  .description("Create an org publisher you own")
-  .argument("<handle>", "Publisher handle, for example opik")
-  .option("--display-name <name>", "Publisher display name")
-  .option("--json", "Output JSON")
-  .action(async (handle, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdCreatePublisher(opts, handle, options);
-  });
-
 const packageCmd = registerCommandGroup(program, ["package"]).description(
-  "Browse and publish OpenClaw packages",
+  "Browse OpenClaw packages",
 );
 
 registerCommand(packageCmd, ["package", "explore"])
@@ -458,57 +427,6 @@ registerCommand(packageCmd, ["package", "verify"])
     });
   });
 
-registerCommand(packageCmd, ["package", "delete"])
-  .description("Soft-delete a package and all releases")
-  .argument("<name>", "Package name")
-  .option("--yes", "Skip confirmation")
-  .option("--json", "Output JSON")
-  .action(async (name, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdDeletePackage(opts, name, options, isInputAllowed());
-  });
-
-registerCommand(packageCmd, ["package", "undelete"])
-  .description("Restore a soft-deleted package and releases")
-  .argument("<name>", "Package name")
-  .option("--yes", "Skip confirmation")
-  .option("--json", "Output JSON")
-  .action(async (name, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdUndeletePackage(opts, name, options, isInputAllowed());
-  });
-
-registerCommand(packageCmd, ["package", "transfer"])
-  .description("Transfer a plugin package to another publisher")
-  .argument("<name>", "Package name")
-  .requiredOption("--to <owner>", "Destination publisher handle")
-  .option("--reason <text>", "Audit reason")
-  .option("--json", "Output JSON")
-  .action(async (name, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdTransferPackage(opts, name, options);
-  });
-
-registerCommand(packageCmd, ["package", "report"])
-  .description("Report a package for moderator review")
-  .argument("<name>", "Package name")
-  .option("--version <version>", "Package version")
-  .requiredOption("--reason <text>", "Report reason")
-  .option("--json", "Output JSON")
-  .action(async (name, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdReportPackage(opts, name, options);
-  });
-
-registerCommand(packageCmd, ["package", "moderation-status"])
-  .description("Show package moderation status")
-  .argument("<name>", "Package name")
-  .option("--json", "Output JSON")
-  .action(async (name, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdPackageModerationStatus(opts, name, options);
-  });
-
 registerCommand(packageCmd, ["package", "readiness"])
   .description("Check package readiness for future OpenClaw consumption")
   .argument("<name>", "Package name")
@@ -535,118 +453,6 @@ registerCommand(packageCmd, ["package", "pack"])
   .action(async (source, options) => {
     const opts = await resolveGlobalOpts();
     await cmdPackPackage(opts, source, options);
-  });
-
-registerCommand(packageCmd, ["package", "publish"])
-  .description("Publish a code plugin or bundle plugin from a folder or GitHub source")
-  .argument("<source>", "Package folder path, GitHub repo (owner/repo[@ref]), or URL")
-  .option("--family <family>", "code-plugin|bundle-plugin")
-  .option("--name <name>", "Package name")
-  .option("--display-name <name>", "Display name")
-  .option("--owner <handle>", "Publish under this owner/publisher handle")
-  .option("--version <version>", "Version")
-  .option("--changelog <text>", "Changelog text")
-  .option("--clawscan-note <text>", CLAWSCAN_NOTE_HELP)
-  .option(
-    "--manual-override-reason <reason>",
-    "Required for manual publish when trusted publisher config exists",
-  )
-  .option("--tags <tags>", "Comma-separated tags", "latest")
-  .option("--bundle-format <format>", "Bundle format")
-  .option("--host-targets <targets>", "Comma-separated bundle host targets")
-  .option("--source-repo <repo>", "GitHub repo (owner/repo or URL)")
-  .option("--source-commit <sha>", "Git commit SHA")
-  .option("--source-ref <ref>", "Git ref/tag/branch")
-  .option("--source-path <path>", "Repo subpath")
-  .option("--dry-run", "Preview what would be published without uploading")
-  .option("--json", "Output JSON (for CI pipelines)")
-  .action(async (source, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdPublishPackage(opts, source, options);
-  });
-
-const trustedPublisherCmd = registerCommandGroup(packageCmd, [
-  "package",
-  "trusted-publisher",
-]).description("Manage package trusted publisher config");
-
-registerCommand(trustedPublisherCmd, ["package", "trusted-publisher", "get"])
-  .description("Show trusted publisher config for a package")
-  .argument("<name>", "Package name")
-  .option("--json", "Output JSON")
-  .action(async (name, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdGetPackageTrustedPublisher(opts, name, options);
-  });
-
-registerCommand(skill, ["skill", "rename"])
-  .description("Rename a published skill and keep the old slug as a redirect")
-  .argument("<slug>", "Current skill slug")
-  .argument("<new-slug>", "New canonical slug")
-  .option("--yes", "Skip confirmation")
-  .action(async (slug, newSlug, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdRenameSkill(opts, slug, newSlug, options, isInputAllowed());
-  });
-
-registerCommand(skill, ["skill", "merge"])
-  .description("Merge one owned skill into another and redirect the old slug")
-  .argument("<source-slug>", "Source skill slug")
-  .argument("<target-slug>", "Target canonical slug")
-  .option("--yes", "Skip confirmation")
-  .action(async (sourceSlug, targetSlug, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdMergeSkill(opts, sourceSlug, targetSlug, options, isInputAllowed());
-  });
-
-const transfer = registerCommandGroup(program, ["transfer"]).description(
-  "Transfer skill ownership",
-);
-
-registerCommand(transfer, ["transfer", "request"])
-  .description("Request skill transfer to another user")
-  .argument("<slug>", "Skill slug")
-  .argument("<handle>", "Recipient handle (e.g., @username)")
-  .option("--message <text>", "Optional message for recipient")
-  .option("--yes", "Skip confirmation")
-  .action(async (slug, handle, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdTransferRequest(opts, slug, handle, options, isInputAllowed());
-  });
-
-registerCommand(transfer, ["transfer", "list"])
-  .description("List pending transfer requests")
-  .option("--outgoing", "Show outgoing transfer requests")
-  .action(async (options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdTransferList(opts, options);
-  });
-
-registerCommand(transfer, ["transfer", "accept"])
-  .description("Accept incoming transfer for a skill")
-  .argument("<slug>", "Skill slug")
-  .option("--yes", "Skip confirmation")
-  .action(async (slug, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdTransferAccept(opts, slug, options, isInputAllowed());
-  });
-
-registerCommand(transfer, ["transfer", "reject"])
-  .description("Reject incoming transfer for a skill")
-  .argument("<slug>", "Skill slug")
-  .option("--yes", "Skip confirmation")
-  .action(async (slug, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdTransferReject(opts, slug, options, isInputAllowed());
-  });
-
-registerCommand(transfer, ["transfer", "cancel"])
-  .description("Cancel outgoing transfer for a skill")
-  .argument("<slug>", "Skill slug")
-  .option("--yes", "Skip confirmation")
-  .action(async (slug, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdTransferCancel(opts, slug, options, isInputAllowed());
   });
 
 registerCommand(program, ["star"])

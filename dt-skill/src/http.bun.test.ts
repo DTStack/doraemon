@@ -63,7 +63,6 @@ describe("bun http client", () => {
     const getResult = await client.apiRequest<{ ok: boolean }>("https://registry.example", {
       method: "GET",
       path: "/v1/ping",
-      token: "clh_token",
     });
     await client.apiRequest("https://registry.example", {
       method: "POST",
@@ -75,7 +74,7 @@ describe("bun http client", () => {
     const [, getArgs] = spawnImpl.mock.calls[0] as [string, string[]];
     expect(getArgs).toContain("GET");
     expect(getArgs).toContain("https://registry.example/v1/ping");
-    expect(getArgs).toContain("Authorization: Bearer clh_token");
+    expect(getArgs.some((arg) => arg.startsWith("Authorization: Bearer"))).toBe(false);
 
     const [, postArgs] = spawnImpl.mock.calls[1] as [string, string[]];
     expect(postArgs).toContain("Content-Type: application/json");
@@ -142,11 +141,10 @@ describe("bun http client", () => {
     ).resolves.toBe("hello world");
     const bytes = await client.downloadZip("https://registry.example", {
       slug: "demo",
-      token: "t",
     });
     expect(Array.from(bytes)).toEqual(Array.from(Buffer.from("not found")));
     await expect(
-      client.downloadZip("https://registry.example", { slug: "demo", token: "t" }),
+      client.downloadZip("https://registry.example", { slug: "demo" }),
     ).rejects.toThrow("not found");
 
     expect(readFileImpl).toHaveBeenCalled();
