@@ -10,12 +10,6 @@ const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[\w.-]+)?(?
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 class ClawhubService extends Service {
-    async ensureStorageReady() {
-        if (this.ctx.service?.skills?.ensureStorageReady) {
-            await this.ctx.service.skills.ensureStorageReady();
-        }
-    }
-
     // Well-Known Registry Metadata
     async getRegistryMetadata(origin) {
         return {
@@ -27,7 +21,6 @@ class ClawhubService extends Service {
 
     // Search skills by name/description LIKE match
     async searchSkills(query, limit = 20) {
-        await this.ensureStorageReady();
         const { SkillsItem } = this.app.model;
         const { Op } = this.app.Sequelize;
         const searchQuery = String(query || '').trim();
@@ -60,7 +53,6 @@ class ClawhubService extends Service {
 
     // List skills with cursor pagination and sorting
     async listSkills(cursor, sort, limit = 20) {
-        await this.ensureStorageReady();
         const { SkillsItem } = this.app.model;
         const where = { is_delete: 0, parent_slug: null };
         const sortMap = {
@@ -133,7 +125,6 @@ class ClawhubService extends Service {
 
     // Get skill detail
     async _resolveSlug(slug) {
-        await this.ensureStorageReady();
         const { SkillsItem } = this.app.model;
         let skill = await SkillsItem.findOne({
             where: { slug, is_delete: 0 },
@@ -355,7 +346,6 @@ class ClawhubService extends Service {
 
     // Publish or update a skill
     async publishSkill(payload, files) {
-        await this.ensureStorageReady();
         const { SkillsItem, SkillsFile, SkillsSource } = this.app.model;
         const { slug, displayName, version, tags } = payload;
 
@@ -469,7 +459,6 @@ class ClawhubService extends Service {
 
     // Compute SHA256 fingerprint for a skill
     async computeSkillFingerprint(skillId) {
-        await this.ensureStorageReady();
         const { SkillsFile } = this.app.model;
         const files = await SkillsFile.findAll({
             where: { skill_id: skillId, is_delete: 0 },
@@ -484,7 +473,6 @@ class ClawhubService extends Service {
 
     // Resolve fingerprint to skill
     async resolveFingerprint(slug, hash) {
-        await this.ensureStorageReady();
         const { SkillsItem } = this.app.model;
         const skill = await SkillsItem.findOne({
             where: { slug, is_delete: 0 },
@@ -509,7 +497,6 @@ class ClawhubService extends Service {
 
     // Soft delete skill
     async deleteSkill(slug) {
-        await this.ensureStorageReady();
         const { SkillsItem } = this.app.model;
         const skill = await SkillsItem.findOne({ where: { slug } });
         if (!skill) {
@@ -521,7 +508,6 @@ class ClawhubService extends Service {
 
     // Undelete skill
     async undeleteSkill(slug) {
-        await this.ensureStorageReady();
         const { SkillsItem } = this.app.model;
         const skill = await SkillsItem.findOne({ where: { slug } });
         if (!skill) {

@@ -165,20 +165,26 @@ module.exports = (app) => {
     /**
      * Clawhub Registry API (v1)
      */
+    const skillsStorageReady = app.middleware.skillsStorageReady();
+
     app.get('/.well-known/clawhub.json', app.controller.clawhub.registryMetadata);
-    app.get('/api/v1/search', app.controller.clawhub.search);
-    app.get('/api/v1/skills', app.controller.clawhub.list);
-    app.get('/api/v1/skills/:slug', app.controller.clawhub.detail);
-    app.get('/api/v1/skills/:slug/versions', app.controller.clawhub.versions);
-    app.get('/api/v1/skills/:slug/versions/:version', app.controller.clawhub.versionDetail);
-    app.get('/api/v1/skills/:slug/file', app.controller.clawhub.fileContent);
-    app.get('/api/v1/download', app.controller.clawhub.download);
-    app.get('/api/v1/resolve', app.controller.clawhub.resolve);
-    app.post('/api/v1/skills', app.controller.clawhub.publish);
-    app.delete('/api/v1/skills/:slug', app.controller.clawhub.delete);
-    app.post('/api/v1/skills/:slug/undelete', app.controller.clawhub.undelete);
-    app.post('/api/v1/stars/:slug', app.controller.clawhub.star);
-    app.delete('/api/v1/stars/:slug', app.controller.clawhub.unstar);
+    app.get('/api/v1/search', skillsStorageReady, app.controller.clawhub.search);
+    app.get('/api/v1/skills', skillsStorageReady, app.controller.clawhub.list);
+    app.get('/api/v1/skills/:slug', skillsStorageReady, app.controller.clawhub.detail);
+    app.get('/api/v1/skills/:slug/versions', skillsStorageReady, app.controller.clawhub.versions);
+    app.get(
+        '/api/v1/skills/:slug/versions/:version',
+        skillsStorageReady,
+        app.controller.clawhub.versionDetail
+    );
+    app.get('/api/v1/skills/:slug/file', skillsStorageReady, app.controller.clawhub.fileContent);
+    app.get('/api/v1/download', skillsStorageReady, app.controller.clawhub.download);
+    app.get('/api/v1/resolve', skillsStorageReady, app.controller.clawhub.resolve);
+    app.post('/api/v1/skills', skillsStorageReady, app.controller.clawhub.publish);
+    app.delete('/api/v1/skills/:slug', skillsStorageReady, app.controller.clawhub.delete);
+    app.post('/api/v1/skills/:slug/undelete', skillsStorageReady, app.controller.clawhub.undelete);
+    app.post('/api/v1/stars/:slug', skillsStorageReady, app.controller.clawhub.star);
+    app.delete('/api/v1/stars/:slug', skillsStorageReady, app.controller.clawhub.unstar);
 
     // io.of('/').route('getShellCommand',  io.controller.home.getShellCommand)
     // 暂时close Terminal相关功能

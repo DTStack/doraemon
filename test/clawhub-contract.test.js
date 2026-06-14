@@ -199,7 +199,6 @@ test('listSkills uses a composite cursor that matches newest sorting', async () 
         },
     });
     service.ctx = createMockCtx();
-    service.ctx.service = { skills: { ensureStorageReady: async () => {} } };
 
     const firstPage = await service.listSkills(null, 'newest', 1);
     await service.listSkills(firstPage.nextCursor, 'newest', 1);
@@ -249,7 +248,6 @@ test('listSkills uses a composite cursor that matches stars sorting', async () =
         },
     });
     service.ctx = createMockCtx();
-    service.ctx.service = { skills: { ensureStorageReady: async () => {} } };
 
     const firstPage = await service.listSkills(null, 'stars', 1);
     await service.listSkills(firstPage.nextCursor, 'stars', 1);
@@ -265,31 +263,6 @@ test('listSkills uses a composite cursor that matches stars sorting', async () =
             id: { lt: 7 },
         },
     ]);
-});
-
-test('searchSkills ensures the skills schema is ready before querying', async () => {
-    const events = [];
-    const service = Object.create(ClawhubService.prototype);
-    service.app = createMockApp({
-        SkillsItem: {
-            findAll: async () => {
-                events.push('query');
-                return [];
-            },
-        },
-    });
-    service.ctx = createMockCtx();
-    service.ctx.service = {
-        skills: {
-            ensureStorageReady: async () => {
-                events.push('migrate');
-            },
-        },
-    };
-
-    await service.searchSkills('demo', 10);
-
-    assert.deepEqual(events, ['migrate', 'query']);
 });
 
 test('getSkillDetail returns full skill object', async () => {
@@ -742,31 +715,6 @@ test('computeSkillFingerprint applies stored ignore files like the CLI', async (
 
     const fingerprint = await service.computeSkillFingerprint(1);
     assert.equal(fingerprint, skillFingerprint.fingerprintFromGoldenCase(testCase));
-});
-
-test('resolveFingerprint ensures storage is ready before querying the skill model', async () => {
-    const events = [];
-    const service = Object.create(ClawhubService.prototype);
-    service.app = createMockApp({
-        SkillsItem: {
-            findOne: async () => {
-                events.push('query');
-                return null;
-            },
-        },
-    });
-    service.ctx = createMockCtx();
-    service.ctx.service = {
-        skills: {
-            ensureStorageReady: async () => {
-                events.push('migrate');
-            },
-        },
-    };
-
-    await service.resolveFingerprint('missing-skill', 'hash');
-
-    assert.deepEqual(events, ['migrate', 'query']);
 });
 
 test('resolveFingerprint returns match and latestVersion for matching fingerprint', async () => {
