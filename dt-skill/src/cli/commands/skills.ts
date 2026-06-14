@@ -1,5 +1,5 @@
-import { mkdir, rm, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, mkdtemp, rename, rm, stat } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import semver from "semver";
 import { apiRequest, downloadZip, registryUrl } from "../../http.js";
 import {
@@ -534,24 +534,29 @@ export async function cmdUpdate(
       } else {
         spinner.start(`Updating ${entry} -> ${targetVersion}`);
       }
-      await rm(target, { recursive: true, force: true });
       const zip = await downloadZip(registry, {
         slug: entry,
         version: targetVersion,
       });
-      await extractZipToDir(zip, target);
-      const installedFiles = await listTextFiles(target);
-      const installedFingerprint =
-        installedFiles.length > 0 ? hashSkillFiles(installedFiles).fingerprint : undefined;
+      const preparedDir = await prepareSkillUpdate(zip, target);
 
-      await writeSkillOrigin(target, {
-        version: 1,
-        registry: existingOrigin?.registry ?? registry,
-        slug: existingOrigin?.slug ?? entry,
-        installedVersion: targetVersion,
-        installedAt: existingOrigin?.installedAt ?? Date.now(),
-        fingerprint: installedFingerprint,
-      });
+      try {
+        const installedFiles = await listTextFiles(preparedDir);
+        const installedFingerprint =
+          installedFiles.length > 0 ? hashSkillFiles(installedFiles).fingerprint : undefined;
+        await writeSkillOrigin(preparedDir, {
+          version: 1,
+          registry: existingOrigin?.registry ?? registry,
+          slug: existingOrigin?.slug ?? entry,
+          installedVersion: targetVersion,
+          installedAt: existingOrigin?.installedAt ?? Date.now(),
+          fingerprint: installedFingerprint,
+        });
+        await replaceSkillDirectory(preparedDir, target, exists);
+      } catch (error) {
+        await rm(preparedDir, { recursive: true, force: true }).catch(() => {});
+        throw error;
+      }
 
       lock.skills[entry] = withPinnedMetadata(targetVersion, Date.now(), lock.skills[entry]);
       const agentSuffix3 = installAgent ? ` (${getAgentLabel(installAgent as import("../agents.js").AgentName)})` : "";
@@ -568,6 +573,47 @@ export async function cmdUpdate(
     console.log(
       `Skipped ${skippedPinned.length} pinned skill${suffix}: ${skippedPinned.join(", ")}`,
     );
+  }
+}
+
+async function prepareSkillUpdate(zip: Uint8Array, target: string) {
+  await mkdir(dirname(target), { recursive: true });
+  const preparedDir = await mkdtemp(join(dirname(target), `.${basename(target)}-update-`));
+  try {
+    await extractZipToDir(zip, preparedDir);
+    return preparedDir;
+  } catch (error) {
+    await rm(preparedDir, { recursive: true, force: true }).catch(() => {});
+    throw error;
+  }
+}
+
+async function replaceSkillDirectory(preparedDir: string, target: string, targetExists: boolean) {
+  const backupDir = `${preparedDir}-previous`;
+  let movedExisting = false;
+
+  try {
+    if (targetExists) {
+      await rename(target, backupDir);
+      movedExisting = true;
+    }
+    await rename(preparedDir, target);
+  } catch (error) {
+    if (movedExisting) {
+      try {
+        await rename(backupDir, target);
+      } catch (rollbackError) {
+        throw new AggregateError(
+          [error, rollbackError],
+          `Failed to replace ${target} and restore the previous installation`,
+        );
+      }
+    }
+    throw error;
+  }
+
+  if (movedExisting) {
+    await rm(backupDir, { recursive: true, force: true }).catch(() => {});
   }
 }
 

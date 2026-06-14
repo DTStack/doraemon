@@ -96,6 +96,36 @@ describe("cmdPublish", () => {
     }
   });
 
+  it("发布时同时上传文本文件和二进制资源", async () => {
+    const workdir = await makeTmpWorkdir();
+    try {
+      const folder = join(workdir, "skill-with-assets");
+      await mkdir(join(folder, "assets"), { recursive: true });
+      await writeFile(join(folder, "SKILL.md"), "# Skill\n", "utf8");
+      await writeFile(join(folder, "assets", "logo.png"), new Uint8Array([0, 1, 2, 255]));
+
+      httpMocks.apiRequestForm.mockResolvedValueOnce({
+        ok: true,
+        skillId: "skill_1",
+        versionId: "ver_1",
+      });
+
+      await cmdPublish(makeOpts(workdir), "skill-with-assets", {
+        version: "1.0.0",
+      });
+
+      const publishCall = httpMocks.apiRequestForm.mock.calls[0];
+      const publishForm = (publishCall?.[1] as { form?: FormData }).form as FormData;
+      const files = publishForm.getAll("files") as Array<Blob & { name?: string }>;
+      expect(files.map((file) => file.name ?? "").sort()).toEqual([
+        "SKILL.md",
+        "assets/logo.png",
+      ]);
+    } finally {
+      await rm(workdir, { recursive: true, force: true });
+    }
+  });
+
   it("rejects oversized clawscan notes before uploading skill files", async () => {
     const workdir = await makeTmpWorkdir();
     try {

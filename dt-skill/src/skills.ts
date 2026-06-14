@@ -47,12 +47,7 @@ export async function extractZipToDir(zipBytes: Uint8Array, targetDir: string) {
 
 export async function listTextFiles(root: string) {
   const files: Array<{ relPath: string; bytes: Uint8Array; contentType?: string }> = [];
-  const absRoot = resolve(root);
-  const ig = ignore();
-  ig.add([".git/", "node_modules/", `${DOT_DIR}/`, `${LEGACY_DOT_DIR}/`]);
-  await addIgnoreFile(ig, join(absRoot, ".gitignore"));
-  await addIgnoreFile(ig, join(absRoot, DOT_IGNORE));
-  await addIgnoreFile(ig, join(absRoot, LEGACY_DOT_IGNORE));
+  const { absRoot, ig } = await createSkillIgnoreMatcher(root);
 
   await walk(absRoot, async (absPath) => {
     const relPath = normalizePath(relative(absRoot, absPath));
@@ -64,6 +59,22 @@ export async function listTextFiles(root: string) {
     if (!ext && !(await isLikelyTextFile(absPath))) return;
     const buffer = await readFile(absPath);
     const contentType = mime.getType(relPath) ?? "text/plain";
+    files.push({ relPath, bytes: new Uint8Array(buffer), contentType });
+  });
+  return files;
+}
+
+export async function listPublishFiles(root: string) {
+  const files: Array<{ relPath: string; bytes: Uint8Array; contentType?: string }> = [];
+  const { absRoot, ig } = await createSkillIgnoreMatcher(root);
+
+  await walk(absRoot, async (absPath) => {
+    const relPath = normalizePath(relative(absRoot, absPath));
+    if (!relPath) return;
+    if (ig.ignores(relPath)) return;
+    if (hasDotPathSegment(relPath)) return;
+    const buffer = await readFile(absPath);
+    const contentType = mime.getType(relPath) ?? "application/octet-stream";
     files.push({ relPath, bytes: new Uint8Array(buffer), contentType });
   });
   return files;
@@ -209,6 +220,16 @@ async function addIgnoreFile(ig: ReturnType<typeof ignore>, path: string) {
   } catch {
     // optional
   }
+}
+
+async function createSkillIgnoreMatcher(root: string) {
+  const absRoot = resolve(root);
+  const ig = ignore();
+  ig.add([".git/", "node_modules/", `${DOT_DIR}/`, `${LEGACY_DOT_DIR}/`]);
+  await addIgnoreFile(ig, join(absRoot, ".gitignore"));
+  await addIgnoreFile(ig, join(absRoot, DOT_IGNORE));
+  await addIgnoreFile(ig, join(absRoot, LEGACY_DOT_IGNORE));
+  return { absRoot, ig };
 }
 
 export async function listManualSkills(skillsDir: string, lockedSlugs: Set<string>) {

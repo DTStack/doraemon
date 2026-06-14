@@ -8,7 +8,7 @@ import {
   ApiV1PublishResponseSchema,
   normalizeClawScanNote,
 } from "../../schema/index.js";
-import { listTextFiles } from "../../skills.js";
+import { listPublishFiles } from "../../skills.js";
 import { getRegistry } from "../registry.js";
 import { sanitizeSlug, titleCase } from "../slug.js";
 import { findSkillFolders } from "../scanSkills.js";
@@ -85,7 +85,7 @@ export async function cmdPublish(
 
   const spinner = createSpinner(`Preparing ${slug}@${version}`);
   try {
-    const filesOnDisk = await ensureRootManifestFile(folder, await listTextFiles(folder));
+    const filesOnDisk = await ensureRootManifestFile(folder, await listPublishFiles(folder));
     if (filesOnDisk.length === 0) fail("No files found");
     if (
       !filesOnDisk.some((file) => {
@@ -137,7 +137,7 @@ export async function cmdPublish(
 
 async function ensureRootManifestFile(
   folder: string,
-  files: Awaited<ReturnType<typeof listTextFiles>>,
+  files: Awaited<ReturnType<typeof listPublishFiles>>,
 ) {
   if (
     files.some((file) => {

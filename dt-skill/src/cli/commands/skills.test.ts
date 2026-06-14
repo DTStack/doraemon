@@ -12,6 +12,8 @@ import * as skillStore from "../../skills.js";
 
 const fsMocks = vi.hoisted(() => ({
   mkdir: vi.fn(),
+  mkdtemp: vi.fn(),
+  rename: vi.fn(),
   rm: vi.fn(),
   stat: vi.fn(),
 }));
@@ -21,6 +23,8 @@ vi.mock("node:fs/promises", async () => {
   return {
     ...actual,
     mkdir: fsMocks.mkdir,
+    mkdtemp: fsMocks.mkdtemp,
+    rename: fsMocks.rename,
     rm: fsMocks.rm,
     stat: fsMocks.stat,
   };
@@ -58,6 +62,8 @@ const writeLockfileMock = vi.spyOn(skillStore, "writeLockfile");
 const writeSkillOriginMock = vi.spyOn(skillStore, "writeSkillOrigin");
 
 const mkdirMock = fsMocks.mkdir;
+const mkdtempMock = fsMocks.mkdtemp;
+const renameMock = fsMocks.rename;
 const rmMock = fsMocks.rm;
 const statMock = fsMocks.stat;
 const {
@@ -88,6 +94,8 @@ function makeOpts() {
 
 beforeEach(() => {
   mkdirMock.mockResolvedValue(undefined);
+  mkdtempMock.mockResolvedValue("/work/skills/.demo-update-test");
+  renameMock.mockResolvedValue(undefined);
   rmMock.mockResolvedValue(undefined);
   statMock.mockRejectedValue(new Error("missing"));
   extractZipToDirMock.mockResolvedValue(undefined);
@@ -286,6 +294,51 @@ describe("cmdUpdate", () => {
     expect(mockDownloadZip).not.toHaveBeenCalled();
   });
 
+  it("更新下载失败时保留现有技能", async () => {
+    mockApiRequest.mockResolvedValue({ latestVersion: { version: "2.0.0" }, moderation: null });
+    mockDownloadZip.mockRejectedValue(new Error("download failed"));
+    vi.mocked(readLockfile).mockResolvedValue({
+      version: 1,
+      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+    });
+    vi.mocked(readSkillOrigin).mockResolvedValue(null);
+    vi.mocked(listTextFiles).mockResolvedValue([]);
+    vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
+
+    await expect(cmdUpdate(makeOpts(), "demo", { force: true }, false)).rejects.toThrow(
+      "download failed",
+    );
+
+    expect(rm).not.toHaveBeenCalledWith("/work/skills/demo", {
+      recursive: true,
+      force: true,
+    });
+    expect(renameMock).not.toHaveBeenCalled();
+  });
+
+  it("更新解压失败时保留现有技能", async () => {
+    mockApiRequest.mockResolvedValue({ latestVersion: { version: "2.0.0" }, moderation: null });
+    mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+    vi.mocked(readLockfile).mockResolvedValue({
+      version: 1,
+      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+    });
+    vi.mocked(readSkillOrigin).mockResolvedValue(null);
+    vi.mocked(listTextFiles).mockResolvedValue([]);
+    vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
+    vi.mocked(extractZipToDir).mockRejectedValue(new Error("extract failed"));
+
+    await expect(cmdUpdate(makeOpts(), "demo", { force: true }, false)).rejects.toThrow(
+      "extract failed",
+    );
+
+    expect(renameMock).not.toHaveBeenCalled();
+    expect(rm).not.toHaveBeenCalledWith("/work/skills/demo", {
+      recursive: true,
+      force: true,
+    });
+  });
+
   it("skips pinned skills during update --all and reports them in the summary", async () => {
     mockApiRequest.mockResolvedValue({
       latestVersion: { version: "2.0.0" },
@@ -388,7 +441,7 @@ describe("cmdUpdate", () => {
       "https://clawhub.ai",
       expect.objectContaining({ slug: "demo", version: "2.0.0" }),
     );
-    expect(writeSkillOrigin).toHaveBeenCalledWith("/work/skills/demo", {
+    expect(writeSkillOrigin).toHaveBeenCalledWith("/work/skills/.demo-update-test", {
       version: 1,
       registry: "https://clawhub.ai",
       slug: "demo",
@@ -396,6 +449,16 @@ describe("cmdUpdate", () => {
       installedAt: 123,
       fingerprint: "hash",
     });
+    expect(renameMock).toHaveBeenNthCalledWith(
+      1,
+      "/work/skills/demo",
+      "/work/skills/.demo-update-test-previous",
+    );
+    expect(renameMock).toHaveBeenNthCalledWith(
+      2,
+      "/work/skills/.demo-update-test",
+      "/work/skills/demo",
+    );
   });
 });
 
