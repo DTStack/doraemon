@@ -600,7 +600,7 @@ class SkillsService extends Service {
         const sample = buffer.subarray(0, Math.min(buffer.length, 4096));
         if (sample.includes(0)) return true;
         try {
-            new TextDecoder('utf-8', { fatal: true }).decode(sample);
+            new TextDecoder('utf-8', { fatal: true }).decode(buffer);
             return false;
         } catch {
             return true;

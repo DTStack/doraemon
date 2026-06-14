@@ -11,6 +11,15 @@ test('isLikelyBinary treats invalid UTF-8 as binary so original bytes are preser
     assert.equal(service.isLikelyBinary(Buffer.from([0x61, 0x00, 0x62])), true);
 });
 
+test('isLikelyBinary does not reject valid UTF-8 split at the 4096-byte sample boundary', () => {
+    const service = Object.create(skillsModule.prototype);
+    const prefix = 'a'.repeat(4094);
+    const buffer = Buffer.from(`${prefix}答后续内容`, 'utf8');
+
+    assert.equal(buffer.subarray(0, 4096).toString('hex').endsWith('e7ad'), true);
+    assert.equal(service.isLikelyBinary(buffer), false);
+});
+
 test('getUploadIdentityKey returns preferredName when provided', () => {
     const result = skillsModule.prototype.getUploadIdentityKey(
         [{ name: 'skill-a' }, { name: 'skill-b' }],
