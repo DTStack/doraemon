@@ -3,7 +3,6 @@ import { stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { Command } from "commander";
 import { getCliBuildLabel, getCliVersion } from "./cli/buildInfo.js";
-import { resolveClawdbotDefaultWorkspace } from "./cli/clawdbotConfig.js";
 import {
   cmdDeleteSkill,
   cmdHideSkill,
@@ -11,15 +10,6 @@ import {
   cmdUnhideSkill,
 } from "./cli/commands/delete.js";
 import { cmdInspect } from "./cli/commands/inspect.js";
-import {
-  cmdDownloadPackage,
-  cmdExplorePackages,
-  cmdInspectPackage,
-  cmdPackageMigrationStatus,
-  cmdPackageReadiness,
-  cmdPackPackage,
-  cmdVerifyPackage,
-} from "./cli/commands/packages.js";
 import { cmdPublish } from "./cli/commands/publish.js";
 import {
   cmdExplore,
@@ -32,7 +22,6 @@ import {
   cmdUpdate,
 } from "./cli/commands/skills.js";
 import { cmdStarSkill } from "./cli/commands/star.js";
-import { cmdSync } from "./cli/commands/sync.js";
 import { cmdUnstarSkill } from "./cli/commands/unstar.js";
 import { isAgentName, listAgentNames, resolveAgentWorkdir } from "./cli/agents.js";
 import { configureCommanderHelp, styleEnvBlock, styleTitle } from "./cli/helpStyle.js";
@@ -47,7 +36,7 @@ const program = new Command()
   .name("dt-skill")
   .description(
     `${styleTitle(`dt-skill CLI ${getCliBuildLabel()}`)}\n${styleEnvBlock(
-      "install, update, search, and publish skills plus OpenClaw packages.",
+      "install, update, search, and publish agent skills.",
     )}`,
   )
   .version(getCliVersion(), "-V, --cli-version", "Show CLI version")
@@ -63,7 +52,7 @@ const program = new Command()
   .addHelpText(
     "after",
     styleEnvBlock(
-      "\nEnv:\n  CLAWHUB_SITE\n  CLAWHUB_REGISTRY\n  CLAWHUB_WORKDIR\n  (CLAWDHUB_* supported)\n",
+      "\nEnv:\n  DT_SKILL_SITE\n  DT_SKILL_REGISTRY\n  DT_SKILL_WORKDIR\n",
     ),
   );
 
@@ -109,17 +98,13 @@ async function resolveGlobalOpts(): Promise<GlobalOpts> {
     dir = resolve(workdir, raw.dir ?? "skills");
   }
 
-  const site = raw.site ?? process.env.CLAWHUB_SITE ?? process.env.CLAWDHUB_SITE ?? DEFAULT_SITE;
+  const site = raw.site ?? process.env.DT_SKILL_SITE ?? DEFAULT_SITE;
   const registrySource = raw.registry
     ? "cli"
-    : process.env.CLAWHUB_REGISTRY || process.env.CLAWDHUB_REGISTRY
+    : process.env.DT_SKILL_REGISTRY
       ? "env"
       : "default";
-  const registry =
-    raw.registry ??
-    process.env.CLAWHUB_REGISTRY ??
-    process.env.CLAWDHUB_REGISTRY ??
-    DEFAULT_REGISTRY;
+  const registry = raw.registry ?? process.env.DT_SKILL_REGISTRY ?? DEFAULT_REGISTRY;
   return { workdir, dir, site, registry, registrySource, agent: agentName, globalScope: isGlobal, globalScopeExplicit: raw.global !== undefined };
 }
 
@@ -130,26 +115,19 @@ function isInputAllowed() {
 
 async function resolveWorkdir(explicit?: string) {
   if (explicit?.trim()) return resolve(explicit.trim());
-  const envWorkdir = process.env.CLAWHUB_WORKDIR?.trim() ?? process.env.CLAWDHUB_WORKDIR?.trim();
+  const envWorkdir = process.env.DT_SKILL_WORKDIR?.trim();
   if (envWorkdir) return resolve(envWorkdir);
 
   const cwd = resolve(process.cwd());
-  const hasMarker = await hasClawhubMarker(cwd);
-  if (hasMarker) return cwd;
-
-  const clawdbotWorkspace = await resolveClawdbotDefaultWorkspace();
-  return clawdbotWorkspace ? resolve(clawdbotWorkspace) : cwd;
+  if (await hasDtSkillMarker(cwd)) return cwd;
+  return cwd;
 }
 
-async function hasClawhubMarker(workdir: string) {
-  const lockfile = join(workdir, ".clawhub", "lock.json");
+async function hasDtSkillMarker(workdir: string) {
+  const lockfile = join(workdir, ".dt-skill", "lock.json");
   if (await pathExists(lockfile)) return true;
-  const markerDir = join(workdir, ".clawhub");
-  if (await pathExists(markerDir)) return true;
-  const legacyLockfile = join(workdir, ".clawdhub", "lock.json");
-  if (await pathExists(legacyLockfile)) return true;
-  const legacyMarkerDir = join(workdir, ".clawdhub");
-  return pathExists(legacyMarkerDir);
+  const markerDir = join(workdir, ".dt-skill");
+  return pathExists(markerDir);
 }
 
 async function pathExists(path: string) {
@@ -345,116 +323,6 @@ registerCommand(skill, ["skill", "publish"])
     await cmdPublish(opts, folder, options);
   });
 
-const packageCmd = registerCommandGroup(program, ["package"]).description(
-  "Browse OpenClaw packages",
-);
-
-registerCommand(packageCmd, ["package", "explore"])
-  .description("Browse published packages and plugins")
-  .argument("[query...]", "Optional search query")
-  .option("--family <family>", "skill|code-plugin|bundle-plugin")
-  .option("--official", "Only official packages")
-  .option("--executes-code", "Only packages that execute code")
-  .option("--target <target>", "Filter by host target, e.g. darwin-arm64")
-  .option("--os <os>", "Filter by host OS, e.g. darwin, linux, win32")
-  .option("--arch <arch>", "Filter by host architecture, e.g. arm64 or x64")
-  .option("--libc <libc>", "Filter by libc, e.g. glibc or musl")
-  .option("--requires-browser", "Only packages that require a browser")
-  .option("--requires-desktop", "Only packages that require local desktop access")
-  .option("--requires-native-deps", "Only packages with native dependency requirements")
-  .option("--requires-external-service", "Only packages that require an external service")
-  .option("--external-service <name>", "Filter by named external service")
-  .option("--binary <name>", "Filter by required local binary")
-  .option("--os-permission <name>", "Filter by required OS permission")
-  .option("--artifact-kind <kind>", "legacy-zip|npm-pack")
-  .option("--npm-mirror", "Only packages available through the npm mirror")
-  .option(
-    "--limit <n>",
-    "Number of packages to show (max 100)",
-    (value) => Number.parseInt(value, 10),
-    25,
-  )
-  .option("--json", "Output JSON")
-  .action(async (queryParts, options) => {
-    const opts = await resolveGlobalOpts();
-    const query = Array.isArray(queryParts) ? queryParts.join(" ").trim() : "";
-    await cmdExplorePackages(opts, query, options);
-  });
-
-registerCommand(packageCmd, ["package", "inspect"])
-  .description("Fetch package metadata and files without installing")
-  .argument("<name>", "Package name")
-  .option("--version <version>", "Version to inspect")
-  .option("--tag <tag>", "Tag to inspect (default: latest)")
-  .option("--versions", "List version history (first page)")
-  .option("--limit <n>", "Max versions to list (1-100)", (value) => Number.parseInt(value, 10))
-  .option("--files", "List files for the selected version")
-  .option("--file <path>", "Fetch raw file content (text only)")
-  .option("--json", "Output JSON")
-  .action(async (name, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdInspectPackage(opts, name, options);
-  });
-
-registerCommand(packageCmd, ["package", "download"])
-  .description("Download a package artifact and verify its published digests")
-  .argument("<name>", "Package name")
-  .option("--version <version>", "Version to download")
-  .option("--tag <tag>", "Tag to download (default: latest)")
-  .option("-o, --output <path>", "Output file or directory")
-  .option("--force", "Overwrite existing output file")
-  .option("--json", "Output JSON")
-  .action(async (name, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdDownloadPackage(opts, name, options);
-  });
-
-registerCommand(packageCmd, ["package", "verify"])
-  .description("Verify a local package artifact against ClawHub or expected digests")
-  .argument("<file>", "Artifact file")
-  .option("--package <name>", "Package name to resolve expected artifact metadata")
-  .option("--version <version>", "Package version to resolve")
-  .option("--tag <tag>", "Package tag to resolve")
-  .option("--sha256 <hex>", "Expected ClawHub SHA-256")
-  .option("--npm-integrity <sri>", "Expected npm sha512 integrity")
-  .option("--npm-shasum <sha1>", "Expected npm shasum")
-  .option("--json", "Output JSON")
-  .action(async (file, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdVerifyPackage(opts, file, {
-      ...options,
-      packageName: options.package,
-    });
-  });
-
-registerCommand(packageCmd, ["package", "readiness"])
-  .description("Check package readiness for future OpenClaw consumption")
-  .argument("<name>", "Package name")
-  .option("--json", "Output JSON")
-  .action(async (name, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdPackageReadiness(opts, name, options);
-  });
-
-registerCommand(packageCmd, ["package", "migration-status"])
-  .description("Show package migration status for future OpenClaw consumption")
-  .argument("<name>", "Package name")
-  .option("--json", "Output JSON")
-  .action(async (name, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdPackageMigrationStatus(opts, name, options);
-  });
-
-registerCommand(packageCmd, ["package", "pack"])
-  .description("Create a ClawPack npm tarball from a plugin package folder")
-  .argument("<source>", "Package folder path")
-  .option("--pack-destination <dir>", "Directory for the generated .tgz (default: workdir)")
-  .option("--json", "Output JSON")
-  .action(async (source, options) => {
-    const opts = await resolveGlobalOpts();
-    await cmdPackPackage(opts, source, options);
-  });
-
 registerCommand(program, ["star"])
   .description("Add a skill to your highlights")
   .argument("<slug>", "Skill slug")
@@ -471,37 +339,6 @@ registerCommand(program, ["unstar"])
   .action(async (slug, options) => {
     const opts = await resolveGlobalOpts();
     await cmdUnstarSkill(opts, slug, options, isInputAllowed());
-  });
-
-registerCommand(program, ["sync"])
-  .description("Scan local skills and publish new/updated ones")
-  .option("--root <dir...>", "Extra scan roots (one or more)")
-  .option("--all", "Upload all new/updated skills without prompting")
-  .option("--dry-run", "Show what would be uploaded")
-  .option("--bump <type>", "Version bump for updates (patch|minor|major)", "patch")
-  .option("--changelog <text>", "Changelog to use for updates (non-interactive)")
-  .option("--tags <tags>", "Comma-separated tags", "latest")
-  .option("--concurrency <n>", "Concurrent registry checks (default: 4)", "4")
-  .action(async (options) => {
-    const opts = await resolveGlobalOpts();
-    const bump = String(options.bump ?? "patch") as "patch" | "minor" | "major";
-    if (!["patch", "minor", "major"].includes(bump)) fail("--bump must be patch|minor|major");
-    const concurrencyRaw = Number(options.concurrency ?? 4);
-    const concurrency = Number.isFinite(concurrencyRaw) ? Math.round(concurrencyRaw) : 4;
-    if (concurrency < 1 || concurrency > 32) fail("--concurrency must be between 1 and 32");
-    await cmdSync(
-      opts,
-      {
-        root: options.root,
-        all: options.all,
-        dryRun: options.dryRun,
-        bump,
-        changelog: options.changelog,
-        tags: options.tags,
-        concurrency,
-      },
-      isInputAllowed(),
-    );
   });
 
 program.action(async () => {

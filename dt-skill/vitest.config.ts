@@ -7,6 +7,6 @@ export default defineConfig({
     testTimeout: 15_000,
     hookTimeout: 15_000,
     include: ["src/**/*.test.ts"],
-    exclude: ["dist/**", "node_modules/**", "test-artifact/**", "src/cli/commands/packages.test.ts"],
+    exclude: ["dist/**", "node_modules/**", "test-artifact/**"],
   },
 });

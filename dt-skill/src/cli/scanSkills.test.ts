@@ -4,10 +4,10 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { findSkillFolders, getFallbackSkillRoots } from "./scanSkills";
+import { findSkillFolders } from "./scanSkills";
 
 async function makeTmpDir() {
-  return mkdtemp(join(tmpdir(), "clawhub-scan-"));
+  return mkdtemp(join(tmpdir(), "dt-skill-scan-"));
 }
 
 describe("scanSkills", () => {
@@ -53,14 +53,5 @@ describe("scanSkills", () => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
-  });
-
-  it("includes known legacy roots", () => {
-    const roots = getFallbackSkillRoots("/tmp/anywhere");
-    expect(roots.some((p) => p.endsWith("/clawdis/skills"))).toBe(true);
-    expect(roots.some((p) => p.endsWith("/clawd/skills"))).toBe(true);
-    expect(roots.some((p) => p.endsWith("/clawdbot/skills"))).toBe(true);
-    expect(roots.some((p) => p.endsWith("/openclaw/skills"))).toBe(true);
-    expect(roots.some((p) => p.endsWith("/moltbot/skills"))).toBe(true);
   });
 });

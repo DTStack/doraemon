@@ -1,7 +1,7 @@
 /* @vitest-environment node */
 
 import { spawnSync } from 'node:child_process';
-import { cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -28,17 +28,6 @@ function runNode(args: string[], envOverrides: NodeJS.ProcessEnv = {}) {
     });
 }
 
-function runGit(cwd: string, args: string[]) {
-    const result = spawnSync('git', ['-C', cwd, ...args], {
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    if (result.status !== 0) {
-        throw new Error(`git ${args.join(' ')} failed: ${result.stderr}`);
-    }
-    return result.stdout.trim();
-}
-
 afterEach(async () => {
     while (tempDirs.length > 0) {
         await rm(tempDirs.pop()!, { recursive: true, force: true });
@@ -55,7 +44,7 @@ describe('built CLI artifact', () => {
     });
 
     it('loads the fingerprint contract from the built package', async () => {
-        const isolatedPackage = await makeTmpDir('clawhub-artifact-package-');
+        const isolatedPackage = await makeTmpDir('dt-skill-artifact-package-');
         await cp(join(packageRoot, 'bin'), join(isolatedPackage, 'bin'), { recursive: true });
         await cp(join(packageRoot, 'dist'), join(isolatedPackage, 'dist'), { recursive: true });
         await cp(join(packageRoot, 'package.json'), join(isolatedPackage, 'package.json'));
@@ -72,78 +61,6 @@ describe('built CLI artifact', () => {
 
         expect(result.status).toBe(0);
         expect(result.stderr).toBe('');
-    });
-
-    it('packs a local code plugin in json mode from built output', async () => {
-        const root = await makeTmpDir('clawhub-artifact-');
-        const pluginDir = join(root, 'demo-plugin');
-        const packDestination = join(root, 'packs');
-        await mkdir(join(pluginDir, 'src'), { recursive: true });
-        await writeFile(
-            join(pluginDir, 'package.json'),
-            JSON.stringify({
-                name: '@openclaw/demo-plugin',
-                displayName: 'Demo Plugin',
-                version: '1.0.0',
-                openclaw: {
-                    compat: {
-                        pluginApi: '>=2026.3.24-beta.2',
-                        minGatewayVersion: '2026.3.24-beta.2',
-                    },
-                    build: {
-                        openclawVersion: '2026.3.24-beta.2',
-                        pluginSdkVersion: '2026.3.24-beta.2',
-                    },
-                },
-            }),
-            'utf8'
-        );
-        await writeFile(
-            join(pluginDir, 'openclaw.plugin.json'),
-            JSON.stringify({
-                id: 'demo.plugin',
-                configSchema: {
-                    type: 'object',
-                    additionalProperties: false,
-                },
-            }),
-            'utf8'
-        );
-        await writeFile(join(pluginDir, 'src', 'index.ts'), 'export const demo = true;\n', 'utf8');
-
-        runGit(root, ['init']);
-        runGit(root, ['remote', 'add', 'origin', 'https://github.com/openclaw/demo-plugin.git']);
-        runGit(root, ['add', '.']);
-        runGit(root, [
-            '-c',
-            'user.name=Test',
-            '-c',
-            'user.email=test@example.com',
-            'commit',
-            '-m',
-            'init',
-        ]);
-
-        const result = runNode(
-            [
-                binPath,
-                'package',
-                'pack',
-                pluginDir,
-                '--json',
-                '--pack-destination',
-                packDestination,
-            ],
-            { NPM_CONFIG_CACHE: join(root, '.npm-cache') }
-        );
-
-        expect(result.status, result.stderr || result.stdout).toBe(0);
-        expect(result.stderr).toBe('');
-        const output = JSON.parse(result.stdout.trim()) as Record<string, unknown>;
-        expect(output.name).toBe('@openclaw/demo-plugin');
-        expect(output.version).toBe('1.0.0');
-        expect(output.path).toBeTypeOf('string');
-        expect(output.sha256).toBeTypeOf('string');
     });
 
     it('keeps the built dist free of compiled test files', async () => {

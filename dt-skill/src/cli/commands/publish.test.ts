@@ -31,7 +31,7 @@ vi.mock("../prompts/search-multiselect.js", async () => {
 const { cmdPublish } = await import("./publish");
 
 async function makeTmpWorkdir() {
-  const root = await mkdtemp(join(tmpdir(), "clawhub-publish-"));
+  const root = await mkdtemp(join(tmpdir(), "dt-skill-publish-"));
   return root;
 }
 
@@ -249,7 +249,7 @@ describe("cmdPublish", () => {
     }
   });
 
-  it('rejects plugin folders with guidance to use "clawhub package publish"', async () => {
+  it("rejects plugin folders with guidance to use a skill folder", async () => {
     const workdir = await makeTmpWorkdir();
     try {
       const folder = join(workdir, "demo-plugin");
@@ -269,7 +269,7 @@ describe("cmdPublish", () => {
           tags: "latest",
         }),
       ).rejects.toThrow(
-        'This looks like a plugin. Use "clawhub package publish <source>" instead.',
+        "This folder looks like a code plugin, not a skill. Use a folder with SKILL.md.",
       );
       expect(httpMocks.apiRequestForm).not.toHaveBeenCalled();
     } finally {

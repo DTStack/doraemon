@@ -35,7 +35,7 @@ export async function cmdPublish(
 ) {
   // Resolve folder path: try workdir first (standard behavior),
   // but fall back to cwd so relative paths work from whichever directory
-  // the user runs the command (workdir may point to a clawdbot workspace)
+  // the user runs the command.
   const folder = folderArg
     ? await resolveFolderPath(opts.workdir, folderArg)
     : null;
@@ -43,7 +43,7 @@ export async function cmdPublish(
   const folderStat = await stat(folder).catch(() => null);
   if (!folderStat || !folderStat.isDirectory()) fail("Path must be a folder");
   if (await looksLikePluginFolder(folder)) {
-    fail('This looks like a plugin. Use "clawhub package publish <source>" instead.');
+    fail("This folder looks like a code plugin, not a skill. Use a folder with SKILL.md.");
   }
 
   // Detect batch mode: if folder does NOT contain SKILL.md directly,
