@@ -6,8 +6,8 @@ export function makeGlobalOpts(workdir = "/work"): GlobalOpts {
   return {
     workdir,
     dir: join(workdir, "skills"),
-    site: "https://clawhub.ai",
-    registry: "https://clawhub.ai",
+    site: "https://example.com",
+    registry: "https://example.com",
     registrySource: "default",
   };
 }
@@ -47,7 +47,7 @@ export function createHttpModuleMocks() {
 }
 
 export function createRegistryModuleMocks() {
-  const getRegistry = vi.fn(async (_opts?: unknown, _params?: unknown) => "https://clawhub.ai");
+  const getRegistry = vi.fn(async (_opts?: unknown, _params?: unknown) => "https://example.com");
 
   return {
     getRegistry,

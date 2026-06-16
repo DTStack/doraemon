@@ -4,12 +4,6 @@ import type { GlobalOpts } from "./types.js";
 
 export const DEFAULT_SITE = "";
 export const DEFAULT_REGISTRY = "";
-const LEGACY_REGISTRY_HOSTS = new Set([
-  "auth.clawdhub.com",
-  "auth.clawhub.com",
-  "auth.clawhub.ai",
-  "registry.clawhub.ai",
-]);
 
 export async function resolveRegistry(opts: GlobalOpts) {
   const explicit = opts.registrySource !== "default" ? opts.registry.trim() : "";
@@ -17,7 +11,7 @@ export async function resolveRegistry(opts: GlobalOpts) {
 
   const cfg = await readGlobalConfig();
   const cached = cfg?.registry?.trim();
-  if (cached && !isLegacyRegistry(cached)) return cached;
+  if (cached) return cached;
 
   const site = opts.site.trim();
   if (site) {
@@ -37,18 +31,6 @@ export async function getRegistry(opts: GlobalOpts, params?: { cache?: boolean }
   if (!cache) return registry;
   const cfg = await readGlobalConfig();
   const cached = cfg?.registry?.trim();
-  const shouldUpdate =
-    !cached ||
-    isLegacyRegistry(cached) ||
-    cached !== registry;
-  if (shouldUpdate) await writeGlobalConfig({ registry });
+  if (!cached || cached !== registry) await writeGlobalConfig({ registry });
   return registry;
-}
-
-function isLegacyRegistry(registry: string) {
-  try {
-    return LEGACY_REGISTRY_HOSTS.has(new URL(registry).hostname);
-  } catch {
-    return false;
-  }
 }

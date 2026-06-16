@@ -1,16 +1,16 @@
 {
   "name": "dt-skill",
   "version": "0.18.3",
-  "description": "ClawHub CLI \\u2014 install, update, search, and publish skills plus OpenClaw packages.",
-  "homepage": "https://clawhub.ai",
+  "description": "dt-skill CLI — install, update, search, and publish agent skills.",
+  "homepage": "https://github.com/TreeTreeDi/doraemon",
   "bugs": {
-    "url": "https://github.com/openclaw/clawhub/issues"
+    "url": "https://github.com/TreeTreeDi/doraemon/issues"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openclaw/clawhub.git",
-    "directory": "packages/clawhub"
+    "url": "git+https://github.com/TreeTreeDi/doraemon.git",
+    "directory": "dt-skill"
   },
   "bin": {
     "dt-skill": "bin/dt-skill.js"

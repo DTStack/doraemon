@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fetchGitHubSource, resolveLocalGitInfo, resolveSourceInput } from "./github";
 
 async function makeTmpDir() {
-  return await mkdtemp(join(tmpdir(), "clawhub-github-test-"));
+  return await mkdtemp(join(tmpdir(), "dt-skill-github-test-"));
 }
 
 function runGit(cwd: string, args: string[]) {

@@ -31,7 +31,7 @@ describe("openInBrowser", () => {
     const child = createMockChild();
     mockSpawn.mockReturnValueOnce(child);
     const url =
-      "https://clawhub.ai/auth?redirect_uri=http%3A%2F%2F127.0.0.1%3A43123%2Fcallback&state=abc123";
+      "https://example.com/auth?redirect_uri=http%3A%2F%2F127.0.0.1%3A43123%2Fcallback&state=abc123";
 
     try {
       Object.defineProperty(process, "platform", { value: "win32" });
@@ -52,12 +52,12 @@ describe("openInBrowser", () => {
     mockSpawn.mockReturnValueOnce(child);
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    openInBrowser("https://clawhub.ai");
+    openInBrowser("https://example.com");
     child.emitError(Object.assign(new Error("not found"), { code: "ENOENT" }));
 
     expect(logSpy).toHaveBeenCalledWith("Could not open browser automatically.");
     expect(logSpy).toHaveBeenCalledWith("Please open this URL manually:");
-    expect(logSpy).toHaveBeenCalledWith("  https://clawhub.ai");
+    expect(logSpy).toHaveBeenCalledWith("  https://example.com");
     expect(child.unref).toHaveBeenCalledOnce();
     logSpy.mockRestore();
   });
@@ -67,7 +67,7 @@ describe("openInBrowser", () => {
     mockSpawn.mockReturnValueOnce(child);
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    openInBrowser("https://clawhub.ai");
+    openInBrowser("https://example.com");
     child.emitError(Object.assign(new Error("permission denied"), { code: "EACCES" }));
 
     expect(logSpy).not.toHaveBeenCalledWith("Could not open browser automatically.");

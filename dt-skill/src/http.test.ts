@@ -88,8 +88,8 @@ describe("shouldUseProxyFromEnv", () => {
 
 describe("registryUrl", () => {
   it("preserves registry base paths and normalizes slashes", () => {
-    expect(registryUrl("/api/v1/skills", "https://clawhub.ai").toString()).toBe(
-      "https://clawhub.ai/api/v1/skills",
+    expect(registryUrl("/api/v1/skills", "https://example.com").toString()).toBe(
+      "https://example.com/api/v1/skills",
     );
     expect(registryUrl("/api/v1/skills", "http://localhost:8081/custom/path").toString()).toBe(
       "http://localhost:8081/custom/path/api/v1/skills",

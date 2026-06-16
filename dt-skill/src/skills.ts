@@ -19,10 +19,8 @@ import {
   TEXT_SAMPLE_BYTES,
 } from "./schema/skillFingerprintContract.js";
 
-const DOT_DIR = ".clawhub";
-const LEGACY_DOT_DIR = ".clawdhub";
-const DOT_IGNORE = ".clawhubignore";
-const LEGACY_DOT_IGNORE = ".clawdhubignore";
+const DOT_DIR = ".dt-skill";
+const DOT_IGNORE = ".dt-skillignore";
 
 export type SkillOrigin = {
   version: 1;
@@ -115,17 +113,14 @@ export function hashSkillZip(zipBytes: Uint8Array) {
 }
 
 export async function readLockfile(workdir: string): Promise<Lockfile> {
-  const paths = [join(workdir, DOT_DIR, "lock.json"), join(workdir, LEGACY_DOT_DIR, "lock.json")];
-  for (const path of paths) {
-    try {
-      const raw = await readFile(path, "utf8");
-      const parsed = JSON.parse(raw) as unknown;
-      return parseArk(LockfileSchema, parsed, "Lockfile");
-    } catch {
-      // try next
-    }
+  const path = join(workdir, DOT_DIR, "lock.json");
+  try {
+    const raw = await readFile(path, "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+    return parseArk(LockfileSchema, parsed, "Lockfile");
+  } catch {
+    return { version: 1, skills: {} };
   }
-  return { version: 1, skills: {} };
 }
 
 export async function writeLockfile(workdir: string, lock: Lockfile) {
@@ -135,32 +130,26 @@ export async function writeLockfile(workdir: string, lock: Lockfile) {
 }
 
 export async function readSkillOrigin(skillFolder: string): Promise<SkillOrigin | null> {
-  const paths = [
-    join(skillFolder, DOT_DIR, "origin.json"),
-    join(skillFolder, LEGACY_DOT_DIR, "origin.json"),
-  ];
-  for (const path of paths) {
-    try {
-      const raw = await readFile(path, "utf8");
-      const parsed = JSON.parse(raw) as Partial<SkillOrigin>;
-      if (parsed.version !== 1) return null;
-      if (!parsed.registry || !parsed.slug || !parsed.installedVersion) return null;
-      if (typeof parsed.installedAt !== "number" || !Number.isFinite(parsed.installedAt)) {
-        return null;
-      }
-      return {
-        version: 1,
-        registry: parsed.registry,
-        slug: parsed.slug,
-        installedVersion: parsed.installedVersion,
-        installedAt: parsed.installedAt,
-        fingerprint: typeof parsed.fingerprint === "string" ? parsed.fingerprint : undefined,
-      };
-    } catch {
-      // try next
+  const path = join(skillFolder, DOT_DIR, "origin.json");
+  try {
+    const raw = await readFile(path, "utf8");
+    const parsed = JSON.parse(raw) as Partial<SkillOrigin>;
+    if (parsed.version !== 1) return null;
+    if (!parsed.registry || !parsed.slug || !parsed.installedVersion) return null;
+    if (typeof parsed.installedAt !== "number" || !Number.isFinite(parsed.installedAt)) {
+      return null;
     }
+    return {
+      version: 1,
+      registry: parsed.registry,
+      slug: parsed.slug,
+      installedVersion: parsed.installedVersion,
+      installedAt: parsed.installedAt,
+      fingerprint: typeof parsed.fingerprint === "string" ? parsed.fingerprint : undefined,
+    };
+  } catch {
+    return null;
   }
-  return null;
 }
 
 export async function writeSkillOrigin(skillFolder: string, origin: SkillOrigin) {
@@ -225,10 +214,9 @@ async function addIgnoreFile(ig: ReturnType<typeof ignore>, path: string) {
 async function createSkillIgnoreMatcher(root: string) {
   const absRoot = resolve(root);
   const ig = ignore();
-  ig.add([".git/", "node_modules/", `${DOT_DIR}/`, `${LEGACY_DOT_DIR}/`]);
+  ig.add([".git/", "node_modules/", `${DOT_DIR}/`]);
   await addIgnoreFile(ig, join(absRoot, ".gitignore"));
   await addIgnoreFile(ig, join(absRoot, DOT_IGNORE));
-  await addIgnoreFile(ig, join(absRoot, LEGACY_DOT_IGNORE));
   return { absRoot, ig };
 }
 
@@ -257,7 +245,6 @@ async function hasSkillMetadata(skillDir: string) {
   const candidates = [
     join(skillDir, "SKILL.md"),
     join(skillDir, DOT_DIR, "origin.json"),
-    join(skillDir, LEGACY_DOT_DIR, "origin.json"),
   ];
   for (const path of candidates) {
     try {

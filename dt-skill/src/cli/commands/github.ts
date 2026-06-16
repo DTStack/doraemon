@@ -6,7 +6,7 @@ import { unzipSync } from "fflate";
 
 const GITHUB_API = "https://api.github.com";
 const GITHUB_HOSTS = new Set(["github.com", "www.github.com"]);
-const ZIP_USER_AGENT = "clawhub/package-publish";
+const ZIP_USER_AGENT = "dt-skill/package-publish";
 
 type ResolvedPublishSource =
   | {
@@ -90,7 +90,7 @@ export async function fetchGitHubSource(
   const archiveBytes = await downloadGitHubZip(source.owner, source.repo, commit, token);
   const entries = stripSingleTopLevelFolder(unzipSync(archiveBytes));
   const publishPath = normalizeRepoSubpath(source.path);
-  const tempDir = await mkdtemp(join(tmpdir(), "clawhub-github-publish-"));
+  const tempDir = await mkdtemp(join(tmpdir(), "dt-skill-github-publish-"));
 
   try {
     const subdirEntries = filterEntriesForSubpath(entries, publishPath);

@@ -9,7 +9,7 @@ const skillFingerprint = require('../../contracts/skill-fingerprint');
 const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?$/;
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-class ClawhubService extends Service {
+class SkillsRegistryService extends Service {
     // Well-Known Registry Metadata
     async getRegistryMetadata(origin) {
         return {
@@ -376,7 +376,7 @@ class ClawhubService extends Service {
                     }
                 }
             } catch (err) {
-                this.ctx.logger.error(`[clawhub] 读取上传文件 ${originalName} 失败:`, err);
+                this.ctx.logger.error(`[skillsRegistry] 读取上传文件 ${originalName} 失败:`, err);
             }
             processedFiles.push({
                 filename: originalName,
@@ -610,4 +610,4 @@ class ClawhubService extends Service {
     }
 }
 
-module.exports = ClawhubService;
+module.exports = SkillsRegistryService;

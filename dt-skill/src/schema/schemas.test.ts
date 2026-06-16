@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { parseArk } from "./ark";
 import { ApiV1SearchResponseSchema, ClawdisSkillMetadataSchema } from "./schemas";
 
-describe("packages/clawhub skill metadata schema", () => {
+describe("dt-skill skill metadata schema", () => {
   it("preserves optional env var declarations", () => {
     const parsed = parseArk(
       ClawdisSkillMetadataSchema,

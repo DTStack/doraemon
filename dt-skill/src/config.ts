@@ -1,19 +1,10 @@
-import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { resolveHome } from "./homedir.js";
 import { type GlobalConfig, GlobalConfigSchema, parseArk } from "./schema/index.js";
 
-/**
- * Resolve config path with legacy fallback.
- * Checks for 'clawhub' first, falls back to legacy 'clawdhub' if it exists.
- */
 function resolveConfigPath(baseDir: string): string {
-  const clawhubPath = join(baseDir, "clawhub", "config.json");
-  const clawdhubPath = join(baseDir, "clawdhub", "config.json");
-  if (existsSync(clawhubPath)) return clawhubPath;
-  if (existsSync(clawdhubPath)) return clawdhubPath;
-  return clawhubPath;
+  return join(baseDir, "dt-skill", "config.json");
 }
 
 function isNonFatalChmodError(error: unknown): boolean {
@@ -23,8 +14,7 @@ function isNonFatalChmodError(error: unknown): boolean {
 }
 
 function getGlobalConfigPath() {
-  const override =
-    process.env.CLAWHUB_CONFIG_PATH?.trim() ?? process.env.CLAWDHUB_CONFIG_PATH?.trim();
+  const override = process.env.DT_SKILL_CONFIG_PATH?.trim();
   if (override) return resolve(override);
 
   const home = resolveHome();

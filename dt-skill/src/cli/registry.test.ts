@@ -42,8 +42,8 @@ describe("registry resolution", () => {
   });
 
   it("prefers explicit registry over discovery/cache", async () => {
-    readGlobalConfig.mockResolvedValue({ registry: "https://auth.clawdhub.com" });
-    discoverRegistryFromSite.mockResolvedValue({ apiBase: "https://clawhub.ai" });
+    readGlobalConfig.mockResolvedValue({ registry: "https://cached.example" });
+    discoverRegistryFromSite.mockResolvedValue({ apiBase: "https://discovered.example" });
 
     const registry = await resolveRegistry(
       makeOpts({ registry: "https://custom.example", registrySource: "cli" }),
@@ -53,8 +53,18 @@ describe("registry resolution", () => {
     expect(discoverRegistryFromSite).not.toHaveBeenCalled();
   });
 
-  it("ignores legacy registry and updates cache from discovery", async () => {
-    readGlobalConfig.mockResolvedValue({ registry: "https://auth.clawdhub.com" });
+  it("uses cached registry before site discovery", async () => {
+    readGlobalConfig.mockResolvedValue({ registry: "http://10.0.0.7:7001" });
+    discoverRegistryFromSite.mockResolvedValue({ apiBase: "http://10.0.0.8:7001" });
+
+    const registry = await resolveRegistry(makeOpts({ site: "http://10.0.0.8:7001" }));
+
+    expect(registry).toBe("http://10.0.0.7:7001");
+    expect(discoverRegistryFromSite).not.toHaveBeenCalled();
+  });
+
+  it("discovers registry from site when cache is empty", async () => {
+    readGlobalConfig.mockResolvedValue(null);
     discoverRegistryFromSite.mockResolvedValue({ apiBase: "http://10.0.0.8:7001" });
 
     const registry = await getRegistry(makeOpts({ site: "http://10.0.0.8:7001" }), { cache: true });
@@ -66,7 +76,7 @@ describe("registry resolution", () => {
   });
 
   it("fails clearly when no explicit, cached, or discoverable registry exists", async () => {
-    readGlobalConfig.mockResolvedValue({ registry: "https://registry.clawhub.ai" });
+    readGlobalConfig.mockResolvedValue(null);
     discoverRegistryFromSite.mockResolvedValue(null);
 
     await expect(getRegistry(makeOpts(), { cache: true })).rejects.toThrow(

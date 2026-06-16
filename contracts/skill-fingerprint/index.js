@@ -9,8 +9,7 @@ const TEXT_FILE_EXTENSION_SET = new Set(TEXT_FILE_EXTENSIONS);
 
 const FINGERPRINT_IGNORE_FILENAMES = Object.freeze([
     '.gitignore',
-    '.clawhubignore',
-    '.clawdhubignore',
+    '.dt-skillignore',
 ]);
 
 const TEXT_SAMPLE_BYTES = 4096;

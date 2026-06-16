@@ -26,7 +26,7 @@ const configModuleSpecifier = "./config.js?config-test" as string;
 const { writeGlobalConfig } = (await import(configModuleSpecifier)) as typeof import("./config");
 
 const originalPlatform = process.platform;
-const testConfigPath = "/tmp/clawhub-config-test/config.json";
+const testConfigPath = "/tmp/dt-skill-config-test/config.json";
 const envStubs = createEnvStubRegistry();
 
 function makeErr(code: string): NodeJS.ErrnoException {
@@ -36,7 +36,7 @@ function makeErr(code: string): NodeJS.ErrnoException {
 }
 
 beforeEach(() => {
-  envStubs.stub("CLAWHUB_CONFIG_PATH", testConfigPath);
+  envStubs.stub("DT_SKILL_CONFIG_PATH", testConfigPath);
   Object.defineProperty(process, "platform", { value: "linux" });
   fsMocks.chmod.mockResolvedValue(undefined);
   fsMocks.mkdir.mockResolvedValue(undefined);
@@ -58,7 +58,7 @@ describe("writeGlobalConfig", () => {
   it("writes config with restricted modes", async () => {
     await writeGlobalConfig({ registry: "https://example.com" });
 
-    expect(fsMocks.mkdir).toHaveBeenCalledWith("/tmp/clawhub-config-test", {
+    expect(fsMocks.mkdir).toHaveBeenCalledWith("/tmp/dt-skill-config-test", {
       recursive: true,
       mode: 0o700,
     });

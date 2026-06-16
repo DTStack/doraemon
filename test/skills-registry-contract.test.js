@@ -43,14 +43,14 @@ function createMockCtx(query = {}, params = {}, body = {}, files = []) {
 }
 
 // Load the service module
-const ClawhubService = require('../app/service/clawhub');
+const SkillsRegistryService = require('../app/service/skillsRegistry');
 
 // ============================================================
 // Phase 2: Foundation Tests (T005)
 // ============================================================
 
-test('ClawhubService can be instantiated with mock app and ctx', () => {
-    const service = Object.create(ClawhubService.prototype);
+test('SkillsRegistryService can be instantiated with mock app and ctx', () => {
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp();
     service.ctx = createMockCtx();
     assert.equal(typeof service.getRegistryMetadata, 'function');
@@ -61,7 +61,7 @@ test('ClawhubService can be instantiated with mock app and ctx', () => {
 // ============================================================
 
 test('getRegistryMetadata returns well-known config', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp();
     service.ctx = createMockCtx();
 
@@ -72,7 +72,7 @@ test('getRegistryMetadata returns well-known config', async () => {
 });
 
 test('searchSkills returns flat results with score 1.0', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findAll: async () => [
@@ -102,7 +102,7 @@ test('searchSkills returns flat results with score 1.0', async () => {
 });
 
 test('searchSkills with empty query returns all skills', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findAll: async () => [],
@@ -115,7 +115,7 @@ test('searchSkills with empty query returns all skills', async () => {
 });
 
 test('listSkills returns items with cursor pagination', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findAll: async () => [
@@ -189,7 +189,7 @@ test('listSkills uses a composite cursor that matches newest sorting', async () 
             updated_at: new Date('2026-05-21T10:00:00Z'),
         },
     ];
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findAll: async (options) => {
@@ -238,7 +238,7 @@ test('listSkills uses a composite cursor that matches stars sorting', async () =
             updated_at: new Date('2026-05-21T09:00:00Z'),
         },
     ];
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findAll: async (options) => {
@@ -266,7 +266,7 @@ test('listSkills uses a composite cursor that matches stars sorting', async () =
 });
 
 test('getSkillDetail returns full skill object', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => ({
@@ -304,7 +304,7 @@ test('getSkillDetail returns full skill object', async () => {
 });
 
 test('getSkillDetail returns null for missing skill', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => null,
@@ -317,7 +317,7 @@ test('getSkillDetail returns null for missing skill', async () => {
 });
 
 test('getSkillDetail returns children for a package skill', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => ({
@@ -364,7 +364,7 @@ test('getSkillDetail returns children for a package skill', async () => {
 });
 
 test('listSkillVersions returns single version list', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => ({
@@ -387,7 +387,7 @@ test('listSkillVersions returns single version list', async () => {
 });
 
 test('getSkillVersionDetail returns version for matching current version', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => ({
@@ -412,7 +412,7 @@ test('getSkillVersionDetail returns version for matching current version', async
 });
 
 test('getSkillVersionDetail returns null for non-matching version', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => ({
@@ -434,7 +434,7 @@ test('getSkillVersionDetail returns null for non-matching version', async () => 
 // ============================================================
 
 test('getSkillFileContent returns file content', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => ({ id: 1, slug: 'my-skill' }),
@@ -456,7 +456,7 @@ test('getSkillFileContent returns file content', async () => {
 });
 
 test('getSkillFileContent returns null for missing file', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => ({ id: 1, slug: 'my-skill' }),
@@ -472,7 +472,7 @@ test('getSkillFileContent returns null for missing file', async () => {
 });
 
 test('buildSkillZip returns zip buffer', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => ({ id: 1, slug: 'my-skill', version: '1.0.0' }),
@@ -491,7 +491,7 @@ test('buildSkillZip returns zip buffer', async () => {
 });
 
 test('buildSkillZip packages skill package nested structure when is_package is 1', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async (options) => {
@@ -546,7 +546,7 @@ test('buildSkillZip packages skill package nested structure when is_package is 1
 // ============================================================
 
 test('validateSemVer accepts valid versions', () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     assert.equal(service.validateSemVer('1.0.0'), true);
     assert.equal(service.validateSemVer('0.1.0'), true);
     assert.equal(service.validateSemVer('1.2.3-alpha'), true);
@@ -554,7 +554,7 @@ test('validateSemVer accepts valid versions', () => {
 });
 
 test('validateSemVer rejects invalid versions', () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     assert.equal(service.validateSemVer('v1.0.0'), false);
     assert.equal(service.validateSemVer('1.0'), false);
     assert.equal(service.validateSemVer('1.0.0.0'), false);
@@ -562,7 +562,7 @@ test('validateSemVer rejects invalid versions', () => {
 });
 
 test('isBinaryBuffer detects invalid UTF-8 content', () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
 
     assert.equal(service.isBinaryBuffer(Buffer.from('valid utf8', 'utf8')), false);
     assert.equal(service.isBinaryBuffer(Buffer.from([0xff, 0xfe, 0xfd])), true);
@@ -570,7 +570,7 @@ test('isBinaryBuffer detects invalid UTF-8 content', () => {
 });
 
 test('publishSkill rejects missing SKILL.md', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: { findOne: async () => null },
         SkillsSource: { findOne: async () => null, create: async () => ({ id: 1 }) },
@@ -592,7 +592,7 @@ test('publishSkill rejects missing SKILL.md', async () => {
 });
 
 test('publishSkill returns ok: true and string skillId and versionId', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => null,
@@ -624,7 +624,7 @@ test('publishSkill returns ok: true and string skillId and versionId', async () 
 // ============================================================
 
 test('computeSkillFingerprint returns consistent hex string', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsFile: {
             findAll: async () => [
@@ -644,7 +644,7 @@ test('computeSkillFingerprint returns consistent hex string', async () => {
 
 test('computeSkillFingerprint matches shared golden vectors', async () => {
     const testCase = goldenVectors.cases.find((entry) => entry.name === 'basic-markdown-pair');
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsFile: {
             findAll: async () => [
@@ -669,7 +669,7 @@ test('computeSkillFingerprint matches shared golden vectors', async () => {
 
 test('computeSkillFingerprint uses the same text-file set as the CLI', async () => {
     const testCase = goldenVectors.cases.find((entry) => entry.name === 'text-file-set-filtering');
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsFile: {
             findAll: async () => [
@@ -694,7 +694,7 @@ test('computeSkillFingerprint uses the same text-file set as the CLI', async () 
 
 test('computeSkillFingerprint applies stored ignore files like the CLI', async () => {
     const testCase = goldenVectors.cases.find((entry) => entry.name === 'stored-ignore-files');
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsFile: {
             findAll: async () => [
@@ -718,7 +718,7 @@ test('computeSkillFingerprint applies stored ignore files like the CLI', async (
 });
 
 test('resolveFingerprint returns match and latestVersion for matching fingerprint', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => ({ id: 1, slug: 'skill-a', version: '1.0.0' }),
@@ -737,7 +737,7 @@ test('resolveFingerprint returns match and latestVersion for matching fingerprin
 });
 
 test('resolveFingerprint returns null match for unmatched fingerprint but valid slug', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => ({ id: 1, slug: 'skill-a', version: '1.0.0' }),
@@ -755,7 +755,7 @@ test('resolveFingerprint returns null match for unmatched fingerprint but valid 
 });
 
 test('resolveFingerprint returns null values for missing slug', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => null,
@@ -774,7 +774,7 @@ test('resolveFingerprint returns null values for missing slug', async () => {
 // ============================================================
 
 test('deleteSkill sets is_delete to 1', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     const skill = { update: async (data) => Object.assign(skill, data) };
     service.app = createMockApp({
         SkillsItem: {
@@ -789,7 +789,7 @@ test('deleteSkill sets is_delete to 1', async () => {
 });
 
 test('undeleteSkill sets is_delete to 0', async () => {
-    const service = Object.create(ClawhubService.prototype);
+    const service = Object.create(SkillsRegistryService.prototype);
     const skill = { is_delete: 1, update: async (data) => Object.assign(skill, data) };
     service.app = createMockApp({
         SkillsItem: {
@@ -807,12 +807,12 @@ test('undeleteSkill sets is_delete to 0', async () => {
 // Controller Tests
 // ============================================================
 
-test('ClawhubController returns flat JSON (no wrapper)', async () => {
-    const ClawhubController = require('../app/controller/clawhub');
-    const controller = Object.create(ClawhubController.prototype);
+test('SkillsRegistryController returns flat JSON (no wrapper)', async () => {
+    const SkillsRegistryController = require('../app/controller/skillsRegistry');
+    const controller = Object.create(SkillsRegistryController.prototype);
     controller.ctx = createMockCtx();
     controller.ctx.service = {
-        clawhub: {
+        skillsRegistry: {
             getRegistryMetadata: async () => ({ apiBase: '/api/v1' }),
         },
     };

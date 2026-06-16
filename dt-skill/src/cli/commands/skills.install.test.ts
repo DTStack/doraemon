@@ -123,12 +123,12 @@ describe("cmdInstall with packages", () => {
     await cmdInstall(makeOpts(), "single-skill");
 
     expect(mockApiRequest).toHaveBeenCalledWith(
-      "https://clawhub.ai",
+      "https://example.com",
       expect.objectContaining({ path: "/api/v1/skills/single-skill" }),
       expect.anything()
     );
     expect(mockDownloadZip).toHaveBeenCalledWith(
-      "https://clawhub.ai",
+      "https://example.com",
       { slug: "single-skill", version: "1.0.0" }
     );
     expect(extractZipToDirMock).toHaveBeenCalled();
@@ -167,12 +167,12 @@ describe("cmdInstall with packages", () => {
     await cmdInstall(makeOpts(), "no-version-skill");
 
     expect(mockApiRequest).toHaveBeenCalledWith(
-      "https://clawhub.ai",
+      "https://example.com",
       expect.objectContaining({ path: "/api/v1/skills/no-version-skill" }),
       expect.anything()
     );
     expect(mockDownloadZip).toHaveBeenCalledWith(
-      "https://clawhub.ai",
+      "https://example.com",
       { slug: "no-version-skill", version: "latest" }
     );
     expect(extractZipToDirMock).toHaveBeenCalled();
@@ -271,7 +271,7 @@ describe("cmdInstall with packages", () => {
 
     expect(mockDownloadZip).toHaveBeenCalledTimes(1);
     expect(mockDownloadZip).toHaveBeenCalledWith(
-      "https://clawhub.ai",
+      "https://example.com",
       { slug: "sub-2", version: "1.2.0" }
     );
 

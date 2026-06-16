@@ -21,7 +21,7 @@ import {
 
 describe("skills", () => {
   it("extracts zip into directory and skips traversal", async () => {
-    const parent = await mkdtemp(join(tmpdir(), "clawhub-zip-"));
+    const parent = await mkdtemp(join(tmpdir(), "dt-skill-zip-"));
     const dir = join(parent, "dir");
     await mkdir(dir);
     const evilName = `evil-${Date.now()}-${Math.random().toString(16).slice(2)}.txt`;
@@ -36,7 +36,7 @@ describe("skills", () => {
   });
 
   it("writes and reads lockfile", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "clawhub-work-"));
+    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-work-"));
     await writeLockfile(workdir, {
       version: 1,
       skills: {
@@ -55,18 +55,18 @@ describe("skills", () => {
   });
 
   it("returns empty lockfile on invalid json", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "clawhub-work-bad-"));
-    await mkdir(join(workdir, ".clawhub"), { recursive: true });
-    await writeFile(join(workdir, ".clawhub", "lock.json"), "{", "utf8");
+    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-work-bad-"));
+    await mkdir(join(workdir, ".dt-skill"), { recursive: true });
+    await writeFile(join(workdir, ".dt-skill", "lock.json"), "{", "utf8");
     const read = await readLockfile(workdir);
     expect(read).toEqual({ version: 1, skills: {} });
   });
 
   it("returns empty lockfile on schema mismatch", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "clawhub-work-schema-"));
-    await mkdir(join(workdir, ".clawhub"), { recursive: true });
+    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-work-schema-"));
+    await mkdir(join(workdir, ".dt-skill"), { recursive: true });
     await writeFile(
-      join(workdir, ".clawhub", "lock.json"),
+      join(workdir, ".dt-skill", "lock.json"),
       JSON.stringify({ version: 1, skills: "nope" }),
       "utf8",
     );
@@ -75,21 +75,21 @@ describe("skills", () => {
   });
 
   it("skips dotfiles and node_modules when listing text files", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "clawhub-files-"));
+    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-files-"));
     await writeFile(join(workdir, "SKILL.md"), "hi", "utf8");
     await writeFile(join(workdir, ".secret.txt"), "no", "utf8");
-    await mkdir(join(workdir, ".clawhub"), { recursive: true });
-    await writeFile(join(workdir, ".clawhub", "origin.json"), "{}", "utf8");
+    await mkdir(join(workdir, ".dt-skill"), { recursive: true });
+    await writeFile(join(workdir, ".dt-skill", "origin.json"), "{}", "utf8");
     await mkdir(join(workdir, "node_modules"), { recursive: true });
     await writeFile(join(workdir, "node_modules", "a.txt"), "no", "utf8");
     const files = await listTextFiles(workdir);
     expect(files.map((file) => file.relPath)).toEqual(["SKILL.md"]);
   });
 
-  it("respects .gitignore and .clawhubignore", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "clawhub-ignore-"));
+  it("respects .gitignore and .dt-skillignore", async () => {
+    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-ignore-"));
     await writeFile(join(workdir, ".gitignore"), "ignored.md\n", "utf8");
-    await writeFile(join(workdir, ".clawhubignore"), "private.md\n", "utf8");
+    await writeFile(join(workdir, ".dt-skillignore"), "private.md\n", "utf8");
     await writeFile(join(workdir, "SKILL.md"), "hi", "utf8");
     await writeFile(join(workdir, "ignored.md"), "no", "utf8");
     await writeFile(join(workdir, "private.md"), "no", "utf8");
@@ -105,7 +105,7 @@ describe("skills", () => {
   });
 
   it("falls back to text/plain for unknown text extensions", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "clawhub-env-"));
+    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-env-"));
     await writeFile(join(workdir, "SKILL.md"), "hi", "utf8");
     await writeFile(join(workdir, "config.env"), "TOKEN=demo", "utf8");
     const files = await listTextFiles(workdir);
@@ -113,7 +113,7 @@ describe("skills", () => {
   });
 
   it("includes tsv and extensionless text files while skipping extensionless binaries", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "clawhub-extensionless-"));
+    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-extensionless-"));
     await writeFile(join(workdir, "SKILL.md"), "hi", "utf8");
     await writeFile(join(workdir, "config.tsv"), "name\tvalue\napi\tok\n", "utf8");
     await writeFile(join(workdir, ".npmrc"), "//registry.npmjs.org/:_authToken=secret\n", "utf8");
@@ -194,26 +194,26 @@ describe("skills", () => {
   });
 
   it("returns null for invalid skill origin metadata", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "clawhub-origin-"));
+    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-origin-"));
     expect(await readSkillOrigin(workdir)).toBeNull();
 
-    await mkdir(join(workdir, ".clawhub"), { recursive: true });
+    await mkdir(join(workdir, ".dt-skill"), { recursive: true });
     await writeFile(
-      join(workdir, ".clawhub", "origin.json"),
+      join(workdir, ".dt-skill", "origin.json"),
       JSON.stringify({ version: 2 }),
       "utf8",
     );
     expect(await readSkillOrigin(workdir)).toBeNull();
 
     await writeFile(
-      join(workdir, ".clawhub", "origin.json"),
+      join(workdir, ".dt-skill", "origin.json"),
       JSON.stringify({ version: 1, registry: "demo", slug: "x", installedAt: 1 }),
       "utf8",
     );
     expect(await readSkillOrigin(workdir)).toBeNull();
 
     await writeFile(
-      join(workdir, ".clawhub", "origin.json"),
+      join(workdir, ".dt-skill", "origin.json"),
       JSON.stringify({
         version: 1,
         registry: "demo",
@@ -238,7 +238,7 @@ describe("skills", () => {
 
   describe("listManualSkills", () => {
     it("lists manual skills not present in the lockfile", async () => {
-      const dir = await mkdtemp(join(tmpdir(), "clawhub-manual-"));
+      const dir = await mkdtemp(join(tmpdir(), "dt-skill-manual-"));
       await mkdir(join(dir, "manual-skill"));
       await writeFile(join(dir, "manual-skill", "SKILL.md"), "# Manual", "utf8");
 
@@ -249,19 +249,17 @@ describe("skills", () => {
       expect(result).toEqual(["manual-skill"]);
     });
 
-    it("recognizes skills from current and legacy origin metadata", async () => {
-      const dir = await mkdtemp(join(tmpdir(), "clawhub-manual-origin-"));
-      await mkdir(join(dir, "current", ".clawhub"), { recursive: true });
-      await writeFile(join(dir, "current", ".clawhub", "origin.json"), "{}", "utf8");
-      await mkdir(join(dir, "legacy", ".clawdhub"), { recursive: true });
-      await writeFile(join(dir, "legacy", ".clawdhub", "origin.json"), "{}", "utf8");
+    it("recognizes skills from origin metadata", async () => {
+      const dir = await mkdtemp(join(tmpdir(), "dt-skill-manual-origin-"));
+      await mkdir(join(dir, "with-origin", ".dt-skill"), { recursive: true });
+      await writeFile(join(dir, "with-origin", ".dt-skill", "origin.json"), "{}", "utf8");
 
       const result = await listManualSkills(dir, new Set());
-      expect(result).toEqual(["current", "legacy"]);
+      expect(result).toEqual(["with-origin"]);
     });
 
     it("skips hidden and non-skill directories and returns sorted results", async () => {
-      const dir = await mkdtemp(join(tmpdir(), "clawhub-manual-sort-"));
+      const dir = await mkdtemp(join(tmpdir(), "dt-skill-manual-sort-"));
       await mkdir(join(dir, "z-skill"));
       await writeFile(join(dir, "z-skill", "SKILL.md"), "# Z", "utf8");
       await mkdir(join(dir, "a-skill"));
@@ -276,7 +274,7 @@ describe("skills", () => {
     });
 
     it("returns an empty list when the skills directory does not exist", async () => {
-      const dir = await mkdtemp(join(tmpdir(), "clawhub-manual-missing-"));
+      const dir = await mkdtemp(join(tmpdir(), "dt-skill-manual-missing-"));
       const result = await listManualSkills(join(dir, "missing"), new Set());
       expect(result).toEqual([]);
     });

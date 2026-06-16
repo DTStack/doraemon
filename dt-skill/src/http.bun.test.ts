@@ -16,7 +16,7 @@ function createBunClient(options?: {
 }) {
   const spawnImpl = vi.fn(options?.spawnImpl ?? (() => ({ status: 0, stdout: "", stderr: "" })));
   const mkdirImpl = vi.fn(async () => undefined);
-  const mkdtempImpl = vi.fn(async () => options?.mkdtempValue ?? "/tmp/clawhub-test");
+  const mkdtempImpl = vi.fn(async () => options?.mkdtempValue ?? "/tmp/dt-skill-test");
   const rmImpl = vi.fn(async () => undefined);
   const writeFileImpl = vi.fn(async () => undefined);
   const readFileImpl = vi.fn(
@@ -111,7 +111,7 @@ describe("bun http client", () => {
     const { client, spawnImpl } = createBunClient({
       spawnImpl: () => ({
         status: 0,
-        stdout: "rate limited\n__CLAWHUB_CURL_META__\n429\n20\n0\n1771404540\n20\n0\n34\n34\n",
+        stdout: "rate limited\n__DT_SKILL_CURL_META__\n429\n20\n0\n1771404540\n20\n0\n34\n34\n",
         stderr: "",
       }),
     });
@@ -132,7 +132,7 @@ describe("bun http client", () => {
         .mockReturnValueOnce({ status: 0, stdout: "hello world\n200", stderr: "" })
         .mockReturnValueOnce({ status: 0, stdout: "200", stderr: "" })
         .mockReturnValueOnce({ status: 0, stdout: "404", stderr: "" }),
-      mkdtempValue: "/tmp/clawhub-download-abc",
+      mkdtempValue: "/tmp/dt-skill-download-abc",
       readFileValue: Buffer.from("not found"),
     });
 
@@ -148,7 +148,7 @@ describe("bun http client", () => {
     ).rejects.toThrow("not found");
 
     expect(readFileImpl).toHaveBeenCalled();
-    expect(rmImpl).toHaveBeenCalledWith("/tmp/clawhub-download-abc", {
+    expect(rmImpl).toHaveBeenCalledWith("/tmp/dt-skill-download-abc", {
       recursive: true,
       force: true,
     });
@@ -158,7 +158,7 @@ describe("bun http client", () => {
   it("posts multipart form data via curl and cleans up temp files", async () => {
     const { client, spawnImpl, mkdirImpl, writeFileImpl, rmImpl } = createBunClient({
       spawnImpl: () => ({ status: 0, stdout: '{"ok":true}\n200', stderr: "" }),
-      mkdtempValue: "/tmp/clawhub-upload-abc",
+      mkdtempValue: "/tmp/dt-skill-upload-abc",
     });
 
     const form = new FormData();
@@ -172,16 +172,16 @@ describe("bun http client", () => {
     });
 
     expect(result).toEqual({ ok: true });
-    expect(mkdirImpl).toHaveBeenCalledWith("/tmp/clawhub-upload-abc/dist", { recursive: true });
+    expect(mkdirImpl).toHaveBeenCalledWith("/tmp/dt-skill-upload-abc/dist", { recursive: true });
     expect(writeFileImpl).toHaveBeenCalled();
-    expect(rmImpl).toHaveBeenCalledWith("/tmp/clawhub-upload-abc", {
+    expect(rmImpl).toHaveBeenCalledWith("/tmp/dt-skill-upload-abc", {
       recursive: true,
       force: true,
     });
     const [, args] = spawnImpl.mock.calls[0] as [string, string[]];
     expect(args).toContain("-F");
     expect(args.some((arg) => arg.includes("name=demo"))).toBe(true);
-    expect(args.some((arg) => arg.includes("file=@/tmp/clawhub-upload-abc/dist/demo.txt"))).toBe(
+    expect(args.some((arg) => arg.includes("file=@/tmp/dt-skill-upload-abc/dist/demo.txt"))).toBe(
       true,
     );
   });

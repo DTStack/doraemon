@@ -416,7 +416,7 @@ describe("cmdUpdate", () => {
     });
     vi.mocked(readSkillOrigin).mockResolvedValue({
       version: 1,
-      registry: "https://clawhub.ai",
+      registry: "https://example.com",
       slug: "demo",
       installedVersion: "1.0.0",
       installedAt: 123,
@@ -438,12 +438,12 @@ describe("cmdUpdate", () => {
       "demo: local changes (no match). Use --force to overwrite.",
     );
     expect(mockDownloadZip).toHaveBeenCalledWith(
-      "https://clawhub.ai",
+      "https://example.com",
       expect.objectContaining({ slug: "demo", version: "2.0.0" }),
     );
     expect(writeSkillOrigin).toHaveBeenCalledWith("/work/skills/.demo-update-test", {
       version: 1,
-      registry: "https://clawhub.ai",
+      registry: "https://example.com",
       slug: "demo",
       installedVersion: "2.0.0",
       installedAt: 123,
@@ -645,7 +645,7 @@ describe("cmdInstall", () => {
     expect(rm).not.toHaveBeenCalled();
     expect(mockApiRequest).toHaveBeenNthCalledWith(
       2,
-      "https://clawhub.ai",
+      "https://example.com",
       expect.objectContaining({
         path: `${ApiRoutes.skills}/${encodeURIComponent("demo")}/versions/${encodeURIComponent("9.9.9")}`,
       }),
@@ -692,7 +692,7 @@ describe("cmdInstall", () => {
 
     expect(rm).toHaveBeenCalledWith("/work/skills/demo", { recursive: true, force: true });
     expect(mockDownloadZip).toHaveBeenCalledWith(
-      "https://clawhub.ai",
+      "https://example.com",
       expect.objectContaining({ slug: "demo", version: "9.9.9" }),
     );
     const versionLookupOrder = mockApiRequest.mock.invocationCallOrder[1];

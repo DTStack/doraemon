@@ -2,15 +2,15 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 /**
- * Integration tests for clawhub API endpoints.
+ * Integration tests for skills registry API endpoints.
  *
  * These tests verify the controller + service integration with mocked
  * Egg.js context. Full end-to-end tests requiring a running dev server
- * and the clawhub CLI should be run manually per quickstart.md.
+ * and the dt-skill CLI should be run manually per quickstart.md.
  */
 
 // Load controller and create mock ctx
-const ClawhubController = require('../app/controller/clawhub');
+const SkillsRegistryController = require('../app/controller/skillsRegistry');
 
 function createMockCtx(query = {}, params = {}, body = {}, files = []) {
     const ctx = {
@@ -33,7 +33,7 @@ function createMockCtx(query = {}, params = {}, body = {}, files = []) {
 
 // Helper to build a controller with mocked service
 function buildController(serviceMethods) {
-    const controller = Object.create(ClawhubController.prototype);
+    const controller = Object.create(SkillsRegistryController.prototype);
     const skillLikeService = Object.create(require('../app/service/skillLike').prototype);
     skillLikeService.resolveClientIp = () => '127.0.0.1';
     skillLikeService.like = async () => ({ liked: true, likeCount: 1 });
@@ -41,7 +41,7 @@ function buildController(serviceMethods) {
 
     controller.ctx = createMockCtx();
     controller.ctx.service = {
-        clawhub: serviceMethods,
+        skillsRegistry: serviceMethods,
         skillLike: skillLikeService,
     };
     return controller;

@@ -199,7 +199,7 @@ export async function cmdInstall(
   const lock = await readLockfile(installWorkdir);
   const existingEntry = lock.skills[trimmed];
   if (isPinnedSkillEntry(existingEntry)) {
-    fail(`skill "${trimmed}" is pinned; run \`clawhub unpin ${trimmed}\` first`);
+    fail(`skill "${trimmed}" is pinned; run \`dt-skill unpin ${trimmed}\` first`);
   }
 
   const spinner = createSpinner(`Resolving ${trimmed}`);
@@ -400,7 +400,7 @@ export async function cmdUpdate(
 
   const lock = await readLockfile(installWorkdir);
   if (slug && isPinnedSkillEntry(lock.skills[slug])) {
-    fail(`skill "${slug}" is pinned; run \`clawhub unpin ${slug}\` first`);
+    fail(`skill "${slug}" is pinned; run \`dt-skill unpin ${slug}\` first`);
   }
   const allowPrompt = isInteractive() && inputAllowed;
 
@@ -661,7 +661,7 @@ export async function cmdList(opts: GlobalOpts) {
   }
   if (manualSkills.length > 0) {
     if (entries.length > 0) console.log();
-    console.log("Manually installed (not tracked by clawhub):");
+    console.log("Manually installed (not tracked by dt-skill):");
     for (const slug of manualSkills) {
       console.log(`  ${slug}`);
     }

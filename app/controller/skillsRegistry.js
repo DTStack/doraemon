@@ -1,10 +1,10 @@
 const Controller = require('egg').Controller;
 
-class ClawhubController extends Controller {
-    // GET /.well-known/clawhub.json
+class SkillsRegistryController extends Controller {
+    // GET /.well-known/dt-skill.json
     async registryMetadata() {
         const { ctx } = this;
-        const data = await ctx.service.clawhub.getRegistryMetadata(ctx.origin);
+        const data = await ctx.service.skillsRegistry.getRegistryMetadata(ctx.origin);
         ctx.body = data;
     }
 
@@ -12,7 +12,7 @@ class ClawhubController extends Controller {
     async search() {
         const { ctx } = this;
         const { q, limit } = ctx.query;
-        const results = await ctx.service.clawhub.searchSkills(q, limit);
+        const results = await ctx.service.skillsRegistry.searchSkills(q, limit);
         ctx.body = { results };
     }
 
@@ -20,7 +20,7 @@ class ClawhubController extends Controller {
     async list() {
         const { ctx } = this;
         const { cursor, sort, limit } = ctx.query;
-        const data = await ctx.service.clawhub.listSkills(cursor, sort, limit);
+        const data = await ctx.service.skillsRegistry.listSkills(cursor, sort, limit);
         ctx.body = data;
     }
 
@@ -28,7 +28,7 @@ class ClawhubController extends Controller {
     async detail() {
         const { ctx } = this;
         const { slug } = ctx.params;
-        const data = await ctx.service.clawhub.getSkillDetail(slug);
+        const data = await ctx.service.skillsRegistry.getSkillDetail(slug);
         if (!data) {
             ctx.status = 404;
             ctx.body = { error: '技能不存在' };
@@ -41,7 +41,7 @@ class ClawhubController extends Controller {
     async versions() {
         const { ctx } = this;
         const { slug } = ctx.params;
-        const data = await ctx.service.clawhub.listSkillVersions(slug);
+        const data = await ctx.service.skillsRegistry.listSkillVersions(slug);
         if (!data) {
             ctx.status = 404;
             ctx.body = { error: '技能不存在' };
@@ -54,7 +54,7 @@ class ClawhubController extends Controller {
     async versionDetail() {
         const { ctx } = this;
         const { slug, version } = ctx.params;
-        const data = await ctx.service.clawhub.getSkillVersionDetail(slug, version);
+        const data = await ctx.service.skillsRegistry.getSkillVersionDetail(slug, version);
         if (!data) {
             ctx.status = 404;
             ctx.body = { error: '版本不存在' };
@@ -68,7 +68,7 @@ class ClawhubController extends Controller {
         const { ctx } = this;
         const { slug } = ctx.params;
         const { path: filePath } = ctx.query;
-        const data = await ctx.service.clawhub.getSkillFileContent(slug, filePath);
+        const data = await ctx.service.skillsRegistry.getSkillFileContent(slug, filePath);
         if (!data) {
             ctx.status = 404;
             ctx.body = { error: '文件不存在' };
@@ -81,7 +81,7 @@ class ClawhubController extends Controller {
     async download() {
         const { ctx } = this;
         const { slug } = ctx.query;
-        const result = await ctx.service.clawhub.buildSkillZip(slug);
+        const result = await ctx.service.skillsRegistry.buildSkillZip(slug);
         if (!result) {
             ctx.status = 404;
             ctx.body = { error: '技能不存在' };
@@ -99,7 +99,7 @@ class ClawhubController extends Controller {
     async resolve() {
         const { ctx } = this;
         const { slug, hash } = ctx.query;
-        const data = await ctx.service.clawhub.resolveFingerprint(slug, hash);
+        const data = await ctx.service.skillsRegistry.resolveFingerprint(slug, hash);
         if (!data) {
             ctx.status = 404;
             ctx.body = { error: '未找到匹配的技能' };
@@ -129,13 +129,13 @@ class ClawhubController extends Controller {
                 }
             }
 
-            const result = await ctx.service.clawhub.publishSkill(parsedPayload, files);
+            const result = await ctx.service.skillsRegistry.publishSkill(parsedPayload, files);
             ctx.body = result;
         } finally {
             try {
                 await ctx.cleanupRequestFiles();
             } catch (err) {
-                ctx.logger.warn('[clawhub] 清理临时上传文件失败:', err);
+                ctx.logger.warn('[skillsRegistry] 清理临时上传文件失败:', err);
             }
         }
     }
@@ -144,7 +144,7 @@ class ClawhubController extends Controller {
     async delete() {
         const { ctx } = this;
         const { slug } = ctx.params;
-        const result = await ctx.service.clawhub.deleteSkill(slug);
+        const result = await ctx.service.skillsRegistry.deleteSkill(slug);
         ctx.body = result;
     }
 
@@ -152,7 +152,7 @@ class ClawhubController extends Controller {
     async undelete() {
         const { ctx } = this;
         const { slug } = ctx.params;
-        const result = await ctx.service.clawhub.undeleteSkill(slug);
+        const result = await ctx.service.skillsRegistry.undeleteSkill(slug);
         ctx.body = result;
     }
 
@@ -181,4 +181,4 @@ class ClawhubController extends Controller {
     }
 }
 
-module.exports = ClawhubController;
+module.exports = SkillsRegistryController;
