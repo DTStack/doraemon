@@ -4,6 +4,8 @@ import { Card, Checkbox, Tag } from 'antd';
 
 import type { SkillItem } from '@/pages/skills/types';
 
+import './style.scss';
+
 interface SkillCardProps {
     skill: SkillItem;
     onClick: (skill: SkillItem) => void;

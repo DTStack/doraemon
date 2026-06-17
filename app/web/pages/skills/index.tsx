@@ -28,7 +28,6 @@ import {
 import { API } from '@/api';
 import { SkillItem, SkillListResponse } from './types';
 import { SkillCard } from '@/components/skills/SkillCard';
-import '@/components/skills/SkillCard.scss';
 import './style.scss';
 
 const { Search } = Input;
