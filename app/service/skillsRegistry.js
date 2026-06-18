@@ -1,6 +1,5 @@
 const Service = require('egg').Service;
 const AdmZip = require('adm-zip');
-const crypto = require('crypto');
 const fs = require('fs');
 const ignore = require('ignore');
 const path = require('path');

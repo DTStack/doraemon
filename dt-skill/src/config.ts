@@ -1,7 +1,8 @@
 import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
-import { resolveHome } from './homedir.js';
+
 import { type GlobalConfig, GlobalConfigSchema, parseArk } from './schema/index.js';
+import { resolveHome } from './homedir.js';
 
 function resolveConfigPath(baseDir: string): string {
     return join(baseDir, 'dt-skill', 'config.json');

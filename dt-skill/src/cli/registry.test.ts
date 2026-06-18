@@ -1,6 +1,7 @@
 /* @vitest-environment node */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { GlobalOpts } from './types';
 
 const readGlobalConfig = vi.fn();

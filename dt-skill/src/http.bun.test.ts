@@ -1,6 +1,7 @@
 /* @vitest-environment node */
 
 import { describe, expect, it, vi } from 'vitest';
+
 import { createHttpClient } from './http.js';
 
 type SpawnResult = {

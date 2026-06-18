@@ -1,9 +1,10 @@
+import { confirm, isCancel, select } from '@clack/prompts';
 import { spawn } from 'node:child_process';
 import { stdin } from 'node:process';
-import { confirm, isCancel, select } from '@clack/prompts';
 import ora from 'ora';
-import { listAgentNames, getAgentLabel, resolveAgentWorkdir, AGENTS } from './agents.js';
+
 import type { AgentName } from './agents.js';
+import { AGENTS, getAgentLabel, listAgentNames, resolveAgentWorkdir } from './agents.js';
 
 export async function promptHidden(prompt: string) {
     if (!stdin.isTTY) return '';
@@ -11,7 +12,7 @@ export async function promptHidden(prompt: string) {
     const chunks: Buffer[] = [];
     stdin.setRawMode(true);
     stdin.resume();
-    return new Promise<string>((resolvePromise) => {
+    return new Promise<string>((resolve) => {
         function onData(data: Buffer) {
             const text = data.toString('utf8');
             if (text === '\r' || text === '\n') {
@@ -19,7 +20,7 @@ export async function promptHidden(prompt: string) {
                 stdin.pause();
                 stdin.off('data', onData);
                 process.stdout.write('\n');
-                resolvePromise(Buffer.concat(chunks).toString('utf8').trim());
+                resolve(Buffer.concat(chunks).toString('utf8').trim());
                 return;
             }
             if (text === '\u0003') {

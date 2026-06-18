@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { vi } from 'vitest';
+
 import type { GlobalOpts } from '../src/cli/types.js';
 
 export function makeGlobalOpts(workdir = '/work'): GlobalOpts {

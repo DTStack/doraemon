@@ -1,8 +1,9 @@
 /* @vitest-environment node */
 
 import { describe, expect, it } from 'vitest';
-import * as schema from '.';
+
 import { isTextContentType, TEXT_FILE_EXTENSION_SET } from './textFiles';
+import * as schema from '.';
 
 describe('dt-skill schema textFiles', () => {
     it('exports text-file extension set', () => {

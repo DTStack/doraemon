@@ -1,7 +1,8 @@
-import { readFile, readdir, stat } from 'node:fs/promises';
-import { basename, join, resolve } from 'node:path';
 import AdmZip from 'adm-zip';
+import { readdir, readFile, stat } from 'node:fs/promises';
+import { basename, join, resolve } from 'node:path';
 import semver from 'semver';
+
 import { apiRequestForm } from '../../http.js';
 import {
     ApiRoutes,
@@ -9,10 +10,10 @@ import {
     normalizeClawScanNote,
 } from '../../schema/index.js';
 import { listPublishFiles } from '../../skills.js';
-import { getRegistry } from '../registry.js';
-import { sanitizeSlug, titleCase } from '../slug.js';
-import { findSkillFolders } from '../scanSkills.js';
 import { searchMultiselect } from '../prompts/search-multiselect.js';
+import { getRegistry } from '../registry.js';
+import { findSkillFolders } from '../scanSkills.js';
+import { sanitizeSlug, titleCase } from '../slug.js';
 import type { GlobalOpts } from '../types.js';
 import { createSpinner, fail, formatError, isInteractive } from '../ui.js';
 

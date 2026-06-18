@@ -1,6 +1,7 @@
 /* @vitest-environment node */
 
 import { describe, expect, it, vi } from 'vitest';
+
 import { createHttpClient, detectHttpRuntime, registryUrl, shouldUseProxyFromEnv } from './http.js';
 
 function createNodeClient(options?: {
@@ -350,6 +351,7 @@ describe('node http client', () => {
 
     it('normalizes non-Error throws from fetch', async () => {
         const fetchImpl = vi.fn(async () => {
+            // eslint-disable-next-line no-throw-literal
             throw { message: 'The operation was aborted', name: 'AbortError' };
         });
         const client = createNodeClient({ fetchImpl: fetchImpl as unknown as typeof fetch });

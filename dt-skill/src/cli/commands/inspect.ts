@@ -1,11 +1,11 @@
 import { apiRequest, fetchText, registryUrl } from '../../http.js';
 import {
     ApiRoutes,
-    PLATFORM_SKILL_LICENSE,
-    PLATFORM_SKILL_LICENSE_SUMMARY,
     ApiV1SkillResponseSchema,
     ApiV1SkillVersionListResponseSchema,
     ApiV1SkillVersionResponseSchema,
+    PLATFORM_SKILL_LICENSE,
+    PLATFORM_SKILL_LICENSE_SUMMARY,
 } from '../../schema/index.js';
 import { getRegistry } from '../registry.js';
 import type { GlobalOpts } from '../types.js';
@@ -55,11 +55,7 @@ export async function cmdInspect(opts: GlobalOpts, slug: string, options: Inspec
     const spinner = createSpinner('Fetching skill');
     try {
         let skillResult: Awaited<ReturnType<typeof fetchSkillDetail>> | null = null;
-        try {
-            skillResult = await fetchSkillDetail(registry, trimmed);
-        } catch (error) {
-            throw error;
-        }
+        skillResult = await fetchSkillDetail(registry, trimmed);
 
         if (!skillResult.skill) {
             spinner.fail('Skill not found');

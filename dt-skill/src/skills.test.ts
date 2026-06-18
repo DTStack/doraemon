@@ -1,9 +1,10 @@
 /* @vitest-environment node */
+import { strToU8, zipSync } from 'fflate';
 import { mkdir, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
+
 import type { SkillOrigin } from './skills';
 import {
     buildSkillFingerprint,

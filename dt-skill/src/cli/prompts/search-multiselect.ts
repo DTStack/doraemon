@@ -1,7 +1,7 @@
-import * as readline from 'readline';
 import { stripVTControlCharacters } from 'node:util';
-import { Writable } from 'stream';
 import pc from 'picocolors';
+import * as readline from 'readline';
+import { Writable } from 'stream';
 
 // Silent writable stream to prevent readline from echoing input
 const silentOutput = new Writable({
@@ -37,7 +37,6 @@ const S_STEP_CANCEL = pc.red('■');
 const S_STEP_SUBMIT = pc.green('◇');
 const S_RADIO_ACTIVE = pc.green('●');
 const S_RADIO_INACTIVE = pc.dim('○');
-const S_CHECKBOX_LOCKED = pc.green('✓');
 const S_BULLET = pc.green('•');
 const S_BAR = pc.dim('│');
 const S_BAR_H = pc.dim('─');
@@ -383,7 +382,6 @@ export async function searchMultiselect<T>(
                 query += key.sequence;
                 cursor = 0;
                 render();
-                return;
             }
         };
 

@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
 import { Command } from 'commander';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('install command argument parsing', () => {
     it('accepts multiple skill slugs via variadic argument', async () => {

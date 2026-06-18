@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+
 import { resolveHome } from '../homedir.js';
 
 export const AGENTS = {

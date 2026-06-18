@@ -1,5 +1,6 @@
 import { readdir, stat } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
+
 import { sanitizeSlug, titleCase } from './slug.js';
 
 export type SkillFolder = {

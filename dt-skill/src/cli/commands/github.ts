@@ -1,8 +1,8 @@
+import { unzipSync } from 'fflate';
 import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
-import { unzipSync } from 'fflate';
 
 const GITHUB_API = 'https://api.github.com';
 const GITHUB_HOSTS = new Set(['github.com', 'www.github.com']);
@@ -133,7 +133,7 @@ export function resolveLocalGitInfo(folder: string): LocalGitInfo | null {
     const repo = normalizeGitHubRepo(runGit(folder, ['remote', 'get-url', 'origin']) || '');
 
     return {
-        root: root,
+        root,
         path: normalizePath(prefix || '') || '.',
         repo: repo || undefined,
         commit,

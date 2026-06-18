@@ -1,11 +1,9 @@
 const Service = require('egg').Service;
 const AdmZip = require('adm-zip');
 const crypto = require('crypto');
-const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const fetch = require('node-fetch');
 const {
     createInstallKeyMap,
     resolveSkillIdentifier,
@@ -781,7 +779,7 @@ class SkillsService extends Service {
         };
     }
 
-    getUploadIdentityKey(skillRecords = [], preferredName = '') {
+    getUploadIdentityKey(_skillRecords = [], preferredName = '') {
         const name = String(preferredName || '').trim();
         if (name) return name;
         return '';
@@ -2088,13 +2086,11 @@ class SkillsService extends Service {
                     transaction,
                 });
 
-                let parentRow;
                 if (globalExistingParent) {
-                    parentRow = globalExistingParent;
                     await globalExistingParent.update(parentPayload, { transaction });
                     oldRowMap.delete(parentSlug);
                 } else {
-                    parentRow = await SkillsItem.create(parentPayload, { transaction });
+                    await SkillsItem.create(parentPayload, { transaction });
                 }
 
                 createdSkills.push({

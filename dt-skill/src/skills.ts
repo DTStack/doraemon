@@ -1,8 +1,9 @@
-import { access, mkdir, open, readdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, join, relative, resolve, sep } from 'node:path';
 import { unzipSync } from 'fflate';
 import ignore from 'ignore';
 import mime from 'mime';
+import { access, mkdir, open, readdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join, relative, resolve, sep } from 'node:path';
+
 import { type Lockfile, LockfileSchema, parseArk } from './schema/index.js';
 import {
     buildSkillFingerprint,

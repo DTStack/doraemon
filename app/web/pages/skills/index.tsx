@@ -26,8 +26,8 @@ import {
 } from 'antd';
 
 import { API } from '@/api';
-import { SkillItem, SkillListResponse } from './types';
 import { SkillCard } from '@/components/skills/SkillCard';
+import { SkillItem, SkillListResponse } from './types';
 import './style.scss';
 
 const { Search } = Input;
@@ -354,7 +354,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                                         onSelect={handleSelect}
                                         onClick={(s) => history.push(`/page/skills/${s.slug}`)}
                                         onEdit={openEditModal}
-                                        showMeta={true}
+                                        showMeta
                                         showChildrenPreview={skill.isPackage === 1}
                                     />
                                 </Col>

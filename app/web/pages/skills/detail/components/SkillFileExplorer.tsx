@@ -5,7 +5,6 @@ import { Button, Empty, Tree } from 'antd';
 import fileDocIcon from '@/asset/images/skills-detail-figma/file-doc.svg';
 import folderOpenBlueIcon from '@/asset/images/skills-detail-figma/folder-open-blue.svg';
 import { copyToClipboard } from '@/utils/copyUtils';
-
 import type { SkillDetailHistory, SkillTreeNode } from '../utils/skillDetailUtils';
 import { DetailIcon } from './DetailIcon';
 

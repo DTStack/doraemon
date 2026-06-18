@@ -3,7 +3,6 @@ import { FileTextOutlined, FolderOutlined, StarOutlined } from '@ant-design/icon
 import { Card, Checkbox, Tag } from 'antd';
 
 import type { SkillItem } from '@/pages/skills/types';
-
 import './style.scss';
 
 interface SkillCardProps {

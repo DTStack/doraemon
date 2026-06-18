@@ -1,4 +1,4 @@
-import { TEXT_FILE_EXTENSIONS, TEXT_FILE_EXTENSION_SET } from './skillFingerprintContract.js';
+import { TEXT_FILE_EXTENSION_SET, TEXT_FILE_EXTENSIONS } from './skillFingerprintContract.js';
 
 const RAW_TEXT_CONTENT_TYPES = [
     'application/json',
@@ -12,7 +12,7 @@ const RAW_TEXT_CONTENT_TYPES = [
     'image/svg+xml',
 ] as const;
 
-export { TEXT_FILE_EXTENSIONS, TEXT_FILE_EXTENSION_SET };
+export { TEXT_FILE_EXTENSION_SET, TEXT_FILE_EXTENSIONS };
 
 export const TEXT_CONTENT_TYPES = RAW_TEXT_CONTENT_TYPES;
 export const TEXT_CONTENT_TYPE_SET = new Set<string>(TEXT_CONTENT_TYPES);

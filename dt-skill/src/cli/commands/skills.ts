@@ -1,18 +1,19 @@
 import { mkdir, mkdtemp, rename, rm, stat } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import semver from 'semver';
+
 import { apiRequest, downloadZip, registryUrl } from '../../http.js';
 import {
     ApiRoutes,
+    type ApiV1SearchResponse,
     ApiV1SearchResponseSchema,
+    type ApiV1SkillListResponse,
     ApiV1SkillListResponseSchema,
+    type ApiV1SkillResolveResponse,
     ApiV1SkillResolveResponseSchema,
+    type ApiV1SkillResponse,
     ApiV1SkillResponseSchema,
     ApiV1SkillVersionResponseSchema,
-    type ApiV1SearchResponse,
-    type ApiV1SkillListResponse,
-    type ApiV1SkillResponse,
-    type ApiV1SkillResolveResponse,
 } from '../../schema/index.js';
 import {
     extractZipToDir,
@@ -24,6 +25,9 @@ import {
     writeLockfile,
     writeSkillOrigin,
 } from '../../skills.js';
+import type { AgentName } from '../agents.js';
+import { getAgentLabel, resolveAgentWorkdir } from '../agents.js';
+import { cancelSymbol, searchMultiselect } from '../prompts/search-multiselect.js';
 import { getRegistry } from '../registry.js';
 import type { GlobalOpts, ResolveResult } from '../types.js';
 import {
@@ -35,9 +39,6 @@ import {
     selectAgent,
     selectScope,
 } from '../ui.js';
-import { searchMultiselect, cancelSymbol } from '../prompts/search-multiselect.js';
-import { getAgentLabel, resolveAgentWorkdir } from '../agents.js';
-import type { AgentName } from '../agents.js';
 
 function normalizeSkillSlugOrFail(raw: string) {
     const slug = raw.trim();

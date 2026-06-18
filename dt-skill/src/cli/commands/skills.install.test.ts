@@ -1,7 +1,7 @@
 /* @vitest-environment node */
 
-import * as fsPromises from 'node:fs/promises';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
     createHttpModuleMocks,
     createRegistryModuleMocks,
@@ -181,9 +181,7 @@ describe('cmdInstall with packages', () => {
     });
 
     it('continues batch install when one skill fails', async () => {
-        let callCount = 0;
         mockApiRequest.mockImplementation(async (_registry, request) => {
-            callCount++;
             const slug = (request as any).path?.split('/').pop();
             if (slug === 'skill-b') {
                 throw new Error('not found');

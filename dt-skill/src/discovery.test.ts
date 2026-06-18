@@ -1,6 +1,7 @@
 /* @vitest-environment node */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { createGlobalStubRegistry } from '../test/runtimeStubs.js';
 import { discoverRegistryFromSite } from './discovery';
 

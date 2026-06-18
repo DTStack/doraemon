@@ -1,6 +1,7 @@
 /* @vitest-environment node */
 
 import { describe, expect, it } from 'vitest';
+
 import { parseArk } from './ark';
 import { ApiV1SearchResponseSchema, ClawdisSkillMetadataSchema } from './schemas';
 

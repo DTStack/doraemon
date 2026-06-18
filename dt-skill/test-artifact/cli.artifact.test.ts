@@ -20,6 +20,7 @@ async function makeTmpDir(prefix: string) {
 }
 
 function runNode(args: string[], envOverrides: NodeJS.ProcessEnv = {}) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { FORCE_COLOR: _forceColor, ...env } = process.env;
     return spawnSync('node', args, {
         cwd: repoRoot,

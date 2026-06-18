@@ -1,7 +1,9 @@
 #!/usr/bin/env node
+import { Command } from 'commander';
 import { stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { Command } from 'commander';
+
+import { isAgentName, listAgentNames, resolveAgentWorkdir } from './cli/agents.js';
 import { getCliBuildLabel, getCliVersion } from './cli/buildInfo.js';
 import {
     cmdDeleteSkill,
@@ -23,7 +25,6 @@ import {
 } from './cli/commands/skills.js';
 import { cmdStarSkill } from './cli/commands/star.js';
 import { cmdUnstarSkill } from './cli/commands/unstar.js';
-import { isAgentName, listAgentNames, resolveAgentWorkdir } from './cli/agents.js';
 import { configureCommanderHelp, styleEnvBlock, styleTitle } from './cli/helpStyle.js';
 import { DEFAULT_REGISTRY, DEFAULT_SITE } from './cli/registry.js';
 import type { GlobalOpts } from './cli/types.js';
@@ -351,7 +352,7 @@ program.action(async () => {
     process.exitCode = 0;
 });
 
-void program.parseAsync(process.argv).catch((error) => {
+program.parseAsync(process.argv).catch((error) => {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`Error: ${message}`);
     process.exit(1);

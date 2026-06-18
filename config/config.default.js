@@ -69,7 +69,7 @@ module.exports = (app) => {
             // 清理上传的临时文件
             cron: '0 30 4 * * *', // 每天4:30清理
         },
-        whitelist: (filename) => {
+        whitelist: (_filename) => {
             // 允许所有类型的文件上传（Skills Registry 技能包含各种代码/配置文件与说明文档）
             return true;
         },
