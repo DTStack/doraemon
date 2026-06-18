@@ -1,33 +1,34 @@
 /* @vitest-environment node */
 
-import * as fsPromises from "node:fs/promises";
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {  createHttpModuleMocks,
-  createRegistryModuleMocks,
-  createUiModuleMocks,
-  makeGlobalOpts,
-} from "../../../test/cliCommandTestKit.js";
-import { ApiRoutes } from "../../schema/index.js";
-import * as skillStore from "../../skills.js";
+import * as fsPromises from 'node:fs/promises';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+    createHttpModuleMocks,
+    createRegistryModuleMocks,
+    createUiModuleMocks,
+    makeGlobalOpts,
+} from '../../../test/cliCommandTestKit.js';
+import { ApiRoutes } from '../../schema/index.js';
+import * as skillStore from '../../skills.js';
 
 const fsMocks = vi.hoisted(() => ({
-  mkdir: vi.fn(),
-  mkdtemp: vi.fn(),
-  rename: vi.fn(),
-  rm: vi.fn(),
-  stat: vi.fn(),
+    mkdir: vi.fn(),
+    mkdtemp: vi.fn(),
+    rename: vi.fn(),
+    rm: vi.fn(),
+    stat: vi.fn(),
 }));
 
-vi.mock("node:fs/promises", async () => {
-  const actual = await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises");
-  return {
-    ...actual,
-    mkdir: fsMocks.mkdir,
-    mkdtemp: fsMocks.mkdtemp,
-    rename: fsMocks.rename,
-    rm: fsMocks.rm,
-    stat: fsMocks.stat,
-  };
+vi.mock('node:fs/promises', async () => {
+    const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
+    return {
+        ...actual,
+        mkdir: fsMocks.mkdir,
+        mkdtemp: fsMocks.mkdtemp,
+        rename: fsMocks.rename,
+        rm: fsMocks.rm,
+        stat: fsMocks.stat,
+    };
 });
 
 const mocked = <T>(value: T) => value as T & Record<string, unknown>;
@@ -41,25 +42,25 @@ const mockDownloadZip = httpMocks.downloadZip;
 const mockSpinner = uiMocks.spinner;
 const mockIsInteractive = vi.fn(() => false);
 const mockPromptConfirm = vi.fn(async () => false);
-vi.mock("../../http.js", () => httpMocks.moduleFactory());
-vi.mock("../registry.js", () => registryMocks.moduleFactory());
+vi.mock('../../http.js', () => httpMocks.moduleFactory());
+vi.mock('../registry.js', () => registryMocks.moduleFactory());
 const mockSelectAgent = vi.fn(async () => null);
-vi.mock("../ui.js", () => ({
-  createSpinner: vi.fn(() => mockSpinner),
-  fail: (message: string) => uiMocks.fail(message),
-  formatError: (error: unknown) => (error instanceof Error ? error.message : String(error)),
-  isInteractive: mockIsInteractive,
-  promptConfirm: mockPromptConfirm,
-  selectAgent: mockSelectAgent,
+vi.mock('../ui.js', () => ({
+    createSpinner: vi.fn(() => mockSpinner),
+    fail: (message: string) => uiMocks.fail(message),
+    formatError: (error: unknown) => (error instanceof Error ? error.message : String(error)),
+    isInteractive: mockIsInteractive,
+    promptConfirm: mockPromptConfirm,
+    selectAgent: mockSelectAgent,
 }));
 
-const extractZipToDirMock = vi.spyOn(skillStore, "extractZipToDir");
-const hashSkillFilesMock = vi.spyOn(skillStore, "hashSkillFiles");
-const listTextFilesMock = vi.spyOn(skillStore, "listTextFiles");
-const readLockfileMock = vi.spyOn(skillStore, "readLockfile");
-const readSkillOriginMock = vi.spyOn(skillStore, "readSkillOrigin");
-const writeLockfileMock = vi.spyOn(skillStore, "writeLockfile");
-const writeSkillOriginMock = vi.spyOn(skillStore, "writeSkillOrigin");
+const extractZipToDirMock = vi.spyOn(skillStore, 'extractZipToDir');
+const hashSkillFilesMock = vi.spyOn(skillStore, 'hashSkillFiles');
+const listTextFilesMock = vi.spyOn(skillStore, 'listTextFiles');
+const readLockfileMock = vi.spyOn(skillStore, 'readLockfile');
+const readSkillOriginMock = vi.spyOn(skillStore, 'readSkillOrigin');
+const writeLockfileMock = vi.spyOn(skillStore, 'writeLockfile');
+const writeSkillOriginMock = vi.spyOn(skillStore, 'writeSkillOrigin');
 
 const mkdirMock = fsMocks.mkdir;
 const mkdtempMock = fsMocks.mkdtemp;
@@ -67,810 +68,834 @@ const renameMock = fsMocks.rename;
 const rmMock = fsMocks.rm;
 const statMock = fsMocks.stat;
 const {
-  clampLimit,
-  cmdExplore,
-  cmdInstall,
-  cmdList,  cmdPin,  cmdSearch,  cmdUninstall,
-  cmdUnpin,
-  cmdUpdate,
-  formatExploreLine,
-} = await import("./skills.js");
+    clampLimit,
+    cmdExplore,
+    cmdInstall,
+    cmdList,
+    cmdPin,
+    cmdSearch,
+    cmdUninstall,
+    cmdUnpin,
+    cmdUpdate,
+    formatExploreLine,
+} = await import('./skills.js');
 const {
-  extractZipToDir,
-  hashSkillFiles,
-  listTextFiles,
-  readLockfile,
-  readSkillOrigin,
-  writeLockfile,
-  writeSkillOrigin,
+    extractZipToDir,
+    hashSkillFiles,
+    listTextFiles,
+    readLockfile,
+    readSkillOrigin,
+    writeLockfile,
+    writeSkillOrigin,
 } = skillStore;
 const { rm, stat } = fsPromises;
 
-const mockLog = vi.spyOn(console, "log").mockImplementation(() => {});
+const mockLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 
 function makeOpts() {
-  return makeGlobalOpts();
+    return makeGlobalOpts();
 }
 
 beforeEach(() => {
-  mkdirMock.mockResolvedValue(undefined);
-  mkdtempMock.mockResolvedValue("/work/skills/.demo-update-test");
-  renameMock.mockResolvedValue(undefined);
-  rmMock.mockResolvedValue(undefined);
-  statMock.mockRejectedValue(new Error("missing"));
-  extractZipToDirMock.mockResolvedValue(undefined);
-  hashSkillFilesMock.mockReturnValue({ fingerprint: "hash", files: [] });
-  listTextFilesMock.mockResolvedValue([]);
-  readLockfileMock.mockResolvedValue({ version: 1, skills: {} });
-  readSkillOriginMock.mockResolvedValue(null);
-  writeLockfileMock.mockResolvedValue(undefined);
-  writeSkillOriginMock.mockResolvedValue(undefined);
+    mkdirMock.mockResolvedValue(undefined);
+    mkdtempMock.mockResolvedValue('/work/skills/.demo-update-test');
+    renameMock.mockResolvedValue(undefined);
+    rmMock.mockResolvedValue(undefined);
+    statMock.mockRejectedValue(new Error('missing'));
+    extractZipToDirMock.mockResolvedValue(undefined);
+    hashSkillFilesMock.mockReturnValue({ fingerprint: 'hash', files: [] });
+    listTextFilesMock.mockResolvedValue([]);
+    readLockfileMock.mockResolvedValue({ version: 1, skills: {} });
+    readSkillOriginMock.mockResolvedValue(null);
+    writeLockfileMock.mockResolvedValue(undefined);
+    writeSkillOriginMock.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
-  vi.clearAllMocks();
+    vi.clearAllMocks();
 });
 
 afterAll(() => {
-  extractZipToDirMock.mockRestore();
-  hashSkillFilesMock.mockRestore();
-  listTextFilesMock.mockRestore();
-  readLockfileMock.mockRestore();
-  readSkillOriginMock.mockRestore();
-  writeLockfileMock.mockRestore();
-  writeSkillOriginMock.mockRestore();
+    extractZipToDirMock.mockRestore();
+    hashSkillFilesMock.mockRestore();
+    listTextFilesMock.mockRestore();
+    readLockfileMock.mockRestore();
+    readSkillOriginMock.mockRestore();
+    writeLockfileMock.mockRestore();
+    writeSkillOriginMock.mockRestore();
 });
 
-describe("explore helpers", () => {
-  it("clamps explore limits and handles non-finite values", () => {
-    expect(clampLimit(-5)).toBe(1);
-    expect(clampLimit(0)).toBe(1);
-    expect(clampLimit(1)).toBe(1);
-    expect(clampLimit(50)).toBe(50);
-    expect(clampLimit(99)).toBe(99);
-    expect(clampLimit(200)).toBe(200);
-    expect(clampLimit(250)).toBe(200);
-    expect(clampLimit(Number.NaN)).toBe(25);
-    expect(clampLimit(Number.POSITIVE_INFINITY)).toBe(25);
-    expect(clampLimit(Number.NaN, 10)).toBe(10);
-  });
-
-  it("formats explore lines with relative time and truncation", () => {
-    const now = 4 * 60 * 60 * 1000;
-    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(now);
-    const summary = "a".repeat(60);
-    const line = formatExploreLine({
-      slug: "weather",
-      summary,
-      updatedAt: now - 2 * 60 * 60 * 1000,
-      latestVersion: null,
+describe('explore helpers', () => {
+    it('clamps explore limits and handles non-finite values', () => {
+        expect(clampLimit(-5)).toBe(1);
+        expect(clampLimit(0)).toBe(1);
+        expect(clampLimit(1)).toBe(1);
+        expect(clampLimit(50)).toBe(50);
+        expect(clampLimit(99)).toBe(99);
+        expect(clampLimit(200)).toBe(200);
+        expect(clampLimit(250)).toBe(200);
+        expect(clampLimit(Number.NaN)).toBe(25);
+        expect(clampLimit(Number.POSITIVE_INFINITY)).toBe(25);
+        expect(clampLimit(Number.NaN, 10)).toBe(10);
     });
-    expect(line).toBe(`weather  v?  2h ago  ${"a".repeat(49)}…`);
-    nowSpy.mockRestore();
-  });
+
+    it('formats explore lines with relative time and truncation', () => {
+        const now = 4 * 60 * 60 * 1000;
+        const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(now);
+        const summary = 'a'.repeat(60);
+        const line = formatExploreLine({
+            slug: 'weather',
+            summary,
+            updatedAt: now - 2 * 60 * 60 * 1000,
+            latestVersion: null,
+        });
+        expect(line).toBe(`weather  v?  2h ago  ${'a'.repeat(49)}…`);
+        nowSpy.mockRestore();
+    });
 });
 
-describe("cmdExplore", () => {
-  it("does not attach a stored auth token to apiRequest", async () => {
-    mockApiRequest.mockResolvedValue({ items: [] });
+describe('cmdExplore', () => {
+    it('does not attach a stored auth token to apiRequest', async () => {
+        mockApiRequest.mockResolvedValue({ items: [] });
 
-    await cmdExplore(makeOpts(), { limit: 25 });
+        await cmdExplore(makeOpts(), { limit: 25 });
 
-    const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
-    expect(requestArgs?.token).toBeUndefined();
-  });
+        const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
+        expect(requestArgs?.token).toBeUndefined();
+    });
 
-  it("clamps limit and handles empty results", async () => {
-    mockApiRequest.mockResolvedValue({ items: [] });
+    it('clamps limit and handles empty results', async () => {
+        mockApiRequest.mockResolvedValue({ items: [] });
 
-    await cmdExplore(makeOpts(), { limit: 0 });
+        await cmdExplore(makeOpts(), { limit: 0 });
 
-    const [, args] = mockApiRequest.mock.calls[0] ?? [];
-    const url = new URL(String(args?.url));
-    expect(url.searchParams.get("limit")).toBe("1");
-    expect(mockLog).toHaveBeenCalledWith("No skills found.");
-  });
+        const [, args] = mockApiRequest.mock.calls[0] ?? [];
+        const url = new URL(String(args?.url));
+        expect(url.searchParams.get('limit')).toBe('1');
+        expect(mockLog).toHaveBeenCalledWith('No skills found.');
+    });
 
-  it("prints formatted results", async () => {
-    const now = 10 * 60 * 1000;
-    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(now);
-    const item = {
-      slug: "gog",
-      summary: "Google Workspace CLI for Gmail, Calendar, Drive and more.",
-      updatedAt: now - 90 * 1000,
-      latestVersion: { version: "1.2.3" },
-    };
-    mockApiRequest.mockResolvedValue({ items: [item] });
+    it('prints formatted results', async () => {
+        const now = 10 * 60 * 1000;
+        const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(now);
+        const item = {
+            slug: 'gog',
+            summary: 'Google Workspace CLI for Gmail, Calendar, Drive and more.',
+            updatedAt: now - 90 * 1000,
+            latestVersion: { version: '1.2.3' },
+        };
+        mockApiRequest.mockResolvedValue({ items: [item] });
 
-    await cmdExplore(makeOpts(), { limit: 250 });
+        await cmdExplore(makeOpts(), { limit: 250 });
 
-    const [, args] = mockApiRequest.mock.calls[0] ?? [];
-    const url = new URL(String(args?.url));
-    expect(url.searchParams.get("limit")).toBe("200");
-    expect(mockLog).toHaveBeenCalledWith(formatExploreLine(item));
-    nowSpy.mockRestore();
-  });
+        const [, args] = mockApiRequest.mock.calls[0] ?? [];
+        const url = new URL(String(args?.url));
+        expect(url.searchParams.get('limit')).toBe('200');
+        expect(mockLog).toHaveBeenCalledWith(formatExploreLine(item));
+        nowSpy.mockRestore();
+    });
 
-  it("supports sort and json output", async () => {
-    const payload = { items: [], nextCursor: null };
-    mockApiRequest.mockResolvedValue(payload);
+    it('supports sort and json output', async () => {
+        const payload = { items: [], nextCursor: null };
+        mockApiRequest.mockResolvedValue(payload);
 
-    await cmdExplore(makeOpts(), { limit: 10, sort: "installs", json: true });
+        await cmdExplore(makeOpts(), { limit: 10, sort: 'installs', json: true });
 
-    const [, args] = mockApiRequest.mock.calls[0] ?? [];
-    const url = new URL(String(args?.url));
-    expect(url.searchParams.get("limit")).toBe("10");
-    expect(url.searchParams.get("sort")).toBe("installsCurrent");
-    expect(mockLog).toHaveBeenCalledWith(JSON.stringify(payload, null, 2));
-  });
+        const [, args] = mockApiRequest.mock.calls[0] ?? [];
+        const url = new URL(String(args?.url));
+        expect(url.searchParams.get('limit')).toBe('10');
+        expect(url.searchParams.get('sort')).toBe('installsCurrent');
+        expect(mockLog).toHaveBeenCalledWith(JSON.stringify(payload, null, 2));
+    });
 
-  it("supports all-time installs and trending sorts", async () => {
-    mockApiRequest.mockResolvedValue({ items: [], nextCursor: null });
+    it('supports all-time installs and trending sorts', async () => {
+        mockApiRequest.mockResolvedValue({ items: [], nextCursor: null });
 
-    await cmdExplore(makeOpts(), { limit: 5, sort: "newest" });
-    await cmdExplore(makeOpts(), { limit: 5, sort: "installsAllTime" });
-    await cmdExplore(makeOpts(), { limit: 5, sort: "trending" });
+        await cmdExplore(makeOpts(), { limit: 5, sort: 'newest' });
+        await cmdExplore(makeOpts(), { limit: 5, sort: 'installsAllTime' });
+        await cmdExplore(makeOpts(), { limit: 5, sort: 'trending' });
 
-    const first = new URL(String(mockApiRequest.mock.calls[0]?.[1]?.url));
-    const second = new URL(String(mockApiRequest.mock.calls[1]?.[1]?.url));
-    const third = new URL(String(mockApiRequest.mock.calls[2]?.[1]?.url));
-    expect(first.searchParams.get("sort")).toBe("createdAt");
-    expect(second.searchParams.get("sort")).toBe("installsAllTime");
-    expect(third.searchParams.get("sort")).toBe("trending");
-  });
+        const first = new URL(String(mockApiRequest.mock.calls[0]?.[1]?.url));
+        const second = new URL(String(mockApiRequest.mock.calls[1]?.[1]?.url));
+        const third = new URL(String(mockApiRequest.mock.calls[2]?.[1]?.url));
+        expect(first.searchParams.get('sort')).toBe('createdAt');
+        expect(second.searchParams.get('sort')).toBe('installsAllTime');
+        expect(third.searchParams.get('sort')).toBe('trending');
+    });
 });
 
-describe("cmdSearch", () => {
-  it("does not attach a stored auth token to apiRequest", async () => {
-    mockApiRequest.mockResolvedValue({ results: [] });
+describe('cmdSearch', () => {
+    it('does not attach a stored auth token to apiRequest', async () => {
+        mockApiRequest.mockResolvedValue({ results: [] });
 
-    await cmdSearch(makeOpts(), "demo");
+        await cmdSearch(makeOpts(), 'demo');
 
-    const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
-    expect(requestArgs?.token).toBeUndefined();
-  });
-
-  it("defaults limit to 25 when not specified", async () => {
-    mockApiRequest.mockResolvedValue({ results: [] });
-
-    await cmdSearch(makeOpts(), "stock price");
-
-    const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
-    const url = new URL(String(requestArgs?.url));
-    expect(url.searchParams.get("limit")).toBe("25");
-  });
-
-  it("uses explicit limit when provided", async () => {
-    mockApiRequest.mockResolvedValue({ results: [] });
-
-    await cmdSearch(makeOpts(), "stock price", 5);
-
-    const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
-    const url = new URL(String(requestArgs?.url));
-    expect(url.searchParams.get("limit")).toBe("5");
-  });
-
-  it("prints skill owners in search results", async () => {
-    mockApiRequest.mockResolvedValue({
-      results: [
-        {
-          slug: "demo",
-          displayName: "Demo Skill",
-          version: "1.2.3",
-          ownerHandle: "openclaw",
-          score: 0.9876,
-        },
-        {
-          slug: "legacy",
-          displayName: "Legacy Skill",
-          version: null,
-          owner: { displayName: "Legacy Owner" },
-          score: 0.5,
-        },
-      ],
+        const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
+        expect(requestArgs?.token).toBeUndefined();
     });
 
-    await cmdSearch(makeOpts(), "demo");
+    it('defaults limit to 25 when not specified', async () => {
+        mockApiRequest.mockResolvedValue({ results: [] });
 
-    expect(mockLog).toHaveBeenCalledWith("demo v1.2.3  @openclaw  Demo Skill  (0.988)");
-    expect(mockLog).toHaveBeenCalledWith("legacy  Legacy Owner  Legacy Skill  (0.500)");
-  });
+        await cmdSearch(makeOpts(), 'stock price');
+
+        const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
+        const url = new URL(String(requestArgs?.url));
+        expect(url.searchParams.get('limit')).toBe('25');
+    });
+
+    it('uses explicit limit when provided', async () => {
+        mockApiRequest.mockResolvedValue({ results: [] });
+
+        await cmdSearch(makeOpts(), 'stock price', 5);
+
+        const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
+        const url = new URL(String(requestArgs?.url));
+        expect(url.searchParams.get('limit')).toBe('5');
+    });
+
+    it('prints skill owners in search results', async () => {
+        mockApiRequest.mockResolvedValue({
+            results: [
+                {
+                    slug: 'demo',
+                    displayName: 'Demo Skill',
+                    version: '1.2.3',
+                    ownerHandle: 'openclaw',
+                    score: 0.9876,
+                },
+                {
+                    slug: 'legacy',
+                    displayName: 'Legacy Skill',
+                    version: null,
+                    owner: { displayName: 'Legacy Owner' },
+                    score: 0.5,
+                },
+            ],
+        });
+
+        await cmdSearch(makeOpts(), 'demo');
+
+        expect(mockLog).toHaveBeenCalledWith('demo v1.2.3  @openclaw  Demo Skill  (0.988)');
+        expect(mockLog).toHaveBeenCalledWith('legacy  Legacy Owner  Legacy Skill  (0.500)');
+    });
 });
 
-describe("cmdUpdate", () => {
-  it("fails when directly updating a pinned skill", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: {
-        demo: { version: "0.1.0", installedAt: 123, pinned: true, pinReason: "hold" },
-      },
+describe('cmdUpdate', () => {
+    it('fails when directly updating a pinned skill', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                demo: { version: '0.1.0', installedAt: 123, pinned: true, pinReason: 'hold' },
+            },
+        });
+
+        await expect(cmdUpdate(makeOpts(), 'demo', { force: true }, false)).rejects.toThrow(
+            /is pinned/i
+        );
+
+        expect(mockApiRequest).not.toHaveBeenCalled();
+        expect(mockDownloadZip).not.toHaveBeenCalled();
     });
 
-    await expect(cmdUpdate(makeOpts(), "demo", { force: true }, false)).rejects.toThrow(
-      /is pinned/i,
-    );
+    it('更新下载失败时保留现有技能', async () => {
+        mockApiRequest.mockResolvedValue({ latestVersion: { version: '2.0.0' }, moderation: null });
+        mockDownloadZip.mockRejectedValue(new Error('download failed'));
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+        vi.mocked(readSkillOrigin).mockResolvedValue(null);
+        vi.mocked(listTextFiles).mockResolvedValue([]);
+        vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
 
-    expect(mockApiRequest).not.toHaveBeenCalled();
-    expect(mockDownloadZip).not.toHaveBeenCalled();
-  });
+        await expect(cmdUpdate(makeOpts(), 'demo', { force: true }, false)).rejects.toThrow(
+            'download failed'
+        );
 
-  it("更新下载失败时保留现有技能", async () => {
-    mockApiRequest.mockResolvedValue({ latestVersion: { version: "2.0.0" }, moderation: null });
-    mockDownloadZip.mockRejectedValue(new Error("download failed"));
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+        expect(rm).not.toHaveBeenCalledWith('/work/skills/demo', {
+            recursive: true,
+            force: true,
+        });
+        expect(renameMock).not.toHaveBeenCalled();
     });
-    vi.mocked(readSkillOrigin).mockResolvedValue(null);
-    vi.mocked(listTextFiles).mockResolvedValue([]);
-    vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
 
-    await expect(cmdUpdate(makeOpts(), "demo", { force: true }, false)).rejects.toThrow(
-      "download failed",
-    );
+    it('更新解压失败时保留现有技能', async () => {
+        mockApiRequest.mockResolvedValue({ latestVersion: { version: '2.0.0' }, moderation: null });
+        mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+        vi.mocked(readSkillOrigin).mockResolvedValue(null);
+        vi.mocked(listTextFiles).mockResolvedValue([]);
+        vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
+        vi.mocked(extractZipToDir).mockRejectedValue(new Error('extract failed'));
 
-    expect(rm).not.toHaveBeenCalledWith("/work/skills/demo", {
-      recursive: true,
-      force: true,
+        await expect(cmdUpdate(makeOpts(), 'demo', { force: true }, false)).rejects.toThrow(
+            'extract failed'
+        );
+
+        expect(renameMock).not.toHaveBeenCalled();
+        expect(rm).not.toHaveBeenCalledWith('/work/skills/demo', {
+            recursive: true,
+            force: true,
+        });
     });
-    expect(renameMock).not.toHaveBeenCalled();
-  });
 
-  it("更新解压失败时保留现有技能", async () => {
-    mockApiRequest.mockResolvedValue({ latestVersion: { version: "2.0.0" }, moderation: null });
-    mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+    it('skips pinned skills during update --all and reports them in the summary', async () => {
+        mockApiRequest.mockResolvedValue({
+            latestVersion: { version: '2.0.0' },
+            moderation: null,
+        });
+        mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                demo: { version: '0.1.0', installedAt: 123, pinned: true, pinReason: 'hold' },
+                other: { version: '1.0.0', installedAt: 456 },
+            },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(readSkillOrigin).mockResolvedValue(null);
+        vi.mocked(writeSkillOrigin).mockResolvedValue();
+        vi.mocked(extractZipToDir).mockResolvedValue();
+        vi.mocked(listTextFiles).mockResolvedValue([]);
+        vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: 'hash', files: [] });
+        vi.mocked(stat).mockRejectedValue(new Error('missing'));
+        vi.mocked(rm).mockResolvedValue();
+
+        await cmdUpdate(makeOpts(), undefined, { all: true }, false);
+
+        expect(mockApiRequest).toHaveBeenCalledTimes(1);
+        const [, args] = mockApiRequest.mock.calls[0] ?? [];
+        expect(args?.path).toBe(`${ApiRoutes.skills}/${encodeURIComponent('other')}`);
+        expect(writeLockfile).toHaveBeenCalledWith('/work', {
+            version: 1,
+            skills: {
+                demo: { version: '0.1.0', installedAt: 123, pinned: true, pinReason: 'hold' },
+                other: { version: '2.0.0', installedAt: expect.any(Number) },
+            },
+        });
+        expect(mockLog).toHaveBeenCalledWith('Skipped 1 pinned skill: demo');
     });
-    vi.mocked(readSkillOrigin).mockResolvedValue(null);
-    vi.mocked(listTextFiles).mockResolvedValue([]);
-    vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
-    vi.mocked(extractZipToDir).mockRejectedValue(new Error("extract failed"));
 
-    await expect(cmdUpdate(makeOpts(), "demo", { force: true }, false)).rejects.toThrow(
-      "extract failed",
-    );
+    it('uses path-based skill lookup when no local fingerprint is available', async () => {
+        mockApiRequest.mockResolvedValue({ latestVersion: { version: '1.0.0' } });
+        mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '0.1.0', installedAt: 123 } },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(readSkillOrigin).mockResolvedValue(null);
+        vi.mocked(writeSkillOrigin).mockResolvedValue();
+        vi.mocked(extractZipToDir).mockResolvedValue();
+        vi.mocked(listTextFiles).mockResolvedValue([]);
+        vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: 'hash', files: [] });
+        vi.mocked(stat).mockRejectedValue(new Error('missing'));
+        vi.mocked(rm).mockResolvedValue();
 
-    expect(renameMock).not.toHaveBeenCalled();
-    expect(rm).not.toHaveBeenCalledWith("/work/skills/demo", {
-      recursive: true,
-      force: true,
+        await cmdUpdate(makeOpts(), 'demo', {}, false);
+
+        const [, args] = mockApiRequest.mock.calls[0] ?? [];
+        expect(args?.path).toBe(`${ApiRoutes.skills}/${encodeURIComponent('demo')}`);
+        expect(args?.url).toBeUndefined();
     });
-  });
 
-  it("skips pinned skills during update --all and reports them in the summary", async () => {
-    mockApiRequest.mockResolvedValue({
-      latestVersion: { version: "2.0.0" },
-      moderation: null,
+    it('trusts the stored install fingerprint when the resolve endpoint cannot match', async () => {
+        mockApiRequest
+            .mockResolvedValueOnce({
+                latestVersion: { version: '2.0.0' },
+                moderation: null,
+            })
+            .mockResolvedValueOnce({
+                match: null,
+                latestVersion: { version: '2.0.0' },
+            });
+        mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+        vi.mocked(readSkillOrigin).mockResolvedValue({
+            version: 1,
+            registry: 'https://example.com',
+            slug: 'demo',
+            installedVersion: '1.0.0',
+            installedAt: 123,
+            fingerprint: 'hash',
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(writeSkillOrigin).mockResolvedValue();
+        vi.mocked(extractZipToDir).mockResolvedValue();
+        vi.mocked(listTextFiles).mockResolvedValue([
+            { relPath: 'SKILL.md', bytes: new Uint8Array([1]) },
+        ]);
+        vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: 'hash', files: [] });
+        vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>);
+        vi.mocked(rm).mockResolvedValue();
+
+        await cmdUpdate(makeOpts(), 'demo', {}, false);
+
+        expect(mockLog).not.toHaveBeenCalledWith(
+            'demo: local changes (no match). Use --force to overwrite.'
+        );
+        expect(mockDownloadZip).toHaveBeenCalledWith(
+            'https://example.com',
+            expect.objectContaining({ slug: 'demo', version: '2.0.0' })
+        );
+        expect(writeSkillOrigin).toHaveBeenCalledWith('/work/skills/.demo-update-test', {
+            version: 1,
+            registry: 'https://example.com',
+            slug: 'demo',
+            installedVersion: '2.0.0',
+            installedAt: 123,
+            fingerprint: 'hash',
+        });
+        expect(renameMock).toHaveBeenNthCalledWith(
+            1,
+            '/work/skills/demo',
+            '/work/skills/.demo-update-test-previous'
+        );
+        expect(renameMock).toHaveBeenNthCalledWith(
+            2,
+            '/work/skills/.demo-update-test',
+            '/work/skills/demo'
+        );
     });
-    mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: {
-        demo: { version: "0.1.0", installedAt: 123, pinned: true, pinReason: "hold" },
-        other: { version: "1.0.0", installedAt: 456 },
-      },
-    });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(readSkillOrigin).mockResolvedValue(null);
-    vi.mocked(writeSkillOrigin).mockResolvedValue();
-    vi.mocked(extractZipToDir).mockResolvedValue();
-    vi.mocked(listTextFiles).mockResolvedValue([]);
-    vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: "hash", files: [] });
-    vi.mocked(stat).mockRejectedValue(new Error("missing"));
-    vi.mocked(rm).mockResolvedValue();
-
-    await cmdUpdate(makeOpts(), undefined, { all: true }, false);
-
-    expect(mockApiRequest).toHaveBeenCalledTimes(1);
-    const [, args] = mockApiRequest.mock.calls[0] ?? [];
-    expect(args?.path).toBe(`${ApiRoutes.skills}/${encodeURIComponent("other")}`);
-    expect(writeLockfile).toHaveBeenCalledWith("/work", {
-      version: 1,
-      skills: {
-        demo: { version: "0.1.0", installedAt: 123, pinned: true, pinReason: "hold" },
-        other: { version: "2.0.0", installedAt: expect.any(Number) },
-      },
-    });
-    expect(mockLog).toHaveBeenCalledWith("Skipped 1 pinned skill: demo");
-  });
-
-  it("uses path-based skill lookup when no local fingerprint is available", async () => {
-    mockApiRequest.mockResolvedValue({ latestVersion: { version: "1.0.0" } });
-    mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "0.1.0", installedAt: 123 } },
-    });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(readSkillOrigin).mockResolvedValue(null);
-    vi.mocked(writeSkillOrigin).mockResolvedValue();
-    vi.mocked(extractZipToDir).mockResolvedValue();
-    vi.mocked(listTextFiles).mockResolvedValue([]);
-    vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: "hash", files: [] });
-    vi.mocked(stat).mockRejectedValue(new Error("missing"));
-    vi.mocked(rm).mockResolvedValue();
-
-    await cmdUpdate(makeOpts(), "demo", {}, false);
-
-    const [, args] = mockApiRequest.mock.calls[0] ?? [];
-    expect(args?.path).toBe(`${ApiRoutes.skills}/${encodeURIComponent("demo")}`);
-    expect(args?.url).toBeUndefined();
-  });
-
-  it("trusts the stored install fingerprint when the resolve endpoint cannot match", async () => {
-    mockApiRequest
-      .mockResolvedValueOnce({
-        latestVersion: { version: "2.0.0" },
-        moderation: null,
-      })
-      .mockResolvedValueOnce({
-        match: null,
-        latestVersion: { version: "2.0.0" },
-      });
-    mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
-    });
-    vi.mocked(readSkillOrigin).mockResolvedValue({
-      version: 1,
-      registry: "https://example.com",
-      slug: "demo",
-      installedVersion: "1.0.0",
-      installedAt: 123,
-      fingerprint: "hash",
-    });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(writeSkillOrigin).mockResolvedValue();
-    vi.mocked(extractZipToDir).mockResolvedValue();
-    vi.mocked(listTextFiles).mockResolvedValue([
-      { relPath: "SKILL.md", bytes: new Uint8Array([1]) },
-    ]);
-    vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: "hash", files: [] });
-    vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>);
-    vi.mocked(rm).mockResolvedValue();
-
-    await cmdUpdate(makeOpts(), "demo", {}, false);
-
-    expect(mockLog).not.toHaveBeenCalledWith(
-      "demo: local changes (no match). Use --force to overwrite.",
-    );
-    expect(mockDownloadZip).toHaveBeenCalledWith(
-      "https://example.com",
-      expect.objectContaining({ slug: "demo", version: "2.0.0" }),
-    );
-    expect(writeSkillOrigin).toHaveBeenCalledWith("/work/skills/.demo-update-test", {
-      version: 1,
-      registry: "https://example.com",
-      slug: "demo",
-      installedVersion: "2.0.0",
-      installedAt: 123,
-      fingerprint: "hash",
-    });
-    expect(renameMock).toHaveBeenNthCalledWith(
-      1,
-      "/work/skills/demo",
-      "/work/skills/.demo-update-test-previous",
-    );
-    expect(renameMock).toHaveBeenNthCalledWith(
-      2,
-      "/work/skills/.demo-update-test",
-      "/work/skills/demo",
-    );
-  });
 });
 
-describe("pin commands", () => {
-  it("pins an installed skill and preserves its version metadata", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
-    });
-    vi.mocked(writeLockfile).mockResolvedValue();
+describe('pin commands', () => {
+    it('pins an installed skill and preserves its version metadata', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
 
-    await cmdPin(makeOpts(), "demo", { reason: "scanner hold" });
+        await cmdPin(makeOpts(), 'demo', { reason: 'scanner hold' });
 
-    expect(writeLockfile).toHaveBeenCalledWith("/work", {
-      version: 1,
-      skills: {
-        demo: {
-          version: "1.0.0",
-          installedAt: 123,
-          pinned: true,
-          pinReason: "scanner hold",
-        },
-      },
-    });
-    expect(mockLog).toHaveBeenCalledWith("Pinned demo: scanner hold");
-  });
-
-  it("reports when an installed skill is already pinned without changes", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: {
-        demo: { version: "1.0.0", installedAt: 123, pinned: true, pinReason: "scanner hold" },
-      },
+        expect(writeLockfile).toHaveBeenCalledWith('/work', {
+            version: 1,
+            skills: {
+                demo: {
+                    version: '1.0.0',
+                    installedAt: 123,
+                    pinned: true,
+                    pinReason: 'scanner hold',
+                },
+            },
+        });
+        expect(mockLog).toHaveBeenCalledWith('Pinned demo: scanner hold');
     });
 
-    await cmdPin(makeOpts(), "demo");
+    it('reports when an installed skill is already pinned without changes', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                demo: {
+                    version: '1.0.0',
+                    installedAt: 123,
+                    pinned: true,
+                    pinReason: 'scanner hold',
+                },
+            },
+        });
 
-    expect(writeLockfile).not.toHaveBeenCalled();
-    expect(mockLog).toHaveBeenCalledWith('Skill "demo" is already pinned: scanner hold');
-  });
+        await cmdPin(makeOpts(), 'demo');
 
-  it("unpinned skills clear pin metadata and keep the installed version", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: {
-        demo: { version: "1.0.0", installedAt: 123, pinned: true, pinReason: "scanner hold" },
-      },
+        expect(writeLockfile).not.toHaveBeenCalled();
+        expect(mockLog).toHaveBeenCalledWith('Skill "demo" is already pinned: scanner hold');
     });
-    vi.mocked(writeLockfile).mockResolvedValue();
 
-    await cmdUnpin(makeOpts(), "demo");
+    it('unpinned skills clear pin metadata and keep the installed version', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                demo: {
+                    version: '1.0.0',
+                    installedAt: 123,
+                    pinned: true,
+                    pinReason: 'scanner hold',
+                },
+            },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
 
-    expect(writeLockfile).toHaveBeenCalledWith("/work", {
-      version: 1,
-      skills: {
-        demo: {
-          version: "1.0.0",
-          installedAt: 123,
-        },
-      },
+        await cmdUnpin(makeOpts(), 'demo');
+
+        expect(writeLockfile).toHaveBeenCalledWith('/work', {
+            version: 1,
+            skills: {
+                demo: {
+                    version: '1.0.0',
+                    installedAt: 123,
+                },
+            },
+        });
+        expect(mockLog).toHaveBeenCalledWith('Unpinned demo');
     });
-    expect(mockLog).toHaveBeenCalledWith("Unpinned demo");
-  });
 });
 
-describe("cmdList", () => {
-  it("shows pinned state in list output", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: {
-        demo: { version: "1.0.0", installedAt: 123, pinned: true, pinReason: "scanner hold" },
-        other: { version: "2.0.0", installedAt: 456 },
-      },
+describe('cmdList', () => {
+    it('shows pinned state in list output', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                demo: {
+                    version: '1.0.0',
+                    installedAt: 123,
+                    pinned: true,
+                    pinReason: 'scanner hold',
+                },
+                other: { version: '2.0.0', installedAt: 456 },
+            },
+        });
+
+        await cmdList(makeOpts());
+
+        expect(mockLog).toHaveBeenCalledWith('demo  1.0.0  pinned (scanner hold)');
+        expect(mockLog).toHaveBeenCalledWith('other  2.0.0');
     });
-
-    await cmdList(makeOpts());
-
-    expect(mockLog).toHaveBeenCalledWith("demo  1.0.0  pinned (scanner hold)");
-    expect(mockLog).toHaveBeenCalledWith("other  2.0.0");
-  });
 });
 
-describe("cmdInstall", () => {
-  it("does not attach a stored auth token to API or download requests", async () => {
-    mockApiRequest.mockResolvedValue({
-      skill: {
-        slug: "demo",
-        displayName: "Demo",
-        summary: null,
-        tags: {},
-        stats: {},
-        createdAt: 0,
-        updatedAt: 0,
-      },
-      latestVersion: { version: "1.0.0" },
-      owner: null,
-      moderation: null,
-    });
-    mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
-    vi.mocked(readLockfile).mockResolvedValue({ version: 1, skills: {} });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(writeSkillOrigin).mockResolvedValue();
-    vi.mocked(extractZipToDir).mockResolvedValue();
-    vi.mocked(stat).mockRejectedValue(new Error("missing"));
-    vi.mocked(rm).mockResolvedValue();
+describe('cmdInstall', () => {
+    it('does not attach a stored auth token to API or download requests', async () => {
+        mockApiRequest.mockResolvedValue({
+            skill: {
+                slug: 'demo',
+                displayName: 'Demo',
+                summary: null,
+                tags: {},
+                stats: {},
+                createdAt: 0,
+                updatedAt: 0,
+            },
+            latestVersion: { version: '1.0.0' },
+            owner: null,
+            moderation: null,
+        });
+        mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({ version: 1, skills: {} });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(writeSkillOrigin).mockResolvedValue();
+        vi.mocked(extractZipToDir).mockResolvedValue();
+        vi.mocked(stat).mockRejectedValue(new Error('missing'));
+        vi.mocked(rm).mockResolvedValue();
 
-    await cmdInstall(makeOpts(), "demo");
+        await cmdInstall(makeOpts(), 'demo');
 
-    const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
-    expect(requestArgs?.token).toBeUndefined();
-    const [, zipArgs] = mockDownloadZip.mock.calls[0] ?? [];
-    expect(zipArgs?.token).toBeUndefined();
-  });
-
-  it("blocks force reinstall when a skill is pinned", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "0.9.0", installedAt: 123, pinned: true, pinReason: "hold" } },
-    });
-    vi.mocked(stat).mockRejectedValue(new Error("missing"));
-
-    await expect(cmdInstall(makeOpts(), "demo", undefined, true)).rejects.toThrow(/is pinned/i);
-
-    expect(mockApiRequest).not.toHaveBeenCalled();
-    expect(mockDownloadZip).not.toHaveBeenCalled();
-    expect(rm).not.toHaveBeenCalled();
-    expect(writeLockfile).not.toHaveBeenCalled();
-  });
-
-  it("does not rm local directory when skill is malware-blocked (--force)", async () => {
-    vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>); // target exists
-    mockApiRequest.mockResolvedValue({
-      skill: {
-        slug: "demo",
-        displayName: "Demo",
-        summary: null,
-        tags: {},
-        stats: {},
-        createdAt: 0,
-        updatedAt: 0,
-      },
-      latestVersion: { version: "1.0.0" },
-      owner: null,
-      moderation: { isMalwareBlocked: true, isSuspicious: false },
+        const [, requestArgs] = mockApiRequest.mock.calls[0] ?? [];
+        expect(requestArgs?.token).toBeUndefined();
+        const [, zipArgs] = mockDownloadZip.mock.calls[0] ?? [];
+        expect(zipArgs?.token).toBeUndefined();
     });
 
-    await expect(cmdInstall(makeOpts(), "demo", undefined, true)).rejects.toThrow(/malware/i);
+    it('blocks force reinstall when a skill is pinned', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                demo: { version: '0.9.0', installedAt: 123, pinned: true, pinReason: 'hold' },
+            },
+        });
+        vi.mocked(stat).mockRejectedValue(new Error('missing'));
 
-    expect(rm).not.toHaveBeenCalled();
-  });
+        await expect(cmdInstall(makeOpts(), 'demo', undefined, true)).rejects.toThrow(/is pinned/i);
 
-  it("does not rm local directory when API fetch fails (--force)", async () => {
-    vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>); // target exists
-    mockApiRequest.mockRejectedValue(new Error("Skill not found"));
-
-    await expect(cmdInstall(makeOpts(), "demo", undefined, true)).rejects.toThrow(/not found/i);
-
-    expect(rm).not.toHaveBeenCalled();
-  });
-
-  it("does not rm local directory when requested version lookup fails (--force)", async () => {
-    vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>); // target exists
-    mockApiRequest
-      .mockResolvedValueOnce({
-        skill: {
-          slug: "demo",
-          displayName: "Demo",
-          summary: null,
-          tags: {},
-          stats: {},
-          createdAt: 0,
-          updatedAt: 0,
-        },
-        latestVersion: { version: "1.0.0" },
-        owner: null,
-        moderation: null,
-      })
-      .mockRejectedValueOnce(new Error("Version not found"));
-
-    await expect(cmdInstall(makeOpts(), "demo", "9.9.9", true)).rejects.toThrow(
-      /version not found/i,
-    );
-
-    expect(rm).not.toHaveBeenCalled();
-    expect(mockApiRequest).toHaveBeenNthCalledWith(
-      2,
-      "https://example.com",
-      expect.objectContaining({
-        path: `${ApiRoutes.skills}/${encodeURIComponent("demo")}/versions/${encodeURIComponent("9.9.9")}`,
-      }),
-      expect.anything(),
-    );
-  });
-
-  it("validates requested version before rm when all checks pass (--force)", async () => {
-    vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>); // target exists
-    mockApiRequest
-      .mockResolvedValueOnce({
-        skill: {
-          slug: "demo",
-          displayName: "Demo",
-          summary: null,
-          tags: {},
-          stats: {},
-          createdAt: 0,
-          updatedAt: 0,
-        },
-        latestVersion: { version: "1.0.0" },
-        owner: null,
-        moderation: null,
-      })
-      .mockResolvedValueOnce({
-        version: {
-          version: "9.9.9",
-          createdAt: 0,
-          changelog: "",
-          changelogSource: null,
-          license: null,
-          files: [],
-        },
-        skill: { slug: "demo", displayName: "Demo" },
-      });
-    mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
-    vi.mocked(readLockfile).mockResolvedValue({ version: 1, skills: {} });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(writeSkillOrigin).mockResolvedValue();
-    vi.mocked(extractZipToDir).mockResolvedValue();
-    vi.mocked(rm).mockResolvedValue();
-
-    await cmdInstall(makeOpts(), "demo", "9.9.9", true);
-
-    expect(rm).toHaveBeenCalledWith("/work/skills/demo", { recursive: true, force: true });
-    expect(mockDownloadZip).toHaveBeenCalledWith(
-      "https://example.com",
-      expect.objectContaining({ slug: "demo", version: "9.9.9" }),
-    );
-    const versionLookupOrder = mockApiRequest.mock.invocationCallOrder[1];
-    const rmOrder = vi.mocked(rm).mock.invocationCallOrder[0];
-    const downloadOrder = mockDownloadZip.mock.invocationCallOrder[0];
-    expect(versionLookupOrder).toBeLessThan(rmOrder);
-    expect(rmOrder).toBeLessThan(downloadOrder);
-  });
-
-  it("calls rm before download when all checks pass (--force)", async () => {
-    vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>); // target exists
-    mockApiRequest.mockResolvedValue({
-      skill: {
-        slug: "demo",
-        displayName: "Demo",
-        summary: null,
-        tags: {},
-        stats: {},
-        createdAt: 0,
-        updatedAt: 0,
-      },
-      latestVersion: { version: "1.0.0" },
-      owner: null,
-      moderation: null,
+        expect(mockApiRequest).not.toHaveBeenCalled();
+        expect(mockDownloadZip).not.toHaveBeenCalled();
+        expect(rm).not.toHaveBeenCalled();
+        expect(writeLockfile).not.toHaveBeenCalled();
     });
-    mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
-    vi.mocked(readLockfile).mockResolvedValue({ version: 1, skills: {} });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(writeSkillOrigin).mockResolvedValue();
-    vi.mocked(extractZipToDir).mockResolvedValue();
-    vi.mocked(rm).mockResolvedValue();
 
-    await cmdInstall(makeOpts(), "demo", undefined, true);
+    it('does not rm local directory when skill is malware-blocked (--force)', async () => {
+        vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>); // target exists
+        mockApiRequest.mockResolvedValue({
+            skill: {
+                slug: 'demo',
+                displayName: 'Demo',
+                summary: null,
+                tags: {},
+                stats: {},
+                createdAt: 0,
+                updatedAt: 0,
+            },
+            latestVersion: { version: '1.0.0' },
+            owner: null,
+            moderation: { isMalwareBlocked: true, isSuspicious: false },
+        });
 
-    expect(rm).toHaveBeenCalledWith("/work/skills/demo", { recursive: true, force: true });
-    expect(mockDownloadZip).toHaveBeenCalled();
-    const rmOrder = vi.mocked(rm).mock.invocationCallOrder[0];
-    const downloadOrder = mockDownloadZip.mock.invocationCallOrder[0];
-    expect(rmOrder).toBeLessThan(downloadOrder);
-  });
+        await expect(cmdInstall(makeOpts(), 'demo', undefined, true)).rejects.toThrow(/malware/i);
+
+        expect(rm).not.toHaveBeenCalled();
+    });
+
+    it('does not rm local directory when API fetch fails (--force)', async () => {
+        vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>); // target exists
+        mockApiRequest.mockRejectedValue(new Error('Skill not found'));
+
+        await expect(cmdInstall(makeOpts(), 'demo', undefined, true)).rejects.toThrow(/not found/i);
+
+        expect(rm).not.toHaveBeenCalled();
+    });
+
+    it('does not rm local directory when requested version lookup fails (--force)', async () => {
+        vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>); // target exists
+        mockApiRequest
+            .mockResolvedValueOnce({
+                skill: {
+                    slug: 'demo',
+                    displayName: 'Demo',
+                    summary: null,
+                    tags: {},
+                    stats: {},
+                    createdAt: 0,
+                    updatedAt: 0,
+                },
+                latestVersion: { version: '1.0.0' },
+                owner: null,
+                moderation: null,
+            })
+            .mockRejectedValueOnce(new Error('Version not found'));
+
+        await expect(cmdInstall(makeOpts(), 'demo', '9.9.9', true)).rejects.toThrow(
+            /version not found/i
+        );
+
+        expect(rm).not.toHaveBeenCalled();
+        expect(mockApiRequest).toHaveBeenNthCalledWith(
+            2,
+            'https://example.com',
+            expect.objectContaining({
+                path: `${ApiRoutes.skills}/${encodeURIComponent(
+                    'demo'
+                )}/versions/${encodeURIComponent('9.9.9')}`,
+            }),
+            expect.anything()
+        );
+    });
+
+    it('validates requested version before rm when all checks pass (--force)', async () => {
+        vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>); // target exists
+        mockApiRequest
+            .mockResolvedValueOnce({
+                skill: {
+                    slug: 'demo',
+                    displayName: 'Demo',
+                    summary: null,
+                    tags: {},
+                    stats: {},
+                    createdAt: 0,
+                    updatedAt: 0,
+                },
+                latestVersion: { version: '1.0.0' },
+                owner: null,
+                moderation: null,
+            })
+            .mockResolvedValueOnce({
+                version: {
+                    version: '9.9.9',
+                    createdAt: 0,
+                    changelog: '',
+                    changelogSource: null,
+                    license: null,
+                    files: [],
+                },
+                skill: { slug: 'demo', displayName: 'Demo' },
+            });
+        mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({ version: 1, skills: {} });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(writeSkillOrigin).mockResolvedValue();
+        vi.mocked(extractZipToDir).mockResolvedValue();
+        vi.mocked(rm).mockResolvedValue();
+
+        await cmdInstall(makeOpts(), 'demo', '9.9.9', true);
+
+        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
+        expect(mockDownloadZip).toHaveBeenCalledWith(
+            'https://example.com',
+            expect.objectContaining({ slug: 'demo', version: '9.9.9' })
+        );
+        const versionLookupOrder = mockApiRequest.mock.invocationCallOrder[1];
+        const rmOrder = vi.mocked(rm).mock.invocationCallOrder[0];
+        const downloadOrder = mockDownloadZip.mock.invocationCallOrder[0];
+        expect(versionLookupOrder).toBeLessThan(rmOrder);
+        expect(rmOrder).toBeLessThan(downloadOrder);
+    });
+
+    it('calls rm before download when all checks pass (--force)', async () => {
+        vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>); // target exists
+        mockApiRequest.mockResolvedValue({
+            skill: {
+                slug: 'demo',
+                displayName: 'Demo',
+                summary: null,
+                tags: {},
+                stats: {},
+                createdAt: 0,
+                updatedAt: 0,
+            },
+            latestVersion: { version: '1.0.0' },
+            owner: null,
+            moderation: null,
+        });
+        mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({ version: 1, skills: {} });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(writeSkillOrigin).mockResolvedValue();
+        vi.mocked(extractZipToDir).mockResolvedValue();
+        vi.mocked(rm).mockResolvedValue();
+
+        await cmdInstall(makeOpts(), 'demo', undefined, true);
+
+        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
+        expect(mockDownloadZip).toHaveBeenCalled();
+        const rmOrder = vi.mocked(rm).mock.invocationCallOrder[0];
+        const downloadOrder = mockDownloadZip.mock.invocationCallOrder[0];
+        expect(rmOrder).toBeLessThan(downloadOrder);
+    });
 });
 
-describe("cmdUninstall", () => {
-  it("requires --yes when input is disabled", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+describe('cmdUninstall', () => {
+    it('requires --yes when input is disabled', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+
+        await expect(cmdUninstall(makeOpts(), 'demo', {}, false)).rejects.toThrow(/--yes/i);
     });
 
-    await expect(cmdUninstall(makeOpts(), "demo", {}, false)).rejects.toThrow(/--yes/i);
-  });
+    it('prompts when interactive and proceeds on confirm', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(rm).mockResolvedValue();
+        mockIsInteractive.mockReturnValue(true);
+        mockPromptConfirm.mockResolvedValue(true);
 
-  it("prompts when interactive and proceeds on confirm", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+        await cmdUninstall(makeOpts(), 'demo', {}, true);
+
+        expect(mockPromptConfirm).toHaveBeenCalledWith('Uninstall demo?');
+        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
+        expect(writeLockfile).toHaveBeenCalled();
     });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(rm).mockResolvedValue();
-    mockIsInteractive.mockReturnValue(true);
-    mockPromptConfirm.mockResolvedValue(true);
 
-    await cmdUninstall(makeOpts(), "demo", {}, true);
+    it('prints Cancelled and does not remove when prompt declines', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+        mockIsInteractive.mockReturnValue(true);
+        mockPromptConfirm.mockResolvedValue(false);
 
-    expect(mockPromptConfirm).toHaveBeenCalledWith("Uninstall demo?");
-    expect(rm).toHaveBeenCalledWith("/work/skills/demo", { recursive: true, force: true });
-    expect(writeLockfile).toHaveBeenCalled();
-  });
+        await cmdUninstall(makeOpts(), 'demo', {}, true);
 
-  it("prints Cancelled and does not remove when prompt declines", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+        expect(mockLog).toHaveBeenCalledWith('Cancelled.');
+        expect(rm).not.toHaveBeenCalled();
+        expect(writeLockfile).not.toHaveBeenCalled();
     });
-    mockIsInteractive.mockReturnValue(true);
-    mockPromptConfirm.mockResolvedValue(false);
 
-    await cmdUninstall(makeOpts(), "demo", {}, true);
-
-    expect(mockLog).toHaveBeenCalledWith("Cancelled.");
-    expect(rm).not.toHaveBeenCalled();
-    expect(writeLockfile).not.toHaveBeenCalled();
-  });
-
-  it("rejects unsafe slugs", async () => {
-    await expect(cmdUninstall(makeOpts(), "../evil", { yes: true }, false)).rejects.toThrow(
-      /invalid slug/i,
-    );
-    await expect(cmdUninstall(makeOpts(), "demo/evil", { yes: true }, false)).rejects.toThrow(
-      /invalid slug/i,
-    );
-  });
-
-  it("fails when skill is not installed", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({ version: 1, skills: {} });
-
-    await expect(cmdUninstall(makeOpts(), "missing", {}, false)).rejects.toThrow(
-      "Not installed: missing",
-    );
-  });
-
-  it("removes skill directory and lockfile entry with --yes flag", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+    it('rejects unsafe slugs', async () => {
+        await expect(cmdUninstall(makeOpts(), '../evil', { yes: true }, false)).rejects.toThrow(
+            /invalid slug/i
+        );
+        await expect(cmdUninstall(makeOpts(), 'demo/evil', { yes: true }, false)).rejects.toThrow(
+            /invalid slug/i
+        );
     });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(rm).mockResolvedValue();
 
-    await cmdUninstall(makeOpts(), "demo", { yes: true }, false);
+    it('fails when skill is not installed', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({ version: 1, skills: {} });
 
-    expect(rm).toHaveBeenCalledWith("/work/skills/demo", { recursive: true, force: true });
-    expect(writeLockfile).toHaveBeenCalledWith("/work", {
-      version: 1,
-      skills: {},
+        await expect(cmdUninstall(makeOpts(), 'missing', {}, false)).rejects.toThrow(
+            'Not installed: missing'
+        );
     });
-    expect(mockSpinner.succeed).toHaveBeenCalledWith("Uninstalled demo");
-  });
 
-  it("does not update lockfile if remove fails", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+    it('removes skill directory and lockfile entry with --yes flag', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(rm).mockResolvedValue();
+
+        await cmdUninstall(makeOpts(), 'demo', { yes: true }, false);
+
+        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
+        expect(writeLockfile).toHaveBeenCalledWith('/work', {
+            version: 1,
+            skills: {},
+        });
+        expect(mockSpinner.succeed).toHaveBeenCalledWith('Uninstalled demo');
     });
-    vi.mocked(rm).mockRejectedValue(new Error("nope"));
 
-    await expect(cmdUninstall(makeOpts(), "demo", { yes: true }, false)).rejects.toThrow("nope");
+    it('does not update lockfile if remove fails', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+        vi.mocked(rm).mockRejectedValue(new Error('nope'));
 
-    expect(writeLockfile).not.toHaveBeenCalled();
-  });
+        await expect(cmdUninstall(makeOpts(), 'demo', { yes: true }, false)).rejects.toThrow(
+            'nope'
+        );
 
-  it("updates lockfile after removing directory", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+        expect(writeLockfile).not.toHaveBeenCalled();
     });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(rm).mockResolvedValue();
 
-    await cmdUninstall(makeOpts(), "demo", { yes: true }, false);
+    it('updates lockfile after removing directory', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(rm).mockResolvedValue();
 
-    const rmCallMock = vi.mocked(rm);
-    const writeLockfileCallMock = vi.mocked(writeLockfile);
-    expect(rmCallMock.mock.invocationCallOrder[0]).toBeLessThan(
-      writeLockfileCallMock.mock.invocationCallOrder[0],
-    );
-  });
+        await cmdUninstall(makeOpts(), 'demo', { yes: true }, false);
 
-  it("removes skill and updates lockfile keeping other skills", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: {
-        demo: { version: "1.0.0", installedAt: 123 },
-        other: { version: "2.0.0", installedAt: 456 },
-      },
+        const rmCallMock = vi.mocked(rm);
+        const writeLockfileCallMock = vi.mocked(writeLockfile);
+        expect(rmCallMock.mock.invocationCallOrder[0]).toBeLessThan(
+            writeLockfileCallMock.mock.invocationCallOrder[0]
+        );
     });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(rm).mockResolvedValue();
 
-    await cmdUninstall(makeOpts(), "demo", { yes: true }, false);
+    it('removes skill and updates lockfile keeping other skills', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                demo: { version: '1.0.0', installedAt: 123 },
+                other: { version: '2.0.0', installedAt: 456 },
+            },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(rm).mockResolvedValue();
 
-    expect(rm).toHaveBeenCalledWith("/work/skills/demo", { recursive: true, force: true });
-    expect(writeLockfile).toHaveBeenCalledWith("/work", {
-      version: 1,
-      skills: { other: { version: "2.0.0", installedAt: 456 } },
+        await cmdUninstall(makeOpts(), 'demo', { yes: true }, false);
+
+        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
+        expect(writeLockfile).toHaveBeenCalledWith('/work', {
+            version: 1,
+            skills: { other: { version: '2.0.0', installedAt: 456 } },
+        });
     });
-  });
 
-  it("trims slug whitespace", async () => {
-    vi.mocked(readLockfile).mockResolvedValue({
-      version: 1,
-      skills: { demo: { version: "1.0.0", installedAt: 123 } },
+    it('trims slug whitespace', async () => {
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { demo: { version: '1.0.0', installedAt: 123 } },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(rm).mockResolvedValue();
+
+        await cmdUninstall(makeOpts(), '  demo  ', { yes: true }, false);
+
+        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
     });
-    vi.mocked(writeLockfile).mockResolvedValue();
-    vi.mocked(rm).mockResolvedValue();
-
-    await cmdUninstall(makeOpts(), "  demo  ", { yes: true }, false);
-
-    expect(rm).toHaveBeenCalledWith("/work/skills/demo", { recursive: true, force: true });
-  });
 });

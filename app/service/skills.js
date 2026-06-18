@@ -456,7 +456,10 @@ class SkillsService extends Service {
                 childFiles.forEach((row) => {
                     const safeRelativePath = this.normalizeRelativePath(row.file_path);
                     const zipPath = path.posix.join(rootFolder, childFolder, safeRelativePath);
-                    const buffer = this.decodeStoredFileContent(row.content, Boolean(row.is_binary));
+                    const buffer = this.decodeStoredFileContent(
+                        row.content,
+                        Boolean(row.is_binary)
+                    );
                     zip.addFile(zipPath, buffer);
                 });
             }
@@ -633,9 +636,12 @@ class SkillsService extends Service {
     }
 
     buildSkillSlug(sourceMeta, relativeSkillPath, skillName, usedSlugs = new Set()) {
-        const isUpload = sourceMeta && (sourceMeta.repoHost === 'upload' || sourceMeta.sourceType === 'upload');
+        const isUpload =
+            sourceMeta && (sourceMeta.repoHost === 'upload' || sourceMeta.sourceType === 'upload');
         const relativeKey = String(
-            (relativeSkillPath && relativeSkillPath !== '.') ? relativeSkillPath : (skillName || 'skill')
+            relativeSkillPath && relativeSkillPath !== '.'
+                ? relativeSkillPath
+                : skillName || 'skill'
         ).replace(/\\/g, '/');
 
         let base;
@@ -1140,7 +1146,13 @@ class SkillsService extends Service {
         cloneArgs.push(parsedSource.cloneUrl, targetDir);
 
         try {
-            await this.commandRunner.runCommand('git', cloneArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
+            await this.commandRunner.runCommand(
+                'git',
+                cloneArgs,
+                GIT_COMMAND_TIMEOUT_MS,
+                process.cwd(),
+                env
+            );
         } catch (error) {
             if (!parsedSource.ref) {
                 throw error;
@@ -1155,7 +1167,13 @@ class SkillsService extends Service {
                 parsedSource.cloneUrl,
                 targetDir,
             ];
-            await this.commandRunner.runCommand('git', fallbackArgs, GIT_COMMAND_TIMEOUT_MS, process.cwd(), env);
+            await this.commandRunner.runCommand(
+                'git',
+                fallbackArgs,
+                GIT_COMMAND_TIMEOUT_MS,
+                process.cwd(),
+                env
+            );
         }
     }
 
@@ -1680,12 +1698,7 @@ class SkillsService extends Service {
 
             const tempUsedSlugs = new Set();
             const excludeSlugs = skillRecords.map((record) =>
-                this.buildSkillSlug(
-                    parsedSource,
-                    record.sourcePath,
-                    record.name,
-                    tempUsedSlugs
-                )
+                this.buildSkillSlug(parsedSource, record.sourcePath, record.name, tempUsedSlugs)
             );
 
             await this.assertSkillNamesUnique(
@@ -1993,7 +2006,12 @@ class SkillsService extends Service {
         };
     }
 
-    async persistSkillsForSource(sourceId, sourceMeta, skillRecords = [], preferredPackageName = '') {
+    async persistSkillsForSource(
+        sourceId,
+        sourceMeta,
+        skillRecords = [],
+        preferredPackageName = ''
+    ) {
         const { SkillsItem, SkillsFile } = this.app.model;
         const { Op } = this.app.Sequelize;
         const repoStars = await this.fetchStarsBySourceRepo(sourceMeta.sourceRepo);
@@ -2034,27 +2052,30 @@ class SkillsService extends Service {
                     const parts = (sourceMeta.repoPath || '').split('/');
                     parentName = parts[parts.length - 1] || 'git-skills-package';
                 }
-                parentSlug = this.buildSkillSlug(
-                    sourceMeta,
-                    '.',
-                    parentName,
-                    usedSlugs
-                );
+                parentSlug = this.buildSkillSlug(sourceMeta, '.', parentName, usedSlugs);
 
                 const parentPayload = {
                     source_id: sourceId,
                     slug: parentSlug,
                     name: parentName,
-                    description: `技能包，包含以下子技能：\n${skillRecords.map((r) => `- **${r.name}**: ${r.description || ''}`).join('\n')}`,
+                    description: `技能包，包含以下子技能：\n${skillRecords
+                        .map((r) => `- **${r.name}**: ${r.description || ''}`)
+                        .join('\n')}`,
                     category: skillRecords[0].category || '通用',
                     version: '1.0.0',
-                    tags: JSON.stringify(Array.from(new Set(skillRecords.flatMap((r) => r.tags || [])))),
-                    allowed_tools: JSON.stringify(Array.from(new Set(skillRecords.flatMap((r) => r.allowedTools || [])))),
+                    tags: JSON.stringify(
+                        Array.from(new Set(skillRecords.flatMap((r) => r.tags || [])))
+                    ),
+                    allowed_tools: JSON.stringify(
+                        Array.from(new Set(skillRecords.flatMap((r) => r.allowedTools || [])))
+                    ),
                     stars: resolvedStars,
                     updated_at_remote: new Date(),
                     source_repo: sourceMeta.sourceRepo || '',
                     source_path: '.',
-                    skill_md: `# ${parentName}\n\n这是一个技能包，包含以下子技能：\n${skillRecords.map((r) => `- **${r.name}**: ${r.description || ''}`).join('\n')}`,
+                    skill_md: `# ${parentName}\n\n这是一个技能包，包含以下子技能：\n${skillRecords
+                        .map((r) => `- **${r.name}**: ${r.description || ''}`)
+                        .join('\n')}`,
                     install_command: '',
                     file_count: skillRecords.reduce((acc, r) => acc + (r.files || []).length, 0),
                     is_delete: 0,
@@ -2116,7 +2137,11 @@ class SkillsService extends Service {
                     transaction,
                 });
 
-                if (globalExisting && globalExisting.is_delete === 0 && globalExisting.name !== record.name) {
+                if (
+                    globalExisting &&
+                    globalExisting.is_delete === 0 &&
+                    globalExisting.name !== record.name
+                ) {
                     this.ctx.throw(400, 'slug 已存在');
                 }
 
@@ -2316,7 +2341,6 @@ class SkillsService extends Service {
         const basicToken = Buffer.from(`oauth2:${token}`).toString('base64');
         return ['-c', `http.https://${host}/.extraHeader=Authorization: Basic ${basicToken}`];
     }
-
 }
 
 const installKeyModule = require('../utils/skill-install-key');

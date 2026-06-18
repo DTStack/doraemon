@@ -54,7 +54,10 @@ describe('built CLI artifact', () => {
             [
                 '--input-type=module',
                 '--eval',
-                `import('${join(isolatedPackage, 'dist/schema/skillFingerprintContract.js').replaceAll('\\', '\\\\')}')`,
+                `import('${join(
+                    isolatedPackage,
+                    'dist/schema/skillFingerprintContract.js'
+                ).replaceAll('\\', '\\\\')}')`,
             ],
             { encoding: 'utf8' }
         );

@@ -1,282 +1,286 @@
 /* @vitest-environment node */
-import { mkdir, mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { strToU8, zipSync } from "fflate";
-import { describe, expect, it } from "vitest";
-import type { SkillOrigin } from "./skills";
+import { mkdir, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { strToU8, zipSync } from 'fflate';
+import { describe, expect, it } from 'vitest';
+import type { SkillOrigin } from './skills';
 import {
-  buildSkillFingerprint,
-  extractZipToDir,
-  hashSkillFiles,
-  hashSkillZip,
-  listManualSkills,
-  listTextFiles,
-  readLockfile,
-  readSkillOrigin,
-  sha256Hex,
-  writeLockfile,
-  writeSkillOrigin,
-} from "./skills";
+    buildSkillFingerprint,
+    extractZipToDir,
+    hashSkillFiles,
+    hashSkillZip,
+    listManualSkills,
+    listTextFiles,
+    readLockfile,
+    readSkillOrigin,
+    sha256Hex,
+    writeLockfile,
+    writeSkillOrigin,
+} from './skills';
 
-describe("skills", () => {
-  it("extracts zip into directory and skips traversal", async () => {
-    const parent = await mkdtemp(join(tmpdir(), "dt-skill-zip-"));
-    const dir = join(parent, "dir");
-    await mkdir(dir);
-    const evilName = `evil-${Date.now()}-${Math.random().toString(16).slice(2)}.txt`;
-    const zip = zipSync({
-      "SKILL.md": strToU8("hello"),
-      [`../${evilName}`]: strToU8("nope"),
-    });
-    await extractZipToDir(new Uint8Array(zip), dir);
+describe('skills', () => {
+    it('extracts zip into directory and skips traversal', async () => {
+        const parent = await mkdtemp(join(tmpdir(), 'dt-skill-zip-'));
+        const dir = join(parent, 'dir');
+        await mkdir(dir);
+        const evilName = `evil-${Date.now()}-${Math.random().toString(16).slice(2)}.txt`;
+        const zip = zipSync({
+            'SKILL.md': strToU8('hello'),
+            [`../${evilName}`]: strToU8('nope'),
+        });
+        await extractZipToDir(new Uint8Array(zip), dir);
 
-    expect((await readFile(join(dir, "SKILL.md"), "utf8")).trim()).toBe("hello");
-    await expect(stat(join(parent, evilName))).rejects.toBeTruthy();
-  });
-
-  it("writes and reads lockfile", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-work-"));
-    await writeLockfile(workdir, {
-      version: 1,
-      skills: {
-        demo: {
-          version: "1.0.0",
-          installedAt: 1,
-          pinned: true,
-          pinReason: "awaiting moderation review",
-        },
-      },
-    });
-    const read = await readLockfile(workdir);
-    expect(read.skills.demo?.version).toBe("1.0.0");
-    expect(read.skills.demo?.pinned).toBe(true);
-    expect(read.skills.demo?.pinReason).toBe("awaiting moderation review");
-  });
-
-  it("returns empty lockfile on invalid json", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-work-bad-"));
-    await mkdir(join(workdir, ".dt-skill"), { recursive: true });
-    await writeFile(join(workdir, ".dt-skill", "lock.json"), "{", "utf8");
-    const read = await readLockfile(workdir);
-    expect(read).toEqual({ version: 1, skills: {} });
-  });
-
-  it("returns empty lockfile on schema mismatch", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-work-schema-"));
-    await mkdir(join(workdir, ".dt-skill"), { recursive: true });
-    await writeFile(
-      join(workdir, ".dt-skill", "lock.json"),
-      JSON.stringify({ version: 1, skills: "nope" }),
-      "utf8",
-    );
-    const read = await readLockfile(workdir);
-    expect(read).toEqual({ version: 1, skills: {} });
-  });
-
-  it("skips dotfiles and node_modules when listing text files", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-files-"));
-    await writeFile(join(workdir, "SKILL.md"), "hi", "utf8");
-    await writeFile(join(workdir, ".secret.txt"), "no", "utf8");
-    await mkdir(join(workdir, ".dt-skill"), { recursive: true });
-    await writeFile(join(workdir, ".dt-skill", "origin.json"), "{}", "utf8");
-    await mkdir(join(workdir, "node_modules"), { recursive: true });
-    await writeFile(join(workdir, "node_modules", "a.txt"), "no", "utf8");
-    const files = await listTextFiles(workdir);
-    expect(files.map((file) => file.relPath)).toEqual(["SKILL.md"]);
-  });
-
-  it("respects .gitignore and .dt-skillignore", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-ignore-"));
-    await writeFile(join(workdir, ".gitignore"), "ignored.md\n", "utf8");
-    await writeFile(join(workdir, ".dt-skillignore"), "private.md\n", "utf8");
-    await writeFile(join(workdir, "SKILL.md"), "hi", "utf8");
-    await writeFile(join(workdir, "ignored.md"), "no", "utf8");
-    await writeFile(join(workdir, "private.md"), "no", "utf8");
-    await writeFile(join(workdir, "public.json"), "{}", "utf8");
-
-    const files = await listTextFiles(workdir);
-    const paths = files.map((file) => file.relPath).sort();
-    expect(paths).toEqual(["SKILL.md", "public.json"]);
-    expect(files.find((file) => file.relPath === "SKILL.md")?.contentType).toMatch(/^text\//);
-    expect(files.find((file) => file.relPath === "public.json")?.contentType).toBe(
-      "application/json",
-    );
-  });
-
-  it("falls back to text/plain for unknown text extensions", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-env-"));
-    await writeFile(join(workdir, "SKILL.md"), "hi", "utf8");
-    await writeFile(join(workdir, "config.env"), "TOKEN=demo", "utf8");
-    const files = await listTextFiles(workdir);
-    expect(files.find((file) => file.relPath === "config.env")?.contentType).toBe("text/plain");
-  });
-
-  it("includes tsv and extensionless text files while skipping extensionless binaries", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-extensionless-"));
-    await writeFile(join(workdir, "SKILL.md"), "hi", "utf8");
-    await writeFile(join(workdir, "config.tsv"), "name\tvalue\napi\tok\n", "utf8");
-    await writeFile(join(workdir, ".npmrc"), "//registry.npmjs.org/:_authToken=secret\n", "utf8");
-    await mkdir(join(workdir, "bin"), { recursive: true });
-    await writeFile(
-      join(workdir, "bin", "openclaw-kraken"),
-      "#!/usr/bin/env sh\necho ok\n",
-      "utf8",
-    );
-    const largeBinary = new Uint8Array(1024 * 1024);
-    largeBinary[0] = 0;
-    largeBinary[largeBinary.length - 1] = 255;
-    await writeFile(join(workdir, "bin", "binary"), largeBinary);
-
-    const files = await listTextFiles(workdir);
-    const paths = files.map((file) => file.relPath).sort();
-    expect(paths).toEqual(["SKILL.md", "bin/openclaw-kraken", "config.tsv"]);
-    expect(files.find((file) => file.relPath === "bin/openclaw-kraken")?.contentType).toBe(
-      "text/plain",
-    );
-  });
-
-  it("hashes skill files deterministically", async () => {
-    const { fingerprint } = hashSkillFiles([
-      { relPath: "b.txt", bytes: strToU8("b") },
-      { relPath: "a.txt", bytes: strToU8("a") },
-    ]);
-    const expected = buildSkillFingerprint([
-      { path: "a.txt", sha256: sha256Hex(strToU8("a")) },
-      { path: "b.txt", sha256: sha256Hex(strToU8("b")) },
-    ]);
-    expect(fingerprint).toBe(expected);
-  });
-
-  it("hashes text files inside a downloaded zip deterministically", () => {
-    const zip = zipSync({
-      "SKILL.md": strToU8("hello"),
-      "notes.md": strToU8("world"),
-      ".npmrc": strToU8("//registry.npmjs.org/:_authToken=secret\n"),
-      "config/endpoints.tsv": strToU8("name\turl\napi\thttps://example.com\n"),
-      "bin/tool": strToU8("#!/usr/bin/env sh\necho ok\n"),
-      "image.png": strToU8("nope"),
-    });
-    const { fingerprint } = hashSkillZip(new Uint8Array(zip));
-    const expected = buildSkillFingerprint([
-      { path: "SKILL.md", sha256: sha256Hex(strToU8("hello")) },
-      { path: "bin/tool", sha256: sha256Hex(strToU8("#!/usr/bin/env sh\necho ok\n")) },
-      {
-        path: "config/endpoints.tsv",
-        sha256: sha256Hex(strToU8("name\turl\napi\thttps://example.com\n")),
-      },
-      { path: "notes.md", sha256: sha256Hex(strToU8("world")) },
-    ]);
-    expect(fingerprint).toBe(expected);
-  });
-
-  it("ignores unsafe or non-text entries when hashing zips", () => {
-    const zip = zipSync({
-      "SKILL.md": strToU8("hello"),
-      "folder/": strToU8(""),
-      "../evil.txt": strToU8("nope"),
-      "bad\\path.txt": strToU8("nope"),
-      "image.png": strToU8("nope"),
-    });
-    const { files } = hashSkillZip(new Uint8Array(zip));
-    expect(files).toEqual([{ path: "SKILL.md", sha256: sha256Hex(strToU8("hello")), size: 5 }]);
-  });
-
-  it("builds fingerprints from valid entries only", () => {
-    const fingerprint = buildSkillFingerprint([
-      { path: "", sha256: "" },
-      { path: "valid.txt", sha256: sha256Hex(strToU8("ok")) },
-    ]);
-    const expected = buildSkillFingerprint([
-      { path: "valid.txt", sha256: sha256Hex(strToU8("ok")) },
-    ]);
-    expect(fingerprint).toBe(expected);
-  });
-
-  it("returns null for invalid skill origin metadata", async () => {
-    const workdir = await mkdtemp(join(tmpdir(), "dt-skill-origin-"));
-    expect(await readSkillOrigin(workdir)).toBeNull();
-
-    await mkdir(join(workdir, ".dt-skill"), { recursive: true });
-    await writeFile(
-      join(workdir, ".dt-skill", "origin.json"),
-      JSON.stringify({ version: 2 }),
-      "utf8",
-    );
-    expect(await readSkillOrigin(workdir)).toBeNull();
-
-    await writeFile(
-      join(workdir, ".dt-skill", "origin.json"),
-      JSON.stringify({ version: 1, registry: "demo", slug: "x", installedAt: 1 }),
-      "utf8",
-    );
-    expect(await readSkillOrigin(workdir)).toBeNull();
-
-    await writeFile(
-      join(workdir, ".dt-skill", "origin.json"),
-      JSON.stringify({
-        version: 1,
-        registry: "demo",
-        slug: "x",
-        installedVersion: "0.1.0",
-        installedAt: "nope",
-      }),
-      "utf8",
-    );
-    expect(await readSkillOrigin(workdir)).toBeNull();
-
-    const origin: SkillOrigin = {
-      version: 1,
-      registry: "https://example.com",
-      slug: "demo",
-      installedVersion: "1.2.3",
-      installedAt: 123,
-    };
-    await writeSkillOrigin(workdir, origin);
-    expect(await readSkillOrigin(workdir)).toEqual(origin);
-  });
-
-  describe("listManualSkills", () => {
-    it("lists manual skills not present in the lockfile", async () => {
-      const dir = await mkdtemp(join(tmpdir(), "dt-skill-manual-"));
-      await mkdir(join(dir, "manual-skill"));
-      await writeFile(join(dir, "manual-skill", "SKILL.md"), "# Manual", "utf8");
-
-      await mkdir(join(dir, "tracked-skill"));
-      await writeFile(join(dir, "tracked-skill", "SKILL.md"), "# Tracked", "utf8");
-
-      const result = await listManualSkills(dir, new Set(["tracked-skill"]));
-      expect(result).toEqual(["manual-skill"]);
+        expect((await readFile(join(dir, 'SKILL.md'), 'utf8')).trim()).toBe('hello');
+        await expect(stat(join(parent, evilName))).rejects.toBeTruthy();
     });
 
-    it("recognizes skills from origin metadata", async () => {
-      const dir = await mkdtemp(join(tmpdir(), "dt-skill-manual-origin-"));
-      await mkdir(join(dir, "with-origin", ".dt-skill"), { recursive: true });
-      await writeFile(join(dir, "with-origin", ".dt-skill", "origin.json"), "{}", "utf8");
-
-      const result = await listManualSkills(dir, new Set());
-      expect(result).toEqual(["with-origin"]);
+    it('writes and reads lockfile', async () => {
+        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-work-'));
+        await writeLockfile(workdir, {
+            version: 1,
+            skills: {
+                demo: {
+                    version: '1.0.0',
+                    installedAt: 1,
+                    pinned: true,
+                    pinReason: 'awaiting moderation review',
+                },
+            },
+        });
+        const read = await readLockfile(workdir);
+        expect(read.skills.demo?.version).toBe('1.0.0');
+        expect(read.skills.demo?.pinned).toBe(true);
+        expect(read.skills.demo?.pinReason).toBe('awaiting moderation review');
     });
 
-    it("skips hidden and non-skill directories and returns sorted results", async () => {
-      const dir = await mkdtemp(join(tmpdir(), "dt-skill-manual-sort-"));
-      await mkdir(join(dir, "z-skill"));
-      await writeFile(join(dir, "z-skill", "SKILL.md"), "# Z", "utf8");
-      await mkdir(join(dir, "a-skill"));
-      await writeFile(join(dir, "a-skill", "SKILL.md"), "# A", "utf8");
-      await mkdir(join(dir, ".hidden"));
-      await writeFile(join(dir, ".hidden", "SKILL.md"), "# Hidden", "utf8");
-      await mkdir(join(dir, "notes"));
-      await writeFile(join(dir, "notes", "README.md"), "not a skill", "utf8");
-
-      const result = await listManualSkills(dir, new Set());
-      expect(result).toEqual(["a-skill", "z-skill"]);
+    it('returns empty lockfile on invalid json', async () => {
+        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-work-bad-'));
+        await mkdir(join(workdir, '.dt-skill'), { recursive: true });
+        await writeFile(join(workdir, '.dt-skill', 'lock.json'), '{', 'utf8');
+        const read = await readLockfile(workdir);
+        expect(read).toEqual({ version: 1, skills: {} });
     });
 
-    it("returns an empty list when the skills directory does not exist", async () => {
-      const dir = await mkdtemp(join(tmpdir(), "dt-skill-manual-missing-"));
-      const result = await listManualSkills(join(dir, "missing"), new Set());
-      expect(result).toEqual([]);
+    it('returns empty lockfile on schema mismatch', async () => {
+        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-work-schema-'));
+        await mkdir(join(workdir, '.dt-skill'), { recursive: true });
+        await writeFile(
+            join(workdir, '.dt-skill', 'lock.json'),
+            JSON.stringify({ version: 1, skills: 'nope' }),
+            'utf8'
+        );
+        const read = await readLockfile(workdir);
+        expect(read).toEqual({ version: 1, skills: {} });
     });
-  });
+
+    it('skips dotfiles and node_modules when listing text files', async () => {
+        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-files-'));
+        await writeFile(join(workdir, 'SKILL.md'), 'hi', 'utf8');
+        await writeFile(join(workdir, '.secret.txt'), 'no', 'utf8');
+        await mkdir(join(workdir, '.dt-skill'), { recursive: true });
+        await writeFile(join(workdir, '.dt-skill', 'origin.json'), '{}', 'utf8');
+        await mkdir(join(workdir, 'node_modules'), { recursive: true });
+        await writeFile(join(workdir, 'node_modules', 'a.txt'), 'no', 'utf8');
+        const files = await listTextFiles(workdir);
+        expect(files.map((file) => file.relPath)).toEqual(['SKILL.md']);
+    });
+
+    it('respects .gitignore and .dt-skillignore', async () => {
+        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-ignore-'));
+        await writeFile(join(workdir, '.gitignore'), 'ignored.md\n', 'utf8');
+        await writeFile(join(workdir, '.dt-skillignore'), 'private.md\n', 'utf8');
+        await writeFile(join(workdir, 'SKILL.md'), 'hi', 'utf8');
+        await writeFile(join(workdir, 'ignored.md'), 'no', 'utf8');
+        await writeFile(join(workdir, 'private.md'), 'no', 'utf8');
+        await writeFile(join(workdir, 'public.json'), '{}', 'utf8');
+
+        const files = await listTextFiles(workdir);
+        const paths = files.map((file) => file.relPath).sort();
+        expect(paths).toEqual(['SKILL.md', 'public.json']);
+        expect(files.find((file) => file.relPath === 'SKILL.md')?.contentType).toMatch(/^text\//);
+        expect(files.find((file) => file.relPath === 'public.json')?.contentType).toBe(
+            'application/json'
+        );
+    });
+
+    it('falls back to text/plain for unknown text extensions', async () => {
+        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-env-'));
+        await writeFile(join(workdir, 'SKILL.md'), 'hi', 'utf8');
+        await writeFile(join(workdir, 'config.env'), 'TOKEN=demo', 'utf8');
+        const files = await listTextFiles(workdir);
+        expect(files.find((file) => file.relPath === 'config.env')?.contentType).toBe('text/plain');
+    });
+
+    it('includes tsv and extensionless text files while skipping extensionless binaries', async () => {
+        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-extensionless-'));
+        await writeFile(join(workdir, 'SKILL.md'), 'hi', 'utf8');
+        await writeFile(join(workdir, 'config.tsv'), 'name\tvalue\napi\tok\n', 'utf8');
+        await writeFile(
+            join(workdir, '.npmrc'),
+            '//registry.npmjs.org/:_authToken=secret\n',
+            'utf8'
+        );
+        await mkdir(join(workdir, 'bin'), { recursive: true });
+        await writeFile(
+            join(workdir, 'bin', 'openclaw-kraken'),
+            '#!/usr/bin/env sh\necho ok\n',
+            'utf8'
+        );
+        const largeBinary = new Uint8Array(1024 * 1024);
+        largeBinary[0] = 0;
+        largeBinary[largeBinary.length - 1] = 255;
+        await writeFile(join(workdir, 'bin', 'binary'), largeBinary);
+
+        const files = await listTextFiles(workdir);
+        const paths = files.map((file) => file.relPath).sort();
+        expect(paths).toEqual(['SKILL.md', 'bin/openclaw-kraken', 'config.tsv']);
+        expect(files.find((file) => file.relPath === 'bin/openclaw-kraken')?.contentType).toBe(
+            'text/plain'
+        );
+    });
+
+    it('hashes skill files deterministically', async () => {
+        const { fingerprint } = hashSkillFiles([
+            { relPath: 'b.txt', bytes: strToU8('b') },
+            { relPath: 'a.txt', bytes: strToU8('a') },
+        ]);
+        const expected = buildSkillFingerprint([
+            { path: 'a.txt', sha256: sha256Hex(strToU8('a')) },
+            { path: 'b.txt', sha256: sha256Hex(strToU8('b')) },
+        ]);
+        expect(fingerprint).toBe(expected);
+    });
+
+    it('hashes text files inside a downloaded zip deterministically', () => {
+        const zip = zipSync({
+            'SKILL.md': strToU8('hello'),
+            'notes.md': strToU8('world'),
+            '.npmrc': strToU8('//registry.npmjs.org/:_authToken=secret\n'),
+            'config/endpoints.tsv': strToU8('name\turl\napi\thttps://example.com\n'),
+            'bin/tool': strToU8('#!/usr/bin/env sh\necho ok\n'),
+            'image.png': strToU8('nope'),
+        });
+        const { fingerprint } = hashSkillZip(new Uint8Array(zip));
+        const expected = buildSkillFingerprint([
+            { path: 'SKILL.md', sha256: sha256Hex(strToU8('hello')) },
+            { path: 'bin/tool', sha256: sha256Hex(strToU8('#!/usr/bin/env sh\necho ok\n')) },
+            {
+                path: 'config/endpoints.tsv',
+                sha256: sha256Hex(strToU8('name\turl\napi\thttps://example.com\n')),
+            },
+            { path: 'notes.md', sha256: sha256Hex(strToU8('world')) },
+        ]);
+        expect(fingerprint).toBe(expected);
+    });
+
+    it('ignores unsafe or non-text entries when hashing zips', () => {
+        const zip = zipSync({
+            'SKILL.md': strToU8('hello'),
+            'folder/': strToU8(''),
+            '../evil.txt': strToU8('nope'),
+            'bad\\path.txt': strToU8('nope'),
+            'image.png': strToU8('nope'),
+        });
+        const { files } = hashSkillZip(new Uint8Array(zip));
+        expect(files).toEqual([{ path: 'SKILL.md', sha256: sha256Hex(strToU8('hello')), size: 5 }]);
+    });
+
+    it('builds fingerprints from valid entries only', () => {
+        const fingerprint = buildSkillFingerprint([
+            { path: '', sha256: '' },
+            { path: 'valid.txt', sha256: sha256Hex(strToU8('ok')) },
+        ]);
+        const expected = buildSkillFingerprint([
+            { path: 'valid.txt', sha256: sha256Hex(strToU8('ok')) },
+        ]);
+        expect(fingerprint).toBe(expected);
+    });
+
+    it('returns null for invalid skill origin metadata', async () => {
+        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-origin-'));
+        expect(await readSkillOrigin(workdir)).toBeNull();
+
+        await mkdir(join(workdir, '.dt-skill'), { recursive: true });
+        await writeFile(
+            join(workdir, '.dt-skill', 'origin.json'),
+            JSON.stringify({ version: 2 }),
+            'utf8'
+        );
+        expect(await readSkillOrigin(workdir)).toBeNull();
+
+        await writeFile(
+            join(workdir, '.dt-skill', 'origin.json'),
+            JSON.stringify({ version: 1, registry: 'demo', slug: 'x', installedAt: 1 }),
+            'utf8'
+        );
+        expect(await readSkillOrigin(workdir)).toBeNull();
+
+        await writeFile(
+            join(workdir, '.dt-skill', 'origin.json'),
+            JSON.stringify({
+                version: 1,
+                registry: 'demo',
+                slug: 'x',
+                installedVersion: '0.1.0',
+                installedAt: 'nope',
+            }),
+            'utf8'
+        );
+        expect(await readSkillOrigin(workdir)).toBeNull();
+
+        const origin: SkillOrigin = {
+            version: 1,
+            registry: 'https://example.com',
+            slug: 'demo',
+            installedVersion: '1.2.3',
+            installedAt: 123,
+        };
+        await writeSkillOrigin(workdir, origin);
+        expect(await readSkillOrigin(workdir)).toEqual(origin);
+    });
+
+    describe('listManualSkills', () => {
+        it('lists manual skills not present in the lockfile', async () => {
+            const dir = await mkdtemp(join(tmpdir(), 'dt-skill-manual-'));
+            await mkdir(join(dir, 'manual-skill'));
+            await writeFile(join(dir, 'manual-skill', 'SKILL.md'), '# Manual', 'utf8');
+
+            await mkdir(join(dir, 'tracked-skill'));
+            await writeFile(join(dir, 'tracked-skill', 'SKILL.md'), '# Tracked', 'utf8');
+
+            const result = await listManualSkills(dir, new Set(['tracked-skill']));
+            expect(result).toEqual(['manual-skill']);
+        });
+
+        it('recognizes skills from origin metadata', async () => {
+            const dir = await mkdtemp(join(tmpdir(), 'dt-skill-manual-origin-'));
+            await mkdir(join(dir, 'with-origin', '.dt-skill'), { recursive: true });
+            await writeFile(join(dir, 'with-origin', '.dt-skill', 'origin.json'), '{}', 'utf8');
+
+            const result = await listManualSkills(dir, new Set());
+            expect(result).toEqual(['with-origin']);
+        });
+
+        it('skips hidden and non-skill directories and returns sorted results', async () => {
+            const dir = await mkdtemp(join(tmpdir(), 'dt-skill-manual-sort-'));
+            await mkdir(join(dir, 'z-skill'));
+            await writeFile(join(dir, 'z-skill', 'SKILL.md'), '# Z', 'utf8');
+            await mkdir(join(dir, 'a-skill'));
+            await writeFile(join(dir, 'a-skill', 'SKILL.md'), '# A', 'utf8');
+            await mkdir(join(dir, '.hidden'));
+            await writeFile(join(dir, '.hidden', 'SKILL.md'), '# Hidden', 'utf8');
+            await mkdir(join(dir, 'notes'));
+            await writeFile(join(dir, 'notes', 'README.md'), 'not a skill', 'utf8');
+
+            const result = await listManualSkills(dir, new Set());
+            expect(result).toEqual(['a-skill', 'z-skill']);
+        });
+
+        it('returns an empty list when the skills directory does not exist', async () => {
+            const dir = await mkdtemp(join(tmpdir(), 'dt-skill-manual-missing-'));
+            const result = await listManualSkills(join(dir, 'missing'), new Set());
+            expect(result).toEqual([]);
+        });
+    });
 });

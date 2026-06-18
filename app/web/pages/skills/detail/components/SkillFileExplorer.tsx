@@ -91,7 +91,9 @@ export const SkillFileExplorer: React.FC<SkillFileExplorerProps> = ({
                             >
                                 <DetailIcon
                                     src={node.isLeaf ? fileDocIcon : folderOpenBlueIcon}
-                                    className={`is-tree-node ${node.isLeaf ? 'is-leaf' : 'is-folder'}`}
+                                    className={`is-tree-node ${
+                                        node.isLeaf ? 'is-leaf' : 'is-folder'
+                                    }`}
                                 />
                                 <span>{String(node.title)}</span>
                             </span>
@@ -110,9 +112,7 @@ export const SkillFileExplorer: React.FC<SkillFileExplorerProps> = ({
                         onFocusInstallPanel();
                         copyToClipboard(
                             isInstallable ? skillInstallCommand : downloadCommand,
-                            isInstallable
-                                ? '技能安装命令已复制到剪贴板'
-                                : '下载命令已复制到剪贴板'
+                            isInstallable ? '技能安装命令已复制到剪贴板' : '下载命令已复制到剪贴板'
                         );
                     }}
                 >

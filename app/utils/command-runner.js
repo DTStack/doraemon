@@ -7,7 +7,13 @@ class CommandRunner {
         this.defaultTimeout = defaultTimeout;
     }
 
-    runCommand(command, args = [], timeout = this.defaultTimeout, cwd = process.cwd(), env = process.env) {
+    runCommand(
+        command,
+        args = [],
+        timeout = this.defaultTimeout,
+        cwd = process.cwd(),
+        env = process.env
+    ) {
         return new Promise((resolve, reject) => {
             const child = spawn(command, args, {
                 cwd,

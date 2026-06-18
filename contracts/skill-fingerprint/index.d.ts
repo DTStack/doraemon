@@ -21,9 +21,7 @@ export function shouldIncludeFingerprintFile(options: {
 
 export function sha256Hex(bytes: Uint8Array | Buffer): string;
 
-export function buildSkillFingerprint(
-    files: Array<{ path: string; sha256: string }>
-): string;
+export function buildSkillFingerprint(files: Array<{ path: string; sha256: string }>): string;
 
 export function buildSkillFingerprintFromStoredFiles(
     files: Array<{

@@ -5,14 +5,23 @@ const GitHubStarsClient = require('../app/utils/github-stars');
 
 test('extractGitHubRepoFullName parses SSH git@github.com URLs', () => {
     const client = new GitHubStarsClient();
-    assert.equal(client.extractGitHubRepoFullName('git@github.com:anthropics/claude-code.git'), 'anthropics/claude-code');
+    assert.equal(
+        client.extractGitHubRepoFullName('git@github.com:anthropics/claude-code.git'),
+        'anthropics/claude-code'
+    );
     assert.equal(client.extractGitHubRepoFullName('git@github.com:owner/repo'), 'owner/repo');
 });
 
 test('extractGitHubRepoFullName parses HTTPS github.com URLs', () => {
     const client = new GitHubStarsClient();
-    assert.equal(client.extractGitHubRepoFullName('https://github.com/facebook/react'), 'facebook/react');
-    assert.equal(client.extractGitHubRepoFullName('https://github.com/owner/repo.git'), 'owner/repo');
+    assert.equal(
+        client.extractGitHubRepoFullName('https://github.com/facebook/react'),
+        'facebook/react'
+    );
+    assert.equal(
+        client.extractGitHubRepoFullName('https://github.com/owner/repo.git'),
+        'owner/repo'
+    );
     assert.equal(client.extractGitHubRepoFullName('http://github.com/owner/repo'), 'owner/repo');
 });
 

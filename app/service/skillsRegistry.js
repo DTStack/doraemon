@@ -170,12 +170,14 @@ class SkillsRegistryService extends Service {
                 isPackage: skill.is_package === 1,
                 parentSlug: skill.parent_slug || null,
             },
-            latestVersion: version ? {
-                version,
-                createdAt: updatedAt,
-                changelog: '',
-                license: null,
-            } : null,
+            latestVersion: version
+                ? {
+                      version,
+                      createdAt: updatedAt,
+                      changelog: '',
+                      license: null,
+                  }
+                : null,
             owner: null,
             moderation: null,
         };

@@ -88,8 +88,11 @@ test('getSkillList aggregates package stars from children (T038)', async () => {
     assert.equal(result.total, 1, 'List should only show parent package');
     assert.equal(result.list.length, 1);
     assert.equal(result.list[0].slug, 'my-pack');
-    assert.equal(result.list[0].stars, 35,
-        `Package stars should be sum of children (10 + 25 = 35), got: ${result.list[0].stars}`);
+    assert.equal(
+        result.list[0].stars,
+        35,
+        `Package stars should be sum of children (10 + 25 = 35), got: ${result.list[0].stars}`
+    );
 });
 
 test('getSkillList children keep their original stars (T039)', async () => {
@@ -151,8 +154,7 @@ test('getSkillList children keep their original stars (T039)', async () => {
     // Child should be filtered out from list
     assert.equal(result.total, 1);
     assert.equal(result.list[0].slug, 'my-pack');
-    assert.equal(result.list[0].stars, 42,
-        'Package stars should equal child stars (42)');
+    assert.equal(result.list[0].stars, 42, 'Package stars should equal child stars (42)');
 });
 
 test('getSkillDetail aggregates package stars from children (T039 variant)', async () => {
@@ -250,8 +252,11 @@ test('getSkillDetail aggregates package stars from children (T039 variant)', asy
 
     const detail = await service.getSkillDetail('test-pack');
 
-    assert.equal(detail.stars, 20,
-        `Package detail stars should be sum of children (7 + 13 = 20), got: ${detail.stars}`);
+    assert.equal(
+        detail.stars,
+        20,
+        `Package detail stars should be sum of children (7 + 13 = 20), got: ${detail.stars}`
+    );
     assert.equal(detail.children.length, 2);
     assert.equal(detail.children[0].stars, 7, 'Child should keep original stars');
     assert.equal(detail.children[1].stars, 13, 'Child should keep original stars');

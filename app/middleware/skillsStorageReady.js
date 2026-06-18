@@ -3,7 +3,7 @@ module.exports = () => {
 
     return async function skillsStorageReady(ctx, next) {
         if (!storageReadyPromise) {
-            storageReadyPromise = ctx.service.skills.ensureStorageReady().catch(error => {
+            storageReadyPromise = ctx.service.skills.ensureStorageReady().catch((error) => {
                 storageReadyPromise = null;
                 throw error;
             });

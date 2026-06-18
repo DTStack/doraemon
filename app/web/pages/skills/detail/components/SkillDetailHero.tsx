@@ -102,7 +102,9 @@ export const SkillDetailHero: React.FC<SkillDetailHeroProps> = ({
                 <section className="package-children-section">
                     <div className="package-children-header">
                         <span className="package-badge">📦</span>
-                        <span className="package-title">包含 {detail.children.length} 个子技能</span>
+                        <span className="package-title">
+                            包含 {detail.children.length} 个子技能
+                        </span>
                     </div>
                     <Row gutter={[16, 16]}>
                         {detail.children.map((child: SkillItem) => (

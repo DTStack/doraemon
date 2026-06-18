@@ -33,8 +33,11 @@ test('getUploadIdentityKey returns empty string when no preferredName', () => {
         [{ name: 'skill-b' }, { name: 'skill-a' }],
         ''
     );
-    assert.equal(result, '',
-        'Without preferredName, should return empty string to keep package name clean');
+    assert.equal(
+        result,
+        '',
+        'Without preferredName, should return empty string to keep package name clean'
+    );
 });
 
 test('buildUploadSourceMeta with packageName as identityKey produces readable sourceKey', () => {
@@ -52,14 +55,17 @@ test('buildUploadSourceMeta produces clean repoPath with or without packageName'
         'demo-multi-skill-folders.zip',
         'demo-multi-skill-folders'
     );
-    const withoutPackage = skillsModule.prototype.buildUploadSourceMeta(
-        'skills-batch.zip',
-        ''
+    const withoutPackage = skillsModule.prototype.buildUploadSourceMeta('skills-batch.zip', '');
+    assert.equal(
+        withPackage.repoPath,
+        'demo-multi-skill-folders',
+        'With packageName, repoPath should equal packageName'
     );
-    assert.equal(withPackage.repoPath, 'demo-multi-skill-folders',
-        'With packageName, repoPath should equal packageName');
-    assert.equal(withoutPackage.repoPath, 'skills-batch',
-        'Without packageName, repoPath should equal zip filename');
+    assert.equal(
+        withoutPackage.repoPath,
+        'skills-batch',
+        'Without packageName, repoPath should equal zip filename'
+    );
 });
 
 test('persistSkillsForSource accepts preferredPackageName parameter', () => {
@@ -83,8 +89,11 @@ test('importSkillFile multi-skill upload uses clean zip filename as package name
 
     // First build: used for buildSkillSlug
     const parsedSource = service.buildUploadSourceMeta(fileName, identityKey);
-    assert.equal(parsedSource.repoPath, 'test-skill-package',
-        'First build should have clean repoPath from filename');
+    assert.equal(
+        parsedSource.repoPath,
+        'test-skill-package',
+        'First build should have clean repoPath from filename'
+    );
 
     // Skill records from discoverSkillDirs + prepareSkillRecord
     const skillRecords = [{ name: 'web-scraper' }, { name: 'api-tester' }];
@@ -98,8 +107,11 @@ test('importSkillFile multi-skill upload uses clean zip filename as package name
 
     // BUG: currently produces 'test-skill-package-api-tester-web-scraper-b0c3619b'
     // EXPECTED: 'test-skill-package' (just the filename, readable)
-    assert.equal(uploadSourceMeta.repoPath, 'test-skill-package',
-        `Package name should be clean zip filename, got: ${uploadSourceMeta.repoPath}`);
+    assert.equal(
+        uploadSourceMeta.repoPath,
+        'test-skill-package',
+        `Package name should be clean zip filename, got: ${uploadSourceMeta.repoPath}`
+    );
 });
 
 test('importSkillFile single-skill upload with custom name uses name in repoPath', () => {
@@ -118,8 +130,11 @@ test('importSkillFile single-skill upload with custom name uses name in repoPath
         service.getUploadIdentityKey(skillRecords, identityKey)
     );
 
-    assert.equal(uploadSourceMeta.repoPath, 'custom-skill-name',
-        'Single-skill upload with custom name should use name as repoPath');
+    assert.equal(
+        uploadSourceMeta.repoPath,
+        'custom-skill-name',
+        'Single-skill upload with custom name should use name as repoPath'
+    );
 });
 
 test('importSkillFile CLI upload with packageName uses packageName as repoPath', () => {
@@ -138,6 +153,9 @@ test('importSkillFile CLI upload with packageName uses packageName as repoPath',
         service.getUploadIdentityKey(skillRecords, identityKey)
     );
 
-    assert.equal(uploadSourceMeta.repoPath, 'my-awesome-pack',
-        'CLI upload with packageName should use packageName as repoPath');
+    assert.equal(
+        uploadSourceMeta.repoPath,
+        'my-awesome-pack',
+        'CLI upload with packageName should use packageName as repoPath'
+    );
 });

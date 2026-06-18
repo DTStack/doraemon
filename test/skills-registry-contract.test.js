@@ -513,14 +513,10 @@ test('buildSkillZip packages skill package nested structure when is_package is 1
         SkillsFile: {
             findAll: async (options) => {
                 if (options.where.skill_id === 101) {
-                    return [
-                        { file_path: 'README.md', content: 'c3ViLTE=', is_binary: 0 },
-                    ];
+                    return [{ file_path: 'README.md', content: 'c3ViLTE=', is_binary: 0 }];
                 }
                 if (options.where.skill_id === 102) {
-                    return [
-                        { file_path: 'index.js', content: 'c3ViLTI=', is_binary: 0 },
-                    ];
+                    return [{ file_path: 'index.js', content: 'c3ViLTI=', is_binary: 0 }];
                 }
                 return [];
             },
@@ -535,7 +531,7 @@ test('buildSkillZip packages skill package nested structure when is_package is 1
 
     const AdmZip = require('adm-zip');
     const zip = new AdmZip(result.content);
-    const entries = zip.getEntries().map(e => e.entryName);
+    const entries = zip.getEntries().map((e) => e.entryName);
 
     assert.ok(entries.includes('my-skills-pack/sub-skill-1/README.md'));
     assert.ok(entries.includes('my-skills-pack/sub-skill-2/index.js'));
@@ -609,9 +605,7 @@ test('publishSkill returns ok: true and string skillId and versionId', async () 
 
     const result = await service.publishSkill(
         { slug: 'test-skill', displayName: 'Test Skill', version: '1.0.0' },
-        [
-            { filepath: 'SKILL.md', content: 'test content' },
-        ]
+        [{ filepath: 'SKILL.md', content: 'test content' }]
     );
 
     assert.equal(result.ok, true);

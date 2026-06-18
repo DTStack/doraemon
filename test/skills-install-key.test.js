@@ -191,7 +191,7 @@ test('buildSkillSlug generates clean slug for upload source without prefix', () 
     // 网页端上传，ZIP内技能目录为 "my-skill"
     const slug = service.buildSkillSlug(sourceMeta, 'my-skill', 'My Skill');
     assert.equal(slug, 'my-skill');
-    
+
     // 如果 relativeSkillPath 是 "."，应该回退使用 skillName
     const slugDot = service.buildSkillSlug(sourceMeta, '.', 'My Skill');
     assert.equal(slugDot, 'my-skill');
@@ -199,12 +199,12 @@ test('buildSkillSlug generates clean slug for upload source without prefix', () 
 
 test('persistSkillsForSource - TDD scenarios for web upload', async () => {
     const service = Object.create(SkillsService.prototype);
-    
+
     service.fetchStarsBySourceRepo = async () => 0;
     service.buildSkillSlug = SkillsService.prototype.buildSkillSlug;
     service.sanitizeSlugSegment = SkillsService.prototype.sanitizeSlugSegment;
     service.hashString = SkillsService.prototype.hashString;
-    
+
     const dbSkills = [];
     const dbFiles = [];
     let idCounter = 1;
@@ -212,11 +212,11 @@ test('persistSkillsForSource - TDD scenarios for web upload', async () => {
     const SkillsItem = {
         findAll: async (options) => {
             const sourceId = options.where.source_id;
-            return dbSkills.filter(item => item.source_id === sourceId && item.is_delete === 0);
+            return dbSkills.filter((item) => item.source_id === sourceId && item.is_delete === 0);
         },
         findOne: async (options) => {
             const slug = options.where.slug;
-            return dbSkills.find(item => item.slug === slug) || null;
+            return dbSkills.find((item) => item.slug === slug) || null;
         },
         create: async (payload) => {
             const newItem = {
@@ -231,7 +231,7 @@ test('persistSkillsForSource - TDD scenarios for web upload', async () => {
             return newItem;
         },
     };
-    
+
     const SkillsFile = {
         destroy: async () => {},
         bulkCreate: async (rows) => {
@@ -255,7 +255,7 @@ test('persistSkillsForSource - TDD scenarios for web upload', async () => {
             },
         },
     };
-    
+
     service.ctx = {
         throw(status, message) {
             const error = new Error(message);
@@ -285,7 +285,7 @@ test('persistSkillsForSource - TDD scenarios for web upload', async () => {
         installCommand: '',
         files: [],
     };
-    
+
     const result1 = await service.persistSkillsForSource(10, sourceMeta, [record1]);
     assert.equal(result1.length, 1);
     assert.equal(result1[0].slug, 'my-skill');
@@ -316,7 +316,7 @@ test('persistSkillsForSource - TDD scenarios for web upload', async () => {
         installCommand: '',
         files: [],
     };
-    
+
     await assert.rejects(
         () => service.persistSkillsForSource(11, sourceMeta, [recordConflict]),
         (error) => error.status === 400 && error.message === 'slug 已存在'
@@ -324,7 +324,7 @@ test('persistSkillsForSource - TDD scenarios for web upload', async () => {
 
     // 4. 对已软删除的同 slug 技能进行复用更新
     dbSkills[0].is_delete = 1;
-    
+
     const recordReuse = {
         name: 'reused-name',
         description: 'reused-desc',
@@ -339,7 +339,7 @@ test('persistSkillsForSource - TDD scenarios for web upload', async () => {
         installCommand: '',
         files: [],
     };
-    
+
     const resultReuse = await service.persistSkillsForSource(12, sourceMeta, [recordReuse]);
     assert.equal(resultReuse.length, 1);
     assert.equal(dbSkills.length, 1);
@@ -356,13 +356,17 @@ test('assertSkillNamesUnique with excludeSlugs option ignores matching slug', as
             throw error;
         },
     };
-    
+
     service.app = {
         model: {
             SkillsItem: {
                 findOne: async (options) => {
                     const slugFilter = options.where.slug;
-                    if (slugFilter && slugFilter['notIn'] && slugFilter['notIn'].includes('skill-a')) {
+                    if (
+                        slugFilter &&
+                        slugFilter['notIn'] &&
+                        slugFilter['notIn'].includes('skill-a')
+                    ) {
                         return null;
                     }
                     return { id: 9, name: 'skill-a', slug: 'skill-a' };
@@ -405,15 +409,21 @@ test('persistSkillsForSource - auto-package for multiple skill records and query
         findAll: async (options) => {
             const sourceId = options.where.source_id;
             // If filtering out sub-skills, parent_slug must be null
-            let result = dbSkills.filter(item => item.source_id === sourceId && item.is_delete === 0);
-            if (options.where && 'parent_slug' in options.where && options.where.parent_slug === null) {
-                result = result.filter(item => item.parent_slug === null);
+            let result = dbSkills.filter(
+                (item) => item.source_id === sourceId && item.is_delete === 0
+            );
+            if (
+                options.where &&
+                'parent_slug' in options.where &&
+                options.where.parent_slug === null
+            ) {
+                result = result.filter((item) => item.parent_slug === null);
             }
             return result;
         },
         findOne: async (options) => {
             const slug = options.where.slug;
-            return dbSkills.find(item => item.slug === slug) || null;
+            return dbSkills.find((item) => item.slug === slug) || null;
         },
         create: async (payload) => {
             const newItem = {
@@ -500,14 +510,14 @@ test('persistSkillsForSource - auto-package for multiple skill records and query
     ];
 
     await service.persistSkillsForSource(20, sourceMeta, records);
-    
+
     // There should be a parent package item (is_package = 1) and two sub-skills (parent_slug = parentSlug)
-    const parent = dbSkills.find(item => item.is_package === 1);
+    const parent = dbSkills.find((item) => item.is_package === 1);
     assert.ok(parent, 'Should create a parent package');
     assert.equal(parent.name, 'my-skills-pack');
     assert.equal(parent.is_package, 1);
 
-    const subSkills = dbSkills.filter(item => item.parent_slug === parent.slug);
+    const subSkills = dbSkills.filter((item) => item.parent_slug === parent.slug);
     assert.equal(subSkills.length, 2, 'Both sub-skills should refer to parent slug');
     assert.equal(subSkills[0].is_package, 0);
 
@@ -534,14 +544,10 @@ test('getSkillArchive - skill package ZIP nested structures (T008)', async () =>
             SkillsFile: {
                 findAll: async (options) => {
                     if (options.where.skill_id === 101) {
-                        return [
-                            { file_path: 'README.md', content: 'c3ViLTE=', is_binary: 0 },
-                        ];
+                        return [{ file_path: 'README.md', content: 'c3ViLTE=', is_binary: 0 }];
                     }
                     if (options.where.skill_id === 102) {
-                        return [
-                            { file_path: 'index.js', content: 'c3ViLTI=', is_binary: 0 },
-                        ];
+                        return [{ file_path: 'index.js', content: 'c3ViLTI=', is_binary: 0 }];
                     }
                     return [];
                 },
@@ -559,11 +565,11 @@ test('getSkillArchive - skill package ZIP nested structures (T008)', async () =>
 
     const archive = await service.getSkillArchive('my-skills-pack');
     assert.ok(archive.content);
-    
+
     const AdmZip = require('adm-zip');
     const zip = new AdmZip(archive.content);
-    const entries = zip.getEntries().map(e => e.entryName);
-    
+    const entries = zip.getEntries().map((e) => e.entryName);
+
     assert.ok(entries.includes('my-skills-pack/sub-skill-1/README.md'));
     assert.ok(entries.includes('my-skills-pack/sub-skill-2/index.js'));
 });
@@ -593,7 +599,9 @@ test('ensureSkillsItemPackageColumns - auto-migration adds is_package and parent
         },
         Sequelize: {
             TINYINT: 'TINYINT',
-            STRING(len) { this.len = len; },
+            STRING(len) {
+                this.len = len;
+            },
         },
     };
 
@@ -626,7 +634,9 @@ test('ensureSkillsItemPackageColumns - skips migration when columns already exis
         },
         Sequelize: {
             TINYINT: 'TINYINT',
-            STRING(len) { this.len = len; },
+            STRING(len) {
+                this.len = len;
+            },
         },
     };
 
@@ -646,13 +656,16 @@ test('persistSkillsForSource - single skill source does not create package (T015
     let idCounter = 1;
 
     const SkillsItem = {
-        findAll: async () => dbSkills.filter(item => item.is_delete === 0),
-        findOne: async (opts) => dbSkills.find(item => item.slug === opts.where.slug) || null,
+        findAll: async () => dbSkills.filter((item) => item.is_delete === 0),
+        findOne: async (opts) => dbSkills.find((item) => item.slug === opts.where.slug) || null,
         create: async (payload) => {
             const newItem = {
                 id: idCounter++,
                 ...payload,
-                update: async (fields) => { Object.assign(newItem, fields); return newItem; },
+                update: async (fields) => {
+                    Object.assign(newItem, fields);
+                    return newItem;
+                },
             };
             dbSkills.push(newItem);
             return newItem;
@@ -674,7 +687,11 @@ test('persistSkillsForSource - single skill source does not create package (T015
     };
 
     service.ctx = {
-        throw(status, message) { const e = new Error(message); e.status = status; throw e; },
+        throw(status, message) {
+            const e = new Error(message);
+            e.status = status;
+            throw e;
+        },
     };
 
     const sourceMeta = {
@@ -683,20 +700,22 @@ test('persistSkillsForSource - single skill source does not create package (T015
         repoPath: 'single-skill-zip',
     };
 
-    const singleRecord = [{
-        name: 'solo-skill',
-        description: 'a single skill',
-        category: '通用',
-        version: '1.0.0',
-        tags: [],
-        allowedTools: [],
-        updatedAt: new Date(),
-        sourceRepo: '',
-        sourcePath: 'solo-skill',
-        skillMd: '# solo',
-        installCommand: '',
-        files: [],
-    }];
+    const singleRecord = [
+        {
+            name: 'solo-skill',
+            description: 'a single skill',
+            category: '通用',
+            version: '1.0.0',
+            tags: [],
+            allowedTools: [],
+            updatedAt: new Date(),
+            sourceRepo: '',
+            sourcePath: 'solo-skill',
+            skillMd: '# solo',
+            installCommand: '',
+            files: [],
+        },
+    ];
 
     await service.persistSkillsForSource(30, sourceMeta, singleRecord);
 
@@ -719,14 +738,17 @@ test('persistSkillsForSource - multi-skill source creates parent package with ch
     const SkillsItem = {
         findAll: async (opts) => {
             const sourceId = opts.where.source_id;
-            return dbSkills.filter(item => item.source_id === sourceId && item.is_delete === 0);
+            return dbSkills.filter((item) => item.source_id === sourceId && item.is_delete === 0);
         },
-        findOne: async (opts) => dbSkills.find(item => item.slug === opts.where.slug) || null,
+        findOne: async (opts) => dbSkills.find((item) => item.slug === opts.where.slug) || null,
         create: async (payload) => {
             const newItem = {
                 id: idCounter++,
                 ...payload,
-                update: async (fields) => { Object.assign(newItem, fields); return newItem; },
+                update: async (fields) => {
+                    Object.assign(newItem, fields);
+                    return newItem;
+                },
             };
             dbSkills.push(newItem);
             return newItem;
@@ -748,7 +770,11 @@ test('persistSkillsForSource - multi-skill source creates parent package with ch
     };
 
     service.ctx = {
-        throw(status, message) { const e = new Error(message); e.status = status; throw e; },
+        throw(status, message) {
+            const e = new Error(message);
+            e.status = status;
+            throw e;
+        },
     };
 
     const sourceMeta = {
@@ -804,8 +830,8 @@ test('persistSkillsForSource - multi-skill source creates parent package with ch
 
     await service.persistSkillsForSource(40, sourceMeta, multiRecords);
 
-    const parents = dbSkills.filter(s => s.is_package === 1);
-    const children = dbSkills.filter(s => s.parent_slug !== null && s.parent_slug !== '');
+    const parents = dbSkills.filter((s) => s.is_package === 1);
+    const children = dbSkills.filter((s) => s.parent_slug !== null && s.parent_slug !== '');
 
     assert.equal(parents.length, 1, 'Should create exactly 1 parent package');
     assert.equal(children.length, 3, 'Should create exactly 3 child skills');
@@ -815,10 +841,17 @@ test('persistSkillsForSource - multi-skill source creates parent package with ch
     assert.equal(parent.parent_slug, null, 'Parent should have null parent_slug');
     assert.equal(parent.name, 'mega-pack');
     assert.equal(parent.source_path, '.');
-    assert.ok(parent.description.includes('alpha-skill'), 'Parent description should list children');
+    assert.ok(
+        parent.description.includes('alpha-skill'),
+        'Parent description should list children'
+    );
 
     for (const child of children) {
-        assert.equal(child.parent_slug, parent.slug, `Child ${child.slug} should reference parent slug`);
+        assert.equal(
+            child.parent_slug,
+            parent.slug,
+            `Child ${child.slug} should reference parent slug`
+        );
         assert.equal(child.is_package, 0, `Child ${child.slug} should NOT be a package`);
     }
 });
@@ -847,8 +880,28 @@ test('getSkillDetail returns children for package, none for regular skill (T018)
     const service = Object.create(SkillsService.prototype);
 
     const mockChildren = [
-        { id: 201, slug: 'sub-1', name: 'Sub 1', is_package: 0, parent_slug: 'test-pack', is_delete: 0, stars: 0, updated_at_remote: new Date(), updated_at: new Date() },
-        { id: 202, slug: 'sub-2', name: 'Sub 2', is_package: 0, parent_slug: 'test-pack', is_delete: 0, stars: 0, updated_at_remote: new Date(), updated_at: new Date() },
+        {
+            id: 201,
+            slug: 'sub-1',
+            name: 'Sub 1',
+            is_package: 0,
+            parent_slug: 'test-pack',
+            is_delete: 0,
+            stars: 0,
+            updated_at_remote: new Date(),
+            updated_at: new Date(),
+        },
+        {
+            id: 202,
+            slug: 'sub-2',
+            name: 'Sub 2',
+            is_package: 0,
+            parent_slug: 'test-pack',
+            is_delete: 0,
+            stars: 0,
+            updated_at_remote: new Date(),
+            updated_at: new Date(),
+        },
     ];
 
     service.app = {
@@ -870,12 +923,48 @@ test('getSkillDetail returns children for package, none for regular skill (T018)
     service.ensureSkillCache = async () => {};
     service.getSkillByIdentifier = (_slug) => {
         if (_slug === 'test-pack') {
-            return { id: 100, slug: 'test-pack', name: 'Test Pack', isPackage: 1, parentSlug: null, skillMd: '# pack', stars: 10, category: '通用', version: '1.0.0', tags: [], allowedTools: [], sourceRepo: '', sourcePath: '.', description: 'test' };
+            return {
+                id: 100,
+                slug: 'test-pack',
+                name: 'Test Pack',
+                isPackage: 1,
+                parentSlug: null,
+                skillMd: '# pack',
+                stars: 10,
+                category: '通用',
+                version: '1.0.0',
+                tags: [],
+                allowedTools: [],
+                sourceRepo: '',
+                sourcePath: '.',
+                description: 'test',
+            };
         }
-        return { id: 200, slug: 'solo', name: 'Solo', isPackage: 0, parentSlug: null, skillMd: '# solo', stars: 5, category: '通用', version: '1.0.0', tags: [], allowedTools: [], sourceRepo: '', sourcePath: '.', description: 'test' };
+        return {
+            id: 200,
+            slug: 'solo',
+            name: 'Solo',
+            isPackage: 0,
+            parentSlug: null,
+            skillMd: '# solo',
+            stars: 5,
+            category: '通用',
+            version: '1.0.0',
+            tags: [],
+            allowedTools: [],
+            sourceRepo: '',
+            sourcePath: '.',
+            description: 'test',
+        };
     };
     service.toSkillDto = (row) => row;
-    service.toPublicSkill = (s) => ({ slug: s.slug, name: s.name, isPackage: s.isPackage || s.is_package, parentSlug: s.parentSlug || s.parent_slug, description: s.description || '' });
+    service.toPublicSkill = (s) => ({
+        slug: s.slug,
+        name: s.name,
+        isPackage: s.isPackage || s.is_package,
+        parentSlug: s.parentSlug || s.parent_slug,
+        description: s.description || '',
+    });
 
     // Package detail should include children
     const packDetail = await service.getSkillDetail('test-pack');
@@ -947,4 +1036,3 @@ test('getSkillArchive - nested ZIP structure for package with multiple children 
     assert.ok(entries.includes('AI Toolkit/planner/rules.md'));
     assert.equal(entries.length, 4, 'ZIP should contain exactly 4 files (2 per child)');
 });
-

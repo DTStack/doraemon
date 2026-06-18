@@ -171,18 +171,30 @@ module.exports = (app) => {
     app.get('/api/v1/search', skillsStorageReady, app.controller.skillsRegistry.search);
     app.get('/api/v1/skills', skillsStorageReady, app.controller.skillsRegistry.list);
     app.get('/api/v1/skills/:slug', skillsStorageReady, app.controller.skillsRegistry.detail);
-    app.get('/api/v1/skills/:slug/versions', skillsStorageReady, app.controller.skillsRegistry.versions);
+    app.get(
+        '/api/v1/skills/:slug/versions',
+        skillsStorageReady,
+        app.controller.skillsRegistry.versions
+    );
     app.get(
         '/api/v1/skills/:slug/versions/:version',
         skillsStorageReady,
         app.controller.skillsRegistry.versionDetail
     );
-    app.get('/api/v1/skills/:slug/file', skillsStorageReady, app.controller.skillsRegistry.fileContent);
+    app.get(
+        '/api/v1/skills/:slug/file',
+        skillsStorageReady,
+        app.controller.skillsRegistry.fileContent
+    );
     app.get('/api/v1/download', skillsStorageReady, app.controller.skillsRegistry.download);
     app.get('/api/v1/resolve', skillsStorageReady, app.controller.skillsRegistry.resolve);
     app.post('/api/v1/skills', skillsStorageReady, app.controller.skillsRegistry.publish);
     app.delete('/api/v1/skills/:slug', skillsStorageReady, app.controller.skillsRegistry.delete);
-    app.post('/api/v1/skills/:slug/undelete', skillsStorageReady, app.controller.skillsRegistry.undelete);
+    app.post(
+        '/api/v1/skills/:slug/undelete',
+        skillsStorageReady,
+        app.controller.skillsRegistry.undelete
+    );
     app.post('/api/v1/stars/:slug', skillsStorageReady, app.controller.skillsRegistry.star);
     app.delete('/api/v1/stars/:slug', skillsStorageReady, app.controller.skillsRegistry.unstar);
 

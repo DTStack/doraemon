@@ -1,81 +1,77 @@
-import { access, mkdir, open, readdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join, relative, resolve, sep } from "node:path";
-import { unzipSync } from "fflate";
-import ignore from "ignore";
-import mime from "mime";
+import { access, mkdir, open, readdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join, relative, resolve, sep } from 'node:path';
+import { unzipSync } from 'fflate';
+import ignore from 'ignore';
+import mime from 'mime';
+import { type Lockfile, LockfileSchema, parseArk } from './schema/index.js';
 import {
-  type Lockfile,
-  LockfileSchema,
-  parseArk,
-} from "./schema/index.js";
-import {
-  buildSkillFingerprint,
-  getFileExtension,
-  hasDotPathSegment,
-  isLikelyTextBytes,
-  sha256Hex,
-  shouldIncludeFingerprintFile,
-  TEXT_FILE_EXTENSION_SET,
-  TEXT_SAMPLE_BYTES,
-} from "./schema/skillFingerprintContract.js";
+    buildSkillFingerprint,
+    getFileExtension,
+    hasDotPathSegment,
+    isLikelyTextBytes,
+    sha256Hex,
+    shouldIncludeFingerprintFile,
+    TEXT_FILE_EXTENSION_SET,
+    TEXT_SAMPLE_BYTES,
+} from './schema/skillFingerprintContract.js';
 
-const DOT_DIR = ".dt-skill";
-const DOT_IGNORE = ".dt-skillignore";
+const DOT_DIR = '.dt-skill';
+const DOT_IGNORE = '.dt-skillignore';
 
 export type SkillOrigin = {
-  version: 1;
-  registry: string;
-  slug: string;
-  installedVersion: string;
-  installedAt: number;
-  fingerprint?: string;
+    version: 1;
+    registry: string;
+    slug: string;
+    installedVersion: string;
+    installedAt: number;
+    fingerprint?: string;
 };
 
 export async function extractZipToDir(zipBytes: Uint8Array, targetDir: string) {
-  const entries = unzipSync(zipBytes);
-  await mkdir(targetDir, { recursive: true });
-  for (const [rawPath, data] of Object.entries(entries)) {
-    const safePath = sanitizeRelPath(rawPath);
-    if (!safePath) continue;
-    const outPath = join(targetDir, safePath);
-    await mkdir(dirname(outPath), { recursive: true });
-    await writeFile(outPath, data);
-  }
+    const entries = unzipSync(zipBytes);
+    await mkdir(targetDir, { recursive: true });
+    for (const [rawPath, data] of Object.entries(entries)) {
+        const safePath = sanitizeRelPath(rawPath);
+        if (!safePath) continue;
+        const outPath = join(targetDir, safePath);
+        await mkdir(dirname(outPath), { recursive: true });
+        await writeFile(outPath, data);
+    }
 }
 
 export async function listTextFiles(root: string) {
-  const files: Array<{ relPath: string; bytes: Uint8Array; contentType?: string }> = [];
-  const { absRoot, ig } = await createSkillIgnoreMatcher(root);
+    const files: Array<{ relPath: string; bytes: Uint8Array; contentType?: string }> = [];
+    const { absRoot, ig } = await createSkillIgnoreMatcher(root);
 
-  await walk(absRoot, async (absPath) => {
-    const relPath = normalizePath(relative(absRoot, absPath));
-    if (!relPath) return;
-    if (ig.ignores(relPath)) return;
-    if (hasDotPathSegment(relPath)) return;
-    const ext = getFileExtension(relPath);
-    if (ext && !TEXT_FILE_EXTENSION_SET.has(ext)) return;
-    if (!ext && !(await isLikelyTextFile(absPath))) return;
-    const buffer = await readFile(absPath);
-    const contentType = mime.getType(relPath) ?? "text/plain";
-    files.push({ relPath, bytes: new Uint8Array(buffer), contentType });
-  });
-  return files;
+    await walk(absRoot, async (absPath) => {
+        const relPath = normalizePath(relative(absRoot, absPath));
+        if (!relPath) return;
+        if (ig.ignores(relPath)) return;
+        if (hasDotPathSegment(relPath)) return;
+        const ext = getFileExtension(relPath);
+        if (ext && !TEXT_FILE_EXTENSION_SET.has(ext)) return;
+        if (!ext && !(await isLikelyTextFile(absPath))) return;
+        const buffer = await readFile(absPath);
+        const contentType = mime.getType(relPath) ?? 'text/plain';
+        files.push({ relPath, bytes: new Uint8Array(buffer), contentType });
+    });
+    return files;
 }
 
 export async function listPublishFiles(root: string) {
-  const files: Array<{ relPath: string; bytes: Uint8Array; contentType?: string }> = [];
-  const { absRoot, ig } = await createSkillIgnoreMatcher(root);
+    const files: Array<{ relPath: string; bytes: Uint8Array; contentType?: string }> = [];
+    const { absRoot, ig } = await createSkillIgnoreMatcher(root);
 
-  await walk(absRoot, async (absPath) => {
-    const relPath = normalizePath(relative(absRoot, absPath));
-    if (!relPath) return;
-    if (ig.ignores(relPath)) return;
-    if (hasDotPathSegment(relPath)) return;
-    const buffer = await readFile(absPath);
-    const contentType = mime.getType(relPath) ?? "application/octet-stream";
-    files.push({ relPath, bytes: new Uint8Array(buffer), contentType });
-  });
-  return files;
+    await walk(absRoot, async (absPath) => {
+        const relPath = normalizePath(relative(absRoot, absPath));
+        if (!relPath) return;
+        if (ig.ignores(relPath)) return;
+        if (hasDotPathSegment(relPath)) return;
+        const buffer = await readFile(absPath);
+        const contentType = mime.getType(relPath) ?? 'application/octet-stream';
+        files.push({ relPath, bytes: new Uint8Array(buffer), contentType });
+    });
+    return files;
 }
 
 type SkillFileHash = { path: string; sha256: string; size: number };
@@ -83,181 +79,178 @@ type SkillFileHash = { path: string; sha256: string; size: number };
 export { buildSkillFingerprint, sha256Hex };
 
 export function hashSkillFiles(files: Array<{ relPath: string; bytes: Uint8Array }>) {
-  const hashed = files.map((file) => ({
-    path: file.relPath,
-    sha256: sha256Hex(file.bytes),
-    size: file.bytes.byteLength,
-  }));
-  return { files: hashed, fingerprint: buildSkillFingerprint(hashed) };
+    const hashed = files.map((file) => ({
+        path: file.relPath,
+        sha256: sha256Hex(file.bytes),
+        size: file.bytes.byteLength,
+    }));
+    return { files: hashed, fingerprint: buildSkillFingerprint(hashed) };
 }
 
 export function hashSkillZip(zipBytes: Uint8Array) {
-  const entries = unzipSync(zipBytes);
-  const hashed = Object.entries(entries)
-    .map(([rawPath, bytes]) => {
-      const safePath = sanitizeZipPath(rawPath);
-      if (!safePath) return null;
-      if (
-        !shouldIncludeFingerprintFile({
-          filePath: safePath,
-          bytes,
+    const entries = unzipSync(zipBytes);
+    const hashed = Object.entries(entries)
+        .map(([rawPath, bytes]) => {
+            const safePath = sanitizeZipPath(rawPath);
+            if (!safePath) return null;
+            if (
+                !shouldIncludeFingerprintFile({
+                    filePath: safePath,
+                    bytes,
+                })
+            ) {
+                return null;
+            }
+            return { path: safePath, sha256: sha256Hex(bytes), size: bytes.byteLength };
         })
-      ) {
-        return null;
-      }
-      return { path: safePath, sha256: sha256Hex(bytes), size: bytes.byteLength };
-    })
-    .filter(Boolean) as SkillFileHash[];
+        .filter(Boolean) as SkillFileHash[];
 
-  return { files: hashed, fingerprint: buildSkillFingerprint(hashed) };
+    return { files: hashed, fingerprint: buildSkillFingerprint(hashed) };
 }
 
 export async function readLockfile(workdir: string): Promise<Lockfile> {
-  const path = join(workdir, DOT_DIR, "lock.json");
-  try {
-    const raw = await readFile(path, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    return parseArk(LockfileSchema, parsed, "Lockfile");
-  } catch {
-    return { version: 1, skills: {} };
-  }
+    const path = join(workdir, DOT_DIR, 'lock.json');
+    try {
+        const raw = await readFile(path, 'utf8');
+        const parsed = JSON.parse(raw) as unknown;
+        return parseArk(LockfileSchema, parsed, 'Lockfile');
+    } catch {
+        return { version: 1, skills: {} };
+    }
 }
 
 export async function writeLockfile(workdir: string, lock: Lockfile) {
-  const path = join(workdir, DOT_DIR, "lock.json");
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, `${JSON.stringify(lock, null, 2)}\n`, "utf8");
+    const path = join(workdir, DOT_DIR, 'lock.json');
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, `${JSON.stringify(lock, null, 2)}\n`, 'utf8');
 }
 
 export async function readSkillOrigin(skillFolder: string): Promise<SkillOrigin | null> {
-  const path = join(skillFolder, DOT_DIR, "origin.json");
-  try {
-    const raw = await readFile(path, "utf8");
-    const parsed = JSON.parse(raw) as Partial<SkillOrigin>;
-    if (parsed.version !== 1) return null;
-    if (!parsed.registry || !parsed.slug || !parsed.installedVersion) return null;
-    if (typeof parsed.installedAt !== "number" || !Number.isFinite(parsed.installedAt)) {
-      return null;
+    const path = join(skillFolder, DOT_DIR, 'origin.json');
+    try {
+        const raw = await readFile(path, 'utf8');
+        const parsed = JSON.parse(raw) as Partial<SkillOrigin>;
+        if (parsed.version !== 1) return null;
+        if (!parsed.registry || !parsed.slug || !parsed.installedVersion) return null;
+        if (typeof parsed.installedAt !== 'number' || !Number.isFinite(parsed.installedAt)) {
+            return null;
+        }
+        return {
+            version: 1,
+            registry: parsed.registry,
+            slug: parsed.slug,
+            installedVersion: parsed.installedVersion,
+            installedAt: parsed.installedAt,
+            fingerprint: typeof parsed.fingerprint === 'string' ? parsed.fingerprint : undefined,
+        };
+    } catch {
+        return null;
     }
-    return {
-      version: 1,
-      registry: parsed.registry,
-      slug: parsed.slug,
-      installedVersion: parsed.installedVersion,
-      installedAt: parsed.installedAt,
-      fingerprint: typeof parsed.fingerprint === "string" ? parsed.fingerprint : undefined,
-    };
-  } catch {
-    return null;
-  }
 }
 
 export async function writeSkillOrigin(skillFolder: string, origin: SkillOrigin) {
-  const path = join(skillFolder, DOT_DIR, "origin.json");
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, `${JSON.stringify(origin, null, 2)}\n`, "utf8");
+    const path = join(skillFolder, DOT_DIR, 'origin.json');
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, `${JSON.stringify(origin, null, 2)}\n`, 'utf8');
 }
 
 function normalizePath(path: string) {
-  return path
-    .split(sep)
-    .join("/")
-    .replace(/^\.\/+/, "");
+    return path
+        .split(sep)
+        .join('/')
+        .replace(/^\.\/+/, '');
 }
 
 async function isLikelyTextFile(path: string) {
-  const handle = await open(path, "r");
-  try {
-    const sample = new Uint8Array(TEXT_SAMPLE_BYTES);
-    const { bytesRead } = await handle.read(sample, 0, sample.byteLength, 0);
-    return isLikelyTextBytes(sample.subarray(0, bytesRead));
-  } finally {
-    await handle.close();
-  }
+    const handle = await open(path, 'r');
+    try {
+        const sample = new Uint8Array(TEXT_SAMPLE_BYTES);
+        const { bytesRead } = await handle.read(sample, 0, sample.byteLength, 0);
+        return isLikelyTextBytes(sample.subarray(0, bytesRead));
+    } finally {
+        await handle.close();
+    }
 }
 
 function sanitizeRelPath(path: string) {
-  const normalized = path.replace(/^\.\/+/, "").replace(/^\/+/, "");
-  if (!normalized || normalized.endsWith("/")) return null;
-  if (normalized.includes("..") || normalized.includes("\\")) return null;
-  return normalized;
+    const normalized = path.replace(/^\.\/+/, '').replace(/^\/+/, '');
+    if (!normalized || normalized.endsWith('/')) return null;
+    if (normalized.includes('..') || normalized.includes('\\')) return null;
+    return normalized;
 }
 
 function sanitizeZipPath(path: string) {
-  return sanitizeRelPath(path);
+    return sanitizeRelPath(path);
 }
 
 async function walk(dir: string, onFile: (path: string) => Promise<void>) {
-  const entries = await readdir(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    if (entry.name.startsWith(".")) continue;
-    if (entry.name === "node_modules") continue;
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      await walk(full, onFile);
-      continue;
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+        if (entry.name.startsWith('.')) continue;
+        if (entry.name === 'node_modules') continue;
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+            await walk(full, onFile);
+            continue;
+        }
+        if (!entry.isFile()) continue;
+        await onFile(full);
     }
-    if (!entry.isFile()) continue;
-    await onFile(full);
-  }
 }
 
 async function addIgnoreFile(ig: ReturnType<typeof ignore>, path: string) {
-  try {
-    const raw = await readFile(path, "utf8");
-    ig.add(raw.split(/\r?\n/));
-  } catch {
-    // optional
-  }
+    try {
+        const raw = await readFile(path, 'utf8');
+        ig.add(raw.split(/\r?\n/));
+    } catch {
+        // optional
+    }
 }
 
 async function createSkillIgnoreMatcher(root: string) {
-  const absRoot = resolve(root);
-  const ig = ignore();
-  ig.add([".git/", "node_modules/", `${DOT_DIR}/`]);
-  await addIgnoreFile(ig, join(absRoot, ".gitignore"));
-  await addIgnoreFile(ig, join(absRoot, DOT_IGNORE));
-  return { absRoot, ig };
+    const absRoot = resolve(root);
+    const ig = ignore();
+    ig.add(['.git/', 'node_modules/', `${DOT_DIR}/`]);
+    await addIgnoreFile(ig, join(absRoot, '.gitignore'));
+    await addIgnoreFile(ig, join(absRoot, DOT_IGNORE));
+    return { absRoot, ig };
 }
 
 export async function listManualSkills(skillsDir: string, lockedSlugs: Set<string>) {
-  const manual: string[] = [];
-  let entries;
-  try {
-    entries = await readdir(skillsDir, { withFileTypes: true });
-  } catch (error) {
-    if (isMissingPathError(error)) return manual;
-    throw error;
-  }
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    if (entry.name.startsWith(".")) continue;
-    if (lockedSlugs.has(entry.name)) continue;
-    if (await hasSkillMetadata(join(skillsDir, entry.name))) {
-      manual.push(entry.name);
+    const manual: string[] = [];
+    let entries;
+    try {
+        entries = await readdir(skillsDir, { withFileTypes: true });
+    } catch (error) {
+        if (isMissingPathError(error)) return manual;
+        throw error;
     }
-  }
-  return manual.sort((a, b) => a.localeCompare(b));
+
+    for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        if (entry.name.startsWith('.')) continue;
+        if (lockedSlugs.has(entry.name)) continue;
+        if (await hasSkillMetadata(join(skillsDir, entry.name))) {
+            manual.push(entry.name);
+        }
+    }
+    return manual.sort((a, b) => a.localeCompare(b));
 }
 
 async function hasSkillMetadata(skillDir: string) {
-  const candidates = [
-    join(skillDir, "SKILL.md"),
-    join(skillDir, DOT_DIR, "origin.json"),
-  ];
-  for (const path of candidates) {
-    try {
-      await access(path);
-      return true;
-    } catch (error) {
-      if (!isMissingPathError(error)) throw error;
+    const candidates = [join(skillDir, 'SKILL.md'), join(skillDir, DOT_DIR, 'origin.json')];
+    for (const path of candidates) {
+        try {
+            await access(path);
+            return true;
+        } catch (error) {
+            if (!isMissingPathError(error)) throw error;
+        }
     }
-  }
-  return false;
+    return false;
 }
 
 function isMissingPathError(error: unknown) {
-  const code = (error as NodeJS.ErrnoException | undefined)?.code;
-  return code === "ENOENT" || code === "ENOTDIR";
+    const code = (error as NodeJS.ErrnoException | undefined)?.code;
+    return code === 'ENOENT' || code === 'ENOTDIR';
 }

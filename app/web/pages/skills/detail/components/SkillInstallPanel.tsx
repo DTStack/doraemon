@@ -274,10 +274,7 @@ export const SkillInstallPanel: React.FC<SkillInstallPanelProps> = ({
                         onClick={() => history.push(browseMarketPath)}
                     >
                         <span>浏览市场</span>
-                        <DetailIcon
-                            src={externalLinkXsIcon}
-                            className="is-browse-market-arrow"
-                        />
+                        <DetailIcon src={externalLinkXsIcon} className="is-browse-market-arrow" />
                     </button>
                 </>
             )}
