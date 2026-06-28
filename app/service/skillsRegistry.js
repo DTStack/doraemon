@@ -3,6 +3,7 @@ const AdmZip = require('adm-zip');
 const fs = require('fs');
 const ignore = require('ignore');
 const path = require('path');
+const skillUtils = require('../utils/skill-utils');
 const skillFingerprint = require('../../contracts/skill-fingerprint');
 
 const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?$/;
@@ -171,11 +172,11 @@ class SkillsRegistryService extends Service {
             },
             latestVersion: version
                 ? {
-                      version,
-                      createdAt: updatedAt,
-                      changelog: '',
-                      license: null,
-                  }
+                    version,
+                    createdAt: updatedAt,
+                    changelog: '',
+                    license: null,
+                }
                 : null,
             owner: null,
             moderation: null,
@@ -311,7 +312,9 @@ class SkillsRegistryService extends Service {
                 });
                 for (const file of childFiles) {
                     const content = file.content || '';
-                    const zipPath = path.posix.join(slug, childFolder, file.file_path);
+                    const safePath = skillUtils.normalizeRelativePath(file.file_path);
+                    if (!safePath) continue;
+                    const zipPath = path.posix.join(slug, childFolder, safePath);
                     if (file.is_binary === 1) {
                         zip.addFile(zipPath, Buffer.from(content, 'base64'));
                     } else {
@@ -325,10 +328,12 @@ class SkillsRegistryService extends Service {
             });
             for (const file of files) {
                 const content = file.content || '';
+                const safePath = skillUtils.normalizeRelativePath(file.file_path);
+                if (!safePath) continue;
                 if (file.is_binary === 1) {
-                    zip.addFile(file.file_path, Buffer.from(content, 'base64'));
+                    zip.addFile(safePath, Buffer.from(content, 'base64'));
                 } else {
-                    zip.addFile(file.file_path, Buffer.from(content, 'utf8'));
+                    zip.addFile(safePath, Buffer.from(content, 'utf8'));
                 }
             }
         }
@@ -360,27 +365,39 @@ class SkillsRegistryService extends Service {
 
         const parsedTags = Array.isArray(tags) ? tags : [];
 
-        // Read files content from disk and determine original filenames
+        // file.content 直接给（内存形态，测试/部分调用方）优先；否则读磁盘临时文件（真实 multipart）。
         const processedFiles = [];
         for (const file of files) {
-            const originalName = file.filename || path.basename(file.filepath);
+            const originalName = file.filename || path.basename(file.filepath || '');
+            const relPath = skillUtils.normalizeRelativePath(originalName);
+            if (!relPath) {
+                this.ctx.throw(400, `非法文件路径: ${originalName}`);
+            }
+
             let content = '';
             let isBinary = false;
-            try {
-                if (file.filepath && fs.existsSync(file.filepath)) {
+            if (file.content != null) {
+                content = String(file.content);
+                isBinary = this.isBinaryBuffer(Buffer.from(content, 'utf8'));
+            } else if (file.filepath && fs.existsSync(file.filepath)) {
+                try {
                     const buffer = fs.readFileSync(file.filepath);
                     isBinary = this.isBinaryBuffer(buffer);
-                    if (isBinary) {
-                        content = buffer.toString('base64');
-                    } else {
-                        content = buffer.toString('utf8');
-                    }
+                    content = isBinary ? buffer.toString('base64') : buffer.toString('utf8');
+                } catch (err) {
+                    this.ctx.logger.error(
+                        `[skillsRegistry] 读取上传文件 ${originalName} 失败:`,
+                        err
+                    );
+                    this.ctx.throw(400, `读取上传文件 ${originalName} 失败`);
                 }
-            } catch (err) {
-                this.ctx.logger.error(`[skillsRegistry] 读取上传文件 ${originalName} 失败:`, err);
+            } else {
+                // I1: 既无 content 也无可读磁盘文件，必须报错而非静默存空
+                this.ctx.throw(400, `上传文件不存在: ${originalName}`);
             }
             processedFiles.push({
                 filename: originalName,
+                relPath,
                 content,
                 isBinary,
             });
@@ -395,67 +412,79 @@ class SkillsRegistryService extends Service {
             this.ctx.throw(400, `上传内容必须包含 SKILL.md。已上传: ${uploadedNames}`);
         }
 
-        // Upsert skill
-        let skill = await SkillsItem.findOne({ where: { slug } });
-
-        // Create or update source record
-        let source = await SkillsSource.findOne({ where: { source_url: 'clawhub-publish' } });
-        if (!source) {
-            source = await SkillsSource.create({
-                source_url: 'clawhub-publish',
-                source_type: 'upload',
-                clone_url: 'clawhub-publish',
-                source_repo: 'clawhub-publish',
+        return await this.app.model.transaction(async (t) => {
+            const [source] = await SkillsSource.findOrCreate({
+                where: { source_url: 'clawhub-publish' },
+                defaults: {
+                    source_type: 'upload',
+                    clone_url: 'clawhub-publish',
+                    source_repo: 'clawhub-publish',
+                },
+                transaction: t,
             });
-        }
 
-        if (skill) {
-            await skill.update({
-                name: displayName,
-                description: payload.description || '',
-                version,
-                tags: JSON.stringify(parsedTags),
-                skill_md: skillMdFile.content || '',
-                is_delete: 0,
-                source_id: source.id,
-            });
-            // Delete old files
-            await SkillsFile.update({ is_delete: 1 }, { where: { skill_id: skill.id } });
-        } else {
-            skill = await SkillsItem.create({
-                source_id: source.id,
-                slug,
-                name: displayName,
-                description: payload.description || '',
-                version,
-                tags: JSON.stringify(parsedTags),
-                skill_md: skillMdFile.content || '',
-                category: '通用',
-                file_count: files.length,
-            });
-        }
+            let skill = await SkillsItem.findOne({ where: { slug }, transaction: t });
 
-        // Save files
-        for (const file of processedFiles) {
-            await SkillsFile.create({
-                skill_id: skill.id,
-                file_path: file.filename,
-                language: this.detectLanguage(file.filename),
-                size: Buffer.byteLength(file.content, file.isBinary ? 'base64' : 'utf8'),
-                is_binary: file.isBinary ? 1 : 0,
-                encoding: file.isBinary ? 'base64' : 'utf8',
-                content: file.content,
-            });
-        }
+            if (skill) {
+                await skill.update(
+                    {
+                        name: displayName,
+                        description: payload.description || '',
+                        version,
+                        tags: JSON.stringify(parsedTags),
+                        skill_md: skillMdFile.content || '',
+                        is_delete: 0,
+                        source_id: source.id,
+                    },
+                    { transaction: t }
+                );
+                // Delete old files
+                await SkillsFile.update(
+                    { is_delete: 1 },
+                    { where: { skill_id: skill.id }, transaction: t }
+                );
+            } else {
+                skill = await SkillsItem.create(
+                    {
+                        source_id: source.id,
+                        slug,
+                        name: displayName,
+                        description: payload.description || '',
+                        version,
+                        tags: JSON.stringify(parsedTags),
+                        skill_md: skillMdFile.content || '',
+                        category: '通用',
+                        file_count: files.length,
+                    },
+                    { transaction: t }
+                );
+            }
 
-        // Update file count
-        await skill.update({ file_count: files.length });
+            // Save files
+            for (const file of processedFiles) {
+                await SkillsFile.create(
+                    {
+                        skill_id: skill.id,
+                        file_path: file.relPath,
+                        language: this.detectLanguage(file.filename),
+                        size: Buffer.byteLength(file.content, file.isBinary ? 'base64' : 'utf8'),
+                        is_binary: file.isBinary ? 1 : 0,
+                        encoding: file.isBinary ? 'base64' : 'utf8',
+                        content: file.content,
+                    },
+                    { transaction: t }
+                );
+            }
 
-        return {
-            ok: true,
-            skillId: String(skill.id),
-            versionId: `v${version}`,
-        };
+            // Update file count
+            await skill.update({ file_count: files.length }, { transaction: t });
+
+            return {
+                ok: true,
+                skillId: String(skill.id),
+                versionId: `v${version}`,
+            };
+        });
     }
 
     // Compute SHA256 fingerprint for a skill

@@ -15,6 +15,7 @@ import relatedSkillDocsIcon from '@/asset/images/skills-detail-figma/related-ski
 import relatedSkillSecurityIcon from '@/asset/images/skills-detail-figma/related-skill-security.svg';
 import relatedSkillSqlIcon from '@/asset/images/skills-detail-figma/related-skill-sql.svg';
 import { copyToClipboard } from '@/utils/copyUtils';
+import { safeOpenUrl } from '@/utils/safeOpenUrl';
 import { SkillFileContent, SkillItem } from '../../types';
 import type { SkillDetailHistory } from '../utils/skillDetailUtils';
 import { formatFileSize } from '../utils/skillDetailUtils';
@@ -25,8 +26,6 @@ export type InstallPanelKey = 'agent' | 'human' | null;
 const relatedSkillIconUrls = [relatedSkillSqlIcon, relatedSkillSecurityIcon, relatedSkillDocsIcon];
 const relatedSkillShellClasses = ['is-blue', 'is-green', 'is-orange'];
 const browseMarketPath = '/page/skills';
-const cliInstallPlaceholderCommand =
-    '# 待补齐 Doraemon CLI 安装脚本 URL，例如 curl -fsSL <install.sh> | bash';
 
 interface SkillInstallPanelProps {
     slug: string;
@@ -187,11 +186,7 @@ export const SkillInstallPanel: React.FC<SkillInstallPanelProps> = ({
                     <div className="install-option-body-inner">
                         <div className="human-command-card">
                             <div className="human-command-title">先安装 Doraemon CLI</div>
-                            {renderInlineCommand(
-                                cliInstallPlaceholderCommand,
-                                'CLI 安装命令已复制到剪贴板',
-                                false
-                            )}
+                            {renderInlineCommand('', 'CLI 安装命令已复制到剪贴板', false)}
                         </div>
                         <div className="human-command-card">
                             <div className="human-command-title">再安装当前技能</div>
@@ -214,7 +209,7 @@ export const SkillInstallPanel: React.FC<SkillInstallPanelProps> = ({
                 type="default"
                 block
                 className="download-btn"
-                onClick={() => window.open(manualDownloadUrl, '_blank')}
+                onClick={() => safeOpenUrl(manualDownloadUrl)}
             >
                 <DetailIcon src={downloadIcon} className="is-download" />
                 下载 .zip

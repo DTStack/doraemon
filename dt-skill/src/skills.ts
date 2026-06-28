@@ -19,6 +19,11 @@ import {
 const DOT_DIR = '.dt-skill';
 const DOT_IGNORE = '.dt-skillignore';
 
+// I8: 解压上限，防 zip bomb（条目数 / 单文件 / 总量）
+const MAX_ZIP_ENTRIES = 5000;
+const MAX_ZIP_ENTRY_BYTES = 50 * 1024 * 1024;
+const MAX_ZIP_TOTAL_BYTES = 200 * 1024 * 1024;
+
 export type SkillOrigin = {
     version: 1;
     registry: string;
@@ -31,9 +36,21 @@ export type SkillOrigin = {
 export async function extractZipToDir(zipBytes: Uint8Array, targetDir: string) {
     const entries = unzipSync(zipBytes);
     await mkdir(targetDir, { recursive: true });
-    for (const [rawPath, data] of Object.entries(entries)) {
+    const entryList = Object.entries(entries);
+    if (entryList.length > MAX_ZIP_ENTRIES) {
+        throw new Error(`zip 条目过多 (${entryList.length} > ${MAX_ZIP_ENTRIES})`);
+    }
+    let total = 0;
+    for (const [rawPath, data] of entryList) {
         const safePath = sanitizeRelPath(rawPath);
         if (!safePath) continue;
+        if (data.byteLength > MAX_ZIP_ENTRY_BYTES) {
+            throw new Error(`zip 单文件过大: ${safePath} (${data.byteLength} bytes)`);
+        }
+        total += data.byteLength;
+        if (total > MAX_ZIP_TOTAL_BYTES) {
+            throw new Error(`zip 解压总量超限 (> ${MAX_ZIP_TOTAL_BYTES} bytes)`);
+        }
         const outPath = join(targetDir, safePath);
         await mkdir(dirname(outPath), { recursive: true });
         await writeFile(outPath, data);

@@ -36,6 +36,28 @@ describe('skills', () => {
         await expect(stat(join(parent, evilName))).rejects.toBeTruthy();
     });
 
+    it('rejects zip bombs that exceed the entry-count limit', async () => {
+        const dir = await mkdtemp(join(tmpdir(), 'dt-skill-bomb-'));
+        const files: Record<string, Uint8Array> = {};
+        for (let i = 0; i < 5001; i++) files[`f${i}.txt`] = strToU8('x');
+        const zip = zipSync(files);
+        await expect(extractZipToDir(new Uint8Array(zip), dir)).rejects.toThrow(/条目过多/);
+    });
+
+    it('rejects zip bombs that exceed the total-bytes limit', async () => {
+        const dir = await mkdtemp(join(tmpdir(), 'dt-skill-bomb-total-'));
+        // ponytail: 5 × 50MB 条目，第二条即触发总量上限
+        const big = strToU8('x'.repeat(50 * 1024 * 1024));
+        const zip = zipSync({
+            'a.bin': big,
+            'b.bin': big,
+            'c.bin': big,
+            'd.bin': big,
+            'e.bin': big,
+        });
+        await expect(extractZipToDir(new Uint8Array(zip), dir)).rejects.toThrow(/总量超限/);
+    });
+
     it('writes and reads lockfile', async () => {
         const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-work-'));
         await writeLockfile(workdir, {

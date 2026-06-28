@@ -595,6 +595,8 @@ export async function cmdUpdate(
             }
 
             lock.skills[entry] = withPinnedMetadata(targetVersion, Date.now(), lock.skills[entry]);
+            // 每条成功更新后即持久化 lockfile，崩溃不再让磁盘与锁漂移
+            await writeLockfile(installWorkdir, lock);
             const agentSuffix3 = installAgent
                 ? ` (${getAgentLabel(installAgent as import('../agents.js').AgentName)})`
                 : '';

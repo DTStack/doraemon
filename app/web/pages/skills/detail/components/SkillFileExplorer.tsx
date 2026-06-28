@@ -34,7 +34,6 @@ export const SkillFileExplorer: React.FC<SkillFileExplorerProps> = ({
     isInstallable,
     skillInstallCommand,
     downloadCommand,
-    sourceUrl,
     onFocusInstallPanel,
 }) => {
     const handleBack = () => {
@@ -120,12 +119,9 @@ export const SkillFileExplorer: React.FC<SkillFileExplorerProps> = ({
                 <button
                     type="button"
                     className="sidebar-help-btn"
-                    onClick={() =>
-                        window.open(
-                            sourceUrl || 'https://github.com/JackWang032/doraemon-proxy-tool',
-                            '_blank'
-                        )
-                    }
+                    onClick={() => {
+                        // 帮助跳转逻辑待补齐，暂置空
+                    }}
                 >
                     <QuestionCircleOutlined />
                     <span>帮助</span>

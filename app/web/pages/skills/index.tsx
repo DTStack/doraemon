@@ -112,7 +112,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
 
     const copyToClipboard = (text: string): boolean => {
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(text).catch(() => {});
+            navigator.clipboard.writeText(text).catch(() => { });
             return true;
         }
         const textarea = document.createElement('textarea');
@@ -126,7 +126,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
         let success = false;
         try {
             success = document.execCommand('copy');
-        } catch {}
+        } catch { }
         document.body.removeChild(textarea);
         return success;
     };
@@ -204,8 +204,10 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
             }
 
             const importedCount = Number(response.data?.importedCount || 0);
-            if (importedCount > 0) {
-                message.success(`导入成功，新增 ${importedCount} 个技能`);
+            if (importedCount > 1) {
+                message.success(`已导入技能包（含 ${importedCount - 1} 个子技能）`);
+            } else if (importedCount === 1) {
+                message.success('导入成功，新增 1 个技能');
             } else {
                 message.success('导入完成，技能可能已存在');
             }
@@ -409,7 +411,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     <Form.Item
                         name="skillName"
                         label="技能名称（可选）"
-                        extra="填写后将作为该技能卡片的唯一名称；留空则使用压缩包中的默认名称"
+                        extra="填写后该名称将套用到压缩包内的单个技能；上传多技能包时务必留空，否则校验失败"
                         rules={[
                             {
                                 max: 255,

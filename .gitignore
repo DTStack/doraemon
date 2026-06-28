@@ -27,3 +27,6 @@ Thumbs.db
 .vscode/
 .idea/
 
+
+# lavish review artifacts
+.lavish/

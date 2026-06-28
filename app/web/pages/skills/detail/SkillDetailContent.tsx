@@ -94,9 +94,10 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
         setFileLoading(true);
     };
 
-    const fetchLikeStatus = async () => {
+    const fetchLikeStatus = async (isCancelled?: () => boolean) => {
         try {
             const res = await API.getSkillLikeStatus({ slug });
+            if (isCancelled?.()) return;
             if (res.success) {
                 setLikeStatus({
                     liked: res.data.liked,
@@ -195,7 +196,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
         };
 
         loadDetail();
-        fetchLikeStatus();
+        fetchLikeStatus(() => cancelled);
 
         return () => {
             cancelled = true;

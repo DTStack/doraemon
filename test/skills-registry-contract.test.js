@@ -7,7 +7,12 @@ const goldenVectors = require('../contracts/skill-fingerprint/golden-vectors.v1.
 // Mock app and ctx helpers
 function createMockApp(models = {}) {
     return {
-        model: models,
+        model: Object.assign(
+            {
+                transaction: async (cb) => cb({}),
+            },
+            models
+        ),
         Sequelize: {
             Op: {
                 like: 'like',
@@ -35,8 +40,8 @@ function createMockCtx(query = {}, params = {}, body = {}, files = []) {
             err.status = status;
             throw err;
         },
-        logger: { warn: () => {}, info: () => {} },
-        set: () => {},
+        logger: { warn: () => { }, info: () => { } },
+        set: () => { },
         status: 200,
         body: null,
     };
@@ -569,7 +574,11 @@ test('publishSkill rejects missing SKILL.md', async () => {
     const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
         SkillsItem: { findOne: async () => null },
-        SkillsSource: { findOne: async () => null, create: async () => ({ id: 1 }) },
+        SkillsSource: {
+            findOne: async () => null,
+            create: async () => ({ id: 1 }),
+            findOrCreate: async () => [{ id: 1 }],
+        },
     });
     service.ctx = createMockCtx();
     service.ctx.throw = (status, message) => {
@@ -592,10 +601,11 @@ test('publishSkill returns ok: true and string skillId and versionId', async () 
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => null,
-            create: async (data) => ({ id: 123, ...data, update: async () => {} }),
+            create: async (data) => ({ id: 123, ...data, update: async () => { } }),
         },
         SkillsSource: {
             findOne: async () => ({ id: 1 }),
+            findOrCreate: async () => [{ id: 1 }],
         },
         SkillsFile: {
             create: async () => ({}),

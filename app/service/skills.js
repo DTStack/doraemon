@@ -9,6 +9,7 @@ const {
     resolveSkillIdentifier,
     createUniqueSkillNames,
 } = require('../utils/skill-install-key');
+const { normalizeRelativePath: normalizeRelativeFilePath } = require('../utils/skill-utils');
 const GitHubStarsClient = require('../utils/github-stars');
 const CommandRunner = require('../utils/command-runner');
 
@@ -582,14 +583,8 @@ class SkillsService extends Service {
     }
 
     normalizeRelativePath(filePath) {
-        const value = String(filePath || '').trim();
-        if (!value) {
-            this.ctx.throw(400, '缺少文件路径');
-        }
-
-        const normalized = path.normalize(value).replace(/\\/g, '/').replace(/^\/+/, '');
-
-        if (!normalized || normalized === '.' || normalized.startsWith('..')) {
+        const normalized = normalizeRelativeFilePath(filePath);
+        if (!normalized) {
             this.ctx.throw(400, '非法文件路径');
         }
 
