@@ -172,11 +172,11 @@ class SkillsRegistryService extends Service {
             },
             latestVersion: version
                 ? {
-                    version,
-                    createdAt: updatedAt,
-                    changelog: '',
-                    license: null,
-                }
+                      version,
+                      createdAt: updatedAt,
+                      changelog: '',
+                      license: null,
+                  }
                 : null,
             owner: null,
             moderation: null,

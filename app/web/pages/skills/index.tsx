@@ -112,7 +112,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
 
     const copyToClipboard = (text: string): boolean => {
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(text).catch(() => { });
+            navigator.clipboard.writeText(text).catch(() => {});
             return true;
         }
         const textarea = document.createElement('textarea');
@@ -126,7 +126,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
         let success = false;
         try {
             success = document.execCommand('copy');
-        } catch { }
+        } catch {}
         document.body.removeChild(textarea);
         return success;
     };

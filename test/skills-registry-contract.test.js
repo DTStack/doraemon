@@ -40,8 +40,8 @@ function createMockCtx(query = {}, params = {}, body = {}, files = []) {
             err.status = status;
             throw err;
         },
-        logger: { warn: () => { }, info: () => { } },
-        set: () => { },
+        logger: { warn: () => {}, info: () => {} },
+        set: () => {},
         status: 200,
         body: null,
     };
@@ -601,7 +601,7 @@ test('publishSkill returns ok: true and string skillId and versionId', async () 
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => null,
-            create: async (data) => ({ id: 123, ...data, update: async () => { } }),
+            create: async (data) => ({ id: 123, ...data, update: async () => {} }),
         },
         SkillsSource: {
             findOne: async () => ({ id: 1 }),
