@@ -9,6 +9,7 @@ import {
     makeGlobalOpts,
 } from '../../../test/cliCommandTestKit.js';
 import * as skillStore from '../../skills.js';
+import * as lockStore from '../../lockfile.js';
 
 const fsMocks = vi.hoisted(() => ({
     mkdir: vi.fn(),
@@ -37,7 +38,6 @@ const mockDownloadZip = httpMocks.downloadZip;
 const mockSpinner = uiMocks.spinner;
 const mockIsInteractive = vi.fn(() => false);
 const mockPromptConfirm = vi.fn(async () => false);
-const mockSelectAgent = vi.fn(async () => null);
 const mockSelectScope = vi.fn(async () => false);
 const mockSelectAgentsInteractive = vi.fn(async (): Promise<string[]> => []);
 const mockSelectInstallMethod = vi.fn(async () => 'symlink' as const);
@@ -55,7 +55,6 @@ vi.mock('../ui.js', () => ({
     formatError: (error: unknown) => (error instanceof Error ? error.message : String(error)),
     isInteractive: mockIsInteractive,
     promptConfirm: mockPromptConfirm,
-    selectAgent: mockSelectAgent,
     selectScope: mockSelectScope,
     selectAgentsInteractive: mockSelectAgentsInteractive,
     selectInstallMethod: mockSelectInstallMethod,
@@ -75,9 +74,9 @@ vi.mock('../prompts/search-multiselect.js', async () => {
 const extractZipToDirMock = vi.spyOn(skillStore, 'extractZipToDir');
 const hashSkillFilesMock = vi.spyOn(skillStore, 'hashSkillFiles');
 const listTextFilesMock = vi.spyOn(skillStore, 'listTextFiles');
-const readLockfileMock = vi.spyOn(skillStore, 'readLockfile');
+const readLockfileMock = vi.spyOn(lockStore, 'readLockfile');
 const readSkillOriginMock = vi.spyOn(skillStore, 'readSkillOrigin');
-const writeLockfileMock = vi.spyOn(skillStore, 'writeLockfile');
+const writeLockfileMock = vi.spyOn(lockStore, 'writeLockfile');
 const writeSkillOriginMock = vi.spyOn(skillStore, 'writeSkillOrigin');
 
 const mkdirMock = fsMocks.mkdir;

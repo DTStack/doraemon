@@ -1,6 +1,4 @@
 // Agent logic + compatibility helpers. Configuration lives in ./agents/definitions.ts.
-import { existsSync } from 'node:fs';
-
 import {
     AGENT_DEFINITIONS,
     AGENT_NAMES,
@@ -62,5 +60,3 @@ export const AGENTS = AGENT_DEFINITIONS;
 export function supportsGlobalInstall(agentName: AgentName): boolean {
     return AGENT_DEFINITIONS[agentName]?.globalSkillsDir !== undefined;
 }
-
-export { existsSync };

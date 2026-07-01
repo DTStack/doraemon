@@ -1,10 +1,10 @@
 // Physical installer: canonical .agents/skills extraction + cross-platform
 // symlinks (junctions on Windows) with copy fallback. Ported from
 // vercel-labs/skills src/installer.ts, trimmed to dt-skill's zip-based flow.
-import { cp, lstat, mkdir, readdir, readlink, realpath, rm, stat, symlink } from 'node:fs/promises';
+import { cp, mkdir, readdir, rm, stat, symlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { homedir, platform } from 'node:os';
-import { basename, dirname, join, normalize, relative, resolve, sep } from 'node:path';
+import { dirname, join, normalize, relative, resolve, sep } from 'node:path';
 
 import { AGENT_DEFINITIONS, isUniversalAgent, type AgentType } from './agents/definitions.js';
 
@@ -93,60 +93,21 @@ async function cleanAndCreateDirectory(path: string): Promise<void> {
     await mkdir(path, { recursive: true });
 }
 
-/** Resolve a path's parent through symlinks, keeping the final component. */
-async function resolveParentSymlinks(path: string): Promise<string> {
-    const resolved = resolve(path);
-    const dir = dirname(resolved);
-    const base = basename(resolved);
-    try {
-        const realDir = await realpath(dir);
-        return join(realDir, base);
-    } catch {
-        return resolved;
-    }
-}
-
 /**
  * Create a symlink. Windows uses absolute junctions (no Developer Mode needed);
  * Unix uses relative symlinks. Returns false on failure so callers can copy.
  */
 export async function createSymlink(target: string, linkPath: string): Promise<boolean> {
     try {
-        const resolvedTarget = resolve(target);
-        const resolvedLinkPath = resolve(linkPath);
-
-        const [realTarget, realLinkPath] = await Promise.all([
-            realpath(resolvedTarget).catch(() => resolvedTarget),
-            realpath(resolvedLinkPath).catch(() => resolvedLinkPath),
-        ]);
-        if (realTarget === realLinkPath) return true;
-
-        const realTargetWithParents = await resolveParentSymlinks(target);
-        const realLinkPathWithParents = await resolveParentSymlinks(linkPath);
-        if (realTargetWithParents === realLinkPathWithParents) return true;
-
-        try {
-            const stats = await lstat(linkPath);
-            if (stats.isSymbolicLink()) {
-                const existingTarget = await readlink(linkPath);
-                if (resolve(dirname(linkPath), existingTarget) === resolvedTarget) return true;
-                await rm(linkPath);
-            } else {
-                await rm(linkPath, { recursive: true });
-            }
-        } catch (err: unknown) {
-            if (err && typeof err === 'object' && 'code' in err && err.code === 'ELOOP') {
-                await rm(linkPath, { force: true }).catch(() => {});
-            }
-            // ENOENT or other — fall through to symlink creation.
-        }
-
+        // ponytail: linkPath points into a freshly-created canonical tree, so
+        // parent dirs are never pre-existing symlinks — no realpath/ELOOP guards
+        // needed. rm(force) is a no-op when nothing exists yet.
+        await rm(linkPath, { recursive: true, force: true });
         const linkDir = dirname(linkPath);
         await mkdir(linkDir, { recursive: true });
-        const realLinkDir = await resolveParentSymlinks(linkDir);
-        const relativePath = relative(realLinkDir, target);
         const symlinkType = platform() === 'win32' ? 'junction' : undefined;
-        const symlinkTarget = symlinkType === 'junction' ? resolvedTarget : relativePath;
+        // Relative on Unix so the project tree stays movable; junction needs absolute.
+        const symlinkTarget = symlinkType === 'junction' ? resolve(target) : relative(linkDir, target);
         await symlink(symlinkTarget, linkPath, symlinkType);
         return true;
     } catch {

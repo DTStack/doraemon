@@ -4,7 +4,6 @@ import mime from 'mime';
 import { access, mkdir, open, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 
-import { type Lockfile, LockfileSchema, parseArk } from './schema/index.js';
 import {
     buildSkillFingerprint,
     getFileExtension,
@@ -124,23 +123,6 @@ export function hashSkillZip(zipBytes: Uint8Array) {
         .filter(Boolean) as SkillFileHash[];
 
     return { files: hashed, fingerprint: buildSkillFingerprint(hashed) };
-}
-
-export async function readLockfile(workdir: string): Promise<Lockfile> {
-    const path = join(workdir, DOT_DIR, 'lock.json');
-    try {
-        const raw = await readFile(path, 'utf8');
-        const parsed = JSON.parse(raw) as unknown;
-        return parseArk(LockfileSchema, parsed, 'Lockfile');
-    } catch {
-        return { version: 1, skills: {} };
-    }
-}
-
-export async function writeLockfile(workdir: string, lock: Lockfile) {
-    const path = join(workdir, DOT_DIR, 'lock.json');
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, `${JSON.stringify(lock, null, 2)}\n`, 'utf8');
 }
 
 export async function readSkillOrigin(skillFolder: string): Promise<SkillOrigin | null> {

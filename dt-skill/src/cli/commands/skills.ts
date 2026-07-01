@@ -21,19 +21,24 @@ import {
     hashSkillFiles,
     listManualSkills,
     listTextFiles,
-    readLockfile,
     readSkillOrigin,
-    writeLockfile,
     writeSkillOrigin,
 } from '../../skills.js';
-import { AGENT_DEFINITIONS, getAgentLabel, getUniversalAgents, type AgentType } from '../agents.js';
+import {
+    formatPinnedDetails,
+    isPinned as isPinnedSkillEntry,
+    readLockfile,
+    withPinnedMetadata,
+    writeLockfile,
+} from '../../lockfile.js';
+import { AGENT_DEFINITIONS, detectInstalledAgents, getAgentLabel, getUniversalAgents, type AgentType } from '../agents.js';
 import {
     getCanonicalPath,
     getCanonicalSkillsDir,
     getCanonicalWorkdir,
-    linkOrCopyToAgent,
     type InstallMode,
 } from '../installer.js';
+import { installExtractedSkill, type InstallTargets } from '../installerPipeline.js';
 import { cancelSymbol, searchMultiselect } from '../prompts/search-multiselect.js';
 import { getRegistry } from '../registry.js';
 import type { GlobalOpts, ResolveResult } from '../types.js';
@@ -65,25 +70,49 @@ function isSafeSkillSlug(slug: string) {
     return Boolean(slug) && !slug.includes('/') && !slug.includes('\\') && !slug.includes('..');
 }
 
-function isPinnedSkillEntry(entry?: { pinned?: boolean | null }) {
-    return entry?.pinned === true;
+const SUSPICIOUS_WARNING =
+    '\n⚠️  Warning: "{slug}" is flagged for ClawHub security review.\n' +
+    '   This skill may contain risky patterns (crypto keys, external APIs, eval, etc.)\n' +
+    '   Review the skill code before use.\n';
+
+/**
+ * Moderation suspicious-prompt decision tree. Shared by the resolved-skill,
+ * one-skill, and update paths so the suspicious branching lives in one place.
+ * Malware-block is checked separately by callers (it must run at different
+ * points in each flow). Returns true to proceed, throws via fail() to abort.
+ */
+async function checkSuspiciousModeration(
+    moderation: { isSuspicious?: boolean } | null | undefined,
+    slug: string,
+    force: boolean,
+    allowPrompt: boolean,
+    onConfirm: () => void
+): Promise<void> {
+    if (moderation?.isSuspicious && !force) {
+        console.log(SUSPICIOUS_WARNING.replace('{slug}', slug));
+        if (!allowPrompt) {
+            fail('Use --force to install suspicious skills in non-interactive mode');
+        }
+        const confirm = await promptConfirm('Install anyway?');
+        if (!confirm) fail('Installation cancelled');
+        onConfirm();
+    }
 }
 
-function withPinnedMetadata(
-    version: string | null,
-    installedAt: number,
-    existing?: { pinned?: boolean; pinReason?: string }
-) {
-    return {
-        version,
-        installedAt,
-        ...(existing?.pinned ? { pinned: true } : {}),
-        ...(existing?.pinned && existing.pinReason ? { pinReason: existing.pinReason } : {}),
-    };
-}
-
-function formatPinnedDetails(entry?: { pinReason?: string }) {
-    return entry?.pinReason ? ` (${entry.pinReason})` : '';
+/** Verify an explicit version exists before any destructive rm. */
+async function verifyVersion(
+    registry: string,
+    slug: string,
+    version: string
+): Promise<void> {
+    await apiRequest(
+        registry,
+        {
+            method: 'GET',
+            path: `${ApiRoutes.skills}/${encodeURIComponent(slug)}/versions/${encodeURIComponent(version)}`,
+        },
+        ApiV1SkillVersionResponseSchema
+    );
 }
 
 function formatSearchOwner(entry: {
@@ -109,12 +138,6 @@ function ensureUniversalAgents(agents: AgentType[]): AgentType[] {
     return result;
 }
 
-export interface InstallTargets {
-    agents: AgentType[];
-    global: boolean;
-    mode: InstallMode;
-}
-
 /**
  * Resolve install targets (agents, scope, mode). Interactive TUI when possible,
  * otherwise driven by --yes/--agent/--global/--copy flags. Returns null if the
@@ -129,14 +152,7 @@ async function resolveInstallTargets(opts: GlobalOpts): Promise<InstallTargets |
         if (explicitAgents && explicitAgents.length > 0) {
             agents = ensureUniversalAgents(explicitAgents);
         } else {
-            const detected = await Promise.resolve(
-                // detect synchronously via definitions; wrap for future async
-                Promise.resolve(
-                    (Object.keys(AGENT_DEFINITIONS) as AgentType[]).filter((a) =>
-                        AGENT_DEFINITIONS[a].detectInstalled()
-                    )
-                )
-            );
+            const detected = detectInstalledAgents();
             agents = ensureUniversalAgents(detected.length > 0 ? detected : getUniversalAgents());
         }
         const global = opts.globalScope ?? false;
@@ -289,20 +305,20 @@ export async function cmdInstall(
 
         // Resolve the flat list of skills to install (expand packages up front).
         const skillsToInstall: ResolvedSkill[] = [];
-        if (skillMeta.skill && (skillMeta.skill as any).isPackage) {
+        if (skillMeta.skill && skillMeta.skill.isPackage) {
             spinner.stop();
-            const children = (skillMeta.skill as any).children || [];
+            const children = skillMeta.skill.children ?? [];
             if (children.length === 0) {
                 fail(`Skill package "${slug}" has no children skills.`);
             }
-            const items = children.map((c: any) => ({
+            const items = children.map((c) => ({
                 value: c.slug,
                 label: c.displayName || c.slug,
                 hint: c.summary || undefined,
             }));
             let selectedSlugs: string[] | symbol;
             if (opts.yes) {
-                selectedSlugs = children.map((c: any) => c.slug);
+                selectedSlugs = children.map((c) => c.slug);
             } else {
                 selectedSlugs = await searchMultiselect({
                     message: `Select skills from package "${slug}" to install:`,
@@ -319,7 +335,7 @@ export async function cmdInstall(
                 return;
             }
             for (const subSlug of selectedSlugs) {
-                const subSkill = children.find((c: any) => c.slug === subSlug);
+                const subSkill = children.find((c) => c.slug === subSlug);
                 const subVersion = String(subSkill?.version || '') || 'latest';
                 skillsToInstall.push({
                     slug: subSlug,
@@ -433,7 +449,7 @@ function buildSummaryLines(skills: ResolvedSkill[], targets: InstallTargets, bas
     return lines;
 }
 
-/** Install one already-resolved skill: pinned check, moderation, version check, extract, link, lock. */
+/** Install one already-resolved skill: pinned check, moderation, version check, then extract+link+lock. */
 async function installResolvedSkill(
     skill: ResolvedSkill,
     force: boolean,
@@ -454,82 +470,38 @@ async function installResolvedSkill(
 
     const spinner = createSpinner(`Installing ${slug}@${version}`);
     try {
-        if (meta?.moderation?.isSuspicious && !force) {
-            spinner.stop();
-            console.log(
-                `\n⚠️  Warning: "${slug}" is flagged for ClawHub security review.\n` +
-                    '   This skill may contain risky patterns (crypto keys, external APIs, eval, etc.)\n' +
-                    '   Review the skill code before use.\n'
-            );
-            if (isInteractive()) {
-                const confirm = await promptConfirm('Install anyway?');
-                if (!confirm) fail('Installation cancelled');
-                spinner.start(`Installing ${slug}@${version}`);
-            } else {
-                fail('Use --force to install suspicious skills in non-interactive mode');
-            }
-        }
+        await checkSuspiciousModeration(meta?.moderation, slug, force, isInteractive(), () =>
+            spinner.start(`Installing ${slug}@${version}`)
+        );
 
         if (explicitVersion && explicitVersion === version) {
-            await apiRequest(
-                registry,
-                {
-                    method: 'GET',
-                    path: `${ApiRoutes.skills}/${encodeURIComponent(slug)}/versions/${encodeURIComponent(version)}`,
-                },
-                ApiV1SkillVersionResponseSchema
-            );
+            await verifyVersion(registry, slug, version);
         }
 
         if (!force) {
             const exists = await fileExists(canonicalDir);
             if (exists) fail(`Already installed: ${canonicalDir} (use --force)`);
         }
-
         if (force) {
             await rm(canonicalDir, { recursive: true, force: true });
         }
 
-        spinner.text = `Downloading ${slug}@${version}`;
-        const zip = await downloadZip(registry, { slug, version });
-        await extractZipToDir(zip, canonicalDir);
-        const installedFiles = await listTextFiles(canonicalDir);
-        const installedFingerprint =
-            installedFiles.length > 0 ? hashSkillFiles(installedFiles).fingerprint : undefined;
-
-        await writeSkillOrigin(canonicalDir, {
-            version: 1,
-            registry,
+        await installExtractedSkill({
             slug,
-            installedVersion: version,
-            installedAt: Date.now(),
-            fingerprint: installedFingerprint,
-        });
-
-        await linkToAgents(slug, canonicalDir, targets, base);
-
-        lock.skills[slug] = withPinnedMetadata(version, Date.now(), existingEntry);
-        await writeLockfile(canonicalWorkdir, lock);
+            version,
+            canonicalDir,
+            canonicalWorkdir,
+            targets,
+            registry,
+            base,
+            lock,
+            existingEntry,
+            spinner,
+        }, { downloadZip });
         spinner.succeed(`OK. Installed ${slug} -> ${canonicalDir}`);
     } catch (error) {
         spinner.fail(formatError(error));
         throw error;
-    }
-}
-
-/** Symlink/copy an already-extracted canonical skill dir into every target agent. */
-async function linkToAgents(
-    slug: string,
-    canonicalDir: string,
-    targets: InstallTargets,
-    base: string
-) {
-    for (const agent of targets.agents) {
-        await linkOrCopyToAgent(slug, canonicalDir, agent, {
-            global: targets.global,
-            cwd: base,
-            mode: targets.mode,
-        });
     }
 }
 
@@ -568,14 +540,14 @@ async function installOneSkill(
         }
 
         // Package: prompt sub-skills, then install each to canonical + link.
-        if (skillMeta.skill && (skillMeta.skill as any).isPackage) {
+        if (skillMeta.skill && skillMeta.skill.isPackage) {
             spinner.stop();
-            const children = (skillMeta.skill as any).children || [];
+            const children = skillMeta.skill.children ?? [];
             if (children.length === 0) {
                 fail(`Skill package "${trimmed}" has no children skills.`);
             }
 
-            const items = children.map((c: any) => ({
+            const items = children.map((c) => ({
                 value: c.slug,
                 label: c.displayName || c.slug,
                 hint: c.summary || undefined,
@@ -583,7 +555,7 @@ async function installOneSkill(
 
             let selectedSlugs: string[] | symbol;
             if (opts.yes) {
-                selectedSlugs = children.map((c: any) => c.slug);
+                selectedSlugs = children.map((c) => c.slug);
             } else {
                 selectedSlugs = await searchMultiselect({
                     message: `Select skills from package "${trimmed}" to install:`,
@@ -623,7 +595,7 @@ async function installOneSkill(
             }
 
             for (const subSlug of selectedSlugs) {
-                const subSkill = children.find((c: any) => c.slug === subSlug);
+                const subSkill = children.find((c) => c.slug === subSlug);
                 const subVersion = String(subSkill?.version || '') || 'latest';
                 const subCanonical = join(canonicalSkillsDir, subSlug);
 
@@ -639,36 +611,20 @@ async function installOneSkill(
                     await rm(subCanonical, { recursive: true, force: true });
                 }
 
-                const subSpinner = createSpinner(`Downloading sub-skill ${subSlug}@${subVersion}`);
+                const subSpinner = createSpinner(`Installing sub-skill ${subSlug}@${subVersion}`);
                 try {
-                    const zip = await downloadZip(registry, {
+                    await installExtractedSkill({
                         slug: subSlug,
                         version: subVersion,
-                    });
-                    await extractZipToDir(zip, subCanonical);
-                    const installedFiles = await listTextFiles(subCanonical);
-                    const installedFingerprint =
-                        installedFiles.length > 0
-                            ? hashSkillFiles(installedFiles).fingerprint
-                            : undefined;
-
-                    await writeSkillOrigin(subCanonical, {
-                        version: 1,
+                        canonicalDir: subCanonical,
+                        canonicalWorkdir,
+                        targets,
                         registry,
-                        slug: subSlug,
-                        installedVersion: subVersion,
-                        installedAt: Date.now(),
-                        fingerprint: installedFingerprint,
-                    });
-
-                    await linkToAgents(subSlug, subCanonical, targets, base);
-
-                    lock.skills[subSlug] = withPinnedMetadata(
-                        subVersion,
-                        Date.now(),
-                        lock.skills[subSlug]
-                    );
-                    await writeLockfile(canonicalWorkdir, lock);
+                        base,
+                        lock,
+                        existingEntry: lock.skills[subSlug],
+                        spinner: subSpinner,
+                    }, { downloadZip });
                     subSpinner.succeed(`OK. Installed sub-skill ${subSlug} -> ${subCanonical}`);
                 } catch (err) {
                     subSpinner.fail(`Failed to install sub-skill ${subSlug}: ${formatError(err)}`);
@@ -683,64 +639,32 @@ async function installOneSkill(
             if (exists) fail(`Already installed: ${canonicalDir} (use --force)`);
         }
 
-        if (skillMeta.moderation?.isSuspicious && !force) {
-            spinner.stop();
-            console.log(
-                `\n⚠️  Warning: "${trimmed}" is flagged for ClawHub security review.\n` +
-                    '   This skill may contain risky patterns (crypto keys, external APIs, eval, etc.)\n' +
-                    '   Review the skill code before use.\n'
-            );
-            if (isInteractive()) {
-                const confirm = await promptConfirm('Install anyway?');
-                if (!confirm) fail('Installation cancelled');
-                spinner.start(`Resolving ${trimmed}`);
-            } else {
-                fail('Use --force to install suspicious skills in non-interactive mode');
-            }
-        }
+        await checkSuspiciousModeration(skillMeta.moderation, trimmed, force, isInteractive(), () =>
+            spinner.start(`Resolving ${trimmed}`)
+        );
 
         const resolvedVersion = versionFlag ?? skillMeta.latestVersion?.version ?? 'latest';
 
         if (versionFlag) {
-            await apiRequest(
-                registry,
-                {
-                    method: 'GET',
-                    path: `${ApiRoutes.skills}/${encodeURIComponent(
-                        trimmed
-                    )}/versions/${encodeURIComponent(resolvedVersion)}`,
-                },
-                ApiV1SkillVersionResponseSchema
-            );
+            await verifyVersion(registry, trimmed, resolvedVersion);
         }
 
         if (force) {
             await rm(canonicalDir, { recursive: true, force: true });
         }
 
-        spinner.text = `Downloading ${trimmed}@${resolvedVersion}`;
-        const zip = await downloadZip(registry, {
+        await installExtractedSkill({
             slug: trimmed,
             version: resolvedVersion,
-        });
-        await extractZipToDir(zip, canonicalDir);
-        const installedFiles = await listTextFiles(canonicalDir);
-        const installedFingerprint =
-            installedFiles.length > 0 ? hashSkillFiles(installedFiles).fingerprint : undefined;
-
-        await writeSkillOrigin(canonicalDir, {
-            version: 1,
+            canonicalDir,
+            canonicalWorkdir,
+            targets,
             registry,
-            slug: trimmed,
-            installedVersion: resolvedVersion,
-            installedAt: Date.now(),
-            fingerprint: installedFingerprint,
-        });
-
-        await linkToAgents(trimmed, canonicalDir, targets, base);
-
-        lock.skills[trimmed] = withPinnedMetadata(resolvedVersion, Date.now(), existingEntry);
-        await writeLockfile(canonicalWorkdir, lock);
+            base,
+            lock,
+            existingEntry,
+            spinner,
+        }, { downloadZip });
         spinner.succeed(`OK. Installed ${trimmed} -> ${canonicalDir}`);
     } catch (error) {
         spinner.fail(formatError(error));
@@ -1001,9 +925,8 @@ export async function cmdList(opts: GlobalOpts) {
         return;
     }
     for (const [slug, entry] of entries) {
-        const e = entry as { version?: string | null; pinned?: boolean; pinReason?: string };
-        const pinned = isPinnedSkillEntry(e) ? `  pinned${formatPinnedDetails(e)}` : '';
-        console.log(`${slug}  ${e.version ?? 'latest'}${pinned}`);
+        const pinned = isPinnedSkillEntry(entry) ? `  pinned${formatPinnedDetails(entry)}` : '';
+        console.log(`${slug}  ${entry.version ?? 'latest'}${pinned}`);
     }
     if (manualSkills.length > 0) {
         if (entries.length > 0) console.log();

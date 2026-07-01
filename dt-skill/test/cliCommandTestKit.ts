@@ -95,7 +95,6 @@ export function createUiModuleMocks(options?: { interactive?: boolean }) {
             selectInstallMethod: vi.fn(async () => 'symlink' as const),
             noteSummary: vi.fn(),
             isCancelledValue: (value: unknown) => typeof value === 'symbol',
-            selectAgent: vi.fn(async () => null),
         }),
     };
 }

@@ -13,10 +13,8 @@ import {
     hashSkillZip,
     listManualSkills,
     listTextFiles,
-    readLockfile,
     readSkillOrigin,
     sha256Hex,
-    writeLockfile,
     writeSkillOrigin,
 } from './skills';
 
@@ -56,45 +54,6 @@ describe('skills', () => {
             'e.bin': big,
         });
         await expect(extractZipToDir(new Uint8Array(zip), dir)).rejects.toThrow(/总量超限/);
-    });
-
-    it('writes and reads lockfile', async () => {
-        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-work-'));
-        await writeLockfile(workdir, {
-            version: 1,
-            skills: {
-                demo: {
-                    version: '1.0.0',
-                    installedAt: 1,
-                    pinned: true,
-                    pinReason: 'awaiting moderation review',
-                },
-            },
-        });
-        const read = await readLockfile(workdir);
-        expect(read.skills.demo?.version).toBe('1.0.0');
-        expect(read.skills.demo?.pinned).toBe(true);
-        expect(read.skills.demo?.pinReason).toBe('awaiting moderation review');
-    });
-
-    it('returns empty lockfile on invalid json', async () => {
-        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-work-bad-'));
-        await mkdir(join(workdir, '.dt-skill'), { recursive: true });
-        await writeFile(join(workdir, '.dt-skill', 'lock.json'), '{', 'utf8');
-        const read = await readLockfile(workdir);
-        expect(read).toEqual({ version: 1, skills: {} });
-    });
-
-    it('returns empty lockfile on schema mismatch', async () => {
-        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-work-schema-'));
-        await mkdir(join(workdir, '.dt-skill'), { recursive: true });
-        await writeFile(
-            join(workdir, '.dt-skill', 'lock.json'),
-            JSON.stringify({ version: 1, skills: 'nope' }),
-            'utf8'
-        );
-        const read = await readLockfile(workdir);
-        expect(read).toEqual({ version: 1, skills: {} });
     });
 
     it('skips dotfiles and node_modules when listing text files', async () => {

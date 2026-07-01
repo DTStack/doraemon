@@ -11,8 +11,6 @@ import {
     getNonUniversalAgents,
     getVisibleUniversalAgents,
 } from './agents/definitions.js';
-import type { AgentName } from './agents.js';
-import { getAgentLabel } from './agents.js';
 import { searchMultiselect } from './prompts/search-multiselect.js';
 import type { InstallMode } from './installer.js';
 
@@ -229,26 +227,4 @@ export function noteSummary(lines: string[], title: string) {
 
 export function isCancelledValue(value: unknown): value is symbol {
     return isCancelled(value);
-}
-
-// ─── Legacy single-agent prompt (kept for update/list/uninstall compatibility) ───
-
-export async function selectAgent(): Promise<{
-    agent: AgentName;
-    workdir: string;
-    dir: string;
-} | null> {
-    if (!isInteractive()) return null;
-    const options = (Object.keys(AGENT_DEFINITIONS) as AgentName[]).map((name) => ({
-        value: name,
-        label: getAgentLabel(name),
-    }));
-    const selected = await select({
-        message: 'Select target agent:',
-        options: options as unknown as Parameters<typeof select>[0]['options'],
-    });
-    if (isCancel(selected)) return null;
-    const agent = selected as AgentName;
-    const workdir = agent; // legacy callers no longer rely on this path
-    return { agent, workdir, dir: workdir };
 }

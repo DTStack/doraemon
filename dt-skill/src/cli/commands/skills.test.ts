@@ -11,6 +11,7 @@ import {
 } from '../../../test/cliCommandTestKit.js';
 import { ApiRoutes } from '../../schema/index.js';
 import * as skillStore from '../../skills.js';
+import * as lockStore from '../../lockfile.js';
 
 const fsMocks = vi.hoisted(() => ({
     mkdir: vi.fn(),
@@ -45,22 +46,20 @@ const mockIsInteractive = vi.fn(() => false);
 const mockPromptConfirm = vi.fn(async () => false);
 vi.mock('../../http.js', () => httpMocks.moduleFactory());
 vi.mock('../registry.js', () => registryMocks.moduleFactory());
-const mockSelectAgent = vi.fn(async () => null);
 vi.mock('../ui.js', () => ({
     createSpinner: vi.fn(() => mockSpinner),
     fail: (message: string) => uiMocks.fail(message),
     formatError: (error: unknown) => (error instanceof Error ? error.message : String(error)),
     isInteractive: mockIsInteractive,
     promptConfirm: mockPromptConfirm,
-    selectAgent: mockSelectAgent,
 }));
 
 const extractZipToDirMock = vi.spyOn(skillStore, 'extractZipToDir');
 const hashSkillFilesMock = vi.spyOn(skillStore, 'hashSkillFiles');
 const listTextFilesMock = vi.spyOn(skillStore, 'listTextFiles');
-const readLockfileMock = vi.spyOn(skillStore, 'readLockfile');
+const readLockfileMock = vi.spyOn(lockStore, 'readLockfile');
 const readSkillOriginMock = vi.spyOn(skillStore, 'readSkillOrigin');
-const writeLockfileMock = vi.spyOn(skillStore, 'writeLockfile');
+const writeLockfileMock = vi.spyOn(lockStore, 'writeLockfile');
 const writeSkillOriginMock = vi.spyOn(skillStore, 'writeSkillOrigin');
 
 const mkdirMock = fsMocks.mkdir;
@@ -84,11 +83,10 @@ const {
     extractZipToDir,
     hashSkillFiles,
     listTextFiles,
-    readLockfile,
     readSkillOrigin,
-    writeLockfile,
     writeSkillOrigin,
 } = skillStore;
+const { readLockfile, writeLockfile } = lockStore;
 const { rm, stat } = fsPromises;
 
 const mockLog = vi.spyOn(console, 'log').mockImplementation(() => {});

@@ -43,6 +43,15 @@ export const ApiSkillMetaResponseSchema = type({
     skill: 'unknown|null?',
 });
 
+/** A child skill listed inside a package. */
+export const SkillChildSchema = type({
+    slug: 'string',
+    displayName: 'string|null?',
+    summary: 'string|null?',
+    version: 'string|null?',
+});
+export type SkillChild = typeof SkillChildSchema[inferred];
+
 export const ApiCliUploadUrlResponseSchema = type({
     uploadUrl: 'string',
 });
@@ -207,7 +216,7 @@ export const ApiV1SkillResponseSchema = type({
         updatedAt: 'number',
         isPackage: 'boolean?',
         parentSlug: 'string|null?',
-        children: 'unknown[]?',
+        children: SkillChildSchema.array().optional(),
     }).or('null'),
     latestVersion: type({
         version: 'string',
