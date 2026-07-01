@@ -99,7 +99,7 @@ function makeOpts() {
 
 beforeEach(() => {
     mkdirMock.mockResolvedValue(undefined);
-    mkdtempMock.mockResolvedValue('/work/skills/.demo-update-test');
+    mkdtempMock.mockResolvedValue('/work/.agents/skills/.demo-update-test');
     renameMock.mockResolvedValue(undefined);
     rmMock.mockResolvedValue(undefined);
     statMock.mockRejectedValue(new Error('missing'));
@@ -314,7 +314,7 @@ describe('cmdUpdate', () => {
             'download failed'
         );
 
-        expect(rm).not.toHaveBeenCalledWith('/work/skills/demo', {
+        expect(rm).not.toHaveBeenCalledWith('/work/.agents/skills/demo', {
             recursive: true,
             force: true,
         });
@@ -338,7 +338,7 @@ describe('cmdUpdate', () => {
         );
 
         expect(renameMock).not.toHaveBeenCalled();
-        expect(rm).not.toHaveBeenCalledWith('/work/skills/demo', {
+        expect(rm).not.toHaveBeenCalledWith('/work/.agents/skills/demo', {
             recursive: true,
             force: true,
         });
@@ -371,7 +371,7 @@ describe('cmdUpdate', () => {
         expect(mockApiRequest).toHaveBeenCalledTimes(1);
         const [, args] = mockApiRequest.mock.calls[0] ?? [];
         expect(args?.path).toBe(`${ApiRoutes.skills}/${encodeURIComponent('other')}`);
-        expect(writeLockfile).toHaveBeenCalledWith('/work', {
+        expect(writeLockfile).toHaveBeenCalledWith('/work/.agents', {
             version: 1,
             skills: {
                 demo: { version: '0.1.0', installedAt: 123, pinned: true, pinReason: 'hold' },
@@ -446,7 +446,7 @@ describe('cmdUpdate', () => {
             'https://example.com',
             expect.objectContaining({ slug: 'demo', version: '2.0.0' })
         );
-        expect(writeSkillOrigin).toHaveBeenCalledWith('/work/skills/.demo-update-test', {
+        expect(writeSkillOrigin).toHaveBeenCalledWith('/work/.agents/skills/.demo-update-test', {
             version: 1,
             registry: 'https://example.com',
             slug: 'demo',
@@ -456,13 +456,13 @@ describe('cmdUpdate', () => {
         });
         expect(renameMock).toHaveBeenNthCalledWith(
             1,
-            '/work/skills/demo',
-            '/work/skills/.demo-update-test-previous'
+            '/work/.agents/skills/demo',
+            '/work/.agents/skills/.demo-update-test-previous'
         );
         expect(renameMock).toHaveBeenNthCalledWith(
             2,
-            '/work/skills/.demo-update-test',
-            '/work/skills/demo'
+            '/work/.agents/skills/.demo-update-test',
+            '/work/.agents/skills/demo'
         );
     });
 });
@@ -477,7 +477,7 @@ describe('pin commands', () => {
 
         await cmdPin(makeOpts(), 'demo', { reason: 'scanner hold' });
 
-        expect(writeLockfile).toHaveBeenCalledWith('/work', {
+        expect(writeLockfile).toHaveBeenCalledWith('/work/.agents', {
             version: 1,
             skills: {
                 demo: {
@@ -526,7 +526,7 @@ describe('pin commands', () => {
 
         await cmdUnpin(makeOpts(), 'demo');
 
-        expect(writeLockfile).toHaveBeenCalledWith('/work', {
+        expect(writeLockfile).toHaveBeenCalledWith('/work/.agents', {
             version: 1,
             skills: {
                 demo: {
@@ -594,6 +594,20 @@ describe('cmdInstall', () => {
     });
 
     it('blocks force reinstall when a skill is pinned', async () => {
+        mockApiRequest.mockResolvedValue({
+            skill: {
+                slug: 'demo',
+                displayName: 'Demo',
+                summary: null,
+                tags: {},
+                stats: {},
+                createdAt: 0,
+                updatedAt: 0,
+            },
+            latestVersion: { version: '1.0.0' },
+            owner: null,
+            moderation: null,
+        });
         vi.mocked(readLockfile).mockResolvedValue({
             version: 1,
             skills: {
@@ -604,7 +618,6 @@ describe('cmdInstall', () => {
 
         await expect(cmdInstall(makeOpts(), 'demo', undefined, true)).rejects.toThrow(/is pinned/i);
 
-        expect(mockApiRequest).not.toHaveBeenCalled();
         expect(mockDownloadZip).not.toHaveBeenCalled();
         expect(rm).not.toHaveBeenCalled();
         expect(writeLockfile).not.toHaveBeenCalled();
@@ -714,7 +727,7 @@ describe('cmdInstall', () => {
 
         await cmdInstall(makeOpts(), 'demo', '9.9.9', true);
 
-        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
         expect(mockDownloadZip).toHaveBeenCalledWith(
             'https://example.com',
             expect.objectContaining({ slug: 'demo', version: '9.9.9' })
@@ -751,7 +764,7 @@ describe('cmdInstall', () => {
 
         await cmdInstall(makeOpts(), 'demo', undefined, true);
 
-        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
         expect(mockDownloadZip).toHaveBeenCalled();
         const rmOrder = vi.mocked(rm).mock.invocationCallOrder[0];
         const downloadOrder = mockDownloadZip.mock.invocationCallOrder[0];
@@ -782,7 +795,7 @@ describe('cmdUninstall', () => {
         await cmdUninstall(makeOpts(), 'demo', {}, true);
 
         expect(mockPromptConfirm).toHaveBeenCalledWith('Uninstall demo?');
-        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
         expect(writeLockfile).toHaveBeenCalled();
     });
 
@@ -828,8 +841,8 @@ describe('cmdUninstall', () => {
 
         await cmdUninstall(makeOpts(), 'demo', { yes: true }, false);
 
-        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
-        expect(writeLockfile).toHaveBeenCalledWith('/work', {
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
+        expect(writeLockfile).toHaveBeenCalledWith('/work/.agents', {
             version: 1,
             skills: {},
         });
@@ -880,8 +893,8 @@ describe('cmdUninstall', () => {
 
         await cmdUninstall(makeOpts(), 'demo', { yes: true }, false);
 
-        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
-        expect(writeLockfile).toHaveBeenCalledWith('/work', {
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
+        expect(writeLockfile).toHaveBeenCalledWith('/work/.agents', {
             version: 1,
             skills: { other: { version: '2.0.0', installedAt: 456 } },
         });
@@ -897,6 +910,6 @@ describe('cmdUninstall', () => {
 
         await cmdUninstall(makeOpts(), '  demo  ', { yes: true }, false);
 
-        expect(rm).toHaveBeenCalledWith('/work/skills/demo', { recursive: true, force: true });
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
     });
 });

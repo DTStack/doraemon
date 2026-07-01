@@ -3,7 +3,12 @@ import { vi } from 'vitest';
 
 import type { GlobalOpts } from '../src/cli/types.js';
 
-export function makeGlobalOpts(workdir = '/work'): GlobalOpts {
+/**
+ * Default opts use the canonical layout: <base>/.agents holds the lockfile,
+ * <base>/.agents/skills holds skill dirs. projectBase() = dirname(workdir) = base.
+ */
+export function makeGlobalOpts(base = '/work'): GlobalOpts {
+    const workdir = join(base, '.agents');
     return {
         workdir,
         dir: join(workdir, 'skills'),
@@ -84,6 +89,13 @@ export function createUiModuleMocks(options?: { interactive?: boolean }) {
                 error instanceof Error ? error.message : String(error),
             isInteractive: () => interactive,
             promptConfirm,
+            printSkillsLogo: vi.fn(),
+            selectAgentsInteractive: vi.fn(async () => []),
+            selectScope: vi.fn(async () => false),
+            selectInstallMethod: vi.fn(async () => 'symlink' as const),
+            noteSummary: vi.fn(),
+            isCancelledValue: (value: unknown) => typeof value === 'symbol',
+            selectAgent: vi.fn(async () => null),
         }),
     };
 }

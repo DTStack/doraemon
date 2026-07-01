@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, rename, rm, stat } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, rename, rm, stat } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import semver from 'semver';
 
@@ -25,8 +26,14 @@ import {
     writeLockfile,
     writeSkillOrigin,
 } from '../../skills.js';
-import type { AgentName } from '../agents.js';
-import { getAgentLabel, resolveAgentWorkdir } from '../agents.js';
+import { AGENT_DEFINITIONS, getAgentLabel, getUniversalAgents, type AgentType } from '../agents.js';
+import {
+    getCanonicalPath,
+    getCanonicalSkillsDir,
+    getCanonicalWorkdir,
+    linkOrCopyToAgent,
+    type InstallMode,
+} from '../installer.js';
 import { cancelSymbol, searchMultiselect } from '../prompts/search-multiselect.js';
 import { getRegistry } from '../registry.js';
 import type { GlobalOpts, ResolveResult } from '../types.js';
@@ -35,8 +42,12 @@ import {
     fail,
     formatError,
     isInteractive,
+    isCancelledValue,
+    noteSummary,
+    printSkillsLogo,
     promptConfirm,
-    selectAgent,
+    selectAgentsInteractive,
+    selectInstallMethod,
     selectScope,
 } from '../ui.js';
 
@@ -84,6 +95,124 @@ function formatSearchOwner(entry: {
     return entry.owner?.displayName ?? 'unknown owner';
 }
 
+/** Project root (or home) derived from the canonical workdir (<base>/.agents). */
+function projectBase(opts: GlobalOpts): string {
+    return dirname(opts.workdir);
+}
+
+/** Always include universal agents (they share the canonical .agents/skills dir). */
+function ensureUniversalAgents(agents: AgentType[]): AgentType[] {
+    const result = [...agents];
+    for (const ua of getUniversalAgents()) {
+        if (!result.includes(ua)) result.push(ua);
+    }
+    return result;
+}
+
+export interface InstallTargets {
+    agents: AgentType[];
+    global: boolean;
+    mode: InstallMode;
+}
+
+/**
+ * Resolve install targets (agents, scope, mode). Interactive TUI when possible,
+ * otherwise driven by --yes/--agent/--global/--copy flags. Returns null if the
+ * user cancelled.
+ */
+async function resolveInstallTargets(opts: GlobalOpts): Promise<InstallTargets | null> {
+    const explicitAgents = opts.agent as AgentType[] | undefined;
+
+    // Non-interactive: derive everything from flags / detection.
+    if (opts.yes || !isInteractive()) {
+        let agents: AgentType[];
+        if (explicitAgents && explicitAgents.length > 0) {
+            agents = ensureUniversalAgents(explicitAgents);
+        } else {
+            const detected = await Promise.resolve(
+                // detect synchronously via definitions; wrap for future async
+                Promise.resolve(
+                    (Object.keys(AGENT_DEFINITIONS) as AgentType[]).filter((a) =>
+                        AGENT_DEFINITIONS[a].detectInstalled()
+                    )
+                )
+            );
+            agents = ensureUniversalAgents(detected.length > 0 ? detected : getUniversalAgents());
+        }
+        const global = opts.globalScope ?? false;
+        const mode: InstallMode = opts.copy ? 'copy' : 'symlink';
+        return { agents, global, mode };
+    }
+
+    // Interactive TUI. (Logo is printed by cmdInstall before skill selection.)
+    let agents: AgentType[];
+    if (explicitAgents && explicitAgents.length > 0) {
+        agents = ensureUniversalAgents(explicitAgents);
+    } else {
+        const selected = await selectAgentsInteractive({ global: opts.globalScope });
+        if (isCancelledValue(selected)) {
+            console.log('Installation cancelled');
+            return null;
+        }
+        agents = ensureUniversalAgents(selected);
+    }
+
+    let global = opts.globalScope ?? false;
+    if (opts.globalScopeExplicit) {
+        global = opts.globalScope ?? false;
+    } else {
+        const supportsGlobal = agents.some((a) => AGENT_DEFINITIONS[a].globalSkillsDir !== undefined);
+        if (supportsGlobal) {
+            const scope = await selectScope();
+            if (scope === null) {
+                console.log('Installation cancelled');
+                return null;
+            }
+            global = scope;
+        }
+    }
+
+    // Method prompt only matters when agents target more than one unique skills dir.
+    const base = global ? '' : projectBase(opts);
+    const uniqueDirs = new Set(
+        agents.map((a) => (global ? AGENT_DEFINITIONS[a].globalSkillsDir : join(base, AGENT_DEFINITIONS[a].skillsDir)))
+    );
+    let mode: InstallMode;
+    if (opts.copy) {
+        mode = 'copy';
+    } else if (uniqueDirs.size > 1) {
+        const method = await selectInstallMethod();
+        if (method === null) {
+            console.log('Installation cancelled');
+            return null;
+        }
+        mode = method;
+    } else {
+        mode = 'copy'; // single target dir — symlink is meaningless
+    }
+
+    return { agents, global, mode };
+}
+
+function buildAgentSummaryLines(agents: AgentType[], mode: InstallMode): string[] {
+    const universal: string[] = [];
+    const symlinked: string[] = [];
+    for (const a of agents) {
+        if (AGENT_DEFINITIONS[a].skillsDir === '.agents/skills') universal.push(getAgentLabel(a));
+        else symlinked.push(getAgentLabel(a));
+    }
+    const lines: string[] = [];
+    const formatList = (items: string[]) =>
+        items.length <= 5 ? items.join(', ') : `${items.slice(0, 5).join(', ')} +${items.length - 5} more`;
+    if (mode === 'symlink') {
+        if (universal.length > 0) lines.push(`  universal: ${formatList(universal)}`);
+        if (symlinked.length > 0) lines.push(`  symlink → ${formatList(symlinked)}`);
+    } else {
+        lines.push(`  copy → ${formatList(agents.map(getAgentLabel))}`);
+    }
+    return lines;
+}
+
 export async function cmdSearch(opts: GlobalOpts, query: string, limit?: number) {
     if (!query) fail('Query required');
 
@@ -123,94 +252,303 @@ export async function cmdInstall(
     versionFlag?: string,
     force = false
 ) {
-    if (Array.isArray(rawSlug)) {
-        let batchOpts = opts;
-        if (!opts.agent && isInteractive()) {
-            const picked = await selectAgent();
-            if (picked) {
-                batchOpts = {
-                    ...opts,
-                    agent: picked.agent,
-                    workdir: picked.workdir,
-                    dir: picked.dir,
-                };
-            }
+    // `<slugs...>` is variadic, so commander always passes an array. A single
+    // slug still gets the skills-first interactive flow; multiple slugs go batch.
+    const slugArray = Array.isArray(rawSlug) ? rawSlug : [rawSlug];
+    const isBatch = slugArray.length > 1;
+
+    // Interactive banner prints once at the very start (before skill selection),
+    // matching `npx skills add`.
+    if (!opts.yes && isInteractive()) {
+        printSkillsLogo();
+    }
+
+    const registry = await getRegistry(opts, { cache: true });
+
+    // ── Single slug: select skills FIRST, then agents/scope/method. ──
+    // For packages this means sub-skills are chosen before the agent TUI.
+    if (!isBatch) {
+        const slug = normalizeSkillSlugOrFail(slugArray[0] as string);
+        const spinner = createSpinner(`Resolving ${slug}`);
+        let skillMeta: ApiV1SkillResponse;
+        try {
+            skillMeta = await apiRequest<ApiV1SkillResponse>(
+                registry,
+                { method: 'GET', path: `${ApiRoutes.skills}/${encodeURIComponent(slug)}` },
+                ApiV1SkillResponseSchema
+            );
+        } catch (error) {
+            spinner.fail(formatError(error));
+            throw error;
         }
 
-        // Scope selection for batch install (copied from vercel-labs/skills)
-        if (batchOpts.agent && !batchOpts.globalScopeExplicit && isInteractive()) {
-            const scope = await selectScope(batchOpts.agent as AgentName);
-            if (scope === null) {
+        if (skillMeta.moderation?.isMalwareBlocked) {
+            spinner.fail(`Blocked: ${slug} is flagged as malicious`);
+            fail('This skill has been flagged as malware and cannot be installed.');
+        }
+
+        // Resolve the flat list of skills to install (expand packages up front).
+        const skillsToInstall: ResolvedSkill[] = [];
+        if (skillMeta.skill && (skillMeta.skill as any).isPackage) {
+            spinner.stop();
+            const children = (skillMeta.skill as any).children || [];
+            if (children.length === 0) {
+                fail(`Skill package "${slug}" has no children skills.`);
+            }
+            const items = children.map((c: any) => ({
+                value: c.slug,
+                label: c.displayName || c.slug,
+                hint: c.summary || undefined,
+            }));
+            let selectedSlugs: string[] | symbol;
+            if (opts.yes) {
+                selectedSlugs = children.map((c: any) => c.slug);
+            } else {
+                selectedSlugs = await searchMultiselect({
+                    message: `Select skills from package "${slug}" to install:`,
+                    items,
+                    required: true,
+                });
+            }
+            if (
+                selectedSlugs === cancelSymbol ||
+                !Array.isArray(selectedSlugs) ||
+                selectedSlugs.length === 0
+            ) {
                 console.log('Installation cancelled');
                 return;
             }
-            if (scope) {
-                const workdir = resolveAgentWorkdir(batchOpts.agent as AgentName, true);
-                batchOpts = {
-                    ...batchOpts,
-                    workdir,
-                    dir: `${workdir}/skills`,
-                    globalScope: true,
-                    globalScopeExplicit: true,
-                };
-            } else {
-                batchOpts = { ...batchOpts, globalScope: false, globalScopeExplicit: true };
+            for (const subSlug of selectedSlugs) {
+                const subSkill = children.find((c: any) => c.slug === subSlug);
+                const subVersion = String(subSkill?.version || '') || 'latest';
+                skillsToInstall.push({
+                    slug: subSlug,
+                    version: subVersion,
+                    meta: null,
+                    explicitVersion: undefined,
+                });
+            }
+        } else {
+            spinner.stop();
+            const version = versionFlag ?? skillMeta.latestVersion?.version ?? 'latest';
+            skillsToInstall.push({ slug, version, meta: skillMeta, explicitVersion: versionFlag });
+        }
+
+        // Now the agent / scope / method TUI.
+        const targets = await resolveInstallTargets(opts);
+        if (!targets) return;
+        const base = targets.global ? homedir() : projectBase(opts);
+        const canonicalWorkdir = getCanonicalWorkdir(targets.global, base);
+        const canonicalSkillsDir = getCanonicalSkillsDir(targets.global, base);
+        await mkdir(canonicalSkillsDir, { recursive: true });
+
+        if (!opts.yes && isInteractive()) {
+            noteSummary(
+                buildSummaryLines(skillsToInstall, targets, base),
+                'Installation Summary'
+            );
+            const confirmed = await promptConfirm('Proceed with installation?');
+            if (!confirmed) {
+                console.log('Installation cancelled');
+                return;
             }
         }
 
-        const results: { slug: string; status: 'ok' | 'fail' }[] = [];
-        for (const slug of rawSlug) {
-            try {
-                await cmdInstall(batchOpts, slug, versionFlag, force);
-                results.push({ slug, status: 'ok' });
-            } catch (error) {
-                const message = error instanceof Error ? error.message : String(error);
-                console.log(`✖ ${slug}: ${message}`);
-                results.push({ slug, status: 'fail' });
-            }
-        }
-        const okCount = results.filter((r) => r.status === 'ok').length;
-        const failCount = results.filter((r) => r.status === 'fail').length;
-        console.log(`Summary: ${okCount} ok, ${failCount} fail`);
-        if (failCount > 0) {
-            process.exitCode = 1;
+        for (const skill of skillsToInstall) {
+            await installResolvedSkill(
+                skill,
+                force,
+                targets,
+                registry,
+                canonicalWorkdir,
+                canonicalSkillsDir,
+                base
+            );
         }
         return;
     }
 
-    const trimmed = normalizeSkillSlugOrFail(rawSlug);
+    // ── Batch: resolve agents once, then install each slug (per-slug failure resilient). ──
+    const slugs = slugArray;
+    const targets = await resolveInstallTargets(opts);
+    if (!targets) return;
+    const base = targets.global ? homedir() : projectBase(opts);
+    const canonicalWorkdir = getCanonicalWorkdir(targets.global, base);
+    const canonicalSkillsDir = getCanonicalSkillsDir(targets.global, base);
+    await mkdir(canonicalSkillsDir, { recursive: true });
 
-    // Prompt for target agent when --agent is not provided and interactive
-    let installWorkdir = opts.workdir;
-    let installDir = opts.dir;
-    let installAgent = opts.agent;
-    if (!opts.agent && isInteractive()) {
-        const picked = await selectAgent();
-        if (picked) {
-            installWorkdir = picked.workdir;
-            installDir = picked.dir;
-            installAgent = picked.agent;
-        }
-    }
-
-    // Scope selection (copied from vercel-labs/skills)
-    if (installAgent && !opts.globalScopeExplicit && isInteractive()) {
-        const scope = await selectScope(installAgent as AgentName);
-        if (scope === null) {
+    if (!opts.yes && isInteractive()) {
+        const fakeSkills: ResolvedSkill[] = slugs.map((s) => ({
+            slug: s,
+            version: versionFlag ?? 'latest',
+            meta: null,
+            explicitVersion: versionFlag,
+        }));
+        noteSummary(buildSummaryLines(fakeSkills, targets, base), 'Installation Summary');
+        const confirmed = await promptConfirm('Proceed with installation?');
+        if (!confirmed) {
             console.log('Installation cancelled');
             return;
         }
-        if (scope) {
-            installWorkdir = resolveAgentWorkdir(installAgent as AgentName, true);
-            installDir = `${installWorkdir}/skills`;
-        }
     }
 
-    const registry = await getRegistry(opts, { cache: true });
-    await mkdir(installDir, { recursive: true });
-    const target = join(installDir, trimmed);
+    const results: { slug: string; status: 'ok' | 'fail' }[] = [];
+    for (const slug of slugs) {
+        try {
+            await installOneSkill(opts, slug, versionFlag, force, targets, registry, canonicalWorkdir, canonicalSkillsDir, base);
+            results.push({ slug, status: 'ok' });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.log(`✖ ${slug}: ${message}`);
+            results.push({ slug, status: 'fail' });
+        }
+    }
+    const okCount = results.filter((r) => r.status === 'ok').length;
+    const failCount = results.filter((r) => r.status === 'fail').length;
+    console.log(`Summary: ${okCount} ok, ${failCount} fail`);
+    if (failCount > 0) {
+        process.exitCode = 1;
+    }
+}
 
-    const lock = await readLockfile(installWorkdir);
+interface ResolvedSkill {
+    slug: string;
+    version: string;
+    meta: ApiV1SkillResponse | null;
+    explicitVersion?: string;
+}
+
+function buildSummaryLines(skills: ResolvedSkill[], targets: InstallTargets, base: string): string[] {
+    const lines: string[] = [];
+    for (const skill of skills) {
+        if (lines.length > 0) lines.push('');
+        lines.push(
+            getCanonicalPath(skill.slug, {
+                global: targets.global,
+                cwd: targets.global ? undefined : base,
+            })
+        );
+        lines.push(...buildAgentSummaryLines(targets.agents, targets.mode));
+    }
+    return lines;
+}
+
+/** Install one already-resolved skill: pinned check, moderation, version check, extract, link, lock. */
+async function installResolvedSkill(
+    skill: ResolvedSkill,
+    force: boolean,
+    targets: InstallTargets,
+    registry: string,
+    canonicalWorkdir: string,
+    canonicalSkillsDir: string,
+    base: string
+) {
+    const { slug, version, meta, explicitVersion } = skill;
+    const canonicalDir = join(canonicalSkillsDir, slug);
+
+    const lock = await readLockfile(canonicalWorkdir);
+    const existingEntry = lock.skills[slug];
+    if (isPinnedSkillEntry(existingEntry)) {
+        fail(`skill "${slug}" is pinned; run \`dt-skill unpin ${slug}\` first`);
+    }
+
+    const spinner = createSpinner(`Installing ${slug}@${version}`);
+    try {
+        if (meta?.moderation?.isSuspicious && !force) {
+            spinner.stop();
+            console.log(
+                `\n⚠️  Warning: "${slug}" is flagged for ClawHub security review.\n` +
+                    '   This skill may contain risky patterns (crypto keys, external APIs, eval, etc.)\n' +
+                    '   Review the skill code before use.\n'
+            );
+            if (isInteractive()) {
+                const confirm = await promptConfirm('Install anyway?');
+                if (!confirm) fail('Installation cancelled');
+                spinner.start(`Installing ${slug}@${version}`);
+            } else {
+                fail('Use --force to install suspicious skills in non-interactive mode');
+            }
+        }
+
+        if (explicitVersion && explicitVersion === version) {
+            await apiRequest(
+                registry,
+                {
+                    method: 'GET',
+                    path: `${ApiRoutes.skills}/${encodeURIComponent(slug)}/versions/${encodeURIComponent(version)}`,
+                },
+                ApiV1SkillVersionResponseSchema
+            );
+        }
+
+        if (!force) {
+            const exists = await fileExists(canonicalDir);
+            if (exists) fail(`Already installed: ${canonicalDir} (use --force)`);
+        }
+
+        if (force) {
+            await rm(canonicalDir, { recursive: true, force: true });
+        }
+
+        spinner.text = `Downloading ${slug}@${version}`;
+        const zip = await downloadZip(registry, { slug, version });
+        await extractZipToDir(zip, canonicalDir);
+        const installedFiles = await listTextFiles(canonicalDir);
+        const installedFingerprint =
+            installedFiles.length > 0 ? hashSkillFiles(installedFiles).fingerprint : undefined;
+
+        await writeSkillOrigin(canonicalDir, {
+            version: 1,
+            registry,
+            slug,
+            installedVersion: version,
+            installedAt: Date.now(),
+            fingerprint: installedFingerprint,
+        });
+
+        await linkToAgents(slug, canonicalDir, targets, base);
+
+        lock.skills[slug] = withPinnedMetadata(version, Date.now(), existingEntry);
+        await writeLockfile(canonicalWorkdir, lock);
+        spinner.succeed(`OK. Installed ${slug} -> ${canonicalDir}`);
+    } catch (error) {
+        spinner.fail(formatError(error));
+        throw error;
+    }
+}
+
+/** Symlink/copy an already-extracted canonical skill dir into every target agent. */
+async function linkToAgents(
+    slug: string,
+    canonicalDir: string,
+    targets: InstallTargets,
+    base: string
+) {
+    for (const agent of targets.agents) {
+        await linkOrCopyToAgent(slug, canonicalDir, agent, {
+            global: targets.global,
+            cwd: base,
+            mode: targets.mode,
+        });
+    }
+}
+
+/** Install a single (non-batch) skill: metadata, moderation, extract, origin, link, lock. */
+async function installOneSkill(
+    opts: GlobalOpts,
+    rawSlug: string,
+    versionFlag: string | undefined,
+    force: boolean,
+    targets: InstallTargets,
+    registry: string,
+    canonicalWorkdir: string,
+    canonicalSkillsDir: string,
+    base: string
+) {
+    const trimmed = normalizeSkillSlugOrFail(rawSlug);
+    const canonicalDir = join(canonicalSkillsDir, trimmed);
+
+    const lock = await readLockfile(canonicalWorkdir);
     const existingEntry = lock.skills[trimmed];
     if (isPinnedSkillEntry(existingEntry)) {
         fail(`skill "${trimmed}" is pinned; run \`dt-skill unpin ${trimmed}\` first`);
@@ -218,19 +556,18 @@ export async function cmdInstall(
 
     const spinner = createSpinner(`Resolving ${trimmed}`);
     try {
-        // Fetch skill metadata including moderation status
         const skillMeta = await apiRequest<ApiV1SkillResponse>(
             registry,
             { method: 'GET', path: `${ApiRoutes.skills}/${encodeURIComponent(trimmed)}` },
             ApiV1SkillResponseSchema
         );
 
-        // Check moderation status before proceeding
         if (skillMeta.moderation?.isMalwareBlocked) {
             spinner.fail(`Blocked: ${trimmed} is flagged as malicious`);
             fail('This skill has been flagged as malware and cannot be installed.');
         }
 
+        // Package: prompt sub-skills, then install each to canonical + link.
         if (skillMeta.skill && (skillMeta.skill as any).isPackage) {
             spinner.stop();
             const children = (skillMeta.skill as any).children || [];
@@ -238,18 +575,22 @@ export async function cmdInstall(
                 fail(`Skill package "${trimmed}" has no children skills.`);
             }
 
-            // Prepare items for searchMultiselect
             const items = children.map((c: any) => ({
                 value: c.slug,
                 label: c.displayName || c.slug,
                 hint: c.summary || undefined,
             }));
 
-            const selectedSlugs = await searchMultiselect({
-                message: `Select skills from package "${trimmed}" to install:`,
-                items,
-                required: true,
-            });
+            let selectedSlugs: string[] | symbol;
+            if (opts.yes) {
+                selectedSlugs = children.map((c: any) => c.slug);
+            } else {
+                selectedSlugs = await searchMultiselect({
+                    message: `Select skills from package "${trimmed}" to install:`,
+                    items,
+                    required: true,
+                });
+            }
 
             if (
                 selectedSlugs === cancelSymbol ||
@@ -260,22 +601,42 @@ export async function cmdInstall(
                 return;
             }
 
-            // Install each selected sub-skill
-            for (const subSlug of selectedSlugs as string[]) {
+            // Summary + confirm for the chosen sub-skills.
+            if (!opts.yes && isInteractive()) {
+                const lines: string[] = [];
+                for (const subSlug of selectedSlugs) {
+                    if (lines.length > 0) lines.push('');
+                    lines.push(
+                        getCanonicalPath(subSlug, {
+                            global: targets.global,
+                            cwd: targets.global ? undefined : base,
+                        })
+                    );
+                    lines.push(...buildAgentSummaryLines(targets.agents, targets.mode));
+                }
+                noteSummary(lines, 'Installation Summary');
+                const confirmed = await promptConfirm('Proceed with installation?');
+                if (!confirmed) {
+                    console.log('Installation cancelled');
+                    return;
+                }
+            }
+
+            for (const subSlug of selectedSlugs) {
                 const subSkill = children.find((c: any) => c.slug === subSlug);
                 const subVersion = String(subSkill?.version || '') || 'latest';
-                const subTarget = join(installDir, subSlug);
+                const subCanonical = join(canonicalSkillsDir, subSlug);
 
                 if (!force) {
-                    const exists = await fileExists(subTarget);
+                    const exists = await fileExists(subCanonical);
                     if (exists) {
                         console.log(
-                            `Already installed: ${subTarget} (skipping, use --force to overwrite)`
+                            `Already installed: ${subCanonical} (skipping, use --force to overwrite)`
                         );
                         continue;
                     }
                 } else {
-                    await rm(subTarget, { recursive: true, force: true });
+                    await rm(subCanonical, { recursive: true, force: true });
                 }
 
                 const subSpinner = createSpinner(`Downloading sub-skill ${subSlug}@${subVersion}`);
@@ -284,14 +645,14 @@ export async function cmdInstall(
                         slug: subSlug,
                         version: subVersion,
                     });
-                    await extractZipToDir(zip, subTarget);
-                    const installedFiles = await listTextFiles(subTarget);
+                    await extractZipToDir(zip, subCanonical);
+                    const installedFiles = await listTextFiles(subCanonical);
                     const installedFingerprint =
                         installedFiles.length > 0
                             ? hashSkillFiles(installedFiles).fingerprint
                             : undefined;
 
-                    await writeSkillOrigin(subTarget, {
+                    await writeSkillOrigin(subCanonical, {
                         version: 1,
                         registry,
                         slug: subSlug,
@@ -300,18 +661,15 @@ export async function cmdInstall(
                         fingerprint: installedFingerprint,
                     });
 
+                    await linkToAgents(subSlug, subCanonical, targets, base);
+
                     lock.skills[subSlug] = withPinnedMetadata(
                         subVersion,
                         Date.now(),
                         lock.skills[subSlug]
                     );
-                    await writeLockfile(installWorkdir, lock);
-                    const agentSuffix2 = installAgent
-                        ? ` (${getAgentLabel(installAgent as import('../agents.js').AgentName)})`
-                        : '';
-                    subSpinner.succeed(
-                        `OK. Installed sub-skill ${subSlug} -> ${subTarget}${agentSuffix2}`
-                    );
+                    await writeLockfile(canonicalWorkdir, lock);
+                    subSpinner.succeed(`OK. Installed sub-skill ${subSlug} -> ${subCanonical}`);
                 } catch (err) {
                     subSpinner.fail(`Failed to install sub-skill ${subSlug}: ${formatError(err)}`);
                     throw err;
@@ -321,8 +679,8 @@ export async function cmdInstall(
         }
 
         if (!force) {
-            const exists = await fileExists(target);
-            if (exists) fail(`Already installed: ${target} (use --force)`);
+            const exists = await fileExists(canonicalDir);
+            if (exists) fail(`Already installed: ${canonicalDir} (use --force)`);
         }
 
         if (skillMeta.moderation?.isSuspicious && !force) {
@@ -357,7 +715,7 @@ export async function cmdInstall(
         }
 
         if (force) {
-            await rm(target, { recursive: true, force: true });
+            await rm(canonicalDir, { recursive: true, force: true });
         }
 
         spinner.text = `Downloading ${trimmed}@${resolvedVersion}`;
@@ -365,12 +723,12 @@ export async function cmdInstall(
             slug: trimmed,
             version: resolvedVersion,
         });
-        await extractZipToDir(zip, target);
-        const installedFiles = await listTextFiles(target);
+        await extractZipToDir(zip, canonicalDir);
+        const installedFiles = await listTextFiles(canonicalDir);
         const installedFingerprint =
             installedFiles.length > 0 ? hashSkillFiles(installedFiles).fingerprint : undefined;
 
-        await writeSkillOrigin(target, {
+        await writeSkillOrigin(canonicalDir, {
             version: 1,
             registry,
             slug: trimmed,
@@ -379,12 +737,11 @@ export async function cmdInstall(
             fingerprint: installedFingerprint,
         });
 
+        await linkToAgents(trimmed, canonicalDir, targets, base);
+
         lock.skills[trimmed] = withPinnedMetadata(resolvedVersion, Date.now(), existingEntry);
-        await writeLockfile(installWorkdir, lock);
-        const agentSuffix = installAgent
-            ? ` (${getAgentLabel(installAgent as import('../agents.js').AgentName)})`
-            : '';
-        spinner.succeed(`OK. Installed ${trimmed} -> ${target}${agentSuffix}`);
+        await writeLockfile(canonicalWorkdir, lock);
+        spinner.succeed(`OK. Installed ${trimmed} -> ${canonicalDir}`);
     } catch (error) {
         spinner.fail(formatError(error));
         throw error;
@@ -404,31 +761,8 @@ export async function cmdUpdate(
     if (options.version && !slug) fail('--version requires a single <slug>');
     if (options.version && !semver.valid(options.version)) fail('--version must be valid semver');
 
-    // Prompt for target agent when --agent is not provided and interactive
-    let installWorkdir = opts.workdir;
-    let installDir = opts.dir;
-    let installAgent = opts.agent;
-    if (!opts.agent && isInteractive()) {
-        const picked = await selectAgent();
-        if (picked) {
-            installWorkdir = picked.workdir;
-            installDir = picked.dir;
-            installAgent = picked.agent;
-        }
-    }
-
-    // Scope selection (copied from vercel-labs/skills)
-    if (installAgent && !opts.globalScopeExplicit && isInteractive()) {
-        const scope = await selectScope(installAgent as AgentName);
-        if (scope === null) {
-            console.log('Update cancelled');
-            return;
-        }
-        if (scope) {
-            installWorkdir = resolveAgentWorkdir(installAgent as AgentName, true);
-            installDir = `${installWorkdir}/skills`;
-        }
-    }
+    const installWorkdir = opts.workdir;
+    const installDir = opts.dir;
 
     const lock = await readLockfile(installWorkdir);
     if (slug && isPinnedSkillEntry(lock.skills[slug])) {
@@ -597,10 +931,7 @@ export async function cmdUpdate(
             lock.skills[entry] = withPinnedMetadata(targetVersion, Date.now(), lock.skills[entry]);
             // 每条成功更新后即持久化 lockfile，崩溃不再让磁盘与锁漂移
             await writeLockfile(installWorkdir, lock);
-            const agentSuffix3 = installAgent
-                ? ` (${getAgentLabel(installAgent as import('../agents.js').AgentName)})`
-                : '';
-            spinner.succeed(`${entry}: updated -> ${targetVersion}${agentSuffix3}`);
+            spinner.succeed(`${entry}: updated -> ${targetVersion}`);
         } catch (error) {
             spinner.fail(formatError(error));
             throw error;
@@ -658,42 +989,13 @@ async function replaceSkillDirectory(preparedDir: string, target: string, target
 }
 
 export async function cmdList(opts: GlobalOpts) {
-    // Prompt for target agent when --agent is not provided and interactive
-    let installWorkdir = opts.workdir;
-    let installDir = opts.dir;
-    let installAgent = opts.agent;
-    if (!opts.agent && isInteractive()) {
-        const picked = await selectAgent();
-        if (picked) {
-            installWorkdir = picked.workdir;
-            installDir = picked.dir;
-            installAgent = picked.agent;
-        }
-    }
-
-    // Scope selection (copied from vercel-labs/skills)
-    if (installAgent && !opts.globalScopeExplicit && isInteractive()) {
-        const scope = await selectScope(installAgent as AgentName);
-        if (scope === null) {
-            console.log('List cancelled');
-            return;
-        }
-        if (scope) {
-            installWorkdir = resolveAgentWorkdir(installAgent as AgentName, true);
-            installDir = `${installWorkdir}/skills`;
-        }
-    }
+    const installWorkdir = opts.workdir;
+    const installDir = opts.dir;
 
     const lock = await readLockfile(installWorkdir);
     const entries = Object.entries(lock.skills);
     const manualSkills = await listManualSkills(installDir, new Set(Object.keys(lock.skills)));
-    if (installAgent) {
-        console.log(
-            `Skills for ${getAgentLabel(
-                installAgent as import('../agents.js').AgentName
-            )} (${installDir}):`
-        );
-    }
+    console.log(`Skills (${installDir}):`);
     if (entries.length === 0 && manualSkills.length === 0) {
         console.log('No installed skills.');
         return;
@@ -756,31 +1058,9 @@ export async function cmdUninstall(
 ) {
     const trimmed = normalizeSkillSlugOrFail(slug);
 
-    // Prompt for target agent when --agent is not provided and interactive
-    let installWorkdir = opts.workdir;
-    let installDir = opts.dir;
-    let installAgent = opts.agent;
-    if (!opts.agent && isInteractive()) {
-        const picked = await selectAgent();
-        if (picked) {
-            installWorkdir = picked.workdir;
-            installDir = picked.dir;
-            installAgent = picked.agent;
-        }
-    }
-
-    // Scope selection (copied from vercel-labs/skills)
-    if (installAgent && !opts.globalScopeExplicit && isInteractive()) {
-        const scope = await selectScope(installAgent as AgentName);
-        if (scope === null) {
-            console.log('Uninstall cancelled');
-            return;
-        }
-        if (scope) {
-            installWorkdir = resolveAgentWorkdir(installAgent as AgentName, true);
-            installDir = `${installWorkdir}/skills`;
-        }
-    }
+    const installWorkdir = opts.workdir;
+    const installDir = opts.dir;
+    const base = opts.globalScope ? homedir() : projectBase(opts);
 
     const lock = await readLockfile(installWorkdir);
     if (!lock.skills[trimmed]) {
@@ -803,17 +1083,39 @@ export async function cmdUninstall(
 
         await rm(target, { recursive: true, force: true });
 
+        // Best-effort: remove per-agent symlinks/copies pointing at the canonical dir.
+        await removeAgentLinks(trimmed, opts.globalScope ?? false, base);
+
         delete lock.skills[trimmed];
         await writeLockfile(installWorkdir, lock);
 
-        const agentSuffix4 = installAgent
-            ? ` (${getAgentLabel(installAgent as import('../agents.js').AgentName)})`
-            : '';
-        spinner.succeed(`Uninstalled ${trimmed}${agentSuffix4}`);
+        spinner.succeed(`Uninstalled ${trimmed}`);
     } catch (error) {
         spinner.fail(formatError(error));
         throw error;
     }
+}
+
+/** Remove per-agent symlink/copy entries for a skill whose canonical dir was just removed. */
+async function removeAgentLinks(slug: string, global: boolean, base: string) {
+    const agentTypes = Object.keys(AGENT_DEFINITIONS) as AgentType[];
+    await Promise.all(
+        agentTypes.map(async (agent) => {
+            const config = AGENT_DEFINITIONS[agent];
+            if (config.skillsDir === '.agents/skills') return; // universal — lives in canonical
+            const agentDir = global
+                ? (config.globalSkillsDir ?? null)
+                : join(base, config.skillsDir);
+            if (!agentDir) return;
+            const linkPath = join(agentDir, slug);
+            try {
+                await lstat(linkPath);
+            } catch {
+                return; // nothing to remove
+            }
+            await rm(linkPath, { recursive: true, force: true }).catch(() => {});
+        })
+    );
 }
 
 type ExploreSort = 'newest' | 'downloads' | 'rating' | 'installs' | 'installsAllTime' | 'trending';

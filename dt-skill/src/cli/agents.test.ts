@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-    AGENTS,
+    AGENT_DEFINITIONS,
+    AGENT_NAMES,
+    detectAgentInstalled,
+    detectInstalledAgents,
     getAgentLabel,
+    getNonUniversalAgents,
+    getUniversalAgents,
+    getVisibleUniversalAgents,
     isAgentName,
+    isUniversalAgent,
     listAgentNames,
-    resolveAgentWorkdir,
+    type AgentType,
 } from './agents.js';
 
 describe('agents', () => {
@@ -23,53 +30,86 @@ describe('agents', () => {
     });
 
     describe('listAgentNames', () => {
-        it('returns all agent names', () => {
+        it('returns the full 55-agent list', () => {
             const names = listAgentNames();
             expect(names).toContain('claude-code');
             expect(names).toContain('codex');
             expect(names).toContain('cursor');
+            expect(names.length).toBeGreaterThanOrEqual(55);
         });
     });
 
     describe('getAgentLabel', () => {
-        it('returns the label for known agents', () => {
+        it('returns the displayName for known agents', () => {
             expect(getAgentLabel('claude-code')).toBe('Claude Code');
             expect(getAgentLabel('codex')).toBe('Codex');
             expect(getAgentLabel('cursor')).toBe('Cursor');
         });
     });
 
-    describe('resolveAgentWorkdir', () => {
-        it('resolves project workdir', () => {
-            const dir = resolveAgentWorkdir('claude-code', false);
-            expect(dir).toMatch(/\.claude$/);
+    describe('AGENT_DEFINITIONS config', () => {
+        it('has consistent structure for every agent', () => {
+            for (const [key, agent] of Object.entries(AGENT_DEFINITIONS)) {
+                expect(agent.name).toBe(key);
+                expect(agent.displayName).toBeTruthy();
+                expect(agent.skillsDir).toBeTruthy();
+                // globalSkillsDir is absolute when defined; a few agents (eve, promptscript) leave it undefined.
+                if (agent.globalSkillsDir !== undefined) {
+                    expect(agent.globalSkillsDir).not.toContain('~');
+                }
+                expect(typeof agent.detectInstalled).toBe('function');
+            }
         });
 
-        it('resolves global workdir with tilde', () => {
-            const dir = resolveAgentWorkdir('claude-code', true);
-            expect(dir).not.toContain('~');
-            expect(dir).toMatch(/\.claude$/);
+        it('claude-code resolves to ~/.claude/skills globally', () => {
+            const dir = AGENT_DEFINITIONS['claude-code'].globalSkillsDir;
+            expect(dir).toMatch(/\.claude[\/\\]skills$/);
         });
 
-        it('resolves codex project workdir', () => {
-            const dir = resolveAgentWorkdir('codex', false);
-            expect(dir).toMatch(/\.codex$/);
-        });
-
-        it('resolves cursor global workdir', () => {
-            const dir = resolveAgentWorkdir('cursor', true);
-            expect(dir).not.toContain('~');
-            expect(dir).toMatch(/\.cursor$/);
+        it('codex globalSkillsDir ends with .codex/skills', () => {
+            expect(AGENT_DEFINITIONS.codex.globalSkillsDir).toMatch(/\.codex[\/\\]skills$/);
         });
     });
 
-    describe('AGENTS config', () => {
-        it('has consistent structure for all agents', () => {
-            for (const [key, agent] of Object.entries(AGENTS)) {
-                expect(agent.name).toBe(key);
-                expect(agent.label).toBeTruthy();
-                expect(agent.projectWorkdir).toBeTruthy();
-                expect(agent.globalWorkdir).toMatch(/^~/);
+    describe('universal agents', () => {
+        it('treats .agents/skills agents as universal', () => {
+            expect(isUniversalAgent('cursor')).toBe(true);
+            expect(isUniversalAgent('codex')).toBe(true);
+            expect(isUniversalAgent('claude-code')).toBe(false); // .claude/skills
+        });
+
+        it('getUniversalAgents excludes showInUniversalList:false (replit)', () => {
+            const universal = getUniversalAgents();
+            expect(universal).toContain('cursor');
+            expect(universal).not.toContain('replit');
+        });
+
+        it('getVisibleUniversalAgents excludes showInUniversalPrompt:false', () => {
+            const visible = getVisibleUniversalAgents();
+            expect(visible).not.toContain('loaf');
+            expect(visible).not.toContain('dexto');
+            expect(visible).not.toContain('firebender');
+        });
+
+        it('getNonUniversalAgents returns agent-specific dirs', () => {
+            const nonUniversal = getNonUniversalAgents();
+            expect(nonUniversal).toContain('claude-code');
+            expect(nonUniversal).toContain('windsurf');
+            expect(nonUniversal).not.toContain('cursor');
+        });
+    });
+
+    describe('detectAgentInstalled', () => {
+        it('returns a boolean for known agents', () => {
+            expect(typeof detectAgentInstalled('claude-code')).toBe('boolean');
+        });
+
+        it('detectInstalledAgents returns an array', () => {
+            const detected = detectInstalledAgents();
+            expect(Array.isArray(detected)).toBe(true);
+            // Every detected agent is a valid AgentType.
+            for (const a of detected) {
+                expect(AGENT_NAMES).toContain(a as AgentType);
             }
         });
     });

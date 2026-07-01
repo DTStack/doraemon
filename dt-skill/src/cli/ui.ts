@@ -1,10 +1,20 @@
-import { confirm, isCancel, select } from '@clack/prompts';
+import { confirm, intro, isCancel, note, select } from '@clack/prompts';
+import pc from 'picocolors';
 import { spawn } from 'node:child_process';
 import { stdin } from 'node:process';
 import ora from 'ora';
 
+import {
+    AGENT_DEFINITIONS,
+    type AgentType,
+    detectInstalledAgents,
+    getNonUniversalAgents,
+    getVisibleUniversalAgents,
+} from './agents/definitions.js';
 import type { AgentName } from './agents.js';
-import { AGENTS, getAgentLabel, listAgentNames, resolveAgentWorkdir } from './agents.js';
+import { getAgentLabel } from './agents.js';
+import { searchMultiselect } from './prompts/search-multiselect.js';
+import type { InstallMode } from './installer.js';
 
 export async function promptHidden(prompt: string) {
     if (!stdin.isTTY) return '';
@@ -89,54 +99,156 @@ export function fail(message: string): never {
     throw new Error(message);
 }
 
+// ─── Install TUI (aligned 1:1 with `npx skills add`) ───
+
+const SKILLS_LOGO = [
+    ' ____    _____   _____   _  __    ___    _        _      ',
+    '|  _ \\  |_   _| / ___|  | |/ /   |_ _|  | |      | |     ',
+    "| | | |   | |   \\___ \\  | ' /     | |   | |      | |     ",
+    '| |_| |   | |    ___) | | . \\     | |   | |___   | |___  ',
+    '|____/   |___|  |____/  |_|\\_\\   |___|  |_____|  |_____| ',
+].join('\n');
+
+/** Print the DTSKILLS ASCII banner + clack intro header. */
+export function printSkillsLogo() {
+    console.log(pc.cyan(SKILLS_LOGO));
+    console.log();
+    intro(pc.bgCyan(pc.black(' dt-skill ')));
+}
+
+function isCancelled(value: unknown): value is symbol {
+    return typeof value === 'symbol';
+}
+
+/**
+ * Interactive agent selection with fuzzy search. Universal agents are shown as a
+ * locked, always-included section; detected agents are surfaced to the top; the
+ * rest are searchable below. Nothing is pre-selected by default — matches
+ * `selectAgentsInteractive` from vercel-labs/skills (which pre-selects only
+ * last-used history, none on first run). Pre-selecting every detected agent
+ * would amount to "select all" on machines with many leftover agent dirs.
+ */
+export async function selectAgentsInteractive(options: {
+    global?: boolean;
+}): Promise<AgentType[] | symbol> {
+    const supportsGlobalFilter = (a: AgentType) =>
+        !options.global || AGENT_DEFINITIONS[a].globalSkillsDir !== undefined;
+
+    const universalAgents = getVisibleUniversalAgents().filter(supportsGlobalFilter);
+    const otherAgents = getNonUniversalAgents().filter(supportsGlobalFilter);
+
+    const installed = new Set(detectInstalledAgents());
+    // Detected agents first, then the rest — alphabetical within each group.
+    const ordered = [
+        ...otherAgents.filter((a) => installed.has(a)).sort(byLabel),
+        ...otherAgents.filter((a) => !installed.has(a)).sort(byLabel),
+    ];
+
+    const otherChoices = ordered.map((a) => ({
+        value: a,
+        label: AGENT_DEFINITIONS[a].displayName,
+        hint: options.global
+            ? (AGENT_DEFINITIONS[a].globalSkillsDir ?? AGENT_DEFINITIONS[a].skillsDir)
+            : AGENT_DEFINITIONS[a].skillsDir,
+    }));
+    // No pre-selection: the user picks. Universal agents are always included
+    // via the locked section regardless.
+    const initialSelected: AgentType[] = [];
+
+    const lockedSection = {
+        title: 'Universal (.agents/skills)',
+        items: universalAgents.map((a) => ({
+            value: a,
+            label: AGENT_DEFINITIONS[a].displayName,
+        })),
+    };
+
+    const selected = await searchMultiselect({
+        message: 'Which agents do you want to install to?',
+        items: otherChoices,
+        initialSelected,
+        lockedSection,
+        required: true,
+    });
+
+    return selected as AgentType[] | symbol;
+}
+
+function byLabel(a: AgentType, b: AgentType): number {
+    return AGENT_DEFINITIONS[a].displayName.localeCompare(AGENT_DEFINITIONS[b].displayName);
+}
+
+/** Project vs Global scope selection. Returns true=global, false=project, null=cancelled. */
+export async function selectScope(): Promise<boolean | null> {
+    if (!isInteractive()) return null;
+    const scope = await select({
+        message: 'Installation scope',
+        options: [
+            {
+                value: false,
+                label: 'Project',
+                hint: 'Install in current directory (committed with your project)',
+            },
+            {
+                value: true,
+                label: 'Global',
+                hint: 'Install in home directory (available across all projects)',
+            },
+        ],
+    });
+    if (isCancel(scope)) return null;
+    return scope as boolean;
+}
+
+/** Symlink vs Copy method selection. Returns null=cancelled. */
+export async function selectInstallMethod(): Promise<InstallMode | null> {
+    if (!isInteractive()) return null;
+    const mode = await select({
+        message: 'Installation method',
+        options: [
+            {
+                value: 'symlink',
+                label: 'Symlink (Recommended)',
+                hint: 'Single source of truth, easy updates',
+            },
+            {
+                value: 'copy',
+                label: 'Copy to all agents',
+                hint: 'Independent copies for each agent',
+            },
+        ],
+    });
+    if (isCancel(mode)) return null;
+    return mode as InstallMode;
+}
+
+export function noteSummary(lines: string[], title: string) {
+    console.log();
+    note(lines.join('\n'), title);
+}
+
+export function isCancelledValue(value: unknown): value is symbol {
+    return isCancelled(value);
+}
+
+// ─── Legacy single-agent prompt (kept for update/list/uninstall compatibility) ───
+
 export async function selectAgent(): Promise<{
     agent: AgentName;
     workdir: string;
     dir: string;
 } | null> {
     if (!isInteractive()) return null;
-
-    const names = listAgentNames();
-    const options = names.map((name) => ({
+    const options = (Object.keys(AGENT_DEFINITIONS) as AgentName[]).map((name) => ({
         value: name,
         label: getAgentLabel(name),
     }));
-
     const selected = await select({
         message: 'Select target agent:',
-        options,
+        options: options as unknown as Parameters<typeof select>[0]['options'],
     });
-
     if (isCancel(selected)) return null;
     const agent = selected as AgentName;
-    const workdir = resolveAgentWorkdir(agent, false);
-    const dir = `${workdir}/skills`;
-    return { agent, workdir, dir };
-}
-
-export async function selectScope(agent: AgentName): Promise<boolean | null> {
-    if (!isInteractive()) return null;
-
-    // Check if the selected agent supports global installation
-    const supportsGlobal = AGENTS[agent].globalWorkdir !== undefined;
-    if (!supportsGlobal) return false;
-
-    const scope = await select({
-        message: '安装范围',
-        options: [
-            {
-                value: false,
-                label: 'Project',
-                hint: '在当前目录安装（随项目提交）',
-            },
-            {
-                value: true,
-                label: 'Global',
-                hint: '在 home 目录安装（跨项目可用）',
-            },
-        ],
-    });
-
-    if (isCancel(scope)) return null;
-    return scope as boolean;
+    const workdir = agent; // legacy callers no longer rely on this path
+    return { agent, workdir, dir: workdir };
 }

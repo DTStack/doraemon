@@ -1,6 +1,6 @@
 import AdmZip from 'adm-zip';
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { basename, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import semver from 'semver';
 
 import { apiRequestForm } from '../../http.js';
@@ -34,10 +34,9 @@ export async function cmdPublish(
         category?: string;
     }
 ) {
-    // Resolve folder path: try workdir first (standard behavior),
-    // but fall back to cwd so relative paths work from whichever directory
-    // the user runs the command.
-    const folder = folderArg ? await resolveFolderPath(opts.workdir, folderArg) : null;
+    // Resolve folder path against the project base (parent of the canonical
+    // .agents workdir), falling back to cwd so relative paths work from anywhere.
+    const folder = folderArg ? await resolveFolderPath(dirname(opts.workdir), folderArg) : null;
     if (!folder) fail('Path required');
     const folderStat = await stat(folder).catch(() => null);
     if (!folderStat || !folderStat.isDirectory()) fail('Path must be a folder');

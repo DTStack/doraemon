@@ -1,52 +1,66 @@
-import { join } from 'node:path';
+// Agent logic + compatibility helpers. Configuration lives in ./agents/definitions.ts.
+import { existsSync } from 'node:fs';
 
-import { resolveHome } from '../homedir.js';
+import {
+    AGENT_DEFINITIONS,
+    AGENT_NAMES,
+    type AgentConfig,
+    detectInstalledAgents,
+    getAgentConfig,
+    getEveSubagents,
+    getNonUniversalAgents,
+    getUniversalAgents,
+    getVisibleUniversalAgents,
+    isAgentType,
+    isUniversalAgent,
+    type AgentType,
+} from './agents/definitions.js';
 
-export const AGENTS = {
-    'claude-code': {
-        name: 'claude-code',
-        label: 'Claude Code',
-        projectWorkdir: '.claude',
-        globalWorkdir: '~/.claude',
-    },
-    codex: {
-        name: 'codex',
-        label: 'Codex',
-        projectWorkdir: '.codex',
-        globalWorkdir: '~/.codex',
-    },
-    cursor: {
-        name: 'cursor',
-        label: 'Cursor',
-        projectWorkdir: '.cursor',
-        globalWorkdir: '~/.cursor',
-    },
-} as const;
+export {
+    AGENT_DEFINITIONS,
+    AGENT_NAMES,
+    detectInstalledAgents,
+    getAgentConfig,
+    getEveSubagents,
+    getNonUniversalAgents,
+    getUniversalAgents,
+    getVisibleUniversalAgents,
+    isUniversalAgent,
+    type AgentConfig,
+    type AgentType,
+};
 
-export type AgentName = keyof typeof AGENTS;
+// Legacy alias kept for existing callers/tests.
+export type AgentName = AgentType;
 
 export function isAgentName(value: string): value is AgentName {
-    return value in AGENTS;
+    return isAgentType(value);
 }
 
 export function listAgentNames(): AgentName[] {
-    return Object.keys(AGENTS) as AgentName[];
-}
-
-function resolveTilde(path: string): string {
-    if (path.startsWith('~/')) {
-        return join(resolveHome(), path.slice(2));
-    }
-    return path;
-}
-
-export function resolveAgentWorkdir(agentName: AgentName, isGlobal: boolean): string {
-    const agent = AGENTS[agentName];
-    if (!agent) throw new Error(`Unknown agent: ${agentName}`);
-    const raw = isGlobal ? agent.globalWorkdir : agent.projectWorkdir;
-    return resolveTilde(raw);
+    return AGENT_NAMES;
 }
 
 export function getAgentLabel(agentName: AgentName): string {
-    return AGENTS[agentName]?.label ?? agentName;
+    return AGENT_DEFINITIONS[agentName]?.displayName ?? agentName;
 }
+
+/**
+ * Returns true when this agent appears installed locally. Delegates to the
+ * per-agent detectInstalled() from definitions (checks the real on-disk marker,
+ * e.g. ~/.claude, ~/.cursor, $CODEX_HOME).
+ */
+export function detectAgentInstalled(agentName: AgentName): boolean {
+    const config = AGENT_DEFINITIONS[agentName];
+    return config ? config.detectInstalled() : false;
+}
+
+// Re-export for callers that previously imported AGENTS as a record.
+export const AGENTS = AGENT_DEFINITIONS;
+
+// Used by selectScope to decide whether an agent supports global install.
+export function supportsGlobalInstall(agentName: AgentName): boolean {
+    return AGENT_DEFINITIONS[agentName]?.globalSkillsDir !== undefined;
+}
+
+export { existsSync };

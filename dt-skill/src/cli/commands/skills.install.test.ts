@@ -39,6 +39,11 @@ const mockIsInteractive = vi.fn(() => false);
 const mockPromptConfirm = vi.fn(async () => false);
 const mockSelectAgent = vi.fn(async () => null);
 const mockSelectScope = vi.fn(async () => false);
+const mockSelectAgentsInteractive = vi.fn(async (): Promise<string[]> => []);
+const mockSelectInstallMethod = vi.fn(async () => 'symlink' as const);
+const mockPrintSkillsLogo = vi.fn();
+const mockNoteSummary = vi.fn();
+const mockIsCancelledValue = vi.fn((value: unknown) => typeof value === 'symbol');
 
 const mockSearchMultiselect = vi.fn();
 
@@ -52,6 +57,11 @@ vi.mock('../ui.js', () => ({
     promptConfirm: mockPromptConfirm,
     selectAgent: mockSelectAgent,
     selectScope: mockSelectScope,
+    selectAgentsInteractive: mockSelectAgentsInteractive,
+    selectInstallMethod: mockSelectInstallMethod,
+    printSkillsLogo: mockPrintSkillsLogo,
+    noteSummary: mockNoteSummary,
+    isCancelledValue: mockIsCancelledValue,
 }));
 
 vi.mock('../prompts/search-multiselect.js', async () => {
@@ -322,13 +332,12 @@ describe('cmdInstall with packages', () => {
         expect(mockDownloadZip).not.toHaveBeenCalled();
     });
 
-    it('prompts agent only once during batch install', async () => {
+    it('runs the agent TUI once during batch install', async () => {
         mockIsInteractive.mockReturnValue(true);
-        mockSelectAgent.mockResolvedValue({
-            agent: 'claude-code',
-            workdir: '/mock/.claude',
-            dir: '/mock/.claude/skills',
-        });
+        mockSelectAgentsInteractive.mockResolvedValue(['claude-code']);
+        mockSelectScope.mockResolvedValue(false);
+        mockSelectInstallMethod.mockResolvedValue('symlink');
+        mockPromptConfirm.mockResolvedValue(true);
         mockApiRequest.mockImplementation(async (_registry, request) => {
             const slug = (request as any).path?.split('/').pop();
             return {
@@ -340,8 +349,10 @@ describe('cmdInstall with packages', () => {
 
         await cmdInstall(makeOpts(), ['skill-a', 'skill-b', 'skill-c']);
 
-        expect(mockSelectAgent).toHaveBeenCalledTimes(1);
-        expect(mkdirMock).toHaveBeenCalledWith('/mock/.claude/skills', { recursive: true });
+        // The interactive TUI (logo + agent multiselect) runs exactly once for the batch,
+        // not once per slug — batchOpts propagation prevents re-prompting.
+        expect(mockPrintSkillsLogo).toHaveBeenCalledTimes(1);
+        expect(mockSelectAgentsInteractive).toHaveBeenCalledTimes(1);
         expect(mockDownloadZip).toHaveBeenCalledTimes(3);
     });
 });

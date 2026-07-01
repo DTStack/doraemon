@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { stat } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-import { isAgentName, listAgentNames, resolveAgentWorkdir } from './cli/agents.js';
+import { isAgentName, listAgentNames } from './cli/agents.js';
 import { getCliBuildLabel, getCliVersion } from './cli/buildInfo.js';
 import {
     cmdDeleteSkill,
@@ -45,8 +46,15 @@ const program = new Command()
     .option('--dir <dir>', 'Skills directory (relative to workdir, default: skills)')
     .option('--site <url>', 'Doraemon site URL for registry discovery')
     .option('--registry <url>', 'Registry API base URL')
-    .option('--agent <name>', `Target agent (${listAgentNames().join(', ')})`)
-    .option('--global', 'Install skills to the global agent directory (requires --agent)')
+    .option(
+        '-a, --agent <names>',
+        `Target agent(s) for symlinks (${listAgentNames().length} supported; comma-separated or repeated)`,
+        collectAgent,
+        []
+    )
+    .option('--global', 'Install skills to the global canonical directory (~/.agents/skills)')
+    .option('--copy', 'Copy files into each agent dir instead of symlinking')
+    .option('-y, --yes', 'Skip interactive prompts')
     .option('--no-input', 'Disable prompts')
     .showHelpAfterError()
     .showSuggestionAfterError()
@@ -71,31 +79,31 @@ async function resolveGlobalOpts(): Promise<GlobalOpts> {
         dir?: string;
         site?: string;
         registry?: string;
-        agent?: string;
+        agent?: string[];
         global?: boolean;
+        copy?: boolean;
+        yes?: boolean;
     }>();
 
-    const rawAgent = raw.agent?.trim();
-    if (rawAgent && !isAgentName(rawAgent)) {
-        fail(`Unknown agent "${rawAgent}". Supported: ${listAgentNames().join(', ')}`);
+    // --agent may be comma-separated and/or repeated; collectAgent already
+    // flattens it into an array. Validate each against the known agent list.
+    const agentList: string[] = [];
+    for (const value of raw.agent ?? []) {
+        for (const part of value.split(',').map((s) => s.trim()).filter(Boolean)) {
+            if (!isAgentName(part)) {
+                fail(`Unknown agent "${part}". Supported: ${listAgentNames().join(', ')}`);
+            }
+            agentList.push(part);
+        }
     }
-    const agentName: string | undefined = rawAgent;
 
     const isGlobal = raw.global ?? false;
-    if (isGlobal && !agentName) {
-        fail('--global requires --agent');
-    }
 
-    let workdir: string;
-    let dir: string;
-
-    if (agentName) {
-        workdir = resolveAgentWorkdir(agentName as import('./cli/agents.js').AgentName, isGlobal);
-        dir = resolve(workdir, 'skills');
-    } else {
-        workdir = await resolveWorkdir(raw.workdir);
-        dir = resolve(workdir, raw.dir ?? 'skills');
-    }
+    // Canonical layout: <base>/.agents/skills, with lockfile at <base>/.agents/.dt-skill/lock.json.
+    // base = home for --global, otherwise the resolved project workdir.
+    const base = isGlobal ? homedir() : await resolveWorkdir(raw.workdir);
+    const workdir = join(base, '.agents');
+    const dir = join(workdir, 'skills');
 
     const site = raw.site ?? process.env.DT_SKILL_SITE ?? DEFAULT_SITE;
     const registrySource = raw.registry ? 'cli' : process.env.DT_SKILL_REGISTRY ? 'env' : 'default';
@@ -106,10 +114,16 @@ async function resolveGlobalOpts(): Promise<GlobalOpts> {
         site,
         registry,
         registrySource,
-        agent: agentName,
+        agent: agentList.length > 0 ? agentList : undefined,
         globalScope: isGlobal,
         globalScopeExplicit: raw.global !== undefined,
+        copy: raw.copy,
+        yes: raw.yes,
     };
+}
+
+function collectAgent(value: string, previous: string[]): string[] {
+    return [...(previous ?? []), value];
 }
 
 function isInputAllowed() {
@@ -155,6 +169,7 @@ registerCommand(program, ['search'])
 
 registerCommand(program, ['install'])
     .description('Install skill(s) into <dir>/<slug>')
+    .alias('add')
     .argument('<slugs...>', 'One or more skill slugs')
     .option('--version <version>', 'Version to install (single slug only)')
     .option('--force', 'Overwrite existing folders')
