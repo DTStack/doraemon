@@ -267,7 +267,10 @@ class SkillsRegistryService extends Service {
             return null;
         }
 
-        const targetPath = String(filePath || 'SKILL.md').trim();
+        const targetPath = skillUtils.normalizeRelativePath(filePath || 'SKILL.md');
+        if (!targetPath) {
+            return null;
+        }
         const file = await SkillsFile.findOne({
             where: { skill_id: skill.id, file_path: targetPath, is_delete: 0 },
         });
