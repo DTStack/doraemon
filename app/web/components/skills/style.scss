@@ -34,10 +34,20 @@
     // Compact variant (for package detail page)
     &.is-compact {
         .ant-card-body {
-            padding: 16px;
+            padding: 20px 22px;
+            gap: 14px;
         }
         .card-description {
             -webkit-line-clamp: 2;
+            font-size: 14px;
+            line-height: 22px;
+        }
+        .card-icon-shell {
+            width: 48px;
+            height: 48px;
+        }
+        .card-name {
+            font-size: 16px;
         }
     }
     .card-main {

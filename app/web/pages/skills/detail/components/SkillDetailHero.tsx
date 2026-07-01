@@ -106,7 +106,7 @@ export const SkillDetailHero: React.FC<SkillDetailHeroProps> = ({
                             包含 {detail.children.length} 个子技能
                         </span>
                     </div>
-                    <Row gutter={[16, 16]}>
+                    <Row gutter={[24, 24]}>
                         {detail.children.map((child: SkillItem) => (
                             <Col key={child.slug} xs={24} sm={12} lg={8}>
                                 <SkillCard

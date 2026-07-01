@@ -79,10 +79,25 @@
         &.is-package {
             grid-template-columns: minmax(0, 1fr);
             .detail-main-column.is-package {
-                padding: 20px 28px;
-                gap: 20px;
-                max-width: 1440px;
+                min-width: 0;
+                width: 100%;
+                align-self: center;
+                padding: 28px 40px 40px;
+                gap: 24px;
+                max-width: 1280px;
                 margin: 0 auto;
+
+                @media (min-width: 1600px) {
+                    max-width: 1600px;
+                }
+
+                @media (min-width: 1920px) {
+                    max-width: 1780px;
+                }
+
+                @media (min-width: 2560px) {
+                    max-width: 2200px;
+                }
             }
         }
     }
@@ -245,16 +260,16 @@
     }
     .detail-hero-main {
         width: 100%;
-        padding: 16px 24px;
+        padding: 24px 32px;
         min-height: 182px;
-        border-radius: 8px;
+        border-radius: 12px;
         border: 1px solid rgba(169, 180, 185, 0.1);
         background: #FFF;
         box-shadow: 0 0 0 1px rgba(169, 180, 185, 0.04);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        gap: 10px;
+        gap: 14px;
     }
     .hero-head-row {
         display: flex;
@@ -1171,12 +1186,6 @@
     }
     // SkillCard compact variant overrides for package page
     .skill-card-unified.is-compact {
-        .card-icon-shell {
-            width: 40px;
-            height: 40px;
-            .card-icon {
-                font-size: 18px;
-            }
-        }
+        min-height: 132px;
     }
 }
