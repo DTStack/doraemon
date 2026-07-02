@@ -3,10 +3,15 @@
 // part of the install flow is its own module with an injected HttpClient
 // seam (real in prod, fake in tests) rather than reaching for the http
 // singletons.
-import { type AgentType } from './agents.js';
-import { linkOrCopyToAgent, type InstallMode } from './installer.js';
-import { withPinnedMetadata, writeLockfile, type Lockfile, type LockfileEntry } from '../lockfile.js';
+import {
+    type Lockfile,
+    type LockfileEntry,
+    withPinnedMetadata,
+    writeLockfile,
+} from '../lockfile.js';
 import { extractZipToDir, hashSkillFiles, listTextFiles, writeSkillOrigin } from '../skills.js';
+import { type AgentType } from './agents.js';
+import { type InstallMode,linkOrCopyToAgent } from './installer.js';
 
 export interface InstallTargets {
     agents: AgentType[];
@@ -16,7 +21,10 @@ export interface InstallTargets {
 
 /** Http capabilities the pipeline needs. Injected so tests pass a fake. */
 export interface InstallPipelineHttp {
-    downloadZip: (registry: string, args: { slug: string; version?: string }) => Promise<Uint8Array>;
+    downloadZip: (
+        registry: string,
+        args: { slug: string; version?: string }
+    ) => Promise<Uint8Array>;
 }
 
 type SpinnerLike = { text: string };

@@ -9,9 +9,9 @@ import {
     createUiModuleMocks,
     makeGlobalOpts,
 } from '../../../test/cliCommandTestKit.js';
+import * as lockStore from '../../lockfile.js';
 import { ApiRoutes } from '../../schema/index.js';
 import * as skillStore from '../../skills.js';
-import * as lockStore from '../../lockfile.js';
 
 const fsMocks = vi.hoisted(() => ({
     mkdir: vi.fn(),
@@ -79,13 +79,8 @@ const {
     cmdUpdate,
     formatExploreLine,
 } = await import('./skills.js');
-const {
-    extractZipToDir,
-    hashSkillFiles,
-    listTextFiles,
-    readSkillOrigin,
-    writeSkillOrigin,
-} = skillStore;
+const { extractZipToDir, hashSkillFiles, listTextFiles, readSkillOrigin, writeSkillOrigin } =
+    skillStore;
 const { readLockfile, writeLockfile } = lockStore;
 const { rm, stat } = fsPromises;
 
@@ -725,7 +720,10 @@ describe('cmdInstall', () => {
 
         await cmdInstall(makeOpts(), 'demo', '9.9.9', true);
 
-        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', {
+            recursive: true,
+            force: true,
+        });
         expect(mockDownloadZip).toHaveBeenCalledWith(
             'https://example.com',
             expect.objectContaining({ slug: 'demo', version: '9.9.9' })
@@ -762,7 +760,10 @@ describe('cmdInstall', () => {
 
         await cmdInstall(makeOpts(), 'demo', undefined, true);
 
-        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', {
+            recursive: true,
+            force: true,
+        });
         expect(mockDownloadZip).toHaveBeenCalled();
         const rmOrder = vi.mocked(rm).mock.invocationCallOrder[0];
         const downloadOrder = mockDownloadZip.mock.invocationCallOrder[0];
@@ -793,7 +794,10 @@ describe('cmdUninstall', () => {
         await cmdUninstall(makeOpts(), 'demo', {}, true);
 
         expect(mockPromptConfirm).toHaveBeenCalledWith('Uninstall demo?');
-        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', {
+            recursive: true,
+            force: true,
+        });
         expect(writeLockfile).toHaveBeenCalled();
     });
 
@@ -839,7 +843,10 @@ describe('cmdUninstall', () => {
 
         await cmdUninstall(makeOpts(), 'demo', { yes: true }, false);
 
-        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', {
+            recursive: true,
+            force: true,
+        });
         expect(writeLockfile).toHaveBeenCalledWith('/work/.agents', {
             version: 1,
             skills: {},
@@ -891,7 +898,10 @@ describe('cmdUninstall', () => {
 
         await cmdUninstall(makeOpts(), 'demo', { yes: true }, false);
 
-        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', {
+            recursive: true,
+            force: true,
+        });
         expect(writeLockfile).toHaveBeenCalledWith('/work/.agents', {
             version: 1,
             skills: { other: { version: '2.0.0', installedAt: 456 } },
@@ -908,6 +918,9 @@ describe('cmdUninstall', () => {
 
         await cmdUninstall(makeOpts(), '  demo  ', { yes: true }, false);
 
-        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', { recursive: true, force: true });
+        expect(rm).toHaveBeenCalledWith('/work/.agents/skills/demo', {
+            recursive: true,
+            force: true,
+        });
     });
 });

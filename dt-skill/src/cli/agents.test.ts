@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     AGENT_DEFINITIONS,
     AGENT_NAMES,
+    type AgentType,
     detectAgentInstalled,
     detectInstalledAgents,
     getAgentLabel,
@@ -12,7 +13,6 @@ import {
     isAgentName,
     isUniversalAgent,
     listAgentNames,
-    type AgentType,
 } from './agents.js';
 
 describe('agents', () => {

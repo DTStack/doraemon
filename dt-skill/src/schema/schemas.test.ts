@@ -3,7 +3,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseArk } from './ark';
-import { ApiV1SearchResponseSchema, ApiV1SkillResponseSchema, ClawdisSkillMetadataSchema } from './schemas';
+import {
+    ApiV1SearchResponseSchema,
+    ApiV1SkillResponseSchema,
+    ClawdisSkillMetadataSchema,
+} from './schemas';
 
 describe('dt-skill skill metadata schema', () => {
     it('preserves optional env var declarations', () => {
@@ -67,7 +71,12 @@ describe('dt-skill skill metadata schema', () => {
                     isPackage: true,
                     parentSlug: null,
                     children: [
-                        { slug: 'child-a', displayName: 'A', summary: 'a summary', version: '1.0.0' },
+                        {
+                            slug: 'child-a',
+                            displayName: 'A',
+                            summary: 'a summary',
+                            version: '1.0.0',
+                        },
                         { slug: 'child-b', displayName: null, summary: null, version: null },
                     ],
                 },

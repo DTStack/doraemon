@@ -1,7 +1,7 @@
 // Agent definitions ported from vercel-labs/skills (src/agents.ts).
 // Path resolution mirrors the original: xdg configHome, env-var overrides,
 // and per-agent detectInstalled() that checks the real on-disk marker.
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync,readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -313,7 +313,8 @@ export const AGENT_DEFINITIONS = {
         displayName: 'Jazz',
         skillsDir: '.jazz/skills',
         globalSkillsDir: join(home, '.jazz/skills'),
-        detectInstalled: () => existsSync(join(home, '.jazz')) || existsSync(join(process.cwd(), '.jazz')),
+        detectInstalled: () =>
+            existsSync(join(home, '.jazz')) || existsSync(join(process.cwd(), '.jazz')),
     },
     junie: {
         name: 'junie',
@@ -341,7 +342,8 @@ export const AGENT_DEFINITIONS = {
         displayName: 'Kimi Code CLI',
         skillsDir: '.agents/skills',
         globalSkillsDir: join(home, '.agents/skills'),
-        detectInstalled: () => existsSync(join(home, '.kimi-code')) || existsSync(join(home, '.kimi')),
+        detectInstalled: () =>
+            existsSync(join(home, '.kimi-code')) || existsSync(join(home, '.kimi')),
     },
     'kiro-cli': {
         name: 'kiro-cli',
@@ -590,7 +592,7 @@ export const AGENT_DEFINITIONS = {
         showInUniversalList: false,
         detectInstalled: () => false,
     },
-} as const satisfies Record<string, AgentConfig>;
+} as const;
 
 export type AgentType = keyof typeof AGENT_DEFINITIONS;
 
@@ -608,7 +610,8 @@ export function getAgentConfig(type: AgentType): AgentConfig {
 export function getUniversalAgents(): AgentType[] {
     return (Object.entries(AGENT_DEFINITIONS) as [AgentType, AgentConfig][])
         .filter(
-            ([, config]) => config.skillsDir === '.agents/skills' && config.showInUniversalList !== false
+            ([, config]) =>
+                config.skillsDir === '.agents/skills' && config.showInUniversalList !== false
         )
         .map(([type]) => type);
 }

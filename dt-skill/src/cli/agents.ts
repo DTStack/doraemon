@@ -3,6 +3,7 @@ import {
     AGENT_DEFINITIONS,
     AGENT_NAMES,
     type AgentConfig,
+    type AgentType,
     detectInstalledAgents,
     getAgentConfig,
     getEveSubagents,
@@ -11,12 +12,13 @@ import {
     getVisibleUniversalAgents,
     isAgentType,
     isUniversalAgent,
-    type AgentType,
 } from './agents/definitions.js';
 
 export {
     AGENT_DEFINITIONS,
     AGENT_NAMES,
+    type AgentConfig,
+    type AgentType,
     detectInstalledAgents,
     getAgentConfig,
     getEveSubagents,
@@ -24,8 +26,6 @@ export {
     getUniversalAgents,
     getVisibleUniversalAgents,
     isUniversalAgent,
-    type AgentConfig,
-    type AgentType,
 };
 
 // Legacy alias kept for existing callers/tests.

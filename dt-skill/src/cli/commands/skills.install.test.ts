@@ -8,8 +8,8 @@ import {
     createUiModuleMocks,
     makeGlobalOpts,
 } from '../../../test/cliCommandTestKit.js';
-import * as skillStore from '../../skills.js';
 import * as lockStore from '../../lockfile.js';
+import * as skillStore from '../../skills.js';
 
 const fsMocks = vi.hoisted(() => ({
     mkdir: vi.fn(),

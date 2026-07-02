@@ -5,6 +5,13 @@ import semver from 'semver';
 
 import { apiRequest, downloadZip, registryUrl } from '../../http.js';
 import {
+    formatPinnedDetails,
+    isPinned as isPinnedSkillEntry,
+    readLockfile,
+    withPinnedMetadata,
+    writeLockfile,
+} from '../../lockfile.js';
+import {
     ApiRoutes,
     type ApiV1SearchResponse,
     ApiV1SearchResponseSchema,
@@ -25,13 +32,12 @@ import {
     writeSkillOrigin,
 } from '../../skills.js';
 import {
-    formatPinnedDetails,
-    isPinned as isPinnedSkillEntry,
-    readLockfile,
-    withPinnedMetadata,
-    writeLockfile,
-} from '../../lockfile.js';
-import { AGENT_DEFINITIONS, detectInstalledAgents, getAgentLabel, getUniversalAgents, type AgentType } from '../agents.js';
+    AGENT_DEFINITIONS,
+    type AgentType,
+    detectInstalledAgents,
+    getAgentLabel,
+    getUniversalAgents,
+} from '../agents.js';
 import {
     getCanonicalPath,
     getCanonicalSkillsDir,
@@ -46,8 +52,8 @@ import {
     createSpinner,
     fail,
     formatError,
-    isInteractive,
     isCancelledValue,
+    isInteractive,
     noteSummary,
     printSkillsLogo,
     promptConfirm,
@@ -100,16 +106,14 @@ async function checkSuspiciousModeration(
 }
 
 /** Verify an explicit version exists before any destructive rm. */
-async function verifyVersion(
-    registry: string,
-    slug: string,
-    version: string
-): Promise<void> {
+async function verifyVersion(registry: string, slug: string, version: string): Promise<void> {
     await apiRequest(
         registry,
         {
             method: 'GET',
-            path: `${ApiRoutes.skills}/${encodeURIComponent(slug)}/versions/${encodeURIComponent(version)}`,
+            path: `${ApiRoutes.skills}/${encodeURIComponent(slug)}/versions/${encodeURIComponent(
+                version
+            )}`,
         },
         ApiV1SkillVersionResponseSchema
     );
@@ -177,7 +181,9 @@ async function resolveInstallTargets(opts: GlobalOpts): Promise<InstallTargets |
     if (opts.globalScopeExplicit) {
         global = opts.globalScope ?? false;
     } else {
-        const supportsGlobal = agents.some((a) => AGENT_DEFINITIONS[a].globalSkillsDir !== undefined);
+        const supportsGlobal = agents.some(
+            (a) => AGENT_DEFINITIONS[a].globalSkillsDir !== undefined
+        );
         if (supportsGlobal) {
             const scope = await selectScope();
             if (scope === null) {
@@ -191,7 +197,11 @@ async function resolveInstallTargets(opts: GlobalOpts): Promise<InstallTargets |
     // Method prompt only matters when agents target more than one unique skills dir.
     const base = global ? '' : projectBase(opts);
     const uniqueDirs = new Set(
-        agents.map((a) => (global ? AGENT_DEFINITIONS[a].globalSkillsDir : join(base, AGENT_DEFINITIONS[a].skillsDir)))
+        agents.map((a) =>
+            global
+                ? AGENT_DEFINITIONS[a].globalSkillsDir
+                : join(base, AGENT_DEFINITIONS[a].skillsDir)
+        )
     );
     let mode: InstallMode;
     if (opts.copy) {
@@ -219,7 +229,9 @@ function buildAgentSummaryLines(agents: AgentType[], mode: InstallMode): string[
     }
     const lines: string[] = [];
     const formatList = (items: string[]) =>
-        items.length <= 5 ? items.join(', ') : `${items.slice(0, 5).join(', ')} +${items.length - 5} more`;
+        items.length <= 5
+            ? items.join(', ')
+            : `${items.slice(0, 5).join(', ')} +${items.length - 5} more`;
     if (mode === 'symlink') {
         if (universal.length > 0) lines.push(`  universal: ${formatList(universal)}`);
         if (symlinked.length > 0) lines.push(`  symlink → ${formatList(symlinked)}`);
@@ -359,10 +371,7 @@ export async function cmdInstall(
         await mkdir(canonicalSkillsDir, { recursive: true });
 
         if (!opts.yes && isInteractive()) {
-            noteSummary(
-                buildSummaryLines(skillsToInstall, targets, base),
-                'Installation Summary'
-            );
+            noteSummary(buildSummaryLines(skillsToInstall, targets, base), 'Installation Summary');
             const confirmed = await promptConfirm('Proceed with installation?');
             if (!confirmed) {
                 console.log('Installation cancelled');
@@ -411,7 +420,17 @@ export async function cmdInstall(
     const results: { slug: string; status: 'ok' | 'fail' }[] = [];
     for (const slug of slugs) {
         try {
-            await installOneSkill(opts, slug, versionFlag, force, targets, registry, canonicalWorkdir, canonicalSkillsDir, base);
+            await installOneSkill(
+                opts,
+                slug,
+                versionFlag,
+                force,
+                targets,
+                registry,
+                canonicalWorkdir,
+                canonicalSkillsDir,
+                base
+            );
             results.push({ slug, status: 'ok' });
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
@@ -434,7 +453,11 @@ interface ResolvedSkill {
     explicitVersion?: string;
 }
 
-function buildSummaryLines(skills: ResolvedSkill[], targets: InstallTargets, base: string): string[] {
+function buildSummaryLines(
+    skills: ResolvedSkill[],
+    targets: InstallTargets,
+    base: string
+): string[] {
     const lines: string[] = [];
     for (const skill of skills) {
         if (lines.length > 0) lines.push('');
@@ -486,18 +509,21 @@ async function installResolvedSkill(
             await rm(canonicalDir, { recursive: true, force: true });
         }
 
-        await installExtractedSkill({
-            slug,
-            version,
-            canonicalDir,
-            canonicalWorkdir,
-            targets,
-            registry,
-            base,
-            lock,
-            existingEntry,
-            spinner,
-        }, { downloadZip });
+        await installExtractedSkill(
+            {
+                slug,
+                version,
+                canonicalDir,
+                canonicalWorkdir,
+                targets,
+                registry,
+                base,
+                lock,
+                existingEntry,
+                spinner,
+            },
+            { downloadZip }
+        );
         spinner.succeed(`OK. Installed ${slug} -> ${canonicalDir}`);
     } catch (error) {
         spinner.fail(formatError(error));
@@ -613,18 +639,21 @@ async function installOneSkill(
 
                 const subSpinner = createSpinner(`Installing sub-skill ${subSlug}@${subVersion}`);
                 try {
-                    await installExtractedSkill({
-                        slug: subSlug,
-                        version: subVersion,
-                        canonicalDir: subCanonical,
-                        canonicalWorkdir,
-                        targets,
-                        registry,
-                        base,
-                        lock,
-                        existingEntry: lock.skills[subSlug],
-                        spinner: subSpinner,
-                    }, { downloadZip });
+                    await installExtractedSkill(
+                        {
+                            slug: subSlug,
+                            version: subVersion,
+                            canonicalDir: subCanonical,
+                            canonicalWorkdir,
+                            targets,
+                            registry,
+                            base,
+                            lock,
+                            existingEntry: lock.skills[subSlug],
+                            spinner: subSpinner,
+                        },
+                        { downloadZip }
+                    );
                     subSpinner.succeed(`OK. Installed sub-skill ${subSlug} -> ${subCanonical}`);
                 } catch (err) {
                     subSpinner.fail(`Failed to install sub-skill ${subSlug}: ${formatError(err)}`);
@@ -653,18 +682,21 @@ async function installOneSkill(
             await rm(canonicalDir, { recursive: true, force: true });
         }
 
-        await installExtractedSkill({
-            slug: trimmed,
-            version: resolvedVersion,
-            canonicalDir,
-            canonicalWorkdir,
-            targets,
-            registry,
-            base,
-            lock,
-            existingEntry,
-            spinner,
-        }, { downloadZip });
+        await installExtractedSkill(
+            {
+                slug: trimmed,
+                version: resolvedVersion,
+                canonicalDir,
+                canonicalWorkdir,
+                targets,
+                registry,
+                base,
+                lock,
+                existingEntry,
+                spinner,
+            },
+            { downloadZip }
+        );
         spinner.succeed(`OK. Installed ${trimmed} -> ${canonicalDir}`);
     } catch (error) {
         spinner.fail(formatError(error));
@@ -1026,9 +1058,7 @@ async function removeAgentLinks(slug: string, global: boolean, base: string) {
         agentTypes.map(async (agent) => {
             const config = AGENT_DEFINITIONS[agent];
             if (config.skillsDir === '.agents/skills') return; // universal — lives in canonical
-            const agentDir = global
-                ? (config.globalSkillsDir ?? null)
-                : join(base, config.skillsDir);
+            const agentDir = global ? config.globalSkillsDir ?? null : join(base, config.skillsDir);
             if (!agentDir) return;
             const linkPath = join(agentDir, slug);
             try {

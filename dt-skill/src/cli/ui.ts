@@ -1,8 +1,8 @@
 import { confirm, intro, isCancel, note, select } from '@clack/prompts';
-import pc from 'picocolors';
 import { spawn } from 'node:child_process';
 import { stdin } from 'node:process';
 import ora from 'ora';
+import pc from 'picocolors';
 
 import {
     AGENT_DEFINITIONS,
@@ -146,7 +146,7 @@ export async function selectAgentsInteractive(options: {
         value: a,
         label: AGENT_DEFINITIONS[a].displayName,
         hint: options.global
-            ? (AGENT_DEFINITIONS[a].globalSkillsDir ?? AGENT_DEFINITIONS[a].skillsDir)
+            ? AGENT_DEFINITIONS[a].globalSkillsDir ?? AGENT_DEFINITIONS[a].skillsDir
             : AGENT_DEFINITIONS[a].skillsDir,
     }));
     // No pre-selection: the user picks. Universal agents are always included

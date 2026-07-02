@@ -1,12 +1,12 @@
 // Physical installer: canonical .agents/skills extraction + cross-platform
 // symlinks (junctions on Windows) with copy fallback. Ported from
 // vercel-labs/skills src/installer.ts, trimmed to dt-skill's zip-based flow.
-import { cp, mkdir, readdir, rm, stat, symlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { cp, mkdir, readdir, rm, stat, symlink } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
 import { dirname, join, normalize, relative, resolve, sep } from 'node:path';
 
-import { AGENT_DEFINITIONS, isUniversalAgent, type AgentType } from './agents/definitions.js';
+import { AGENT_DEFINITIONS, type AgentType,isUniversalAgent } from './agents/definitions.js';
 
 const AGENTS_DIR = '.agents';
 const SKILLS_SUBDIR = 'skills';
@@ -107,7 +107,8 @@ export async function createSymlink(target: string, linkPath: string): Promise<b
         await mkdir(linkDir, { recursive: true });
         const symlinkType = platform() === 'win32' ? 'junction' : undefined;
         // Relative on Unix so the project tree stays movable; junction needs absolute.
-        const symlinkTarget = symlinkType === 'junction' ? resolve(target) : relative(linkDir, target);
+        const symlinkTarget =
+            symlinkType === 'junction' ? resolve(target) : relative(linkDir, target);
         await symlink(symlinkTarget, linkPath, symlinkType);
         return true;
     } catch {
@@ -118,7 +119,7 @@ export async function createSymlink(target: string, linkPath: string): Promise<b
 const EXCLUDE_FILES = new Set(['metadata.json']);
 const EXCLUDE_DIRS = new Set(['.git', '__pycache__', '__pypackages__']);
 
-const isExcluded = (name: string, isDirectory: boolean = false): boolean => {
+const isExcluded = (name: string, isDirectory = false) => {
     if (EXCLUDE_FILES.has(name)) return true;
     if (isDirectory && EXCLUDE_DIRS.has(name)) return true;
     return false;
@@ -172,7 +173,13 @@ export async function linkOrCopyToAgent(
 
     // Universal agents already live in the canonical dir.
     if (isUniversalAgent(agentType)) {
-        return { success: true, path: canonicalDir, canonicalPath: canonicalDir, mode, skipped: true };
+        return {
+            success: true,
+            path: canonicalDir,
+            canonicalPath: canonicalDir,
+            mode,
+            skipped: true,
+        };
     }
 
     if (global && agent.globalSkillsDir === undefined) {

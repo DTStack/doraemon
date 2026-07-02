@@ -48,7 +48,9 @@ const program = new Command()
     .option('--registry <url>', 'Registry API base URL')
     .option(
         '-a, --agent <names>',
-        `Target agent(s) for symlinks (${listAgentNames().length} supported; comma-separated or repeated)`,
+        `Target agent(s) for symlinks (${
+            listAgentNames().length
+        } supported; comma-separated or repeated)`,
         collectAgent,
         []
     )
@@ -89,7 +91,10 @@ async function resolveGlobalOpts(): Promise<GlobalOpts> {
     // flattens it into an array. Validate each against the known agent list.
     const agentList: string[] = [];
     for (const value of raw.agent ?? []) {
-        for (const part of value.split(',').map((s) => s.trim()).filter(Boolean)) {
+        for (const part of value
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)) {
             if (!isAgentName(part)) {
                 fail(`Unknown agent "${part}". Supported: ${listAgentNames().join(', ')}`);
             }
