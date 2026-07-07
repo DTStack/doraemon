@@ -11,7 +11,7 @@ import {
 } from '../lockfile.js';
 import { extractZipToDir, hashSkillFiles, listTextFiles, writeSkillOrigin } from '../skills.js';
 import { type AgentType } from './agents.js';
-import { type InstallMode,linkOrCopyToAgent } from './installer.js';
+import { type InstallMode, linkOrCopyToAgent } from './installer.js';
 
 export interface InstallTargets {
     agents: AgentType[];

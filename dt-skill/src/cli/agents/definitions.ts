@@ -1,7 +1,7 @@
 // Agent definitions ported from vercel-labs/skills (src/agents.ts).
 // Path resolution mirrors the original: xdg configHome, env-var overrides,
 // and per-agent detectInstalled() that checks the real on-disk marker.
-import { existsSync, readdirSync,readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 

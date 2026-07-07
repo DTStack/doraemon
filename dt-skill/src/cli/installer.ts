@@ -6,7 +6,7 @@ import { cp, mkdir, readdir, rm, stat, symlink } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
 import { dirname, join, normalize, relative, resolve, sep } from 'node:path';
 
-import { AGENT_DEFINITIONS, type AgentType,isUniversalAgent } from './agents/definitions.js';
+import { AGENT_DEFINITIONS, type AgentType, isUniversalAgent } from './agents/definitions.js';
 
 const AGENTS_DIR = '.agents';
 const SKILLS_SUBDIR = 'skills';
