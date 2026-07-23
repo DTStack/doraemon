@@ -11,7 +11,8 @@ export interface SkillItem {
     updatedAt: string;
     sourceRepo: string;
     sourcePath: string;
-    installCommand: string;
+    isPackage?: number;
+    parentSlug?: string | null;
 }
 
 export interface SkillListResponse {
@@ -25,6 +26,7 @@ export interface SkillListResponse {
 export interface SkillDetail extends SkillItem {
     fileList: string[];
     skillMd: string;
+    children?: SkillItem[];
 }
 
 export interface SkillFileContent {

@@ -1,0 +1,6 @@
+.claude/
+.codex/
+.cursor/
+dist/
+node_modules/
+skills-lock.json

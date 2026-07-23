@@ -1,10 +1,11 @@
 .page-skills {
     height: 100%;
     min-height: 0;
-    padding: 20px 24px;
+    padding: 20px 28px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    background: #F7F9FB;
     .skills-header {
         display: flex;
         align-items: center;
@@ -14,13 +15,15 @@
     .title-group {
         .page-title {
             margin: 0;
-            color: #1F2D3D;
+            color: #2A3439;
             font-size: 28px;
             font-weight: 700;
+            font-family: var(--skill-detail-font-display, inherit);
+            letter-spacing: -0.025em;
         }
         .page-subtitle {
             margin: 8px 0 0;
-            color: #667085;
+            color: #64748B;
         }
     }
     .search-filter-row {
@@ -42,92 +45,6 @@
         }
         .import-btn {
             min-width: 100px;
-        }
-    }
-    .skill-card {
-        height: 100%;
-        border-radius: 10px;
-        border: 1px solid #EDF2F7;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-        &:hover,
-        &:focus {
-            border-color: #C8DAEE;
-            box-shadow: 0 14px 32px rgba(31, 45, 61, 0.08);
-            transform: translateY(-2px);
-        }
-        &:focus {
-            outline: none;
-        }
-        .ant-card-body {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .card-header-actions {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .skill-name {
-            color: #1F2D3D;
-            font-size: 16px;
-            font-weight: 600;
-        }
-        .card-edit-trigger {
-            height: 20px;
-            width: 20px;
-            min-width: 20px;
-            padding: 0;
-            color: #667085;
-            font-size: 12px;
-            line-height: 1;
-            border: none;
-            background: transparent;
-            box-shadow: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .card-edit-trigger:hover,
-        .card-edit-trigger:focus {
-            color: #2F7CF6;
-            background: transparent;
-        }
-        .meta-stars {
-            color: #E6A23C;
-            font-weight: 600;
-        }
-        .skill-desc {
-            margin-bottom: 12px;
-            color: #475467;
-            line-height: 1.6;
-            min-height: calc(1.6em * 3);
-            max-height: calc(1.6em * 3);
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            word-break: break-word;
-        }
-        .meta-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            gap: 8px;
-            .meta-value {
-                flex: 1;
-                color: #344054;
-            }
-        }
-        .tag-row {
-            min-height: 28px;
-            margin-bottom: 10px;
         }
     }
     > .ant-divider {

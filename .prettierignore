@@ -6,3 +6,7 @@ app/view/
 public
 
 config/manifest.json
+
+# Build output and runtime data (already in .gitignore)
+dt-skill/dist/
+run/

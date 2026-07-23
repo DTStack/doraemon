@@ -1,0 +1,100 @@
+import { join } from 'node:path';
+import { vi } from 'vitest';
+
+import type { GlobalOpts } from '../src/cli/types.js';
+
+/**
+ * Default opts use the canonical layout: <base>/.agents holds the lockfile,
+ * <base>/.agents/skills holds skill dirs. projectBase() = dirname(workdir) = base.
+ */
+export function makeGlobalOpts(base = '/work'): GlobalOpts {
+    const workdir = join(base, '.agents');
+    return {
+        workdir,
+        dir: join(workdir, 'skills'),
+        site: 'https://example.com',
+        registry: 'https://example.com',
+        registrySource: 'default',
+    };
+}
+
+function buildRegistryUrl(path: string, registry: string) {
+    const base = registry.endsWith('/') ? registry : `${registry}/`;
+    const relative = path.startsWith('/') ? path.slice(1) : path;
+    return new URL(relative, base);
+}
+
+export function createHttpModuleMocks() {
+    const apiRequest = vi.fn();
+    const apiRequestForm = vi.fn();
+    const downloadZip = vi.fn();
+    const fetchBinary = vi.fn();
+    const fetchText = vi.fn();
+    const registryUrl = vi.fn(buildRegistryUrl);
+
+    return {
+        apiRequest,
+        apiRequestForm,
+        downloadZip,
+        fetchBinary,
+        fetchText,
+        registryUrl,
+        moduleFactory: () => ({
+            apiRequest: (registry: unknown, args: unknown, schema?: unknown) =>
+                apiRequest(registry, args, schema),
+            apiRequestForm: (registry: unknown, args: unknown, schema?: unknown) =>
+                apiRequestForm(registry, args, schema),
+            downloadZip: (registry: unknown, args: unknown) => downloadZip(registry, args),
+            fetchBinary: (registry: unknown, args: unknown) => fetchBinary(registry, args),
+            fetchText: (registry: unknown, args: unknown) => fetchText(registry, args),
+            registryUrl: (...args: [string, string]) => registryUrl(...args),
+        }),
+    };
+}
+
+export function createRegistryModuleMocks() {
+    const getRegistry = vi.fn(async (_opts?: unknown, _params?: unknown) => 'https://example.com');
+
+    return {
+        getRegistry,
+        moduleFactory: () => ({
+            getRegistry: (opts: unknown, params?: unknown) => getRegistry(opts, params),
+        }),
+    };
+}
+
+export function createUiModuleMocks(options?: { interactive?: boolean }) {
+    const spinner = {
+        stop: vi.fn(),
+        fail: vi.fn(),
+        succeed: vi.fn(),
+        start: vi.fn(),
+        isSpinning: false,
+        text: '',
+    };
+    const fail = vi.fn((message: string) => {
+        throw new Error(message);
+    });
+    const promptConfirm = vi.fn(async () => true);
+    const interactive = options?.interactive ?? false;
+
+    return {
+        spinner,
+        fail,
+        promptConfirm,
+        moduleFactory: () => ({
+            createSpinner: vi.fn(() => spinner),
+            fail: (message: string) => fail(message),
+            formatError: (error: unknown) =>
+                error instanceof Error ? error.message : String(error),
+            isInteractive: () => interactive,
+            promptConfirm,
+            printSkillsLogo: vi.fn(),
+            selectAgentsInteractive: vi.fn(async () => []),
+            selectScope: vi.fn(async () => false),
+            selectInstallMethod: vi.fn(async () => 'symlink' as const),
+            noteSummary: vi.fn(),
+            isCancelledValue: (value: unknown) => typeof value === 'symbol',
+        }),
+    };
+}

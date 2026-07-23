@@ -7,7 +7,7 @@
     background: #F7F9FB;
     font-family: var(--skill-detail-font-body);
     color: #2A3439;
-    .skill-detail-figma-icon {
+    .skill-detail-icon {
         display: inline-block;
         object-fit: contain;
         flex: 0 0 auto;
@@ -76,6 +76,30 @@
         display: grid;
         grid-template-columns: 256px minmax(0, 1fr) 320px;
         overflow: hidden;
+        &.is-package {
+            grid-template-columns: minmax(0, 1fr);
+            .detail-main-column.is-package {
+                min-width: 0;
+                width: 100%;
+                align-self: center;
+                padding: 28px 40px 40px;
+                gap: 24px;
+                max-width: 1280px;
+                margin: 0 auto;
+
+                @media (min-width: 1600px) {
+                    max-width: 1600px;
+                }
+
+                @media (min-width: 1920px) {
+                    max-width: 1780px;
+                }
+
+                @media (min-width: 2560px) {
+                    max-width: 2200px;
+                }
+            }
+        }
     }
     .detail-left-sidebar,
     .detail-right-sidebar {
@@ -236,16 +260,16 @@
     }
     .detail-hero-main {
         width: 100%;
-        padding: 16px 24px;
+        padding: 24px 32px;
         min-height: 182px;
-        border-radius: 8px;
+        border-radius: 12px;
         border: 1px solid rgba(169, 180, 185, 0.1);
         background: #FFF;
         box-shadow: 0 0 0 1px rgba(169, 180, 185, 0.04);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        gap: 10px;
+        gap: 14px;
     }
     .hero-head-row {
         display: flex;
@@ -644,10 +668,7 @@
         grid-template-rows: 0fr;
         padding: 0 12px;
         opacity: 0;
-        transition:
-            grid-template-rows 180ms ease,
-            padding 180ms ease,
-            opacity 140ms ease;
+        transition: grid-template-rows 180ms ease, padding 180ms ease, opacity 140ms ease;
         &.is-open {
             grid-template-rows: 1fr;
             padding: 4px 12px 12px;
@@ -1066,6 +1087,9 @@
     @media (max-width: 1200px) {
         .skill-detail-shell {
             grid-template-columns: 220px minmax(0, 1fr) 300px;
+            &.is-package {
+                grid-template-columns: minmax(0, 1fr) 300px;
+            }
         }
         .detail-main-column {
             padding: 24px;
@@ -1119,5 +1143,49 @@
             gap: 20px;
             flex-wrap: wrap;
         }
+    }
+
+    // Package overview page styles
+    .skill-breadcrumb {
+        margin-bottom: 16px;
+        .ant-breadcrumb {
+            font-size: 13px;
+            color: #64748B;
+        }
+        .breadcrumb-link {
+            cursor: pointer;
+            color: #2563EB;
+            &:hover {
+                color: #1D4ED8;
+                text-decoration: underline;
+            }
+        }
+    }
+    .package-children-section {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 8px 4px;
+    }
+    .package-children-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #E2E8F0;
+        .package-badge {
+            font-size: 20px;
+        }
+        .package-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2A3439;
+            font-family: var(--skill-detail-font-display);
+        }
+    }
+    // SkillCard compact variant overrides for package page
+    .skill-card-unified.is-compact {
+        min-height: 132px;
     }
 }

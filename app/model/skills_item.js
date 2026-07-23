@@ -81,6 +81,17 @@ module.exports = (app) => {
                 allowNull: false,
                 defaultValue: 0,
             },
+            is_package: {
+                type: TINYINT,
+                allowNull: false,
+                defaultValue: 0,
+                comment: '是否是技能包',
+            },
+            parent_slug: {
+                type: STRING(255),
+                allowNull: true,
+                comment: '所属技能包的 slug',
+            },
             created_at: {
                 type: DATE,
                 allowNull: false,
