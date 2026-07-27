@@ -712,7 +712,6 @@ export async function cmdUpdate(
 ) {
     const slug = slugArg ? normalizeSkillSlugOrFail(slugArg) : undefined;
     // Bare `update` == update all tracked skills (same as --all). --all kept for compatibility.
-    const all = Boolean(options.all) || !slug;
     if (slug && options.all) fail('Use either <slug> or --all');
     if (options.version && !slug) fail('--version requires a single <slug>');
     if (options.version && !semver.valid(options.version)) fail('--version must be valid semver');
@@ -746,6 +745,11 @@ export async function cmdUpdate(
         return;
     }
 
+    const updated: string[] = [];
+    const alreadyCurrent: string[] = [];
+    const failed: Array<{ slug: string; error: string }> = [];
+    let lockDirty = false;
+
     for (const entry of slugs) {
         const spinner = createSpinner(`Checking ${entry}`);
         try {
@@ -764,6 +768,7 @@ export async function cmdUpdate(
             if (skillMeta.moderation?.isMalwareBlocked) {
                 spinner.fail(`${entry}: blocked as malicious`);
                 console.log('   This skill has been flagged as malware and cannot be updated.');
+                failed.push({ slug: entry, error: 'blocked as malicious' });
                 continue;
             }
 
@@ -798,24 +803,30 @@ export async function cmdUpdate(
                 localFingerprint = lock.skills[entry].fingerprint ?? null;
             }
 
+            const metaFingerprint =
+                skillMeta.latestVersion?.fingerprint ?? skillMeta.skill?.fingerprint ?? null;
+
             let resolveResult: ResolveResult;
             if (localFingerprint) {
                 resolveResult = await resolveSkillVersion(registry, entry, localFingerprint);
             } else {
-                resolveResult = { match: null, latestVersion: skillMeta.latestVersion ?? null };
+                resolveResult = {
+                    match: null,
+                    latestVersion: skillMeta.latestVersion
+                        ? {
+                              version: skillMeta.latestVersion.version,
+                              fingerprint: metaFingerprint,
+                          }
+                        : null,
+                };
             }
 
             const latest =
                 resolveResult.latestVersion?.version ?? skillMeta.latestVersion?.version ?? null;
             const remoteFingerprint =
-                (resolveResult.latestVersion as { fingerprint?: string } | null | undefined)
-                    ?.fingerprint ??
-                (skillMeta.latestVersion as { fingerprint?: string } | undefined)?.fingerprint ??
-                (skillMeta.skill as { fingerprint?: string } | undefined)?.fingerprint ??
-                null;
+                resolveResult.latestVersion?.fingerprint ?? metaFingerprint ?? null;
 
             // Hash model: equal fingerprint (or resolve match) → up to date; else pull latest.
-            // Do NOT treat "disk matches install origin" as up-to-date — remote may have moved.
             const hashMatches =
                 Boolean(localFingerprint) &&
                 Boolean(remoteFingerprint) &&
@@ -825,18 +836,27 @@ export async function cmdUpdate(
 
             if (!latest) {
                 spinner.fail(`${entry}: not found`);
+                failed.push({ slug: entry, error: 'not found' });
                 continue;
             }
 
             if (contentUpToDate && !options.version) {
                 const keepVersion = resolveResult.match?.version ?? latest;
-                lock.skills[entry] = withPinnedMetadata(
-                    keepVersion,
-                    lock.skills[entry]?.installedAt ?? Date.now(),
-                    lock.skills[entry],
-                    remoteFingerprint ?? localFingerprint
-                );
-                await writeLockfile(installWorkdir, lock);
+                const nextFp = remoteFingerprint ?? localFingerprint ?? null;
+                const prev = lock.skills[entry];
+                const needsLockWrite =
+                    prev?.version !== keepVersion ||
+                    (nextFp != null && prev?.fingerprint !== nextFp);
+                if (needsLockWrite) {
+                    lock.skills[entry] = withPinnedMetadata(
+                        keepVersion,
+                        prev?.installedAt ?? Date.now(),
+                        prev,
+                        nextFp
+                    );
+                    lockDirty = true;
+                    await writeLockfile(installWorkdir, lock);
+                }
                 spinner.succeed(
                     `${entry}: up to date${
                         remoteFingerprint
@@ -846,6 +866,7 @@ export async function cmdUpdate(
                               : ''
                     }`
                 );
+                alreadyCurrent.push(entry);
                 continue;
             }
 
@@ -853,6 +874,7 @@ export async function cmdUpdate(
             const targetVersion = options.version ?? latest;
             if (options.version && resolveMatched && resolveResult.match?.version === targetVersion) {
                 spinner.succeed(`${entry}: already at ${targetVersion}`);
+                alreadyCurrent.push(entry);
                 continue;
             }
 
@@ -894,6 +916,7 @@ export async function cmdUpdate(
             }
 
             // 每条成功更新后即持久化 lockfile，崩溃不再让磁盘与锁漂移
+            lockDirty = true;
             await writeLockfile(installWorkdir, lock);
             spinner.succeed(
                 `${entry}: updated${
@@ -902,18 +925,33 @@ export async function cmdUpdate(
                         : ` -> ${targetVersion}`
                 }`
             );
+            updated.push(entry);
         } catch (error) {
             spinner.fail(formatError(error));
-            throw error;
+            // Spec: partial failures continue remaining skills; non-zero exit after summary.
+            failed.push({ slug: entry, error: formatError(error) });
         }
     }
 
-    await writeLockfile(installWorkdir, lock);
+    if (lockDirty) {
+        await writeLockfile(installWorkdir, lock);
+    }
+
+    // Summary: updated / already-current / skipped-pinned / failed
+    console.log('');
+    console.log(
+        `Update summary: ${updated.length} updated, ${alreadyCurrent.length} up to date, ${skippedPinned.length} pinned skipped, ${failed.length} failed`
+    );
+    if (updated.length > 0) console.log(`  updated: ${updated.join(', ')}`);
+    if (alreadyCurrent.length > 0) console.log(`  up to date: ${alreadyCurrent.join(', ')}`);
     if (skippedPinned.length > 0) {
-        const suffix = skippedPinned.length === 1 ? '' : 's';
-        console.log(
-            `Skipped ${skippedPinned.length} pinned skill${suffix}: ${skippedPinned.join(', ')}`
-        );
+        console.log(`  pinned skipped: ${skippedPinned.join(', ')}`);
+    }
+    if (failed.length > 0) {
+        for (const item of failed) {
+            console.log(`  failed ${item.slug}: ${item.error}`);
+        }
+        fail(`Failed to update ${failed.length} skill(s)`);
     }
 }
 

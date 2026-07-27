@@ -629,6 +629,30 @@ test('publishSkill returns ok: true and string skillId and versionId', async () 
     assert.equal(result.unchanged, false);
 });
 
+test('publishSkill rejects invalid category', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    service.app = createMockApp();
+    service.ctx = createMockCtx();
+    service.ctx.throw = (status, message) => {
+        const err = new Error(message);
+        err.status = status;
+        throw err;
+    };
+
+    await assert.rejects(
+        () =>
+            service.publishSkill(
+                {
+                    slug: 'bad-cat',
+                    displayName: 'Bad',
+                    category: 'not-a-real-category',
+                },
+                [{ filepath: 'SKILL.md', content: '# x\n' }]
+            ),
+        /category 无效/
+    );
+});
+
 test('publishSkill accepts missing version (defaults to 0.0.0)', async () => {
     const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({

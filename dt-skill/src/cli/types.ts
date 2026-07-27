@@ -16,7 +16,12 @@ export type GlobalOpts = {
     yes?: boolean;
 };
 
+export type ResolveVersionRef = {
+    version: string;
+    fingerprint?: string | null;
+};
+
 export type ResolveResult = {
-    match: { version: string } | null;
-    latestVersion: { version: string } | null;
+    match: ResolveVersionRef | null;
+    latestVersion: ResolveVersionRef | null;
 };

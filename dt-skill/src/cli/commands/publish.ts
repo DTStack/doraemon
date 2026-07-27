@@ -10,13 +10,20 @@ import {
     ApiV1SkillResponseSchema,
     normalizeClawScanNote,
 } from '../../schema/index.js';
-import { listPublishFiles } from '../../skills.js';
+import { hashSkillFiles, listPublishFiles } from '../../skills.js';
 import { searchMultiselect } from '../prompts/search-multiselect.js';
 import { getRegistry } from '../registry.js';
 import { findSkillFolders } from '../scanSkills.js';
 import { sanitizeSlug, titleCase } from '../slug.js';
 import type { GlobalOpts } from '../types.js';
-import { createSpinner, fail, formatError, isInteractive, promptConfirm, selectCategory } from '../ui.js';
+import {
+    createSpinner,
+    fail,
+    formatError,
+    isInteractive,
+    promptConfirm,
+    selectCategory,
+} from '../ui.js';
 
 /** Closed category enum aligned with Doraemon skills market. */
 export const SKILL_CATEGORY_OPTIONS = [
@@ -101,6 +108,7 @@ export async function cmdPublish(
 
     // Detect whether slug already exists on registry (first publish needs category).
     let existingCategory: string | null = null;
+    let existingFingerprint: string | null = null;
     let skillExists = false;
     try {
         const existing = await apiRequest(
@@ -109,8 +117,9 @@ export async function cmdPublish(
             ApiV1SkillResponseSchema
         );
         skillExists = Boolean(existing?.skill);
-        const skillMeta = existing?.skill as { category?: string } | undefined;
-        if (skillMeta?.category) existingCategory = String(skillMeta.category);
+        if (existing?.skill?.category) existingCategory = String(existing.skill.category);
+        existingFingerprint =
+            existing?.skill?.fingerprint ?? existing?.latestVersion?.fingerprint ?? null;
     } catch {
         skillExists = false;
     }
@@ -132,16 +141,6 @@ export async function cmdPublish(
         category = existingCategory;
     }
 
-    if (skillExists && isInteractive() && !options.yes) {
-        const ok = await promptConfirm(
-            `Skill "${slug}" already exists on the registry. Overwrite remote content if it changed?`
-        );
-        if (!ok) {
-            console.log('Publish cancelled');
-            return;
-        }
-    }
-
     const spinner = createSpinner(`Preparing ${slug}`);
     try {
         const filesOnDisk = await ensureRootManifestFile(folder, await listPublishFiles(folder));
@@ -153,6 +152,29 @@ export async function cmdPublish(
             })
         ) {
             fail('SKILL.md required');
+        }
+
+        // Confirm overwrite only when remote exists AND content hash differs (Decision 18).
+        const localFingerprint = hashSkillFiles(
+            filesOnDisk.map((file) => ({
+                relPath: file.relPath,
+                bytes: file.bytes,
+            }))
+        ).fingerprint;
+        const contentChanged =
+            skillExists &&
+            Boolean(existingFingerprint) &&
+            localFingerprint !== existingFingerprint;
+        if (contentChanged && isInteractive() && !options.yes) {
+            spinner.stop();
+            const ok = await promptConfirm(
+                `Skill "${slug}" exists and content changed. Overwrite remote?`
+            );
+            if (!ok) {
+                console.log('Publish cancelled');
+                return;
+            }
+            spinner.start(`Publishing ${slug}`);
         }
 
         const form = new FormData();

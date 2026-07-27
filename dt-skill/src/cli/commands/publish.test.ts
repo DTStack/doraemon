@@ -47,6 +47,64 @@ afterEach(() => {
 });
 
 describe('cmdPublish', () => {
+    it('does not prompt overwrite when remote fingerprint matches local content', async () => {
+        const workdir = await makeTmpWorkdir();
+        try {
+            const folder = join(workdir, 'same-skill');
+            await mkdir(folder, { recursive: true });
+            const content = '# same\n';
+            await writeFile(join(folder, 'SKILL.md'), content, 'utf8');
+
+            // Precompute fingerprint the same way publish will
+            const { hashSkillFiles } = await import('../../skills.js');
+            const fp = hashSkillFiles([
+                { relPath: 'SKILL.md', bytes: new Uint8Array(Buffer.from(content, 'utf8')) },
+            ]).fingerprint;
+
+            httpMocks.apiRequest.mockResolvedValueOnce({
+                skill: {
+                    slug: 'same-skill',
+                    displayName: 'Same',
+                    summary: null,
+                    tags: [],
+                    stats: {},
+                    createdAt: 1,
+                    updatedAt: 1,
+                    category: '通用',
+                    fingerprint: fp,
+                },
+                latestVersion: {
+                    version: '0.0.0',
+                    createdAt: 1,
+                    changelog: '',
+                    license: null,
+                    fingerprint: fp,
+                },
+                owner: null,
+                moderation: null,
+            });
+            httpMocks.apiRequestForm.mockResolvedValueOnce({
+                ok: true,
+                skillId: '1',
+                versionId: 'v0.0.0',
+                fingerprint: fp,
+                unchanged: true,
+            });
+
+            await cmdPublish(makeOpts(workdir), 'same-skill', {
+                slug: 'same-skill',
+                name: 'Same',
+                category: '通用',
+                // interactive kit defaults interactive:true; no --yes — should still not cancel
+            });
+
+            expect(uiMocks.promptConfirm).not.toHaveBeenCalled();
+            expect(httpMocks.apiRequestForm).toHaveBeenCalled();
+        } finally {
+            await rm(workdir, { recursive: true, force: true });
+        }
+    });
+
     it('publishes SKILL.md from disk (mocked HTTP)', async () => {
         const workdir = await makeTmpWorkdir();
         try {

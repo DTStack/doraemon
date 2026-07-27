@@ -8,6 +8,19 @@ const skillFingerprint = require('../../contracts/skill-fingerprint');
 
 const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?$/;
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+/** Closed category enum (aligned with skills market / CLI). */
+const SKILL_CATEGORY_OPTIONS = [
+    '通用',
+    '前端',
+    '后端',
+    '数据与AI',
+    '运维与系统',
+    '工程效率',
+    '安全',
+    '其他',
+];
+/** Compatibility placeholder when client omits version; content hash is the change signal. */
+const DEFAULT_PUBLISH_VERSION = '0.0.0';
 
 class SkillsRegistryService extends Service {
     // Well-Known Registry Metadata
@@ -365,7 +378,7 @@ class SkillsRegistryService extends Service {
     // Compatibility placeholder when client omits version (hash is the real change signal).
     resolvePublishVersion(version) {
         const raw = String(version || '').trim();
-        if (!raw) return '0.0.0';
+        if (!raw) return DEFAULT_PUBLISH_VERSION;
         if (!this.validateSemVer(raw)) {
             this.ctx.throw(400, 'version 必须是有效的 SemVer 格式');
         }
@@ -375,6 +388,12 @@ class SkillsRegistryService extends Service {
     resolvePublishCategory(category) {
         const raw = String(category || '').trim();
         if (!raw) return null;
+        if (!SKILL_CATEGORY_OPTIONS.includes(raw)) {
+            this.ctx.throw(
+                400,
+                `category 无效，可选: ${SKILL_CATEGORY_OPTIONS.join(', ')}`
+            );
+        }
         return raw;
     }
 
@@ -466,18 +485,10 @@ class SkillsRegistryService extends Service {
 
             let skill = await SkillsItem.findOne({ where: { slug }, transaction: t });
 
-            // Same content already published → no-op (hash model)
+            // Same content already published → pure no-op (no meta churn)
             if (skill && skill.is_delete === 0) {
                 const existingFingerprint = await this.computeSkillFingerprint(skill.id);
                 if (existingFingerprint && existingFingerprint === incomingFingerprint) {
-                    const meta = {};
-                    if (displayName && displayName !== skill.name) meta.name = displayName;
-                    if (payload.description != null) meta.description = payload.description || '';
-                    if (parsedTags.length) meta.tags = JSON.stringify(parsedTags);
-                    if (category) meta.category = category;
-                    if (Object.keys(meta).length) {
-                        await skill.update(meta, { transaction: t });
-                    }
                     return {
                         ok: true,
                         skillId: String(skill.id),
