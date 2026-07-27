@@ -187,11 +187,13 @@ registerCommand(program, ['install'])
     });
 
 registerCommand(program, ['update'])
-    .description('Update installed skills')
-    .argument('[slug]', 'Skill slug')
-    .option('--all', 'Update all installed skills')
-    .option('--version <version>', 'Update to specific version (single slug only)')
-    .option('--force', 'Overwrite when local files do not match any version')
+    .description(
+        'Update installed skills to registry content (by hash). Bare update = all tracked skills.'
+    )
+    .argument('[slug]', 'Skill slug (omit to update all)')
+    .option('--all', 'Update all installed skills (same as bare update)')
+    .option('--version <version>', 'Update to specific version (single slug only, legacy)')
+    .option('--force', 'Overwrite when local files do not match registry content')
     .action(async (slug, options) => {
         const opts = await resolveGlobalOpts();
         await cmdUpdate(opts, slug, options, isInputAllowed());
@@ -269,19 +271,23 @@ registerCommand(program, ['inspect'])
     });
 
 registerCommand(program, ['publish'])
-    .description('Legacy alias: publish a skill from folder')
+    .description(
+        'Publish a skill folder to the registry (push remote). Re-publish same slug overwrites by content hash.'
+    )
+    .alias('upload')
     .argument('<path>', 'Skill folder path')
     .option('--slug <slug>', 'Skill slug')
     .option('--name <name>', 'Display name')
     .option('--owner <handle>', 'Publish under an org/user publisher handle')
     .option('--migrate-owner', 'Move an existing skill to the selected owner when republishing')
-    .option('--version <version>', 'Version (semver)')
+    .option('--version <version>', 'Optional semver (compatibility; default 0.0.0, hash detects changes)')
     .option('--fork-of <slug[@version]>', 'Mark as a fork of an existing skill')
     .option('--changelog <text>', 'Changelog text')
     .option('--clawscan-note <text>', CLAWSCAN_NOTE_HELP)
     .option('--tags <tags>', 'Comma-separated tags', 'latest')
     .option('--all', 'Batch mode: upload all discovered skills without interactive selection')
-    .option('--category <category>', 'Category for batch upload')
+    .option('--category <category>', 'Category (required on first publish in non-interactive mode)')
+    .option('--yes', 'Skip overwrite confirmation')
     .action(async (folder, options) => {
         const opts = await resolveGlobalOpts();
         await cmdPublish(opts, folder, options);
@@ -333,17 +339,19 @@ registerCommand(program, ['unhide'])
 
 const skill = registerCommandGroup(program, ['skill']).description('Manage published skills');
 registerCommand(skill, ['skill', 'publish'])
-    .description('Publish a skill from folder')
+    .description('Publish a skill from folder (same as publish/upload)')
     .argument('<path>', 'Skill folder path')
     .option('--slug <slug>', 'Skill slug')
     .option('--name <name>', 'Display name')
     .option('--owner <handle>', 'Publish under an org/user publisher handle')
     .option('--migrate-owner', 'Move an existing skill to the selected owner when republishing')
-    .option('--version <version>', 'Version (semver)')
+    .option('--version <version>', 'Optional semver (compatibility; default 0.0.0)')
     .option('--fork-of <slug[@version]>', 'Mark as a fork of an existing skill')
     .option('--changelog <text>', 'Changelog text')
     .option('--clawscan-note <text>', CLAWSCAN_NOTE_HELP)
     .option('--tags <tags>', 'Comma-separated tags', 'latest')
+    .option('--category <category>', 'Category (required on first publish in non-interactive mode)')
+    .option('--yes', 'Skip overwrite confirmation')
     .action(async (folder, options) => {
         const opts = await resolveGlobalOpts();
         await cmdPublish(opts, folder, options);

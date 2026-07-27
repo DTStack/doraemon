@@ -57,16 +57,21 @@ describe('cmdPublish', () => {
             await writeFile(join(folder, 'SKILL.md'), skillContent, 'utf8');
             await writeFile(join(folder, 'notes.md'), notesContent, 'utf8');
 
+            // Existing skill lookup (GET) — miss so first-publish path needs category
+            httpMocks.apiRequest.mockRejectedValueOnce(new Error('not found'));
             httpMocks.apiRequestForm.mockResolvedValueOnce({
                 ok: true,
                 skillId: 'skill_1',
-                versionId: 'ver_1',
+                versionId: 'v0.0.0',
+                fingerprint: 'abc123',
+                unchanged: false,
             });
 
             await cmdPublish(makeOpts(workdir), 'my-skill', {
                 slug: 'my-skill',
                 name: 'My Skill',
-                version: '1.0.0',
+                category: '工程效率',
+                yes: true,
                 changelog: '',
                 tags: 'latest',
                 clawscanNote: "This skill needs network access to call the user's configured API.",
@@ -84,7 +89,8 @@ describe('cmdPublish', () => {
             const payload = JSON.parse(payloadEntry);
             expect(payload.slug).toBe('my-skill');
             expect(payload.displayName).toBe('My Skill');
-            expect(payload.version).toBe('1.0.0');
+            expect(payload.version).toBe('0.0.0');
+            expect(payload.category).toBe('工程效率');
             expect(payload.changelog).toBe('');
             expect(payload.clawScanNote).toBe(
                 "This skill needs network access to call the user's configured API."
@@ -106,14 +112,17 @@ describe('cmdPublish', () => {
             await writeFile(join(folder, 'SKILL.md'), '# Skill\n', 'utf8');
             await writeFile(join(folder, 'assets', 'logo.png'), new Uint8Array([0, 1, 2, 255]));
 
+            httpMocks.apiRequest.mockRejectedValueOnce(new Error('not found'));
             httpMocks.apiRequestForm.mockResolvedValueOnce({
                 ok: true,
                 skillId: 'skill_1',
-                versionId: 'ver_1',
+                versionId: 'v1.0.0',
             });
 
             await cmdPublish(makeOpts(workdir), 'skill-with-assets', {
                 version: '1.0.0',
+                category: '通用',
+                yes: true,
             });
 
             const publishCall = httpMocks.apiRequestForm.mock.calls[0];
@@ -158,6 +167,7 @@ describe('cmdPublish', () => {
             await mkdir(folder, { recursive: true });
             await writeFile(join(folder, 'SKILL.md'), '# Skill\n', 'utf8');
 
+            httpMocks.apiRequest.mockRejectedValueOnce(new Error('not found'));
             httpMocks.apiRequestForm.mockResolvedValueOnce({
                 ok: true,
                 skillId: 'skill_1',
@@ -166,6 +176,8 @@ describe('cmdPublish', () => {
 
             await cmdPublish(makeOpts(workdir), 'existing-skill', {
                 version: '1.0.1',
+                category: '通用',
+                yes: true,
                 changelog: '',
                 tags: 'latest',
             });
@@ -189,6 +201,7 @@ describe('cmdPublish', () => {
             await writeFile(join(folder, 'SKILL.md'), '# Skill\n', 'utf8');
             await writeFile(join(folder, 'notes.md'), 'ignored notes\n', 'utf8');
 
+            httpMocks.apiRequest.mockRejectedValueOnce(new Error('not found'));
             httpMocks.apiRequestForm.mockResolvedValueOnce({
                 ok: true,
                 skillId: 'skill_1',
@@ -199,6 +212,8 @@ describe('cmdPublish', () => {
                 slug: 'ignored-manifest',
                 name: 'Ignored Manifest',
                 version: '1.0.0',
+                category: '通用',
+                yes: true,
                 changelog: '',
                 tags: 'latest',
             });
@@ -223,6 +238,7 @@ describe('cmdPublish', () => {
             await mkdir(folder, { recursive: true });
             await writeFile(join(folder, 'SKILL.md'), '# Skill\n', 'utf8');
 
+            httpMocks.apiRequest.mockRejectedValueOnce(new Error('not found'));
             httpMocks.apiRequestForm.mockResolvedValueOnce({
                 ok: true,
                 skillId: 'skill_1',
@@ -233,6 +249,8 @@ describe('cmdPublish', () => {
                 owner: '@openclaw',
                 migrateOwner: true,
                 version: '1.0.1',
+                category: '通用',
+                yes: true,
                 changelog: '',
                 tags: 'latest',
             });

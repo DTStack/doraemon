@@ -287,6 +287,7 @@ test('getSkillDetail returns full skill object', async () => {
         },
     });
     service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
 
     const data = await service.getSkillDetail('my-skill');
     assert.ok(data);
@@ -298,11 +299,13 @@ test('getSkillDetail returns full skill object', async () => {
     assert.deepEqual(data.skill.stats, { stars: 42, downloads: 0 });
     assert.equal(data.skill.createdAt, new Date('2026-05-21T10:00:00Z').getTime());
     assert.equal(data.skill.updatedAt, new Date('2026-05-21T10:00:00Z').getTime());
+    assert.equal(data.skill.fingerprint, null);
     assert.deepEqual(data.latestVersion, {
         version: '1.2.3',
         createdAt: new Date('2026-05-21T10:00:00Z').getTime(),
         changelog: '',
         license: null,
+        fingerprint: null,
     });
     assert.equal(data.owner, null);
     assert.equal(data.moderation, null);
@@ -612,6 +615,7 @@ test('publishSkill returns ok: true and string skillId and versionId', async () 
         },
     });
     service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
 
     const result = await service.publishSkill(
         { slug: 'test-skill', displayName: 'Test Skill', version: '1.0.0' },
@@ -621,6 +625,83 @@ test('publishSkill returns ok: true and string skillId and versionId', async () 
     assert.equal(result.ok, true);
     assert.equal(typeof result.skillId, 'string');
     assert.equal(result.versionId, 'v1.0.0');
+    assert.equal(typeof result.fingerprint, 'string');
+    assert.equal(result.unchanged, false);
+});
+
+test('publishSkill accepts missing version (defaults to 0.0.0)', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => null,
+            create: async (data) => ({ id: 124, ...data, update: async () => {} }),
+        },
+        SkillsSource: {
+            findOne: async () => ({ id: 1 }),
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            create: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill(
+        { slug: 'hash-skill', displayName: 'Hash Skill', category: '工程效率' },
+        [{ filepath: 'SKILL.md', content: '# hash skill\n' }]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.versionId, 'v0.0.0');
+    assert.equal(typeof result.fingerprint, 'string');
+});
+
+test('publishSkill same content is unchanged no-op', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    const skillRow = {
+        id: 50,
+        slug: 'same-skill',
+        name: 'Same',
+        version: '0.0.0',
+        is_delete: 0,
+        update: async () => {},
+    };
+    const files = [
+        {
+            file_path: 'SKILL.md',
+            content: '# same\n',
+            is_binary: 0,
+        },
+    ];
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => skillRow,
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => files,
+            create: async () => {
+                throw new Error('should not create on no-op');
+            },
+            update: async () => {
+                throw new Error('should not soft-delete on no-op');
+            },
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill(
+        { slug: 'same-skill', displayName: 'Same' },
+        [{ filepath: 'SKILL.md', content: '# same\n' }]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, true);
+    assert.equal(typeof result.fingerprint, 'string');
 });
 
 // ============================================================
@@ -736,8 +817,8 @@ test('resolveFingerprint returns match and latestVersion for matching fingerprin
     const fp = await service.computeSkillFingerprint(1);
     const result = await service.resolveFingerprint('skill-a', fp);
     assert.ok(result);
-    assert.deepEqual(result.match, { version: '1.0.0' });
-    assert.deepEqual(result.latestVersion, { version: '1.0.0' });
+    assert.deepEqual(result.match, { version: '1.0.0', fingerprint: fp });
+    assert.deepEqual(result.latestVersion, { version: '1.0.0', fingerprint: fp });
 });
 
 test('resolveFingerprint returns null match for unmatched fingerprint but valid slug', async () => {
@@ -752,10 +833,11 @@ test('resolveFingerprint returns null match for unmatched fingerprint but valid 
     });
     service.ctx = createMockCtx();
 
+    const fp = await service.computeSkillFingerprint(1);
     const result = await service.resolveFingerprint('skill-a', 'wrong_hash');
     assert.ok(result);
     assert.equal(result.match, null);
-    assert.deepEqual(result.latestVersion, { version: '1.0.0' });
+    assert.deepEqual(result.latestVersion, { version: '1.0.0', fingerprint: fp });
 });
 
 test('resolveFingerprint returns null values for missing slug', async () => {

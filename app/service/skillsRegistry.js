@@ -156,6 +156,12 @@ class SkillsRegistryService extends Service {
         const stats = { stars: skill.stars || 0, downloads: 0 };
         const createdAt = skill.created_at ? new Date(skill.created_at).getTime() : 0;
         const updatedAt = skill.updated_at ? new Date(skill.updated_at).getTime() : 0;
+        let fingerprint = null;
+        try {
+            fingerprint = await this.computeSkillFingerprint(skill.id);
+        } catch (err) {
+            this.ctx.logger.warn('[skillsRegistry] compute fingerprint failed:', err);
+        }
 
         const detail = {
             skill: {
@@ -169,6 +175,8 @@ class SkillsRegistryService extends Service {
                 updatedAt,
                 isPackage: skill.is_package === 1,
                 parentSlug: skill.parent_slug || null,
+                category: skill.category || '通用',
+                fingerprint,
             },
             latestVersion: version
                 ? {
@@ -176,6 +184,7 @@ class SkillsRegistryService extends Service {
                       createdAt: updatedAt,
                       changelog: '',
                       license: null,
+                      fingerprint,
                   }
                 : null,
             owner: null,
@@ -353,17 +362,44 @@ class SkillsRegistryService extends Service {
         return SEMVER_PATTERN.test(String(version || '').trim());
     }
 
-    // Publish or update a skill
+    // Compatibility placeholder when client omits version (hash is the real change signal).
+    resolvePublishVersion(version) {
+        const raw = String(version || '').trim();
+        if (!raw) return '0.0.0';
+        if (!this.validateSemVer(raw)) {
+            this.ctx.throw(400, 'version 必须是有效的 SemVer 格式');
+        }
+        return raw;
+    }
+
+    resolvePublishCategory(category) {
+        const raw = String(category || '').trim();
+        if (!raw) return null;
+        return raw;
+    }
+
+    // Fingerprint of an in-memory multipart/processed upload set (same contract as stored files).
+    computeIncomingFingerprint(processedFiles) {
+        const storedLike = processedFiles.map((file) => ({
+            file_path: file.relPath,
+            content: file.content,
+            is_binary: file.isBinary ? 1 : 0,
+        }));
+        const fingerprintIgnore = this.createFingerprintIgnore(storedLike);
+        return skillFingerprint.buildSkillFingerprintFromStoredFiles(storedLike, {
+            ignoreMatcher: fingerprintIgnore,
+        });
+    }
+
+    // Publish or update a skill (single-slot per slug; content hash is the change signal)
     async publishSkill(payload, files) {
         const { SkillsItem, SkillsFile, SkillsSource } = this.app.model;
-        const { slug, displayName, version, tags } = payload;
+        const { slug, displayName, tags } = payload;
+        const version = this.resolvePublishVersion(payload.version);
+        const category = this.resolvePublishCategory(payload.category);
 
         if (!SKILL_SLUG_PATTERN.test(String(slug || ''))) {
             this.ctx.throw(400, 'slug 格式无效');
-        }
-
-        if (!this.validateSemVer(version)) {
-            this.ctx.throw(400, 'version 必须是有效的 SemVer 格式');
         }
 
         const parsedTags = Array.isArray(tags) ? tags : [];
@@ -415,6 +451,8 @@ class SkillsRegistryService extends Service {
             this.ctx.throw(400, `上传内容必须包含 SKILL.md。已上传: ${uploadedNames}`);
         }
 
+        const incomingFingerprint = this.computeIncomingFingerprint(processedFiles);
+
         return await this.app.model.transaction(async (t) => {
             const [source] = await SkillsSource.findOrCreate({
                 where: { source_url: 'clawhub-publish' },
@@ -428,19 +466,40 @@ class SkillsRegistryService extends Service {
 
             let skill = await SkillsItem.findOne({ where: { slug }, transaction: t });
 
+            // Same content already published → no-op (hash model)
+            if (skill && skill.is_delete === 0) {
+                const existingFingerprint = await this.computeSkillFingerprint(skill.id);
+                if (existingFingerprint && existingFingerprint === incomingFingerprint) {
+                    const meta = {};
+                    if (displayName && displayName !== skill.name) meta.name = displayName;
+                    if (payload.description != null) meta.description = payload.description || '';
+                    if (parsedTags.length) meta.tags = JSON.stringify(parsedTags);
+                    if (category) meta.category = category;
+                    if (Object.keys(meta).length) {
+                        await skill.update(meta, { transaction: t });
+                    }
+                    return {
+                        ok: true,
+                        skillId: String(skill.id),
+                        versionId: `v${skill.version || version}`,
+                        fingerprint: existingFingerprint,
+                        unchanged: true,
+                    };
+                }
+            }
+
             if (skill) {
-                await skill.update(
-                    {
-                        name: displayName,
-                        description: payload.description || '',
-                        version,
-                        tags: JSON.stringify(parsedTags),
-                        skill_md: skillMdFile.content || '',
-                        is_delete: 0,
-                        source_id: source.id,
-                    },
-                    { transaction: t }
-                );
+                const updatePayload = {
+                    name: displayName,
+                    description: payload.description || '',
+                    version,
+                    tags: JSON.stringify(parsedTags),
+                    skill_md: skillMdFile.content || '',
+                    is_delete: 0,
+                    source_id: source.id,
+                };
+                if (category) updatePayload.category = category;
+                await skill.update(updatePayload, { transaction: t });
                 // Delete old files
                 await SkillsFile.update(
                     { is_delete: 1 },
@@ -456,7 +515,7 @@ class SkillsRegistryService extends Service {
                         version,
                         tags: JSON.stringify(parsedTags),
                         skill_md: skillMdFile.content || '',
-                        category: '通用',
+                        category: category || '通用',
                         file_count: files.length,
                     },
                     { transaction: t }
@@ -486,6 +545,8 @@ class SkillsRegistryService extends Service {
                 ok: true,
                 skillId: String(skill.id),
                 versionId: `v${version}`,
+                fingerprint: incomingFingerprint,
+                unchanged: false,
             };
         });
     }
@@ -518,9 +579,16 @@ class SkillsRegistryService extends Service {
             };
         }
 
-        const skillFingerprint = await this.computeSkillFingerprint(skill.id);
-        const match = skillFingerprint === hash ? { version: skill.version || '' } : null;
-        const latestVersion = skill.version ? { version: skill.version } : null;
+        const currentFingerprint = await this.computeSkillFingerprint(skill.id);
+        const version = skill.version || '0.0.0';
+        const match =
+            hash && currentFingerprint === hash
+                ? { version, fingerprint: currentFingerprint }
+                : null;
+        const latestVersion = {
+            version,
+            fingerprint: currentFingerprint,
+        };
 
         return {
             match,

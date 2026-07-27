@@ -711,9 +711,9 @@ export async function cmdUpdate(
     inputAllowed: boolean
 ) {
     const slug = slugArg ? normalizeSkillSlugOrFail(slugArg) : undefined;
-    const all = Boolean(options.all);
-    if (!slug && !all) fail('Provide <slug> or --all');
-    if (slug && all) fail('Use either <slug> or --all');
+    // Bare `update` == update all tracked skills (same as --all). --all kept for compatibility.
+    const all = Boolean(options.all) || !slug;
+    if (slug && options.all) fail('Use either <slug> or --all');
     if (options.version && !slug) fail('--version requires a single <slug>');
     if (options.version && !semver.valid(options.version)) fail('--version must be valid semver');
 
@@ -794,6 +794,9 @@ export async function cmdUpdate(
                     localFingerprint = hashed.fingerprint;
                 }
             }
+            if (!localFingerprint && lock.skills[entry]?.fingerprint) {
+                localFingerprint = lock.skills[entry].fingerprint ?? null;
+            }
 
             let resolveResult: ResolveResult;
             if (localFingerprint) {
@@ -802,61 +805,61 @@ export async function cmdUpdate(
                 resolveResult = { match: null, latestVersion: skillMeta.latestVersion ?? null };
             }
 
-            const latest = resolveResult.latestVersion?.version ?? null;
-            const matched =
-                resolveResult.match?.version ??
-                (localFingerprint &&
-                existingOrigin?.fingerprint === localFingerprint &&
-                existingOrigin.slug === entry
-                    ? existingOrigin.installedVersion
-                    : null);
+            const latest =
+                resolveResult.latestVersion?.version ?? skillMeta.latestVersion?.version ?? null;
+            const remoteFingerprint =
+                (resolveResult.latestVersion as { fingerprint?: string } | null | undefined)
+                    ?.fingerprint ??
+                (skillMeta.latestVersion as { fingerprint?: string } | undefined)?.fingerprint ??
+                (skillMeta.skill as { fingerprint?: string } | undefined)?.fingerprint ??
+                null;
 
-            if (matched && lock.skills[entry]?.version !== matched) {
-                lock.skills[entry] = withPinnedMetadata(
-                    matched,
-                    lock.skills[entry]?.installedAt ?? Date.now(),
-                    lock.skills[entry]
-                );
-            }
+            // Hash model: equal fingerprint (or resolve match) → up to date; else pull latest.
+            // Do NOT treat "disk matches install origin" as up-to-date — remote may have moved.
+            const hashMatches =
+                Boolean(localFingerprint) &&
+                Boolean(remoteFingerprint) &&
+                localFingerprint === remoteFingerprint;
+            const resolveMatched = Boolean(resolveResult.match?.version);
+            const contentUpToDate = hashMatches || resolveMatched;
 
             if (!latest) {
                 spinner.fail(`${entry}: not found`);
                 continue;
             }
 
-            if (!matched && localFingerprint && !options.force) {
-                spinner.stop();
-                if (!allowPrompt) {
-                    console.log(`${entry}: local changes (no match). Use --force to overwrite.`);
-                    continue;
-                }
-                const confirm = await promptConfirm(
-                    `${entry}: local changes (no match). Overwrite with ${
-                        options.version ?? latest
-                    }?`
+            if (contentUpToDate && !options.version) {
+                const keepVersion = resolveResult.match?.version ?? latest;
+                lock.skills[entry] = withPinnedMetadata(
+                    keepVersion,
+                    lock.skills[entry]?.installedAt ?? Date.now(),
+                    lock.skills[entry],
+                    remoteFingerprint ?? localFingerprint
                 );
-                if (!confirm) {
-                    console.log(`${entry}: skipped`);
-                    continue;
-                }
-                spinner.start(`Updating ${entry} -> ${options.version ?? latest}`);
+                await writeLockfile(installWorkdir, lock);
+                spinner.succeed(
+                    `${entry}: up to date${
+                        remoteFingerprint
+                            ? ` (${remoteFingerprint.slice(0, 12)}…)`
+                            : keepVersion
+                              ? ` (${keepVersion})`
+                              : ''
+                    }`
+                );
+                continue;
             }
 
+            // Explicit legacy version pin path
             const targetVersion = options.version ?? latest;
-            if (options.version) {
-                if (matched && matched === targetVersion) {
-                    spinner.succeed(`${entry}: already at ${matched}`);
-                    continue;
-                }
-            } else if (matched && semver.valid(matched) && semver.gte(matched, targetVersion)) {
-                spinner.succeed(`${entry}: up to date (${matched})`);
+            if (options.version && resolveMatched && resolveResult.match?.version === targetVersion) {
+                spinner.succeed(`${entry}: already at ${targetVersion}`);
                 continue;
             }
 
             if (spinner.isSpinning) {
-                spinner.text = `Updating ${entry} -> ${targetVersion}`;
+                spinner.text = `Updating ${entry}`;
             } else {
-                spinner.start(`Updating ${entry} -> ${targetVersion}`);
+                spinner.start(`Updating ${entry}`);
             }
             const zip = await downloadZip(registry, {
                 slug: entry,
@@ -879,15 +882,26 @@ export async function cmdUpdate(
                     fingerprint: installedFingerprint,
                 });
                 await replaceSkillDirectory(preparedDir, target, exists);
+                lock.skills[entry] = withPinnedMetadata(
+                    targetVersion,
+                    Date.now(),
+                    lock.skills[entry],
+                    installedFingerprint
+                );
             } catch (error) {
                 await rm(preparedDir, { recursive: true, force: true }).catch(() => {});
                 throw error;
             }
 
-            lock.skills[entry] = withPinnedMetadata(targetVersion, Date.now(), lock.skills[entry]);
             // 每条成功更新后即持久化 lockfile，崩溃不再让磁盘与锁漂移
             await writeLockfile(installWorkdir, lock);
-            spinner.succeed(`${entry}: updated -> ${targetVersion}`);
+            spinner.succeed(
+                `${entry}: updated${
+                    lock.skills[entry]?.fingerprint
+                        ? ` hash=${lock.skills[entry].fingerprint!.slice(0, 12)}…`
+                        : ` -> ${targetVersion}`
+                }`
+            );
         } catch (error) {
             spinner.fail(formatError(error));
             throw error;

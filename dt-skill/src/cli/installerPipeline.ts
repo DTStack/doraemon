@@ -82,6 +82,11 @@ export async function installExtractedSkill(
             mode: targets.mode,
         });
     }
-    lock.skills[slug] = withPinnedMetadata(version, Date.now(), existingEntry);
+    lock.skills[slug] = withPinnedMetadata(
+        version,
+        Date.now(),
+        existingEntry,
+        installedFingerprint
+    );
     await writeLockfile(canonicalWorkdir, lock);
 }

@@ -3,10 +3,11 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import semver from 'semver';
 
-import { apiRequestForm } from '../../http.js';
+import { apiRequest, apiRequestForm } from '../../http.js';
 import {
     ApiRoutes,
     ApiV1PublishResponseSchema,
+    ApiV1SkillResponseSchema,
     normalizeClawScanNote,
 } from '../../schema/index.js';
 import { listPublishFiles } from '../../skills.js';
@@ -15,7 +16,22 @@ import { getRegistry } from '../registry.js';
 import { findSkillFolders } from '../scanSkills.js';
 import { sanitizeSlug, titleCase } from '../slug.js';
 import type { GlobalOpts } from '../types.js';
-import { createSpinner, fail, formatError, isInteractive } from '../ui.js';
+import { createSpinner, fail, formatError, isInteractive, promptConfirm, selectCategory } from '../ui.js';
+
+/** Closed category enum aligned with Doraemon skills market. */
+export const SKILL_CATEGORY_OPTIONS = [
+    '通用',
+    '前端',
+    '后端',
+    '数据与AI',
+    '运维与系统',
+    '工程效率',
+    '安全',
+    '其他',
+] as const;
+
+/** Internal compatibility version when author omits --version (hash is the change signal). */
+const DEFAULT_PUBLISH_VERSION = '0.0.0';
 
 export async function cmdPublish(
     opts: GlobalOpts,
@@ -32,6 +48,7 @@ export async function cmdPublish(
         migrateOwner?: boolean;
         all?: boolean;
         category?: string;
+        yes?: boolean;
     }
 ) {
     // Resolve folder path against the project base (parent of the canonical
@@ -60,7 +77,9 @@ export async function cmdPublish(
     const slug = options.slug ?? sanitizeSlug(basename(folder));
     const displayName = options.name ?? titleCase(basename(folder));
     const ownerHandle = options.owner?.trim().replace(/^@+/, '');
-    const version = options.version;
+    // Version is optional for authors; default is a compatibility placeholder. Change detection uses content hash.
+    let version = options.version?.trim() || DEFAULT_PUBLISH_VERSION;
+    if (!semver.valid(version)) fail('--version must be valid semver when provided');
     const changelog = options.changelog ?? '';
     let clawScanNote: string | undefined;
     try {
@@ -79,9 +98,51 @@ export async function cmdPublish(
 
     if (!slug) fail('--slug required');
     if (!displayName) fail('--name required');
-    if (!version || !semver.valid(version)) fail('--version must be valid semver');
 
-    const spinner = createSpinner(`Preparing ${slug}@${version}`);
+    // Detect whether slug already exists on registry (first publish needs category).
+    let existingCategory: string | null = null;
+    let skillExists = false;
+    try {
+        const existing = await apiRequest(
+            registry,
+            { method: 'GET', path: `${ApiRoutes.skills}/${encodeURIComponent(slug)}` },
+            ApiV1SkillResponseSchema
+        );
+        skillExists = Boolean(existing?.skill);
+        const skillMeta = existing?.skill as { category?: string } | undefined;
+        if (skillMeta?.category) existingCategory = String(skillMeta.category);
+    } catch {
+        skillExists = false;
+    }
+
+    let category = options.category?.trim() || '';
+    if (category && !SKILL_CATEGORY_OPTIONS.includes(category as (typeof SKILL_CATEGORY_OPTIONS)[number])) {
+        fail(`--category must be one of: ${SKILL_CATEGORY_OPTIONS.join(', ')}`);
+    }
+    if (!skillExists && !category) {
+        if (isInteractive()) {
+            const picked = await selectCategory(SKILL_CATEGORY_OPTIONS);
+            if (!picked) fail('Category required for first publish');
+            category = picked;
+        } else {
+            fail('First publish requires --category <category> in non-interactive mode');
+        }
+    }
+    if (skillExists && !category && existingCategory) {
+        category = existingCategory;
+    }
+
+    if (skillExists && isInteractive() && !options.yes) {
+        const ok = await promptConfirm(
+            `Skill "${slug}" already exists on the registry. Overwrite remote content if it changed?`
+        );
+        if (!ok) {
+            console.log('Publish cancelled');
+            return;
+        }
+    }
+
+    const spinner = createSpinner(`Preparing ${slug}`);
     try {
         const filesOnDisk = await ensureRootManifestFile(folder, await listPublishFiles(folder));
         if (filesOnDisk.length === 0) fail('No files found');
@@ -107,6 +168,7 @@ export async function cmdPublish(
                 ...(clawScanNote ? { clawScanNote } : {}),
                 acceptLicenseTerms: true,
                 tags,
+                ...(category ? { category } : {}),
                 ...(forkOf ? { forkOf } : {}),
             })
         );
@@ -121,14 +183,22 @@ export async function cmdPublish(
             form.append('files', blob, file.relPath);
         }
 
-        spinner.text = `Publishing ${slug}@${version}`;
+        spinner.text = `Publishing ${slug}`;
         const result = await apiRequestForm(
             registry,
             { method: 'POST', path: ApiRoutes.skills, form },
             ApiV1PublishResponseSchema
         );
 
-        spinner.succeed(`OK. Published ${slug}@${version} (${result.versionId})`);
+        if (result.unchanged) {
+            spinner.succeed(
+                `OK. Already up to date ${slug}${result.fingerprint ? ` (${result.fingerprint.slice(0, 12)}…)` : ''}`
+            );
+        } else {
+            spinner.succeed(
+                `OK. Published ${slug}${result.fingerprint ? ` hash=${result.fingerprint.slice(0, 12)}…` : ''} (${result.versionId})`
+            );
+        }
     } catch (error) {
         spinner.fail(formatError(error));
         throw error;
