@@ -15,13 +15,3 @@ export type GlobalOpts = {
     /** Skip interactive prompts. */
     yes?: boolean;
 };
-
-export type ResolveVersionRef = {
-    version: string;
-    fingerprint?: string | null;
-};
-
-export type ResolveResult = {
-    match: ResolveVersionRef | null;
-    latestVersion: ResolveVersionRef | null;
-};
