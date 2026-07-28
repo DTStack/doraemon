@@ -27,7 +27,7 @@ import {
 import { cmdStarSkill } from './cli/commands/star.js';
 import { cmdUnstarSkill } from './cli/commands/unstar.js';
 import { configureCommanderHelp, styleEnvBlock, styleTitle } from './cli/helpStyle.js';
-import { DEFAULT_REGISTRY, DEFAULT_SITE } from './cli/registry.js';
+import { DEFAULT_SITE, pickRegistryFromCliAndEnv } from './cli/registry.js';
 import type { GlobalOpts } from './cli/types.js';
 import { fail } from './cli/ui.js';
 
@@ -111,8 +111,10 @@ async function resolveGlobalOpts(): Promise<GlobalOpts> {
     const dir = join(workdir, 'skills');
 
     const site = raw.site ?? process.env.DT_SKILL_SITE ?? DEFAULT_SITE;
-    const registrySource = raw.registry ? 'cli' : process.env.DT_SKILL_REGISTRY ? 'env' : 'default';
-    const registry = raw.registry ?? process.env.DT_SKILL_REGISTRY ?? DEFAULT_REGISTRY;
+    const { registry, registrySource } = pickRegistryFromCliAndEnv({
+        cliRegistry: raw.registry,
+        envRegistry: process.env.DT_SKILL_REGISTRY,
+    });
     return {
         workdir,
         dir,

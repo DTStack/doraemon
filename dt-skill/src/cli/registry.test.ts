@@ -17,8 +17,14 @@ vi.mock('../discovery.js', () => ({
     discoverRegistryFromSite: (...args: unknown[]) => discoverRegistryFromSite(...args),
 }));
 
-const { DEFAULT_REGISTRY, DEFAULT_SITE, getRegistry, normalizeRegistryBase, resolveRegistry } =
-    await import('./registry');
+const {
+    DEFAULT_REGISTRY,
+    DEFAULT_SITE,
+    getRegistry,
+    normalizeRegistryBase,
+    pickRegistryFromCliAndEnv,
+    resolveRegistry,
+} = await import('./registry');
 
 function makeOpts(overrides: Partial<GlobalOpts> = {}): GlobalOpts {
     return {
@@ -115,41 +121,49 @@ describe('registry resolution', () => {
         });
     });
 
-    it('--registry (cli) overrides built-in default and cache', async () => {
+    it('pickRegistryFromCliAndEnv: cli beats env and default', () => {
+        const picked = pickRegistryFromCliAndEnv({
+            cliRegistry: 'http://127.0.0.1:7001/',
+            envRegistry: 'http://env.example:7001',
+        });
+        expect(picked).toEqual({
+            registry: 'http://127.0.0.1:7001/',
+            registrySource: 'cli',
+        });
+        // Full resolve still normalizes trailing slash.
+        expect(normalizeRegistryBase(picked.registry)).toBe('http://127.0.0.1:7001');
+    });
+
+    it('pickRegistryFromCliAndEnv: env beats built-in default', () => {
+        expect(
+            pickRegistryFromCliAndEnv({
+                cliRegistry: undefined,
+                envRegistry: 'http://127.0.0.1:7001',
+            })
+        ).toEqual({
+            registry: 'http://127.0.0.1:7001',
+            registrySource: 'env',
+        });
+    });
+
+    it('pickRegistryFromCliAndEnv: falls back to DEFAULT_REGISTRY', () => {
+        expect(pickRegistryFromCliAndEnv({})).toEqual({
+            registry: DEFAULT_REGISTRY,
+            registrySource: 'default',
+        });
+    });
+
+    it('env-selected registry wins over cache and discovery end-to-end', async () => {
         readGlobalConfig.mockResolvedValue({ registry: DEFAULT_REGISTRY });
-
-        const registry = await resolveRegistry(
-            makeOpts({
-                registry: 'http://127.0.0.1:7001/',
-                registrySource: 'cli',
-            })
-        );
-
-        expect(registry).toBe('http://127.0.0.1:7001');
-    });
-
-    it('DT_SKILL_REGISTRY (env) overrides built-in default', async () => {
-        readGlobalConfig.mockResolvedValue(null);
-
-        const registry = await resolveRegistry(
-            makeOpts({
-                registry: 'http://127.0.0.1:7001',
-                registrySource: 'env',
-            })
-        );
-
-        expect(registry).toBe('http://127.0.0.1:7001');
-        expect(registry).not.toBe(DEFAULT_REGISTRY);
-    });
-
-    it('explicit overrides still beat site discovery', async () => {
-        readGlobalConfig.mockResolvedValue(null);
         discoverRegistryFromSite.mockResolvedValue({ apiBase: 'http://discovered:7001' });
 
+        const picked = pickRegistryFromCliAndEnv({
+            envRegistry: 'http://127.0.0.1:7001',
+        });
         const registry = await resolveRegistry(
             makeOpts({
-                registry: 'http://127.0.0.1:7001',
-                registrySource: 'env',
+                registry: picked.registry,
+                registrySource: picked.registrySource,
                 site: 'http://site.example',
             })
         );

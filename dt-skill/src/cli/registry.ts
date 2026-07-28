@@ -13,6 +13,25 @@ export function normalizeRegistryBase(url: string): string {
         .replace(/\/+$/, '');
 }
 
+/**
+ * Map CLI flag + env to registry opts (priority: --registry > DT_SKILL_REGISTRY > default).
+ * Pure helper so unit tests can exercise the real selection path without commander.
+ */
+export function pickRegistryFromCliAndEnv(args: {
+    cliRegistry?: string | null;
+    envRegistry?: string | null;
+}): { registry: string; registrySource: 'cli' | 'env' | 'default' } {
+    const fromCli = String(args.cliRegistry ?? '').trim();
+    if (fromCli) {
+        return { registry: fromCli, registrySource: 'cli' };
+    }
+    const fromEnv = String(args.envRegistry ?? '').trim();
+    if (fromEnv) {
+        return { registry: fromEnv, registrySource: 'env' };
+    }
+    return { registry: DEFAULT_REGISTRY, registrySource: 'default' };
+}
+
 export async function resolveRegistry(opts: GlobalOpts) {
     const explicit = opts.registrySource !== 'default' ? opts.registry.trim() : '';
     if (explicit) return normalizeRegistryBase(explicit);
