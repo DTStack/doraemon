@@ -114,4 +114,47 @@ describe('registry resolution', () => {
             registry: 'http://10.0.0.8:7001',
         });
     });
+
+    it('--registry (cli) overrides built-in default and cache', async () => {
+        readGlobalConfig.mockResolvedValue({ registry: DEFAULT_REGISTRY });
+
+        const registry = await resolveRegistry(
+            makeOpts({
+                registry: 'http://127.0.0.1:7001/',
+                registrySource: 'cli',
+            })
+        );
+
+        expect(registry).toBe('http://127.0.0.1:7001');
+    });
+
+    it('DT_SKILL_REGISTRY (env) overrides built-in default', async () => {
+        readGlobalConfig.mockResolvedValue(null);
+
+        const registry = await resolveRegistry(
+            makeOpts({
+                registry: 'http://127.0.0.1:7001',
+                registrySource: 'env',
+            })
+        );
+
+        expect(registry).toBe('http://127.0.0.1:7001');
+        expect(registry).not.toBe(DEFAULT_REGISTRY);
+    });
+
+    it('explicit overrides still beat site discovery', async () => {
+        readGlobalConfig.mockResolvedValue(null);
+        discoverRegistryFromSite.mockResolvedValue({ apiBase: 'http://discovered:7001' });
+
+        const registry = await resolveRegistry(
+            makeOpts({
+                registry: 'http://127.0.0.1:7001',
+                registrySource: 'env',
+                site: 'http://site.example',
+            })
+        );
+
+        expect(registry).toBe('http://127.0.0.1:7001');
+        expect(discoverRegistryFromSite).not.toHaveBeenCalled();
+    });
 });
