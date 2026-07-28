@@ -45,7 +45,7 @@ const program = new Command()
     .option('--workdir <dir>', 'Working directory (default: cwd)')
     .option('--dir <dir>', 'Skills directory (relative to workdir, default: skills)')
     .option('--site <url>', 'Doraemon site URL for registry discovery')
-    .option('--registry <url>', 'Registry API base URL')
+    .option('--registry <url>', 'Registry API base URL (overrides default and DT_SKILL_REGISTRY)')
     .option(
         '-a, --agent <names>',
         `Target agent(s) for symlinks (${
@@ -62,7 +62,26 @@ const program = new Command()
     .showSuggestionAfterError()
     .addHelpText(
         'after',
-        styleEnvBlock('\nEnv:\n  DT_SKILL_SITE\n  DT_SKILL_REGISTRY\n  DT_SKILL_WORKDIR\n')
+        styleEnvBlock(
+            [
+                '',
+                'Registry (first match wins):',
+                '  1. --registry <url>',
+                '  2. DT_SKILL_REGISTRY',
+                '  3. cached global config',
+                '  4. --site / DT_SKILL_SITE discovery',
+                '  5. built-in default: http://172.16.100.225:7001',
+                '',
+                'Dev example:',
+                '  export DT_SKILL_REGISTRY=http://127.0.0.1:7001',
+                '',
+                'Env:',
+                '  DT_SKILL_SITE',
+                '  DT_SKILL_REGISTRY',
+                '  DT_SKILL_WORKDIR',
+                '',
+            ].join('\n')
+        )
     );
 
 configureCommanderHelp(program);

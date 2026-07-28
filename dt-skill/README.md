@@ -15,6 +15,22 @@ npx dt-skill --help
 node dt-skill/bin/dt-skill.js --help
 ```
 
+## Registry
+
+Out of the box the CLI talks to the intranet deploy registry:
+
+`http://172.16.100.225:7001`
+
+Override for local Doraemon (`npm run dev` on :7001) or another environment:
+
+```bash
+export DT_SKILL_REGISTRY=http://127.0.0.1:7001
+# or one-shot
+dt-skill --registry http://127.0.0.1:7001 search "query"
+```
+
+Priority: `--registry` → `DT_SKILL_REGISTRY` → cached global config → `--site` / `DT_SKILL_SITE` discovery → built-in default.
+
 ## Skill Package Installation
 
 When you install a skill package (a parent skill containing multiple child skills), the CLI presents an interactive fuzzy-search multiselect prompt so you can choose which sub-skills to install:
