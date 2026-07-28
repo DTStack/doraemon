@@ -530,7 +530,12 @@ class SkillsRegistryService extends Service {
                     is_delete: 0,
                     source_id: source.id,
                 };
-                if (category) updatePayload.category = category;
+                // Explicit preserve: do not rely on partial-update omitting the field.
+                if (category) {
+                    updatePayload.category = category;
+                } else if (skill.category) {
+                    updatePayload.category = skill.category;
+                }
                 await skill.update(updatePayload, { transaction: t });
             } else {
                 skill = await SkillsItem.create(

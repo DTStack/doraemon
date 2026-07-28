@@ -683,6 +683,55 @@ test('publishSkill accepts missing version (defaults to 0.0.0)', async () => {
     assert.equal(typeof result.fingerprint, 'string');
 });
 
+test('publishSkill re-publish without category keeps existing category', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    const updatePayloads = [];
+    const skillRow = {
+        id: 51,
+        slug: 'keep-cat',
+        name: 'Keep Cat',
+        version: '0.0.0',
+        category: '安全',
+        is_delete: 0,
+        update: async (data) => {
+            updatePayloads.push(data);
+            Object.assign(skillRow, data);
+        },
+    };
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => skillRow,
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => [
+                {
+                    file_path: 'SKILL.md',
+                    content: '# old\n',
+                    is_binary: 0,
+                },
+            ],
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill(
+        { slug: 'keep-cat', displayName: 'Keep Cat' },
+        [{ filepath: 'SKILL.md', content: '# new content\n' }]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, false);
+    const mainUpdate = updatePayloads.find((p) => Object.prototype.hasOwnProperty.call(p, 'name'));
+    assert.ok(mainUpdate, 'skill.update should run the main re-publish payload');
+    assert.equal(mainUpdate.category, '安全');
+});
+
 test('publishSkill same content is unchanged no-op', async () => {
     const service = Object.create(SkillsRegistryService.prototype);
     const skillRow = {
