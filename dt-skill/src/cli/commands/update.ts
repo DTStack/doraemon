@@ -152,8 +152,8 @@ export async function cmdUpdate(
                         prev,
                         decision.fingerprint
                     );
+                    // Persist once after the loop (lockDirty).
                     lockDirty = true;
-                    await writeLockfile(installWorkdir, lock);
                 }
                 spinner.succeed(
                     `${entry}: up to date${
@@ -206,8 +206,8 @@ export async function cmdUpdate(
                 throw error;
             }
 
+            // Persist once after the loop (lockDirty).
             lockDirty = true;
-            await writeLockfile(installWorkdir, lock);
             spinner.succeed(
                 `${entry}: updated${
                     lock.skills[entry]?.fingerprint

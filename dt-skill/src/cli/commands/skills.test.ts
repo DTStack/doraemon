@@ -378,8 +378,10 @@ describe('cmdUpdate', () => {
     });
 
     it('bare update equals --all (skips pinned, updates others)', async () => {
+        // Canonical remote id is skill.fingerprint (not latestVersion.fingerprint).
         mockApiRequest.mockResolvedValue({
-            latestVersion: { version: '2.0.0', fingerprint: 'remote-new' },
+            skill: { fingerprint: 'remote-new', version: '0.0.0' },
+            latestVersion: { version: '0.0.0' },
             moderation: null,
         });
         mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
@@ -406,16 +408,58 @@ describe('cmdUpdate', () => {
         const [, args] = mockApiRequest.mock.calls[0] ?? [];
         expect(args?.path).toBe(`${ApiRoutes.skills}/${encodeURIComponent('other')}`);
         expect(mockLog).toHaveBeenCalledWith(expect.stringMatching(/Update summary: 1 updated/));
+        // One write after the loop when lockDirty.
+        expect(writeLockfile).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports up to date when local fingerprint matches skill.fingerprint', async () => {
+        const sharedFp = 'same-content-fp-abc';
+        mockApiRequest.mockResolvedValue({
+            skill: { fingerprint: sharedFp, version: '0.0.0' },
+            latestVersion: { version: '0.0.0' },
+            moderation: null,
+        });
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                demo: { version: '0.0.0', installedAt: 123, fingerprint: sharedFp },
+            },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(readSkillOrigin).mockResolvedValue({
+            version: 1,
+            registry: 'https://example.com',
+            slug: 'demo',
+            installedVersion: '0.0.0',
+            installedAt: 123,
+            fingerprint: sharedFp,
+        });
+        vi.mocked(listTextFiles).mockResolvedValue([
+            { relPath: 'SKILL.md', bytes: new Uint8Array([1]) },
+        ]);
+        vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: sharedFp, files: [] });
+        vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>);
+
+        await cmdUpdate(makeOpts(), 'demo', {}, false);
+
+        expect(mockDownloadZip).not.toHaveBeenCalled();
+        expect(writeLockfile).not.toHaveBeenCalled();
+        expect(mockLog).toHaveBeenCalledWith(
+            expect.stringMatching(/Update summary: 0 updated, 1 up to date/)
+        );
+        expect(mockLog).toHaveBeenCalledWith(expect.stringMatching(/up to date: demo/));
     });
 
     it('continues updating remaining skills when one fails', async () => {
         mockApiRequest
             .mockResolvedValueOnce({
-                latestVersion: { version: '2.0.0', fingerprint: 'fp-a' },
+                skill: { fingerprint: 'fp-a', version: '0.0.0' },
+                latestVersion: { version: '0.0.0' },
                 moderation: null,
             })
             .mockResolvedValueOnce({
-                latestVersion: { version: '2.0.0', fingerprint: 'fp-b' },
+                skill: { fingerprint: 'fp-b', version: '0.0.0' },
+                latestVersion: { version: '0.0.0' },
                 moderation: null,
             });
         mockDownloadZip
@@ -445,6 +489,8 @@ describe('cmdUpdate', () => {
         expect(mockLog).toHaveBeenCalledWith(
             expect.stringMatching(/Update summary: 1 updated.*1 failed/)
         );
+        // Successful skill still dirties lock; one write after the loop.
+        expect(writeLockfile).toHaveBeenCalledTimes(1);
     });
 
     it('uses path-based skill lookup when no local fingerprint is available', async () => {
