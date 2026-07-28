@@ -516,16 +516,13 @@ describe('cmdUpdate', () => {
         expect(args?.url).toBeUndefined();
     });
 
-    it('trusts the stored install fingerprint when the resolve endpoint cannot match', async () => {
-        mockApiRequest
-            .mockResolvedValueOnce({
-                latestVersion: { version: '2.0.0' },
-                moderation: null,
-            })
-            .mockResolvedValueOnce({
-                match: null,
-                latestVersion: { version: '2.0.0' },
-            });
+    it('updates when remote has no skill.fingerprint (uses version download token)', async () => {
+        // cmdUpdate calls detail once per skill; local disk hash is compared to skill.fingerprint only.
+        mockApiRequest.mockResolvedValueOnce({
+            skill: { version: '2.0.0' },
+            latestVersion: { version: '2.0.0' },
+            moderation: null,
+        });
         mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
         vi.mocked(readLockfile).mockResolvedValue({
             version: 1,
@@ -545,15 +542,14 @@ describe('cmdUpdate', () => {
         vi.mocked(listTextFiles).mockResolvedValue([
             { relPath: 'SKILL.md', bytes: new Uint8Array([1]) },
         ]);
+        // Disk-computed local fingerprint (not origin alone) drives decideSkillSync.
         vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: 'hash', files: [] });
         vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>);
         vi.mocked(rm).mockResolvedValue();
 
         await cmdUpdate(makeOpts(), 'demo', {}, false);
 
-        expect(mockLog).not.toHaveBeenCalledWith(
-            'demo: local changes (no match). Use --force to overwrite.'
-        );
+        expect(mockApiRequest).toHaveBeenCalledTimes(1);
         expect(mockDownloadZip).toHaveBeenCalledWith(
             'https://example.com',
             expect.objectContaining({ slug: 'demo', version: '2.0.0' })
