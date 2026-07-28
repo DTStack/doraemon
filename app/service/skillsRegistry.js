@@ -191,13 +191,13 @@ class SkillsRegistryService extends Service {
                 category: skill.category || '通用',
                 fingerprint,
             },
+            // fingerprint lives only on skill (single-slot current content).
             latestVersion: version
                 ? {
                       version,
                       createdAt: updatedAt,
                       changelog: '',
                       license: null,
-                      fingerprint,
                   }
                 : null,
             owner: null,
@@ -410,20 +410,8 @@ class SkillsRegistryService extends Service {
         });
     }
 
-    // Publish or update a skill (single-slot per slug; content hash is the change signal)
-    async publishSkill(payload, files) {
-        const { SkillsItem, SkillsFile, SkillsSource } = this.app.model;
-        const { slug, displayName, tags } = payload;
-        const version = this.resolvePublishVersion(payload.version);
-        const category = this.resolvePublishCategory(payload.category);
-
-        if (!SKILL_SLUG_PATTERN.test(String(slug || ''))) {
-            this.ctx.throw(400, 'slug 格式无效');
-        }
-
-        const parsedTags = Array.isArray(tags) ? tags : [];
-
-        // file.content 直接给（内存形态，测试/部分调用方）优先；否则读磁盘临时文件（真实 multipart）。
+    /** Normalize multipart/in-memory uploads into stored-file shape. Requires SKILL.md. */
+    normalizePublishFiles(files) {
         const processedFiles = [];
         for (const file of files) {
             const originalName = file.filename || path.basename(file.filepath || '');
@@ -450,7 +438,6 @@ class SkillsRegistryService extends Service {
                     this.ctx.throw(400, `读取上传文件 ${originalName} 失败`);
                 }
             } else {
-                // I1: 既无 content 也无可读磁盘文件，必须报错而非静默存空
                 this.ctx.throw(400, `上传文件不存在: ${originalName}`);
             }
             processedFiles.push({
@@ -461,7 +448,6 @@ class SkillsRegistryService extends Service {
             });
         }
 
-        // Check for SKILL.md
         const skillMdFile = processedFiles.find(
             (f) => f.filename && f.filename.toLowerCase().endsWith('skill.md')
         );
@@ -470,6 +456,58 @@ class SkillsRegistryService extends Service {
             this.ctx.throw(400, `上传内容必须包含 SKILL.md。已上传: ${uploadedNames}`);
         }
 
+        return { processedFiles, skillMdFile };
+    }
+
+    async tryPublishUnchanged(skill, incomingFingerprint, version) {
+        if (!skill || skill.is_delete !== 0) return null;
+        const existingFingerprint = await this.computeSkillFingerprint(skill.id);
+        if (!existingFingerprint || existingFingerprint !== incomingFingerprint) return null;
+        return {
+            ok: true,
+            skillId: String(skill.id),
+            versionId: `v${skill.version || version}`,
+            fingerprint: existingFingerprint,
+            unchanged: true,
+        };
+    }
+
+    async replaceSkillStoredFiles(skill, processedFiles, transaction) {
+        const { SkillsFile } = this.app.model;
+        await SkillsFile.update(
+            { is_delete: 1 },
+            { where: { skill_id: skill.id }, transaction }
+        );
+        for (const file of processedFiles) {
+            await SkillsFile.create(
+                {
+                    skill_id: skill.id,
+                    file_path: file.relPath,
+                    language: this.detectLanguage(file.filename),
+                    size: Buffer.byteLength(file.content, file.isBinary ? 'base64' : 'utf8'),
+                    is_binary: file.isBinary ? 1 : 0,
+                    encoding: file.isBinary ? 'base64' : 'utf8',
+                    content: file.content,
+                },
+                { transaction }
+            );
+        }
+        await skill.update({ file_count: processedFiles.length }, { transaction });
+    }
+
+    // Publish or update a skill (single-slot per slug; content hash is the change signal)
+    async publishSkill(payload, files) {
+        const { SkillsItem, SkillsSource } = this.app.model;
+        const { slug, displayName, tags } = payload;
+        const version = this.resolvePublishVersion(payload.version);
+        const category = this.resolvePublishCategory(payload.category);
+
+        if (!SKILL_SLUG_PATTERN.test(String(slug || ''))) {
+            this.ctx.throw(400, 'slug 格式无效');
+        }
+
+        const parsedTags = Array.isArray(tags) ? tags : [];
+        const { processedFiles, skillMdFile } = this.normalizePublishFiles(files);
         const incomingFingerprint = this.computeIncomingFingerprint(processedFiles);
 
         return await this.app.model.transaction(async (t) => {
@@ -485,19 +523,8 @@ class SkillsRegistryService extends Service {
 
             let skill = await SkillsItem.findOne({ where: { slug }, transaction: t });
 
-            // Same content already published → pure no-op (no meta churn)
-            if (skill && skill.is_delete === 0) {
-                const existingFingerprint = await this.computeSkillFingerprint(skill.id);
-                if (existingFingerprint && existingFingerprint === incomingFingerprint) {
-                    return {
-                        ok: true,
-                        skillId: String(skill.id),
-                        versionId: `v${skill.version || version}`,
-                        fingerprint: existingFingerprint,
-                        unchanged: true,
-                    };
-                }
-            }
+            const noop = await this.tryPublishUnchanged(skill, incomingFingerprint, version);
+            if (noop) return noop;
 
             if (skill) {
                 const updatePayload = {
@@ -511,11 +538,6 @@ class SkillsRegistryService extends Service {
                 };
                 if (category) updatePayload.category = category;
                 await skill.update(updatePayload, { transaction: t });
-                // Delete old files
-                await SkillsFile.update(
-                    { is_delete: 1 },
-                    { where: { skill_id: skill.id }, transaction: t }
-                );
             } else {
                 skill = await SkillsItem.create(
                     {
@@ -527,30 +549,13 @@ class SkillsRegistryService extends Service {
                         tags: JSON.stringify(parsedTags),
                         skill_md: skillMdFile.content || '',
                         category: category || '通用',
-                        file_count: files.length,
+                        file_count: processedFiles.length,
                     },
                     { transaction: t }
                 );
             }
 
-            // Save files
-            for (const file of processedFiles) {
-                await SkillsFile.create(
-                    {
-                        skill_id: skill.id,
-                        file_path: file.relPath,
-                        language: this.detectLanguage(file.filename),
-                        size: Buffer.byteLength(file.content, file.isBinary ? 'base64' : 'utf8'),
-                        is_binary: file.isBinary ? 1 : 0,
-                        encoding: file.isBinary ? 'base64' : 'utf8',
-                        content: file.content,
-                    },
-                    { transaction: t }
-                );
-            }
-
-            // Update file count
-            await skill.update({ file_count: files.length }, { transaction: t });
+            await this.replaceSkillStoredFiles(skill, processedFiles, t);
 
             return {
                 ok: true,

@@ -300,12 +300,12 @@ test('getSkillDetail returns full skill object', async () => {
     assert.equal(data.skill.createdAt, new Date('2026-05-21T10:00:00Z').getTime());
     assert.equal(data.skill.updatedAt, new Date('2026-05-21T10:00:00Z').getTime());
     assert.equal(data.skill.fingerprint, null);
+    // fingerprint is only on skill (single-slot current content)
     assert.deepEqual(data.latestVersion, {
         version: '1.2.3',
         createdAt: new Date('2026-05-21T10:00:00Z').getTime(),
         changelog: '',
         license: null,
-        fingerprint: null,
     });
     assert.equal(data.owner, null);
     assert.equal(data.moderation, null);

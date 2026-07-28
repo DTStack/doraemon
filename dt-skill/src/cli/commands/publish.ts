@@ -37,6 +37,8 @@ export const SKILL_CATEGORY_OPTIONS = [
     '其他',
 ] as const;
 
+const SKILL_CATEGORY_SET = new Set<string>(SKILL_CATEGORY_OPTIONS);
+
 /** Internal compatibility version when author omits --version (hash is the change signal). */
 const DEFAULT_PUBLISH_VERSION = '0.0.0';
 
@@ -118,14 +120,14 @@ export async function cmdPublish(
         );
         skillExists = Boolean(existing?.skill);
         if (existing?.skill?.category) existingCategory = String(existing.skill.category);
-        existingFingerprint =
-            existing?.skill?.fingerprint ?? existing?.latestVersion?.fingerprint ?? null;
+        // Canonical: skill.fingerprint only (single-slot current content)
+        existingFingerprint = existing?.skill?.fingerprint ?? null;
     } catch {
         skillExists = false;
     }
 
     let category = options.category?.trim() || '';
-    if (category && !SKILL_CATEGORY_OPTIONS.includes(category as (typeof SKILL_CATEGORY_OPTIONS)[number])) {
+    if (category && !SKILL_CATEGORY_SET.has(category)) {
         fail(`--category must be one of: ${SKILL_CATEGORY_OPTIONS.join(', ')}`);
     }
     if (!skillExists && !category) {

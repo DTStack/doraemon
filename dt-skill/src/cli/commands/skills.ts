@@ -1,4 +1,4 @@
-import { lstat, mkdir, mkdtemp, rename, rm, stat } from 'node:fs/promises';
+import { lstat, mkdir, rm, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import semver from 'semver';
@@ -17,8 +17,6 @@ import {
     ApiV1SearchResponseSchema,
     type ApiV1SkillListResponse,
     ApiV1SkillListResponseSchema,
-    type ApiV1SkillResolveResponse,
-    ApiV1SkillResolveResponseSchema,
     type ApiV1SkillResponse,
     ApiV1SkillResponseSchema,
     ApiV1SkillVersionResponseSchema,
@@ -47,7 +45,7 @@ import {
 import { installExtractedSkill, type InstallTargets } from '../installerPipeline.js';
 import { cancelSymbol, searchMultiselect } from '../prompts/search-multiselect.js';
 import { getRegistry } from '../registry.js';
-import type { GlobalOpts, ResolveResult } from '../types.js';
+import type { GlobalOpts } from '../types.js';
 import {
     createSpinner,
     fail,
@@ -704,297 +702,8 @@ async function installOneSkill(
     }
 }
 
-export async function cmdUpdate(
-    opts: GlobalOpts,
-    slugArg: string | undefined,
-    options: { all?: boolean; version?: string; force?: boolean },
-    inputAllowed: boolean
-) {
-    const slug = slugArg ? normalizeSkillSlugOrFail(slugArg) : undefined;
-    // Bare `update` == update all tracked skills (same as --all). --all kept for compatibility.
-    if (slug && options.all) fail('Use either <slug> or --all');
-    if (options.version && !slug) fail('--version requires a single <slug>');
-    if (options.version && !semver.valid(options.version)) fail('--version must be valid semver');
-
-    const installWorkdir = opts.workdir;
-    const installDir = opts.dir;
-
-    const lock = await readLockfile(installWorkdir);
-    if (slug && isPinnedSkillEntry(lock.skills[slug])) {
-        fail(`skill "${slug}" is pinned; run \`dt-skill unpin ${slug}\` first`);
-    }
-    const allowPrompt = isInteractive() && inputAllowed;
-
-    const registry = await getRegistry(opts, { cache: true });
-    const requestedSlugs = slug ? [slug] : Object.keys(lock.skills).filter(isSafeSkillSlug);
-    const skippedPinned = slug
-        ? []
-        : requestedSlugs.filter((entry) => isPinnedSkillEntry(lock.skills[entry]));
-    const slugs = slug
-        ? requestedSlugs
-        : requestedSlugs.filter((entry) => !isPinnedSkillEntry(lock.skills[entry]));
-    if (slugs.length === 0) {
-        if (skippedPinned.length > 0) {
-            const suffix = skippedPinned.length === 1 ? '' : 's';
-            console.log(
-                `Skipped ${skippedPinned.length} pinned skill${suffix}: ${skippedPinned.join(', ')}`
-            );
-            return;
-        }
-        console.log('No installed skills.');
-        return;
-    }
-
-    const updated: string[] = [];
-    const alreadyCurrent: string[] = [];
-    const failed: Array<{ slug: string; error: string }> = [];
-    let lockDirty = false;
-
-    for (const entry of slugs) {
-        const spinner = createSpinner(`Checking ${entry}`);
-        try {
-            const target = join(installDir, entry);
-            const exists = await fileExists(target);
-            const existingOrigin = exists ? await readSkillOrigin(target) : null;
-
-            // Always fetch skill metadata to check moderation status
-            const skillMeta = await apiRequest<ApiV1SkillResponse>(
-                registry,
-                { method: 'GET', path: `${ApiRoutes.skills}/${encodeURIComponent(entry)}` },
-                ApiV1SkillResponseSchema
-            );
-
-            // Check moderation status before proceeding
-            if (skillMeta.moderation?.isMalwareBlocked) {
-                spinner.fail(`${entry}: blocked as malicious`);
-                console.log('   This skill has been flagged as malware and cannot be updated.');
-                failed.push({ slug: entry, error: 'blocked as malicious' });
-                continue;
-            }
-
-            if (skillMeta.moderation?.isSuspicious && !options.force) {
-                spinner.stop();
-                console.log(
-                    `\n⚠️  Warning: "${entry}" is flagged for ClawHub security review.\n` +
-                        '   This skill may contain risky patterns (crypto keys, external APIs, eval, etc.)\n'
-                );
-                if (allowPrompt) {
-                    const confirm = await promptConfirm('Update anyway?');
-                    if (!confirm) {
-                        console.log(`${entry}: skipped`);
-                        continue;
-                    }
-                    spinner.start(`Checking ${entry}`);
-                } else {
-                    console.log(`${entry}: skipped (use --force to update suspicious skills)`);
-                    continue;
-                }
-            }
-
-            let localFingerprint: string | null = null;
-            if (exists) {
-                const filesOnDisk = await listTextFiles(target);
-                if (filesOnDisk.length > 0) {
-                    const hashed = hashSkillFiles(filesOnDisk);
-                    localFingerprint = hashed.fingerprint;
-                }
-            }
-            if (!localFingerprint && lock.skills[entry]?.fingerprint) {
-                localFingerprint = lock.skills[entry].fingerprint ?? null;
-            }
-
-            const metaFingerprint =
-                skillMeta.latestVersion?.fingerprint ?? skillMeta.skill?.fingerprint ?? null;
-
-            let resolveResult: ResolveResult;
-            if (localFingerprint) {
-                resolveResult = await resolveSkillVersion(registry, entry, localFingerprint);
-            } else {
-                resolveResult = {
-                    match: null,
-                    latestVersion: skillMeta.latestVersion
-                        ? {
-                              version: skillMeta.latestVersion.version,
-                              fingerprint: metaFingerprint,
-                          }
-                        : null,
-                };
-            }
-
-            const latest =
-                resolveResult.latestVersion?.version ?? skillMeta.latestVersion?.version ?? null;
-            const remoteFingerprint =
-                resolveResult.latestVersion?.fingerprint ?? metaFingerprint ?? null;
-
-            // Hash model: equal fingerprint (or resolve match) → up to date; else pull latest.
-            const hashMatches =
-                Boolean(localFingerprint) &&
-                Boolean(remoteFingerprint) &&
-                localFingerprint === remoteFingerprint;
-            const resolveMatched = Boolean(resolveResult.match?.version);
-            const contentUpToDate = hashMatches || resolveMatched;
-
-            if (!latest) {
-                spinner.fail(`${entry}: not found`);
-                failed.push({ slug: entry, error: 'not found' });
-                continue;
-            }
-
-            if (contentUpToDate && !options.version) {
-                const keepVersion = resolveResult.match?.version ?? latest;
-                const nextFp = remoteFingerprint ?? localFingerprint ?? null;
-                const prev = lock.skills[entry];
-                const needsLockWrite =
-                    prev?.version !== keepVersion ||
-                    (nextFp != null && prev?.fingerprint !== nextFp);
-                if (needsLockWrite) {
-                    lock.skills[entry] = withPinnedMetadata(
-                        keepVersion,
-                        prev?.installedAt ?? Date.now(),
-                        prev,
-                        nextFp
-                    );
-                    lockDirty = true;
-                    await writeLockfile(installWorkdir, lock);
-                }
-                spinner.succeed(
-                    `${entry}: up to date${
-                        remoteFingerprint
-                            ? ` (${remoteFingerprint.slice(0, 12)}…)`
-                            : keepVersion
-                              ? ` (${keepVersion})`
-                              : ''
-                    }`
-                );
-                alreadyCurrent.push(entry);
-                continue;
-            }
-
-            // Explicit legacy version pin path
-            const targetVersion = options.version ?? latest;
-            if (options.version && resolveMatched && resolveResult.match?.version === targetVersion) {
-                spinner.succeed(`${entry}: already at ${targetVersion}`);
-                alreadyCurrent.push(entry);
-                continue;
-            }
-
-            if (spinner.isSpinning) {
-                spinner.text = `Updating ${entry}`;
-            } else {
-                spinner.start(`Updating ${entry}`);
-            }
-            const zip = await downloadZip(registry, {
-                slug: entry,
-                version: targetVersion,
-            });
-            const preparedDir = await prepareSkillUpdate(zip, target);
-
-            try {
-                const installedFiles = await listTextFiles(preparedDir);
-                const installedFingerprint =
-                    installedFiles.length > 0
-                        ? hashSkillFiles(installedFiles).fingerprint
-                        : undefined;
-                await writeSkillOrigin(preparedDir, {
-                    version: 1,
-                    registry: existingOrigin?.registry ?? registry,
-                    slug: existingOrigin?.slug ?? entry,
-                    installedVersion: targetVersion,
-                    installedAt: existingOrigin?.installedAt ?? Date.now(),
-                    fingerprint: installedFingerprint,
-                });
-                await replaceSkillDirectory(preparedDir, target, exists);
-                lock.skills[entry] = withPinnedMetadata(
-                    targetVersion,
-                    Date.now(),
-                    lock.skills[entry],
-                    installedFingerprint
-                );
-            } catch (error) {
-                await rm(preparedDir, { recursive: true, force: true }).catch(() => {});
-                throw error;
-            }
-
-            // 每条成功更新后即持久化 lockfile，崩溃不再让磁盘与锁漂移
-            lockDirty = true;
-            await writeLockfile(installWorkdir, lock);
-            spinner.succeed(
-                `${entry}: updated${
-                    lock.skills[entry]?.fingerprint
-                        ? ` hash=${lock.skills[entry].fingerprint!.slice(0, 12)}…`
-                        : ` -> ${targetVersion}`
-                }`
-            );
-            updated.push(entry);
-        } catch (error) {
-            spinner.fail(formatError(error));
-            // Spec: partial failures continue remaining skills; non-zero exit after summary.
-            failed.push({ slug: entry, error: formatError(error) });
-        }
-    }
-
-    if (lockDirty) {
-        await writeLockfile(installWorkdir, lock);
-    }
-
-    // Summary: updated / already-current / skipped-pinned / failed
-    console.log('');
-    console.log(
-        `Update summary: ${updated.length} updated, ${alreadyCurrent.length} up to date, ${skippedPinned.length} pinned skipped, ${failed.length} failed`
-    );
-    if (updated.length > 0) console.log(`  updated: ${updated.join(', ')}`);
-    if (alreadyCurrent.length > 0) console.log(`  up to date: ${alreadyCurrent.join(', ')}`);
-    if (skippedPinned.length > 0) {
-        console.log(`  pinned skipped: ${skippedPinned.join(', ')}`);
-    }
-    if (failed.length > 0) {
-        for (const item of failed) {
-            console.log(`  failed ${item.slug}: ${item.error}`);
-        }
-        fail(`Failed to update ${failed.length} skill(s)`);
-    }
-}
-
-async function prepareSkillUpdate(zip: Uint8Array, target: string) {
-    await mkdir(dirname(target), { recursive: true });
-    const preparedDir = await mkdtemp(join(dirname(target), `.${basename(target)}-update-`));
-    try {
-        await extractZipToDir(zip, preparedDir);
-        return preparedDir;
-    } catch (error) {
-        await rm(preparedDir, { recursive: true, force: true }).catch(() => {});
-        throw error;
-    }
-}
-
-async function replaceSkillDirectory(preparedDir: string, target: string, targetExists: boolean) {
-    const backupDir = `${preparedDir}-previous`;
-    let movedExisting = false;
-
-    try {
-        if (targetExists) {
-            await rename(target, backupDir);
-            movedExisting = true;
-        }
-        await rename(preparedDir, target);
-    } catch (error) {
-        if (movedExisting) {
-            try {
-                await rename(backupDir, target);
-            } catch (rollbackError) {
-                throw new AggregateError(
-                    [error, rollbackError],
-                    `Failed to replace ${target} and restore the previous installation`
-                );
-            }
-        }
-        throw error;
-    }
-
-    if (movedExisting) {
-        await rm(backupDir, { recursive: true, force: true }).catch(() => {});
-    }
-}
+/** Update lives in its own module (hash-only sync). */
+export { cmdUpdate } from './update.js';
 
 export async function cmdList(opts: GlobalOpts) {
     const installWorkdir = opts.workdir;
@@ -1246,21 +955,6 @@ function resolveExploreSort(raw?: string): { sort: ExploreSort; apiSort: ApiExpl
     }
     return fail(
         `Invalid sort "${raw}". Use newest, updated, downloads, rating, installs, installsAllTime, or trending.`
-    );
-}
-
-async function resolveSkillVersion(
-    registry: string,
-    slug: string,
-    hash: string
-): Promise<ApiV1SkillResolveResponse> {
-    const url = registryUrl(ApiRoutes.resolve, registry);
-    url.searchParams.set('slug', slug);
-    url.searchParams.set('hash', hash);
-    return apiRequest<ApiV1SkillResolveResponse>(
-        registry,
-        { method: 'GET', url: url.toString() },
-        ApiV1SkillResolveResponseSchema
     );
 }
 
