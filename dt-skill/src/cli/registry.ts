@@ -3,21 +3,33 @@ import { discoverRegistryFromSite } from '../discovery.js';
 import type { GlobalOpts } from './types.js';
 
 export const DEFAULT_SITE = '';
-export const DEFAULT_REGISTRY = '';
+/** Built-in intranet deploy registry (overridable via --registry / DT_SKILL_REGISTRY). */
+export const DEFAULT_REGISTRY = 'http://172.16.100.225:7001';
+
+/** Strip trailing slashes so join paths do not become `//api/...`. */
+export function normalizeRegistryBase(url: string): string {
+    return String(url || '')
+        .trim()
+        .replace(/\/+$/, '');
+}
 
 export async function resolveRegistry(opts: GlobalOpts) {
     const explicit = opts.registrySource !== 'default' ? opts.registry.trim() : '';
-    if (explicit) return explicit;
+    if (explicit) return normalizeRegistryBase(explicit);
 
     const cfg = await readGlobalConfig();
     const cached = cfg?.registry?.trim();
-    if (cached) return cached;
+    if (cached) return normalizeRegistryBase(cached);
 
     const site = opts.site.trim();
     if (site) {
         const discovery = await discoverRegistryFromSite(site).catch(() => null);
         const discovered = discovery?.apiBase?.trim();
-        if (discovered) return discovered;
+        if (discovered) return normalizeRegistryBase(discovered);
+    }
+
+    if (DEFAULT_REGISTRY.trim()) {
+        return normalizeRegistryBase(DEFAULT_REGISTRY);
     }
 
     throw new Error(
@@ -31,6 +43,8 @@ export async function getRegistry(opts: GlobalOpts, params?: { cache?: boolean }
     if (!cache) return registry;
     const cfg = await readGlobalConfig();
     const cached = cfg?.registry?.trim();
-    if (!cached || cached !== registry) await writeGlobalConfig({ registry });
+    if (!cached || normalizeRegistryBase(cached) !== registry) {
+        await writeGlobalConfig({ registry });
+    }
     return registry;
 }
