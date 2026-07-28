@@ -28,13 +28,14 @@ export async function resolveRegistry(opts: GlobalOpts) {
         if (discovered) return normalizeRegistryBase(discovered);
     }
 
-    if (DEFAULT_REGISTRY.trim()) {
-        return normalizeRegistryBase(DEFAULT_REGISTRY);
+    // Built-in deploy default (ticket 01). Empty only if constant is cleared.
+    const fallback = normalizeRegistryBase(DEFAULT_REGISTRY);
+    if (!fallback) {
+        throw new Error(
+            'Registry is not configured. Copy a command from the Doraemon Skills page or pass --registry <url>.'
+        );
     }
-
-    throw new Error(
-        'Registry is not configured. Copy a command from the Doraemon Skills page or pass --registry <url>.'
-    );
+    return fallback;
 }
 
 export async function getRegistry(opts: GlobalOpts, params?: { cache?: boolean }) {
