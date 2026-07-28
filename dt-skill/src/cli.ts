@@ -27,7 +27,11 @@ import {
 import { cmdStarSkill } from './cli/commands/star.js';
 import { cmdUnstarSkill } from './cli/commands/unstar.js';
 import { configureCommanderHelp, styleEnvBlock, styleTitle } from './cli/helpStyle.js';
-import { DEFAULT_SITE, pickRegistryFromCliAndEnv } from './cli/registry.js';
+import {
+    DEFAULT_REGISTRY,
+    DEFAULT_SITE,
+    pickRegistryFromCliAndEnv,
+} from './cli/registry.js';
 import type { GlobalOpts } from './cli/types.js';
 import { fail } from './cli/ui.js';
 
@@ -70,7 +74,7 @@ const program = new Command()
                 '  2. DT_SKILL_REGISTRY',
                 '  3. cached global config',
                 '  4. --site / DT_SKILL_SITE discovery',
-                '  5. built-in default: http://172.16.100.225:7001',
+                `  5. built-in default: ${DEFAULT_REGISTRY}`,
                 '',
                 'Dev example:',
                 '  export DT_SKILL_REGISTRY=http://127.0.0.1:7001',
