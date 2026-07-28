@@ -1,5 +1,5 @@
-import { join } from 'node:path';
 import { rm } from 'node:fs/promises';
+import { join } from 'node:path';
 import semver from 'semver';
 
 import { apiRequest, downloadZip } from '../../http.js';

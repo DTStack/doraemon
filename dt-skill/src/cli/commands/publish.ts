@@ -87,7 +87,7 @@ export async function cmdPublish(
     const displayName = options.name ?? titleCase(basename(folder));
     const ownerHandle = options.owner?.trim().replace(/^@+/, '');
     // Version is optional for authors; default is a compatibility placeholder. Change detection uses content hash.
-    let version = options.version?.trim() || DEFAULT_PUBLISH_VERSION;
+    const version = options.version?.trim() || DEFAULT_PUBLISH_VERSION;
     if (!semver.valid(version)) fail('--version must be valid semver when provided');
     const changelog = options.changelog ?? '';
     let clawScanNote: string | undefined;

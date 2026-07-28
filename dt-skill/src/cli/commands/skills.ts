@@ -1,14 +1,12 @@
 import { lstat, mkdir, rm, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
-import semver from 'semver';
+import { dirname, join } from 'node:path';
 
 import { apiRequest, downloadZip, registryUrl } from '../../http.js';
 import {
     formatPinnedDetails,
     isPinned as isPinnedSkillEntry,
     readLockfile,
-    withPinnedMetadata,
     writeLockfile,
 } from '../../lockfile.js';
 import {
@@ -21,14 +19,7 @@ import {
     ApiV1SkillResponseSchema,
     ApiV1SkillVersionResponseSchema,
 } from '../../schema/index.js';
-import {
-    extractZipToDir,
-    hashSkillFiles,
-    listManualSkills,
-    listTextFiles,
-    readSkillOrigin,
-    writeSkillOrigin,
-} from '../../skills.js';
+import { listManualSkills } from '../../skills.js';
 import {
     AGENT_DEFINITIONS,
     type AgentType,
