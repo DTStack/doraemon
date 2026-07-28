@@ -612,6 +612,7 @@ test('publishSkill returns ok: true and string skillId and versionId', async () 
         },
         SkillsFile: {
             create: async () => ({}),
+            update: async () => ({}),
         },
     });
     service.ctx = createMockCtx();
@@ -666,6 +667,7 @@ test('publishSkill accepts missing version (defaults to 0.0.0)', async () => {
         },
         SkillsFile: {
             create: async () => ({}),
+            update: async () => ({}),
         },
     });
     service.ctx = createMockCtx();
