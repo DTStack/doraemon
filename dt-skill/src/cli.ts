@@ -27,11 +27,7 @@ import {
 import { cmdStarSkill } from './cli/commands/star.js';
 import { cmdUnstarSkill } from './cli/commands/unstar.js';
 import { configureCommanderHelp, styleEnvBlock, styleTitle } from './cli/helpStyle.js';
-import {
-    DEFAULT_REGISTRY,
-    DEFAULT_SITE,
-    pickRegistryFromCliAndEnv,
-} from './cli/registry.js';
+import { DEFAULT_REGISTRY, DEFAULT_SITE, pickRegistryFromCliAndEnv } from './cli/registry.js';
 import type { GlobalOpts } from './cli/types.js';
 import { fail } from './cli/ui.js';
 
