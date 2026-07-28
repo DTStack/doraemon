@@ -59,20 +59,7 @@ import {
     selectInstallMethod,
     selectScope,
 } from '../ui.js';
-
-function normalizeSkillSlugOrFail(raw: string) {
-    const slug = raw.trim();
-    if (!slug) fail('Slug required');
-    // Safety: never allow path traversal or nested paths to become filesystem operations.
-    if (slug.includes('/') || slug.includes('\\') || slug.includes('..')) {
-        fail(`Invalid slug: ${slug}`);
-    }
-    return slug;
-}
-
-function isSafeSkillSlug(slug: string) {
-    return Boolean(slug) && !slug.includes('/') && !slug.includes('\\') && !slug.includes('..');
-}
+import { normalizeSkillSlugOrFail } from './skillHelpers.js';
 
 const SUSPICIOUS_WARNING =
     '\n⚠️  Warning: "{slug}" is flagged for ClawHub security review.\n' +
