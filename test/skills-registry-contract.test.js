@@ -720,10 +720,9 @@ test('publishSkill re-publish without category keeps existing category', async (
     service.ctx = createMockCtx();
     service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
 
-    const result = await service.publishSkill(
-        { slug: 'keep-cat', displayName: 'Keep Cat' },
-        [{ filepath: 'SKILL.md', content: '# new content\n' }]
-    );
+    const result = await service.publishSkill({ slug: 'keep-cat', displayName: 'Keep Cat' }, [
+        { filepath: 'SKILL.md', content: '# new content\n' },
+    ]);
 
     assert.equal(result.ok, true);
     assert.equal(result.unchanged, false);
