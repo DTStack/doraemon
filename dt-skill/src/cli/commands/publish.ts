@@ -164,9 +164,7 @@ export async function cmdPublish(
             }))
         ).fingerprint;
         const contentChanged =
-            skillExists &&
-            Boolean(existingFingerprint) &&
-            localFingerprint !== existingFingerprint;
+            skillExists && Boolean(existingFingerprint) && localFingerprint !== existingFingerprint;
         if (contentChanged && isInteractive() && !options.yes) {
             spinner.stop();
             const ok = await promptConfirm(
@@ -216,11 +214,15 @@ export async function cmdPublish(
 
         if (result.unchanged) {
             spinner.succeed(
-                `OK. Already up to date ${slug}${result.fingerprint ? ` (${result.fingerprint.slice(0, 12)}…)` : ''}`
+                `OK. Already up to date ${slug}${
+                    result.fingerprint ? ` (${result.fingerprint.slice(0, 12)}…)` : ''
+                }`
             );
         } else {
             spinner.succeed(
-                `OK. Published ${slug}${result.fingerprint ? ` hash=${result.fingerprint.slice(0, 12)}…` : ''} (${result.versionId})`
+                `OK. Published ${slug}${
+                    result.fingerprint ? ` hash=${result.fingerprint.slice(0, 12)}…` : ''
+                } (${result.versionId})`
             );
         }
     } catch (error) {

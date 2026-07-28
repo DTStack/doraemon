@@ -280,7 +280,10 @@ registerCommand(program, ['publish'])
     .option('--name <name>', 'Display name')
     .option('--owner <handle>', 'Publish under an org/user publisher handle')
     .option('--migrate-owner', 'Move an existing skill to the selected owner when republishing')
-    .option('--version <version>', 'Optional semver (compatibility; default 0.0.0, hash detects changes)')
+    .option(
+        '--version <version>',
+        'Optional semver (compatibility; default 0.0.0, hash detects changes)'
+    )
     .option('--fork-of <slug[@version]>', 'Mark as a fork of an existing skill')
     .option('--changelog <text>', 'Changelog text')
     .option('--clawscan-note <text>', CLAWSCAN_NOTE_HELP)

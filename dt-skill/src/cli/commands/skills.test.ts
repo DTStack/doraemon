@@ -405,9 +405,7 @@ describe('cmdUpdate', () => {
         expect(mockApiRequest).toHaveBeenCalledTimes(1);
         const [, args] = mockApiRequest.mock.calls[0] ?? [];
         expect(args?.path).toBe(`${ApiRoutes.skills}/${encodeURIComponent('other')}`);
-        expect(mockLog).toHaveBeenCalledWith(
-            expect.stringMatching(/Update summary: 1 updated/)
-        );
+        expect(mockLog).toHaveBeenCalledWith(expect.stringMatching(/Update summary: 1 updated/));
     });
 
     it('continues updating remaining skills when one fails', async () => {

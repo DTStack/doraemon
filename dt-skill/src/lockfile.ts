@@ -39,9 +39,7 @@ export function withPinnedMetadata(
     fingerprint?: string | null
 ): LockfileEntry {
     const nextFingerprint =
-        fingerprint !== undefined && fingerprint !== null
-            ? fingerprint
-            : existing?.fingerprint;
+        fingerprint !== undefined && fingerprint !== null ? fingerprint : existing?.fingerprint;
     return {
         version,
         installedAt,

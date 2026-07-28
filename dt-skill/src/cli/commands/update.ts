@@ -14,22 +14,11 @@ import {
     type ApiV1SkillResponse,
     ApiV1SkillResponseSchema,
 } from '../../schema/index.js';
-import {
-    hashSkillFiles,
-    listTextFiles,
-    readSkillOrigin,
-    writeSkillOrigin,
-} from '../../skills.js';
+import { hashSkillFiles, listTextFiles, readSkillOrigin, writeSkillOrigin } from '../../skills.js';
 import { getRegistry } from '../registry.js';
 import { decideSkillSync, remoteCurrentFromDetail } from '../skillSync.js';
 import type { GlobalOpts } from '../types.js';
-import {
-    createSpinner,
-    fail,
-    formatError,
-    isInteractive,
-    promptConfirm,
-} from '../ui.js';
+import { createSpinner, fail, formatError, isInteractive, promptConfirm } from '../ui.js';
 import {
     fileExists,
     isSafeSkillSlug,

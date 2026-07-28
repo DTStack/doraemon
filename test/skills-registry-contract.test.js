@@ -720,10 +720,9 @@ test('publishSkill same content is unchanged no-op', async () => {
     service.ctx = createMockCtx();
     service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
 
-    const result = await service.publishSkill(
-        { slug: 'same-skill', displayName: 'Same' },
-        [{ filepath: 'SKILL.md', content: '# same\n' }]
-    );
+    const result = await service.publishSkill({ slug: 'same-skill', displayName: 'Same' }, [
+        { filepath: 'SKILL.md', content: '# same\n' },
+    ]);
 
     assert.equal(result.ok, true);
     assert.equal(result.unchanged, true);

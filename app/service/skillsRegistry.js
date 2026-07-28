@@ -389,10 +389,7 @@ class SkillsRegistryService extends Service {
         const raw = String(category || '').trim();
         if (!raw) return null;
         if (!SKILL_CATEGORY_OPTIONS.includes(raw)) {
-            this.ctx.throw(
-                400,
-                `category 无效，可选: ${SKILL_CATEGORY_OPTIONS.join(', ')}`
-            );
+            this.ctx.throw(400, `category 无效，可选: ${SKILL_CATEGORY_OPTIONS.join(', ')}`);
         }
         return raw;
     }
@@ -474,10 +471,7 @@ class SkillsRegistryService extends Service {
 
     async replaceSkillStoredFiles(skill, processedFiles, transaction) {
         const { SkillsFile } = this.app.model;
-        await SkillsFile.update(
-            { is_delete: 1 },
-            { where: { skill_id: skill.id }, transaction }
-        );
+        await SkillsFile.update({ is_delete: 1 }, { where: { skill_id: skill.id }, transaction });
         for (const file of processedFiles) {
             await SkillsFile.create(
                 {
