@@ -5,20 +5,13 @@ const ignore = require('ignore');
 const path = require('path');
 const skillUtils = require('../utils/skill-utils');
 const skillFingerprint = require('../../contracts/skill-fingerprint');
+const {
+    SKILL_CATEGORY_OPTIONS,
+    isValidSkillCategory,
+} = require('../../contracts/skill-categories');
 
 const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?$/;
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-/** Closed category enum (aligned with skills market / CLI). */
-const SKILL_CATEGORY_OPTIONS = [
-    '通用',
-    '前端',
-    '后端',
-    '数据与AI',
-    '运维与系统',
-    '工程效率',
-    '安全',
-    '其他',
-];
 /** Compatibility placeholder when client omits version; content hash is the change signal. */
 const DEFAULT_PUBLISH_VERSION = '0.0.0';
 
@@ -388,7 +381,7 @@ class SkillsRegistryService extends Service {
     resolvePublishCategory(category) {
         const raw = String(category || '').trim();
         if (!raw) return null;
-        if (!SKILL_CATEGORY_OPTIONS.includes(raw)) {
+        if (!isValidSkillCategory(raw)) {
             this.ctx.throw(400, `category 无效，可选: ${SKILL_CATEGORY_OPTIONS.join(', ')}`);
         }
         return raw;

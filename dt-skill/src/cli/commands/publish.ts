@@ -14,6 +14,7 @@ import { hashSkillFiles, listPublishFiles } from '../../skills.js';
 import { searchMultiselect } from '../prompts/search-multiselect.js';
 import { getRegistry } from '../registry.js';
 import { findSkillFolders } from '../scanSkills.js';
+import { SKILL_CATEGORY_OPTIONS, SKILL_CATEGORY_SET } from '../skillCategories.js';
 import { sanitizeSlug, titleCase } from '../slug.js';
 import type { GlobalOpts } from '../types.js';
 import {
@@ -25,19 +26,8 @@ import {
     selectCategory,
 } from '../ui.js';
 
-/** Closed category enum aligned with Doraemon skills market. */
-export const SKILL_CATEGORY_OPTIONS = [
-    '通用',
-    '前端',
-    '后端',
-    '数据与AI',
-    '运维与系统',
-    '工程效率',
-    '安全',
-    '其他',
-] as const;
-
-const SKILL_CATEGORY_SET = new Set<string>(SKILL_CATEGORY_OPTIONS);
+/** Re-export shared market category list (contracts/skill-categories). */
+export { SKILL_CATEGORY_OPTIONS };
 
 /** Internal compatibility version when author omits --version (hash is the change signal). */
 const DEFAULT_PUBLISH_VERSION = '0.0.0';
