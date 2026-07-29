@@ -573,6 +573,15 @@ test('isBinaryBuffer detects invalid UTF-8 content', () => {
     assert.equal(service.isBinaryBuffer(Buffer.from([0x61, 0x00, 0x62])), true);
 });
 
+test('isBinaryBuffer does not reject valid UTF-8 split at the 4096-byte sample boundary', () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    // 4094 ASCII + multi-byte 答 would be truncated mid-sequence if we only decoded 4096 bytes.
+    const prefix = 'a'.repeat(4094);
+    const buffer = Buffer.from(`${prefix}答后续内容 fan-out：已就绪`, 'utf8');
+    assert.equal(buffer.subarray(0, 4096).toString('hex').endsWith('e7ad'), true);
+    assert.equal(service.isBinaryBuffer(buffer), false);
+});
+
 test('publishSkill rejects missing SKILL.md', async () => {
     const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
