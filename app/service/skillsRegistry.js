@@ -14,6 +14,8 @@ const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[\w.-]+)?(?
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 /** Compatibility placeholder when client omits version; content hash is the change signal. */
 const DEFAULT_PUBLISH_VERSION = '0.0.0';
+/** Matches skills_items.contributor VARCHAR(50) and marketplace UI max length. */
+const MAX_CONTRIBUTOR_LENGTH = 50;
 
 class SkillsRegistryService extends Service {
     // Well-Known Registry Metadata
@@ -482,12 +484,22 @@ class SkillsRegistryService extends Service {
         await skill.update({ file_count: processedFiles.length }, { transaction });
     }
 
+    validateContributor(value) {
+        const contributor = String(value || '').trim();
+        if (contributor.length > MAX_CONTRIBUTOR_LENGTH) {
+            this.ctx.throw(400, `贡献者不能超过 ${MAX_CONTRIBUTOR_LENGTH} 个字符`);
+        }
+        return contributor;
+    }
+
     // Publish or update a skill (single-slot per slug; content hash is the change signal)
     async publishSkill(payload, files) {
         const { SkillsItem, SkillsSource } = this.app.model;
         const { slug, displayName, tags } = payload;
         const version = this.resolvePublishVersion(payload.version);
         const category = this.resolvePublishCategory(payload.category);
+        const hasContributor = Object.prototype.hasOwnProperty.call(payload, 'contributor');
+        const contributor = hasContributor ? this.validateContributor(payload.contributor) : '';
 
         if (!SKILL_SLUG_PATTERN.test(String(slug || ''))) {
             this.ctx.throw(400, 'slug 格式无效');
@@ -529,22 +541,26 @@ class SkillsRegistryService extends Service {
                 } else if (skill.category) {
                     updatePayload.category = skill.category;
                 }
+                if (hasContributor) {
+                    updatePayload.contributor = contributor || null;
+                }
                 await skill.update(updatePayload, { transaction: t });
             } else {
-                skill = await SkillsItem.create(
-                    {
-                        source_id: source.id,
-                        slug,
-                        name: displayName,
-                        description: payload.description || '',
-                        version,
-                        tags: JSON.stringify(parsedTags),
-                        skill_md: skillMdFile.content || '',
-                        category: category || '通用',
-                        file_count: processedFiles.length,
-                    },
-                    { transaction: t }
-                );
+                const createPayload = {
+                    source_id: source.id,
+                    slug,
+                    name: displayName,
+                    description: payload.description || '',
+                    version,
+                    tags: JSON.stringify(parsedTags),
+                    skill_md: skillMdFile.content || '',
+                    category: category || '通用',
+                    file_count: processedFiles.length,
+                };
+                if (hasContributor) {
+                    createPayload.contributor = contributor || null;
+                }
+                skill = await SkillsItem.create(createPayload, { transaction: t });
             }
 
             await this.replaceSkillStoredFiles(skill, processedFiles, t);

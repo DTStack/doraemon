@@ -18,10 +18,16 @@ const httpMocks = createHttpModuleMocks();
 const uiMocks = createUiModuleMocks({ interactive: true });
 
 const mockSearchMultiselect = vi.fn();
+const mockResolvePublishContributor = vi.fn((): string | null => null);
 
 vi.mock('../registry.js', () => registryMocks.moduleFactory());
 vi.mock('../../http.js', () => httpMocks.moduleFactory());
 vi.mock('../ui.js', () => uiMocks.moduleFactory());
+vi.mock('../gitContributor.js', () => ({
+    MAX_CONTRIBUTOR_LENGTH: 50,
+    resolvePublishContributor: () => mockResolvePublishContributor(),
+    resolveGitUserName: () => mockResolvePublishContributor(),
+}));
 vi.mock('../prompts/search-multiselect.js', async () => {
     const actual = await vi.importActual<any>('../prompts/search-multiselect.js');
     return {
@@ -44,9 +50,106 @@ function makeOpts(workdir: string) {
 afterEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
+    mockResolvePublishContributor.mockReset();
+    mockResolvePublishContributor.mockReturnValue(null);
 });
 
 describe('cmdPublish', () => {
+    it('includes contributor from git user.name in v1 publish payload', async () => {
+        const workdir = await makeTmpWorkdir();
+        try {
+            const folder = join(workdir, 'with-contributor');
+            await mkdir(folder, { recursive: true });
+            await writeFile(join(folder, 'SKILL.md'), '# Skill\n', 'utf8');
+
+            mockResolvePublishContributor.mockReturnValue('张三');
+            httpMocks.apiRequest.mockRejectedValueOnce(new Error('not found'));
+            httpMocks.apiRequestForm.mockResolvedValueOnce({
+                ok: true,
+                skillId: '1',
+                versionId: 'v0.0.0',
+                fingerprint: 'abc',
+                unchanged: false,
+            });
+
+            const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+            await cmdPublish(makeOpts(workdir), 'with-contributor', {
+                category: '通用',
+                yes: true,
+            });
+
+            expect(logSpy).toHaveBeenCalledWith('contributor: 张三 (from git user.name)');
+            const publishCall = httpMocks.apiRequestForm.mock.calls.find((call) => {
+                const req = call[1] as { path?: string } | undefined;
+                return req?.path === '/api/v1/skills';
+            });
+            const form = (publishCall?.[1] as { form?: FormData }).form as FormData;
+            const payload = JSON.parse(String(form.get('payload')));
+            expect(payload.contributor).toBe('张三');
+            logSpy.mockRestore();
+        } finally {
+            await rm(workdir, { recursive: true, force: true });
+        }
+    });
+
+    it('omits contributor when git user.name is unset', async () => {
+        const workdir = await makeTmpWorkdir();
+        try {
+            const folder = join(workdir, 'no-contributor');
+            await mkdir(folder, { recursive: true });
+            await writeFile(join(folder, 'SKILL.md'), '# Skill\n', 'utf8');
+
+            mockResolvePublishContributor.mockReturnValue(null);
+            httpMocks.apiRequest.mockRejectedValueOnce(new Error('not found'));
+            httpMocks.apiRequestForm.mockResolvedValueOnce({
+                ok: true,
+                skillId: '1',
+                versionId: 'v0.0.0',
+                fingerprint: 'abc',
+                unchanged: false,
+            });
+
+            await cmdPublish(makeOpts(workdir), 'no-contributor', {
+                category: '通用',
+                yes: true,
+            });
+
+            const publishCall = httpMocks.apiRequestForm.mock.calls.find((call) => {
+                const req = call[1] as { path?: string } | undefined;
+                return req?.path === '/api/v1/skills';
+            });
+            const form = (publishCall?.[1] as { form?: FormData }).form as FormData;
+            const payload = JSON.parse(String(form.get('payload')));
+            expect(payload).not.toHaveProperty('contributor');
+        } finally {
+            await rm(workdir, { recursive: true, force: true });
+        }
+    });
+
+    it('fails publish when git user.name exceeds 50 characters', async () => {
+        const workdir = await makeTmpWorkdir();
+        try {
+            const folder = join(workdir, 'long-name');
+            await mkdir(folder, { recursive: true });
+            await writeFile(join(folder, 'SKILL.md'), '# Skill\n', 'utf8');
+
+            mockResolvePublishContributor.mockImplementation(() => {
+                throw new Error('contributor 不能超过 50 个字符（当前 git user.name 为 51 字）');
+            });
+
+            await expect(
+                cmdPublish(makeOpts(workdir), 'long-name', {
+                    category: '通用',
+                    yes: true,
+                })
+            ).rejects.toThrow(/不能超过 50/);
+            expect(httpMocks.apiRequestForm).not.toHaveBeenCalled();
+        } finally {
+            await rm(workdir, { recursive: true, force: true });
+        }
+    });
+
     it('does not prompt overwrite when remote fingerprint matches local content', async () => {
         const workdir = await makeTmpWorkdir();
         try {
@@ -395,6 +498,41 @@ describe('cmdPublish', () => {
                 const form = (batchCall![1] as { form?: FormData }).form as FormData;
                 const packageName = form.get('packageName');
                 expect(packageName).toBe('skills-batch');
+            } finally {
+                await rm(workdir, { recursive: true, force: true });
+            }
+        });
+
+        it('includes contributor on import-file when git user.name is set', async () => {
+            const workdir = await makeTmpWorkdir();
+            try {
+                const skillsDir = join(workdir, 'batch-contributor');
+                await mkdir(join(skillsDir, 'skill-a'), { recursive: true });
+                await mkdir(join(skillsDir, 'skill-b'), { recursive: true });
+                await writeFile(join(skillsDir, 'skill-a', 'SKILL.md'), '# A\n', 'utf8');
+                await writeFile(join(skillsDir, 'skill-b', 'SKILL.md'), '# B\n', 'utf8');
+
+                mockResolvePublishContributor.mockReturnValue('包作者');
+                httpMocks.apiRequestForm.mockResolvedValueOnce({
+                    success: true,
+                    data: {
+                        importedCount: 2,
+                        refreshedCount: 2,
+                        importedSkills: [
+                            { slug: 'skill-a', name: 'skill-a' },
+                            { slug: 'skill-b', name: 'skill-b' },
+                        ],
+                    },
+                });
+
+                await cmdPublish(makeOpts(workdir), 'batch-contributor', { all: true });
+
+                const batchCall = httpMocks.apiRequestForm.mock.calls.find((call: any[]) => {
+                    const req = call[1] as { path?: string } | undefined;
+                    return req?.path === '/api/skills/import-file';
+                });
+                const form = (batchCall![1] as { form?: FormData }).form as FormData;
+                expect(form.get('contributor')).toBe('包作者');
             } finally {
                 await rm(workdir, { recursive: true, force: true });
             }

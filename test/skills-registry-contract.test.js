@@ -786,6 +786,96 @@ test('publishSkill same content is unchanged no-op', async () => {
     assert.equal(typeof result.fingerprint, 'string');
 });
 
+test('publishSkill stores contributor on create when payload includes it', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    let createdPayload = null;
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => null,
+            create: async (data) => {
+                createdPayload = data;
+                return { id: 201, ...data, update: async () => {} };
+            },
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill(
+        {
+            slug: 'with-contributor',
+            displayName: 'With Contributor',
+            version: '1.0.0',
+            contributor: '  张三  ',
+        },
+        [{ filepath: 'SKILL.md', content: '# c\n' }]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(createdPayload.contributor, '张三');
+});
+
+test('publishSkill does not set contributor on create when payload omits it', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    let createdPayload = null;
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => null,
+            create: async (data) => {
+                createdPayload = data;
+                return { id: 202, ...data, update: async () => {} };
+            },
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    await service.publishSkill(
+        { slug: 'no-contributor', displayName: 'No Contributor', version: '1.0.0' },
+        [{ filepath: 'SKILL.md', content: '# n\n' }]
+    );
+
+    assert.equal(Object.prototype.hasOwnProperty.call(createdPayload, 'contributor'), false);
+});
+
+test('publishSkill rejects contributor longer than 50 characters', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    service.app = createMockApp();
+    service.ctx = createMockCtx();
+    service.ctx.throw = (status, message) => {
+        const err = new Error(message);
+        err.status = status;
+        throw err;
+    };
+
+    await assert.rejects(
+        () =>
+            service.publishSkill(
+                {
+                    slug: 'long-contributor',
+                    displayName: 'Long',
+                    contributor: 'x'.repeat(51),
+                },
+                [{ filepath: 'SKILL.md', content: '# x\n' }]
+            ),
+        /贡献者不能超过 50/
+    );
+});
+
 // ============================================================
 // Phase 6: US4 Resolve Tests (T028)
 // ============================================================

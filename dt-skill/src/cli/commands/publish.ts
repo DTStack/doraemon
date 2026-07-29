@@ -12,6 +12,7 @@ import {
 } from '../../schema/index.js';
 import { hashSkillFiles, listPublishFiles } from '../../skills.js';
 import { searchMultiselect } from '../prompts/search-multiselect.js';
+import { resolvePublishContributor } from '../gitContributor.js';
 import { getRegistry } from '../registry.js';
 import { findSkillFolders } from '../scanSkills.js';
 import { SKILL_CATEGORY_OPTIONS, SKILL_CATEGORY_SET } from '../skillCategories.js';
@@ -31,6 +32,22 @@ export { SKILL_CATEGORY_OPTIONS };
 
 /** Internal compatibility version when author omits --version (hash is the change signal). */
 const DEFAULT_PUBLISH_VERSION = '0.0.0';
+
+/**
+ * Resolve contributor from cwd git user.name (Decision: local publish only).
+ * Logs when set; silent when unset; fails when name exceeds server length limit.
+ */
+function resolveContributorForPublish(): string | null {
+    try {
+        const contributor = resolvePublishContributor(process.cwd());
+        if (contributor) {
+            console.log(`contributor: ${contributor} (from git user.name)`);
+        }
+        return contributor;
+    } catch (error) {
+        fail(formatError(error));
+    }
+}
 
 export async function cmdPublish(
     opts: GlobalOpts,
@@ -72,6 +89,7 @@ export async function cmdPublish(
 
     // Single skill mode (existing logic)
     const registry = await getRegistry(opts, { cache: true });
+    const contributor = resolveContributorForPublish();
 
     const slug = options.slug ?? sanitizeSlug(basename(folder));
     const displayName = options.name ?? titleCase(basename(folder));
@@ -182,6 +200,7 @@ export async function cmdPublish(
                 tags,
                 ...(category ? { category } : {}),
                 ...(forkOf ? { forkOf } : {}),
+                ...(contributor ? { contributor } : {}),
             })
         );
 
@@ -298,6 +317,7 @@ export async function cmdPublishBatch(
     }
 ) {
     const registry = await getRegistry(opts, { cache: true });
+    const contributor = resolveContributorForPublish();
 
     let selectedSkills = discoveredSkills;
 
@@ -351,6 +371,7 @@ export async function cmdPublishBatch(
         if (packageBaseName) form.set('packageName', packageBaseName);
         if (options.category) form.set('category', options.category);
         if (options.tags) form.set('tags', options.tags);
+        if (contributor) form.set('contributor', contributor);
 
         const result = await apiRequestForm<{
             success: boolean;
