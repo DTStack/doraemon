@@ -451,10 +451,17 @@ class SkillsRegistryService extends Service {
         return { processedFiles, skillMdFile };
     }
 
-    async tryPublishUnchanged(skill, incomingFingerprint, version) {
+    async tryPublishUnchanged(skill, incomingFingerprint, version, meta = {}, transaction) {
         if (!skill || skill.is_delete !== 0) return null;
         const existingFingerprint = await this.computeSkillFingerprint(skill.id);
         if (!existingFingerprint || existingFingerprint !== incomingFingerprint) return null;
+        // Content unchanged: still apply optional metadata (e.g. contributor) without re-storing files.
+        if (meta.hasContributor) {
+            await skill.update(
+                { contributor: meta.contributor || null },
+                transaction ? { transaction } : undefined
+            );
+        }
         return {
             ok: true,
             skillId: String(skill.id),
@@ -522,7 +529,16 @@ class SkillsRegistryService extends Service {
 
             let skill = await SkillsItem.findOne({ where: { slug }, transaction: t });
 
-            const noop = await this.tryPublishUnchanged(skill, incomingFingerprint, version);
+            const noop = await this.tryPublishUnchanged(
+                skill,
+                incomingFingerprint,
+                version,
+                {
+                    hasContributor,
+                    contributor,
+                },
+                t
+            );
             if (noop) return noop;
 
             if (skill) {

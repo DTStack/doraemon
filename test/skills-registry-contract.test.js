@@ -748,7 +748,9 @@ test('publishSkill same content is unchanged no-op', async () => {
         name: 'Same',
         version: '0.0.0',
         is_delete: 0,
-        update: async () => {},
+        update: async () => {
+            throw new Error('should not update when content unchanged and no contributor');
+        },
     };
     const files = [
         {
@@ -784,6 +786,61 @@ test('publishSkill same content is unchanged no-op', async () => {
     assert.equal(result.ok, true);
     assert.equal(result.unchanged, true);
     assert.equal(typeof result.fingerprint, 'string');
+});
+
+test('publishSkill same content still updates contributor when provided', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    let metaUpdate = null;
+    const skillRow = {
+        id: 51,
+        slug: 'same-contrib',
+        name: 'Same',
+        version: '0.0.0',
+        is_delete: 0,
+        contributor: '旧署名',
+        update: async (payload) => {
+            metaUpdate = payload;
+        },
+    };
+    const files = [
+        {
+            file_path: 'SKILL.md',
+            content: '# same\n',
+            is_binary: 0,
+        },
+    ];
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => skillRow,
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => files,
+            create: async () => {
+                throw new Error('should not create on content no-op');
+            },
+            update: async () => {
+                throw new Error('should not soft-delete on content no-op');
+            },
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill(
+        {
+            slug: 'same-contrib',
+            displayName: 'Same',
+            contributor: '新署名',
+        },
+        [{ filepath: 'SKILL.md', content: '# same\n' }]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, true);
+    assert.deepEqual(metaUpdate, { contributor: '新署名' });
 });
 
 test('publishSkill stores contributor on create when payload includes it', async () => {
