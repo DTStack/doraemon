@@ -1,0 +1,77 @@
+app/web/pages/skills/detail/components/SkillInstallPanel.tsx
+  s_1e6b6c60d199bc::t_216a95983115f5 40,96,289-291
+app/web/pages/skills/detail/style.scss
+  s_1e6b6c60d199bc::t_216a95983115f5 1062-1067
+app/web/pages/skills/detail/SkillDetailContent.tsx
+  s_1e6b6c60d199bc::t_216a95983115f5 316
+app/service/skills.js
+  s_1e6b6c60d199bc::t_f8d35a692213ce 1891-1892,1935-1937
+  s_8855af2d38c28a::t_e61eac999cb802 174,183-184
+  s_1e6b6c60d199bc::t_8219c65dad3198 129,173,215,245,316,1481,1736
+  s_8855af2d38c28a::t_164ea1ab410675 1463
+  s_1e6b6c60d199bc::t_1bf3aad4d0db53 754
+  s_1e6b6c60d199bc::t_f5a7964b1ea2e4 175-181
+  s_1e6b6c60d199bc::t_4c24a0638ecfef 771-777,779,1458,2076
+  s_1e6b6c60d199bc::t_acea2885b66252 2134,2185
+  s_8855af2d38c28a::t_508498c4320efd 315
+  s_1e6b6c60d199bc::t_b170a85bc9b86b 182
+  s_1e6b6c60d199bc::t_31e7127ca07a4f 765-767,1459-1462,1692-1693,1749-1753
+  s_1e6b6c60d199bc::t_d45f332b82f830 24,749-753,755-764,768-770,778
+  s_1e6b6c60d199bc::t_001af19f1f29d7 780
+test/skills-install-key.test.js
+  s_1e6b6c60d199bc::t_ecb7d0df5afee3 794,809,824,847,860
+app/web/pages/skills/index.tsx
+  s_8855af2d38c28a::t_e1e656fb7f9c1d 300
+  s_1e6b6c60d199bc::t_1bf3aad4d0db53 195,201
+  s_8855af2d38c28a::t_21b6348b3373db 558,560,562
+  s_1e6b6c60d199bc::t_36461f2b3fb45f 173,242,466-471,556-557,559,561
+  s_1e6b6c60d199bc::t_4189f9b8de9ea8 465
+app/web/pages/skills/types.ts
+  s_1e6b6c60d199bc::t_36461f2b3fb45f 16
+app/web/pages/skills/detail/SkillSummaryModalContent.tsx
+  s_1e6b6c60d199bc::t_216a95983115f5 210
+  s_8855af2d38c28a::t_ff60709c928b2f 209
+app/web/components/skills/SkillCard.tsx
+  s_1e6b6c60d199bc::t_cc4252da7ffb5a 120
+  s_8855af2d38c28a::t_44fdd3643f5964 119
+  s_1e6b6c60d199bc::t_36461f2b3fb45f 121
+sql/doraemon.sql
+  s_1e6b6c60d199bc::t_dc5f11f1192744 338
+test/skills-contributor.test.js
+  s_1e6b6c60d199bc::t_e60ba44220a771 3-5,104-105,108-109,111
+  s_1e6b6c60d199bc::t_c7f8a3523556e3 1-2,7,9-10,12,14-22,24
+  s_1e6b6c60d199bc::t_c78cdbf2ef0a59 6,58,60-85,87-88,90-92
+  s_1e6b6c60d199bc::t_bd1016f7e81f94 138
+  s_1e6b6c60d199bc::t_395abbcb16f8d8 25-31,33-52,101-102
+  s_1e6b6c60d199bc::t_c19c9c7fb329fc 166-167,169,171-172,179-180,182-186,198-199,201,203-204,211-212
+  s_1e6b6c60d199bc::t_2ce1f6d2bac44f 214-216,218,220
+  s_1e6b6c60d199bc::t_f1148de25e3dbb 8,11,13,23,32,53-57,59,86,89,93-100,103,106-107,110,112,114-137,139-163,165,168,170,173-178,181,187-197,200,202,205-210,213,217,219
+  s_1e6b6c60d199bc::t_c1bb46180c590d 113,164
+app/model/skills_item.js
+  s_1e6b6c60d199bc::t_dc5f11f1192744 95-98
+  s_8855af2d38c28a::t_f66caa3aa59f92 99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "4606211a8cfbb959174aac0130ebd91288bf5042",
+  "prompts": {},
+  "sessions": {
+    "s_1e6b6c60d199bc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fac9a-b153-7232-9d03-28f7bfc7559b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    },
+    "s_8855af2d38c28a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6ddf0376-f384-4e4d-9ad1-2aa2bc9ea6a1",
+        "model": "mimo-v2.5-pro"
+      },
+      "human_author": null
+    }
+  }
+}
