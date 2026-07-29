@@ -13,6 +13,7 @@ export interface SkillItem {
     sourcePath: string;
     isPackage?: number;
     parentSlug?: string | null;
+    contributor: string;
 }
 
 export interface SkillListResponse {

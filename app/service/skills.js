@@ -21,6 +21,7 @@ const GIT_COMMAND_TIMEOUT_MS = 120 * 1000;
 const GITHUB_API_TIMEOUT_MS = 10 * 1000;
 const MAX_PLATFORM_TAGS = 5;
 const MAX_TAG_LENGTH = 20;
+const MAX_CONTRIBUTOR_LENGTH = 50;
 const DISCOVER_DEPTH_LIMIT = 2;
 const SKILLS_ROOT_DISCOVER_DEPTH_LIMIT = 8;
 const DISCOVER_MAX_DIR_COUNT = 3000;
@@ -125,6 +126,7 @@ class SkillsService extends Service {
             await SkillsFile.sync();
             await this.ensureSkillsItemVersionColumn();
             await this.ensureSkillsItemPackageColumns();
+            await this.ensureSkillsItemContributorColumn();
             this.storageReady = true;
         })();
 
@@ -168,6 +170,18 @@ class SkillsService extends Service {
         }
     }
 
+    async ensureSkillsItemContributorColumn() {
+        const queryInterface = this.app.model.getQueryInterface();
+        const table = await queryInterface.describeTable('skills_items');
+        if (table.contributor) return;
+
+        await queryInterface.addColumn('skills_items', 'contributor', {
+            type: this.app.Sequelize.STRING(50),
+            allowNull: true,
+            comment: '贡献者',
+        });
+    }
+
     parseJsonArray(value) {
         if (!value) return [];
         if (Array.isArray(value)) return value;
@@ -198,6 +212,7 @@ class SkillsService extends Service {
             installCommand: skill.installCommand,
             isPackage: skill.isPackage ? 1 : 0,
             parentSlug: skill.parentSlug || null,
+            contributor: skill.contributor || '',
         };
     }
 
@@ -227,6 +242,7 @@ class SkillsService extends Service {
             fileCount: Number(row.file_count) || 0,
             isPackage: Number(row.is_package) || 0,
             parentSlug: row.parent_slug || null,
+            contributor: this.parseContributor(row.contributor),
         };
     }
 
@@ -296,7 +312,8 @@ class SkillsService extends Service {
                     item.name.toLowerCase().includes(value) ||
                     item.description.toLowerCase().includes(value) ||
                     item.sourceRepo.toLowerCase().includes(value) ||
-                    item.tags.some((tag) => tag.toLowerCase().includes(value))
+                    item.tags.some((tag) => tag.toLowerCase().includes(value)) ||
+                    item.contributor.toLowerCase().includes(value)
             );
         }
 
@@ -727,6 +744,38 @@ class SkillsService extends Service {
             .split(',')
             .map((item) => item.trim())
             .filter(Boolean);
+    }
+
+    parseContributor(value) {
+        if (Array.isArray(value)) {
+            return String(value[0] || '').trim();
+        }
+
+        return String(value || '').trim();
+    }
+
+    validateContributor(value) {
+        const contributor = this.parseContributor(value);
+        if (contributor.length > MAX_CONTRIBUTOR_LENGTH) {
+            this.ctx.throw(400, `贡献者不能超过 ${MAX_CONTRIBUTOR_LENGTH} 个字符`);
+        }
+        return contributor;
+    }
+
+    applyContributorToSkillRecords(records, contributor, shouldOverride = true) {
+        if (!shouldOverride) return records;
+
+        return records.map((record) => ({
+            ...record,
+            contributor,
+        }));
+    }
+
+    validateSkillRecordContributors(records) {
+        return records.map((record) => ({
+            ...record,
+            contributor: this.validateContributor(record.contributor),
+        }));
     }
 
     normalizePlatformTags(rawTags) {
@@ -1406,6 +1455,12 @@ class SkillsService extends Service {
         const allowedTools = this.parseArrayLike(
             frontmatter['allowed-tools'] || frontmatter.allowedTools || frontmatter.allowed_tools
         );
+        const contributor = this.parseContributor(
+            frontmatter.contributor ||
+                frontmatter.contributors ||
+                frontmatter.author ||
+                frontmatter.authors
+        );
 
         const sourcePath = path.relative(repoDir, skillDir).split(path.sep).join('/');
         const installCommand = this.getInstallCommand({
@@ -1423,6 +1478,7 @@ class SkillsService extends Service {
             version,
             tags,
             allowedTools,
+            contributor,
             updatedAt: stat.mtime,
             sourceRepo: sourceMeta.sourceRepo,
             sourcePath,
@@ -1633,6 +1689,8 @@ class SkillsService extends Service {
         const packageName = String(params.packageName || '').trim();
         const category = this.normalizeCategory(params.category);
         const tags = this.normalizePlatformTags(params.tags);
+        const hasContributor = Object.prototype.hasOwnProperty.call(params, 'contributor');
+        const contributor = hasContributor ? this.validateContributor(params.contributor) : '';
         const fileName = String((file && file.filename) || '').trim();
         const filePath = String((file && file.filepath) || '').trim();
 
@@ -1675,7 +1733,7 @@ class SkillsService extends Service {
             const identityKey = packageName || skillName;
             const parsedSource = this.buildUploadSourceMeta(fileName, identityKey);
 
-            const skillRecords = discoveredSkillDirs.map((skillDir) => {
+            let skillRecords = discoveredSkillDirs.map((skillDir) => {
                 const record = this.prepareSkillRecord(
                     skillDir,
                     tempDir,
@@ -1688,6 +1746,11 @@ class SkillsService extends Service {
                 }
                 return record;
             });
+            skillRecords = this.applyContributorToSkillRecords(
+                skillRecords,
+                contributor,
+                hasContributor
+            );
 
             const tempUsedSlugs = new Set();
             const excludeSlugs = skillRecords.map((record) =>
@@ -1825,6 +1888,8 @@ class SkillsService extends Service {
 
         await this.ensureSkillCache();
         const currentSkill = this.getSkillByIdentifier(slug);
+        const hasContributor = Object.prototype.hasOwnProperty.call(params, 'contributor');
+        const contributor = hasContributor ? this.validateContributor(params.contributor) : '';
         await this.ensureStorageReady();
 
         if (!name) {
@@ -1867,6 +1932,9 @@ class SkillsService extends Service {
                 version,
                 tags: JSON.stringify(tags || []),
             };
+            if (hasContributor) {
+                payload.contributor = contributor || null;
+            }
 
             if (!hasZipUpload) {
                 await itemRow.update(payload, { transaction });
@@ -2005,6 +2073,7 @@ class SkillsService extends Service {
         skillRecords = [],
         preferredPackageName = ''
     ) {
+        skillRecords = this.validateSkillRecordContributors(skillRecords);
         const { SkillsItem, SkillsFile } = this.app.model;
         const { Op } = this.app.Sequelize;
         const repoStars = await this.fetchStarsBySourceRepo(sourceMeta.sourceRepo);
@@ -2062,6 +2131,7 @@ class SkillsService extends Service {
                     allowed_tools: JSON.stringify(
                         Array.from(new Set(skillRecords.flatMap((r) => r.allowedTools || [])))
                     ),
+                    contributor: skillRecords[0].contributor || null,
                     stars: resolvedStars,
                     updated_at_remote: new Date(),
                     source_repo: sourceMeta.sourceRepo || '',
@@ -2112,6 +2182,7 @@ class SkillsService extends Service {
                     version: record.version || '',
                     tags: JSON.stringify(record.tags || []),
                     allowed_tools: JSON.stringify(record.allowedTools || []),
+                    contributor: record.contributor || null,
                     stars: resolvedStars,
                     updated_at_remote: record.updatedAt,
                     source_repo: record.sourceRepo,

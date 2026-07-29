@@ -170,6 +170,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
             category: skill.category || '通用',
             tags: skill.tags || [],
             version: skill.version || '',
+            contributor: skill.contributor || '',
         });
     };
 
@@ -191,11 +192,13 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                 return;
             }
             const values = importForm.getFieldsValue();
+            const contributor = String(values.contributor || '').trim();
             const response = await API.importSkillFile({
                 file: targetFile,
                 skillName: values.skillName || '',
                 category: values.category,
                 tags: JSON.stringify(values.tags || []),
+                ...(contributor ? { contributor } : {}),
             });
 
             if (!response.success) {
@@ -236,6 +239,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                 name: values.name,
                 category: values.category,
                 tags: JSON.stringify(values.tags || []),
+                contributor: values.contributor || '',
                 version: values.version || '',
                 file: targetFile,
             });
@@ -293,7 +297,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     allowClear
                     value={query.keyword}
                     className="keyword-search"
-                    placeholder="搜索名称、描述、标签或来源..."
+                    placeholder="搜索名称、描述、标签或贡献者..."
                     enterButton={<SearchOutlined />}
                     onChange={(e) => setQuery({ ...query, keyword: e.target.value })}
                     onSearch={(value) => updateQueryAndFetch({ keyword: value, pageNum: 1 })}
@@ -458,6 +462,13 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                             maxTagCount={5}
                         />
                     </Form.Item>
+                    <Form.Item
+                        name="contributor"
+                        label="贡献者（可选）"
+                        rules={[{ max: 50, message: '贡献者不能超过 50 个字符' }]}
+                    >
+                        <Input placeholder="请输入贡献者名称" maxLength={50} />
+                    </Form.Item>
                 </Form>
                 <Text type="secondary">提示：.zip 包内部应包含 `技能目录/SKILL.md`</Text>
             </Modal>
@@ -541,6 +552,13 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     </Form.Item>
                     <Form.Item name="version" label="版本号">
                         <Input placeholder="例如：V2.4.0-STABLE" maxLength={128} />
+                    </Form.Item>
+                    <Form.Item
+                        name="contributor"
+                        label="贡献者（可选）"
+                        rules={[{ max: 50, message: '贡献者不能超过 50 个字符' }]}
+                    >
+                        <Input placeholder="请输入贡献者名称" maxLength={50} />
                     </Form.Item>
                     <Form.Item
                         label="重新上传 .zip（可选）"
