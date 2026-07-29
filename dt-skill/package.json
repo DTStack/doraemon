@@ -1,6 +1,6 @@
 {
     "name": "dt-skill",
-    "version": "0.18.4",
+    "version": "0.18.5",
     "description": "dt-skill CLI — install, update, search, and publish agent skills.",
     "homepage": "https://github.com/DTStack/doraemon/tree/master/dt-skill",
     "bugs": {
