@@ -11,8 +11,8 @@ import {
     normalizeClawScanNote,
 } from '../../schema/index.js';
 import { hashSkillFiles, listPublishFiles } from '../../skills.js';
-import { searchMultiselect } from '../prompts/search-multiselect.js';
 import { resolvePublishContributor } from '../gitContributor.js';
+import { searchMultiselect } from '../prompts/search-multiselect.js';
 import { getRegistry } from '../registry.js';
 import { findSkillFolders } from '../scanSkills.js';
 import { SKILL_CATEGORY_OPTIONS, SKILL_CATEGORY_SET } from '../skillCategories.js';
