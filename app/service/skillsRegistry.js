@@ -5,9 +5,17 @@ const ignore = require('ignore');
 const path = require('path');
 const skillUtils = require('../utils/skill-utils');
 const skillFingerprint = require('../../contracts/skill-fingerprint');
+const {
+    SKILL_CATEGORY_OPTIONS,
+    isValidSkillCategory,
+} = require('../../contracts/skill-categories');
 
 const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[\w.-]+)?(?:\+[\w.-]+)?$/;
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+/** Compatibility placeholder when client omits version; content hash is the change signal. */
+const DEFAULT_PUBLISH_VERSION = '0.0.0';
+/** Matches skills_items.contributor VARCHAR(50) and marketplace UI max length. */
+const MAX_CONTRIBUTOR_LENGTH = 50;
 
 class SkillsRegistryService extends Service {
     // Well-Known Registry Metadata
@@ -156,6 +164,12 @@ class SkillsRegistryService extends Service {
         const stats = { stars: skill.stars || 0, downloads: 0 };
         const createdAt = skill.created_at ? new Date(skill.created_at).getTime() : 0;
         const updatedAt = skill.updated_at ? new Date(skill.updated_at).getTime() : 0;
+        let fingerprint = null;
+        try {
+            fingerprint = await this.computeSkillFingerprint(skill.id);
+        } catch (err) {
+            this.ctx.logger.warn('[skillsRegistry] compute fingerprint failed:', err);
+        }
 
         const detail = {
             skill: {
@@ -169,7 +183,10 @@ class SkillsRegistryService extends Service {
                 updatedAt,
                 isPackage: skill.is_package === 1,
                 parentSlug: skill.parent_slug || null,
+                category: skill.category || '通用',
+                fingerprint,
             },
+            // fingerprint lives only on skill (single-slot current content).
             latestVersion: version
                 ? {
                       version,
@@ -353,22 +370,40 @@ class SkillsRegistryService extends Service {
         return SEMVER_PATTERN.test(String(version || '').trim());
     }
 
-    // Publish or update a skill
-    async publishSkill(payload, files) {
-        const { SkillsItem, SkillsFile, SkillsSource } = this.app.model;
-        const { slug, displayName, version, tags } = payload;
-
-        if (!SKILL_SLUG_PATTERN.test(String(slug || ''))) {
-            this.ctx.throw(400, 'slug 格式无效');
-        }
-
-        if (!this.validateSemVer(version)) {
+    // Compatibility placeholder when client omits version (hash is the real change signal).
+    resolvePublishVersion(version) {
+        const raw = String(version || '').trim();
+        if (!raw) return DEFAULT_PUBLISH_VERSION;
+        if (!this.validateSemVer(raw)) {
             this.ctx.throw(400, 'version 必须是有效的 SemVer 格式');
         }
+        return raw;
+    }
 
-        const parsedTags = Array.isArray(tags) ? tags : [];
+    resolvePublishCategory(category) {
+        const raw = String(category || '').trim();
+        if (!raw) return null;
+        if (!isValidSkillCategory(raw)) {
+            this.ctx.throw(400, `category 无效，可选: ${SKILL_CATEGORY_OPTIONS.join(', ')}`);
+        }
+        return raw;
+    }
 
-        // file.content 直接给（内存形态，测试/部分调用方）优先；否则读磁盘临时文件（真实 multipart）。
+    // Fingerprint of an in-memory multipart/processed upload set (same contract as stored files).
+    computeIncomingFingerprint(processedFiles) {
+        const storedLike = processedFiles.map((file) => ({
+            file_path: file.relPath,
+            content: file.content,
+            is_binary: file.isBinary ? 1 : 0,
+        }));
+        const fingerprintIgnore = this.createFingerprintIgnore(storedLike);
+        return skillFingerprint.buildSkillFingerprintFromStoredFiles(storedLike, {
+            ignoreMatcher: fingerprintIgnore,
+        });
+    }
+
+    /** Normalize multipart/in-memory uploads into stored-file shape. Requires SKILL.md. */
+    normalizePublishFiles(files) {
         const processedFiles = [];
         for (const file of files) {
             const originalName = file.filename || path.basename(file.filepath || '');
@@ -395,7 +430,6 @@ class SkillsRegistryService extends Service {
                     this.ctx.throw(400, `读取上传文件 ${originalName} 失败`);
                 }
             } else {
-                // I1: 既无 content 也无可读磁盘文件，必须报错而非静默存空
                 this.ctx.throw(400, `上传文件不存在: ${originalName}`);
             }
             processedFiles.push({
@@ -406,7 +440,6 @@ class SkillsRegistryService extends Service {
             });
         }
 
-        // Check for SKILL.md
         const skillMdFile = processedFiles.find(
             (f) => f.filename && f.filename.toLowerCase().endsWith('skill.md')
         );
@@ -414,6 +447,76 @@ class SkillsRegistryService extends Service {
             const uploadedNames = processedFiles.map((f) => f.filename).join(', ');
             this.ctx.throw(400, `上传内容必须包含 SKILL.md。已上传: ${uploadedNames}`);
         }
+
+        return { processedFiles, skillMdFile };
+    }
+
+    async tryPublishUnchanged(skill, incomingFingerprint, version, meta = {}, transaction) {
+        if (!skill || skill.is_delete !== 0) return null;
+        // Read files in the same transaction as publish so concurrent writers cannot
+        // make the no-op decision against a non-transactional snapshot.
+        const existingFingerprint = await this.computeSkillFingerprint(skill.id, transaction);
+        if (!existingFingerprint || existingFingerprint !== incomingFingerprint) return null;
+        // Content unchanged: still apply optional metadata (e.g. contributor) without re-storing files.
+        if (meta.hasContributor) {
+            await skill.update(
+                { contributor: meta.contributor || null },
+                transaction ? { transaction } : undefined
+            );
+        }
+        return {
+            ok: true,
+            skillId: String(skill.id),
+            versionId: `v${skill.version || version}`,
+            fingerprint: existingFingerprint,
+            unchanged: true,
+        };
+    }
+
+    async replaceSkillStoredFiles(skill, processedFiles, transaction) {
+        const { SkillsFile } = this.app.model;
+        await SkillsFile.update({ is_delete: 1 }, { where: { skill_id: skill.id }, transaction });
+        for (const file of processedFiles) {
+            await SkillsFile.create(
+                {
+                    skill_id: skill.id,
+                    file_path: file.relPath,
+                    language: this.detectLanguage(file.filename),
+                    size: Buffer.byteLength(file.content, file.isBinary ? 'base64' : 'utf8'),
+                    is_binary: file.isBinary ? 1 : 0,
+                    encoding: file.isBinary ? 'base64' : 'utf8',
+                    content: file.content,
+                },
+                { transaction }
+            );
+        }
+        await skill.update({ file_count: processedFiles.length }, { transaction });
+    }
+
+    validateContributor(value) {
+        const contributor = String(value || '').trim();
+        if (contributor.length > MAX_CONTRIBUTOR_LENGTH) {
+            this.ctx.throw(400, `贡献者不能超过 ${MAX_CONTRIBUTOR_LENGTH} 个字符`);
+        }
+        return contributor;
+    }
+
+    // Publish or update a skill (single-slot per slug; content hash is the change signal)
+    async publishSkill(payload, files) {
+        const { SkillsItem, SkillsSource } = this.app.model;
+        const { slug, displayName, tags } = payload;
+        const version = this.resolvePublishVersion(payload.version);
+        const category = this.resolvePublishCategory(payload.category);
+        const hasContributor = Object.prototype.hasOwnProperty.call(payload, 'contributor');
+        const contributor = hasContributor ? this.validateContributor(payload.contributor) : '';
+
+        if (!SKILL_SLUG_PATTERN.test(String(slug || ''))) {
+            this.ctx.throw(400, 'slug 格式无效');
+        }
+
+        const parsedTags = Array.isArray(tags) ? tags : [];
+        const { processedFiles, skillMdFile } = this.normalizePublishFiles(files);
+        const incomingFingerprint = this.computeIncomingFingerprint(processedFiles);
 
         return await this.app.model.transaction(async (t) => {
             const [source] = await SkillsSource.findOrCreate({
@@ -428,75 +531,79 @@ class SkillsRegistryService extends Service {
 
             let skill = await SkillsItem.findOne({ where: { slug }, transaction: t });
 
+            const noop = await this.tryPublishUnchanged(
+                skill,
+                incomingFingerprint,
+                version,
+                {
+                    hasContributor,
+                    contributor,
+                },
+                t
+            );
+            if (noop) return noop;
+
             if (skill) {
-                await skill.update(
-                    {
-                        name: displayName,
-                        description: payload.description || '',
-                        version,
-                        tags: JSON.stringify(parsedTags),
-                        skill_md: skillMdFile.content || '',
-                        is_delete: 0,
-                        source_id: source.id,
-                    },
-                    { transaction: t }
-                );
-                // Delete old files
-                await SkillsFile.update(
-                    { is_delete: 1 },
-                    { where: { skill_id: skill.id }, transaction: t }
-                );
+                const updatePayload = {
+                    name: displayName,
+                    description: payload.description || '',
+                    version,
+                    tags: JSON.stringify(parsedTags),
+                    skill_md: skillMdFile.content || '',
+                    is_delete: 0,
+                    source_id: source.id,
+                };
+                // Explicit preserve: do not rely on partial-update omitting the field.
+                if (category) {
+                    updatePayload.category = category;
+                } else if (skill.category) {
+                    updatePayload.category = skill.category;
+                }
+                if (hasContributor) {
+                    updatePayload.contributor = contributor || null;
+                }
+                await skill.update(updatePayload, { transaction: t });
             } else {
-                skill = await SkillsItem.create(
-                    {
-                        source_id: source.id,
-                        slug,
-                        name: displayName,
-                        description: payload.description || '',
-                        version,
-                        tags: JSON.stringify(parsedTags),
-                        skill_md: skillMdFile.content || '',
-                        category: '通用',
-                        file_count: files.length,
-                    },
-                    { transaction: t }
-                );
+                const createPayload = {
+                    source_id: source.id,
+                    slug,
+                    name: displayName,
+                    description: payload.description || '',
+                    version,
+                    tags: JSON.stringify(parsedTags),
+                    skill_md: skillMdFile.content || '',
+                    category: category || '通用',
+                    file_count: processedFiles.length,
+                };
+                if (hasContributor) {
+                    createPayload.contributor = contributor || null;
+                }
+                skill = await SkillsItem.create(createPayload, { transaction: t });
             }
 
-            // Save files
-            for (const file of processedFiles) {
-                await SkillsFile.create(
-                    {
-                        skill_id: skill.id,
-                        file_path: file.relPath,
-                        language: this.detectLanguage(file.filename),
-                        size: Buffer.byteLength(file.content, file.isBinary ? 'base64' : 'utf8'),
-                        is_binary: file.isBinary ? 1 : 0,
-                        encoding: file.isBinary ? 'base64' : 'utf8',
-                        content: file.content,
-                    },
-                    { transaction: t }
-                );
-            }
-
-            // Update file count
-            await skill.update({ file_count: files.length }, { transaction: t });
+            await this.replaceSkillStoredFiles(skill, processedFiles, t);
 
             return {
                 ok: true,
                 skillId: String(skill.id),
                 versionId: `v${version}`,
+                fingerprint: incomingFingerprint,
+                unchanged: false,
             };
         });
     }
 
     // Compute SHA256 fingerprint for a skill
-    async computeSkillFingerprint(skillId) {
+    async computeSkillFingerprint(skillId, transaction) {
         const { SkillsFile } = this.app.model;
-        const files = await SkillsFile.findAll({
+        const query = {
             where: { skill_id: skillId, is_delete: 0 },
             order: [['file_path', 'ASC']],
-        });
+        };
+        if (transaction) {
+            query.transaction = transaction;
+        }
+        const files = await SkillsFile.findAll(query);
         const fingerprintIgnore = this.createFingerprintIgnore(files);
 
         return skillFingerprint.buildSkillFingerprintFromStoredFiles(files, {
@@ -518,9 +625,16 @@ class SkillsRegistryService extends Service {
             };
         }
 
-        const skillFingerprint = await this.computeSkillFingerprint(skill.id);
-        const match = skillFingerprint === hash ? { version: skill.version || '' } : null;
-        const latestVersion = skill.version ? { version: skill.version } : null;
+        const currentFingerprint = await this.computeSkillFingerprint(skill.id);
+        const version = skill.version || '0.0.0';
+        const match =
+            hash && currentFingerprint === hash
+                ? { version, fingerprint: currentFingerprint }
+                : null;
+        const latestVersion = {
+            version,
+            fingerprint: currentFingerprint,
+        };
 
         return {
             match,
@@ -612,7 +726,7 @@ class SkillsRegistryService extends Service {
         const sample = buffer.subarray(0, Math.min(buffer.length, 4096));
         if (sample.includes(0)) return true;
         try {
-            new TextDecoder('utf-8', { fatal: true }).decode(sample);
+            new TextDecoder('utf-8', { fatal: true }).decode(buffer);
             return false;
         } catch {
             return true;

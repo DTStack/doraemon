@@ -27,16 +27,7 @@ const SKILLS_ROOT_DISCOVER_DEPTH_LIMIT = 8;
 const DISCOVER_MAX_DIR_COUNT = 3000;
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-const SKILL_CATEGORY_OPTIONS = [
-    '通用',
-    '前端',
-    '后端',
-    '数据与AI',
-    '运维与系统',
-    '工程效率',
-    '安全',
-    '其他',
-];
+const { SKILL_CATEGORY_OPTIONS } = require('../../contracts/skill-categories');
 
 const EXTENSION_LANGUAGE_MAP = {
     '.md': 'markdown',

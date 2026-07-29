@@ -304,7 +304,7 @@ describe('cmdUpdate', () => {
         vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
 
         await expect(cmdUpdate(makeOpts(), 'demo', { force: true }, false)).rejects.toThrow(
-            'download failed'
+            /Failed to update 1 skill|download failed/
         );
 
         expect(rm).not.toHaveBeenCalledWith('/work/.agents/skills/demo', {
@@ -327,7 +327,7 @@ describe('cmdUpdate', () => {
         vi.mocked(extractZipToDir).mockRejectedValue(new Error('extract failed'));
 
         await expect(cmdUpdate(makeOpts(), 'demo', { force: true }, false)).rejects.toThrow(
-            'extract failed'
+            /Failed to update 1 skill|extract failed/
         );
 
         expect(renameMock).not.toHaveBeenCalled();
@@ -371,7 +371,126 @@ describe('cmdUpdate', () => {
                 other: { version: '2.0.0', installedAt: expect.any(Number) },
             },
         });
-        expect(mockLog).toHaveBeenCalledWith('Skipped 1 pinned skill: demo');
+        expect(mockLog).toHaveBeenCalledWith(
+            'Update summary: 1 updated, 0 up to date, 1 pinned skipped, 0 failed'
+        );
+        expect(mockLog).toHaveBeenCalledWith('  pinned skipped: demo');
+    });
+
+    it('bare update equals --all (skips pinned, updates others)', async () => {
+        // Canonical remote id is skill.fingerprint (not latestVersion.fingerprint).
+        mockApiRequest.mockResolvedValue({
+            skill: { fingerprint: 'remote-new', version: '0.0.0' },
+            latestVersion: { version: '0.0.0' },
+            moderation: null,
+        });
+        mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                demo: { version: '0.1.0', installedAt: 123, pinned: true, pinReason: 'hold' },
+                other: { version: '1.0.0', installedAt: 456 },
+            },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(readSkillOrigin).mockResolvedValue(null);
+        vi.mocked(writeSkillOrigin).mockResolvedValue();
+        vi.mocked(extractZipToDir).mockResolvedValue();
+        vi.mocked(listTextFiles).mockResolvedValue([]);
+        vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: 'local-old', files: [] });
+        vi.mocked(stat).mockRejectedValue(new Error('missing'));
+        vi.mocked(rm).mockResolvedValue();
+
+        // bare update (no slug, no --all)
+        await cmdUpdate(makeOpts(), undefined, {}, false);
+
+        expect(mockApiRequest).toHaveBeenCalledTimes(1);
+        const [, args] = mockApiRequest.mock.calls[0] ?? [];
+        expect(args?.path).toBe(`${ApiRoutes.skills}/${encodeURIComponent('other')}`);
+        expect(mockLog).toHaveBeenCalledWith(expect.stringMatching(/Update summary: 1 updated/));
+        // One write after the loop when lockDirty.
+        expect(writeLockfile).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports up to date when local fingerprint matches skill.fingerprint', async () => {
+        const sharedFp = 'same-content-fp-abc';
+        mockApiRequest.mockResolvedValue({
+            skill: { fingerprint: sharedFp, version: '0.0.0' },
+            latestVersion: { version: '0.0.0' },
+            moderation: null,
+        });
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                demo: { version: '0.0.0', installedAt: 123, fingerprint: sharedFp },
+            },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(readSkillOrigin).mockResolvedValue({
+            version: 1,
+            registry: 'https://example.com',
+            slug: 'demo',
+            installedVersion: '0.0.0',
+            installedAt: 123,
+            fingerprint: sharedFp,
+        });
+        vi.mocked(listTextFiles).mockResolvedValue([
+            { relPath: 'SKILL.md', bytes: new Uint8Array([1]) },
+        ]);
+        vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: sharedFp, files: [] });
+        vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>);
+
+        await cmdUpdate(makeOpts(), 'demo', {}, false);
+
+        expect(mockDownloadZip).not.toHaveBeenCalled();
+        expect(writeLockfile).not.toHaveBeenCalled();
+        expect(mockLog).toHaveBeenCalledWith(
+            expect.stringMatching(/Update summary: 0 updated, 1 up to date/)
+        );
+        expect(mockLog).toHaveBeenCalledWith(expect.stringMatching(/up to date: demo/));
+    });
+
+    it('continues updating remaining skills when one fails', async () => {
+        mockApiRequest
+            .mockResolvedValueOnce({
+                skill: { fingerprint: 'fp-a', version: '0.0.0' },
+                latestVersion: { version: '0.0.0' },
+                moderation: null,
+            })
+            .mockResolvedValueOnce({
+                skill: { fingerprint: 'fp-b', version: '0.0.0' },
+                latestVersion: { version: '0.0.0' },
+                moderation: null,
+            });
+        mockDownloadZip
+            .mockRejectedValueOnce(new Error('download failed'))
+            .mockResolvedValueOnce(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                broken: { version: '1.0.0', installedAt: 1 },
+                ok: { version: '1.0.0', installedAt: 2 },
+            },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(readSkillOrigin).mockResolvedValue(null);
+        vi.mocked(writeSkillOrigin).mockResolvedValue();
+        vi.mocked(extractZipToDir).mockResolvedValue();
+        vi.mocked(listTextFiles).mockResolvedValue([]);
+        vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: 'local', files: [] });
+        vi.mocked(stat).mockRejectedValue(new Error('missing'));
+        vi.mocked(rm).mockResolvedValue();
+
+        await expect(cmdUpdate(makeOpts(), undefined, { all: true }, false)).rejects.toThrow(
+            /Failed to update 1 skill/
+        );
+
+        expect(mockDownloadZip).toHaveBeenCalledTimes(2);
+        expect(mockLog).toHaveBeenCalledWith(
+            expect.stringMatching(/Update summary: 1 updated.*1 failed/)
+        );
+        // Successful skill still dirties lock; one write after the loop.
+        expect(writeLockfile).toHaveBeenCalledTimes(1);
     });
 
     it('uses path-based skill lookup when no local fingerprint is available', async () => {
@@ -397,16 +516,13 @@ describe('cmdUpdate', () => {
         expect(args?.url).toBeUndefined();
     });
 
-    it('trusts the stored install fingerprint when the resolve endpoint cannot match', async () => {
-        mockApiRequest
-            .mockResolvedValueOnce({
-                latestVersion: { version: '2.0.0' },
-                moderation: null,
-            })
-            .mockResolvedValueOnce({
-                match: null,
-                latestVersion: { version: '2.0.0' },
-            });
+    it('updates when remote has no skill.fingerprint (uses version download token)', async () => {
+        // cmdUpdate calls detail once per skill; local disk hash is compared to skill.fingerprint only.
+        mockApiRequest.mockResolvedValueOnce({
+            skill: { version: '2.0.0' },
+            latestVersion: { version: '2.0.0' },
+            moderation: null,
+        });
         mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
         vi.mocked(readLockfile).mockResolvedValue({
             version: 1,
@@ -426,15 +542,14 @@ describe('cmdUpdate', () => {
         vi.mocked(listTextFiles).mockResolvedValue([
             { relPath: 'SKILL.md', bytes: new Uint8Array([1]) },
         ]);
+        // Disk-computed local fingerprint (not origin alone) drives decideSkillSync.
         vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: 'hash', files: [] });
         vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>);
         vi.mocked(rm).mockResolvedValue();
 
         await cmdUpdate(makeOpts(), 'demo', {}, false);
 
-        expect(mockLog).not.toHaveBeenCalledWith(
-            'demo: local changes (no match). Use --force to overwrite.'
-        );
+        expect(mockApiRequest).toHaveBeenCalledTimes(1);
         expect(mockDownloadZip).toHaveBeenCalledWith(
             'https://example.com',
             expect.objectContaining({ slug: 'demo', version: '2.0.0' })

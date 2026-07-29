@@ -22,6 +22,7 @@ export const LockfileSchema = type({
             installedAt: 'number',
             pinned: 'boolean?',
             pinReason: 'string?',
+            fingerprint: 'string?',
         },
     },
 });
@@ -116,8 +117,8 @@ export const ApiCliSkillDeleteResponseSchema = type({
 });
 
 export const ApiSkillResolveResponseSchema = type({
-    match: type({ version: 'string' }).or('null'),
-    latestVersion: type({ version: 'string' }).or('null'),
+    match: type({ version: 'string', fingerprint: 'string?' }).or('null'),
+    latestVersion: type({ version: 'string', fingerprint: 'string?' }).or('null'),
 });
 
 export const CliTelemetrySyncRequestSchema = type({
@@ -216,6 +217,8 @@ export const ApiV1SkillResponseSchema = type({
         updatedAt: 'number',
         isPackage: 'boolean?',
         parentSlug: 'string|null?',
+        category: 'string?',
+        fingerprint: 'string|null?',
         children: SkillChildSchema.array().optional(),
     }).or('null'),
     latestVersion: type({
@@ -223,6 +226,7 @@ export const ApiV1SkillResponseSchema = type({
         createdAt: 'number',
         changelog: 'string',
         license: '"MIT-0"|null?',
+        fingerprint: 'string|null?',
     }).or('null'),
     owner: type({
         handle: 'string|null',
@@ -430,8 +434,8 @@ export const ApiV1SkillVersionResponseSchema = type({
 export type ApiV1SkillVersionResponse = typeof ApiV1SkillVersionResponseSchema[inferred];
 
 export const ApiV1SkillResolveResponseSchema = type({
-    match: type({ version: 'string' }).or('null'),
-    latestVersion: type({ version: 'string' }).or('null'),
+    match: type({ version: 'string', fingerprint: 'string?' }).or('null'),
+    latestVersion: type({ version: 'string', fingerprint: 'string?' }).or('null'),
 });
 export type ApiV1SkillResolveResponse = typeof ApiV1SkillResolveResponseSchema[inferred];
 
@@ -439,6 +443,8 @@ export const ApiV1PublishResponseSchema = type({
     ok: 'true',
     skillId: 'string',
     versionId: 'string',
+    fingerprint: 'string?',
+    unchanged: 'boolean?',
 });
 
 export const ApiV1DeleteResponseSchema = type({

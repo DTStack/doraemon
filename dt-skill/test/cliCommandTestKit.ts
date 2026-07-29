@@ -93,6 +93,7 @@ export function createUiModuleMocks(options?: { interactive?: boolean }) {
             selectAgentsInteractive: vi.fn(async () => []),
             selectScope: vi.fn(async () => false),
             selectInstallMethod: vi.fn(async () => 'symlink' as const),
+            selectCategory: vi.fn(async () => '通用'),
             noteSummary: vi.fn(),
             isCancelledValue: (value: unknown) => typeof value === 'symbol',
         }),

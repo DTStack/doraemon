@@ -35,11 +35,15 @@ export function isPinned(entry?: LockfileEntry): boolean {
 export function withPinnedMetadata(
     version: string | null,
     installedAt: number,
-    existing?: LockfileEntry
+    existing?: LockfileEntry,
+    fingerprint?: string | null
 ): LockfileEntry {
+    const nextFingerprint =
+        fingerprint !== undefined && fingerprint !== null ? fingerprint : existing?.fingerprint;
     return {
         version,
         installedAt,
+        ...(nextFingerprint ? { fingerprint: nextFingerprint } : {}),
         ...(existing?.pinned ? { pinned: true } : {}),
         ...(existing?.pinned && existing.pinReason ? { pinReason: existing.pinReason } : {}),
     };

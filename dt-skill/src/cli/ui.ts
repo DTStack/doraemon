@@ -198,6 +198,17 @@ export async function selectScope(): Promise<boolean | null> {
     return scope as boolean;
 }
 
+/** Skill market category selection (first publish). Returns null=cancelled. */
+export async function selectCategory(categories: readonly string[]): Promise<string | null> {
+    if (!isInteractive()) return null;
+    const picked = await select({
+        message: 'Select skill category',
+        options: categories.map((value) => ({ value, label: value })),
+    });
+    if (isCancel(picked)) return null;
+    return picked as string;
+}
+
 /** Symlink vs Copy method selection. Returns null=cancelled. */
 export async function selectInstallMethod(): Promise<InstallMode | null> {
     if (!isInteractive()) return null;

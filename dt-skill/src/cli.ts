@@ -27,7 +27,7 @@ import {
 import { cmdStarSkill } from './cli/commands/star.js';
 import { cmdUnstarSkill } from './cli/commands/unstar.js';
 import { configureCommanderHelp, styleEnvBlock, styleTitle } from './cli/helpStyle.js';
-import { DEFAULT_REGISTRY, DEFAULT_SITE } from './cli/registry.js';
+import { DEFAULT_REGISTRY, DEFAULT_SITE, pickRegistryFromCliAndEnv } from './cli/registry.js';
 import type { GlobalOpts } from './cli/types.js';
 import { fail } from './cli/ui.js';
 
@@ -45,7 +45,7 @@ const program = new Command()
     .option('--workdir <dir>', 'Working directory (default: cwd)')
     .option('--dir <dir>', 'Skills directory (relative to workdir, default: skills)')
     .option('--site <url>', 'Doraemon site URL for registry discovery')
-    .option('--registry <url>', 'Registry API base URL')
+    .option('--registry <url>', 'Registry API base URL (overrides default and DT_SKILL_REGISTRY)')
     .option(
         '-a, --agent <names>',
         `Target agent(s) for symlinks (${
@@ -62,7 +62,26 @@ const program = new Command()
     .showSuggestionAfterError()
     .addHelpText(
         'after',
-        styleEnvBlock('\nEnv:\n  DT_SKILL_SITE\n  DT_SKILL_REGISTRY\n  DT_SKILL_WORKDIR\n')
+        styleEnvBlock(
+            [
+                '',
+                'Registry (first match wins):',
+                '  1. --registry <url>',
+                '  2. DT_SKILL_REGISTRY',
+                '  3. cached global config',
+                '  4. --site / DT_SKILL_SITE discovery',
+                `  5. built-in default: ${DEFAULT_REGISTRY}`,
+                '',
+                'Dev example:',
+                '  export DT_SKILL_REGISTRY=http://127.0.0.1:7001',
+                '',
+                'Env:',
+                '  DT_SKILL_SITE',
+                '  DT_SKILL_REGISTRY',
+                '  DT_SKILL_WORKDIR',
+                '',
+            ].join('\n')
+        )
     );
 
 configureCommanderHelp(program);
@@ -111,8 +130,10 @@ async function resolveGlobalOpts(): Promise<GlobalOpts> {
     const dir = join(workdir, 'skills');
 
     const site = raw.site ?? process.env.DT_SKILL_SITE ?? DEFAULT_SITE;
-    const registrySource = raw.registry ? 'cli' : process.env.DT_SKILL_REGISTRY ? 'env' : 'default';
-    const registry = raw.registry ?? process.env.DT_SKILL_REGISTRY ?? DEFAULT_REGISTRY;
+    const { registry, registrySource } = pickRegistryFromCliAndEnv({
+        cliRegistry: raw.registry,
+        envRegistry: process.env.DT_SKILL_REGISTRY,
+    });
     return {
         workdir,
         dir,
@@ -187,11 +208,13 @@ registerCommand(program, ['install'])
     });
 
 registerCommand(program, ['update'])
-    .description('Update installed skills')
-    .argument('[slug]', 'Skill slug')
-    .option('--all', 'Update all installed skills')
-    .option('--version <version>', 'Update to specific version (single slug only)')
-    .option('--force', 'Overwrite when local files do not match any version')
+    .description(
+        'Update installed skills to registry content (by hash). Bare update = all tracked skills.'
+    )
+    .argument('[slug]', 'Skill slug (omit to update all)')
+    .option('--all', 'Update all installed skills (same as bare update)')
+    .option('--version <version>', 'Update to specific version (single slug only, legacy)')
+    .option('--force', 'Overwrite when local files do not match registry content')
     .action(async (slug, options) => {
         const opts = await resolveGlobalOpts();
         await cmdUpdate(opts, slug, options, isInputAllowed());
@@ -269,19 +292,26 @@ registerCommand(program, ['inspect'])
     });
 
 registerCommand(program, ['publish'])
-    .description('Legacy alias: publish a skill from folder')
+    .description(
+        'Publish a skill folder to the registry (push remote). Re-publish same slug overwrites by content hash.'
+    )
+    .alias('upload')
     .argument('<path>', 'Skill folder path')
     .option('--slug <slug>', 'Skill slug')
     .option('--name <name>', 'Display name')
     .option('--owner <handle>', 'Publish under an org/user publisher handle')
     .option('--migrate-owner', 'Move an existing skill to the selected owner when republishing')
-    .option('--version <version>', 'Version (semver)')
+    .option(
+        '--version <version>',
+        'Optional semver (compatibility; default 0.0.0, hash detects changes)'
+    )
     .option('--fork-of <slug[@version]>', 'Mark as a fork of an existing skill')
     .option('--changelog <text>', 'Changelog text')
     .option('--clawscan-note <text>', CLAWSCAN_NOTE_HELP)
     .option('--tags <tags>', 'Comma-separated tags', 'latest')
     .option('--all', 'Batch mode: upload all discovered skills without interactive selection')
-    .option('--category <category>', 'Category for batch upload')
+    .option('--category <category>', 'Category (required on first publish in non-interactive mode)')
+    .option('--yes', 'Skip overwrite confirmation')
     .action(async (folder, options) => {
         const opts = await resolveGlobalOpts();
         await cmdPublish(opts, folder, options);
@@ -333,17 +363,19 @@ registerCommand(program, ['unhide'])
 
 const skill = registerCommandGroup(program, ['skill']).description('Manage published skills');
 registerCommand(skill, ['skill', 'publish'])
-    .description('Publish a skill from folder')
+    .description('Publish a skill from folder (same as publish/upload)')
     .argument('<path>', 'Skill folder path')
     .option('--slug <slug>', 'Skill slug')
     .option('--name <name>', 'Display name')
     .option('--owner <handle>', 'Publish under an org/user publisher handle')
     .option('--migrate-owner', 'Move an existing skill to the selected owner when republishing')
-    .option('--version <version>', 'Version (semver)')
+    .option('--version <version>', 'Optional semver (compatibility; default 0.0.0)')
     .option('--fork-of <slug[@version]>', 'Mark as a fork of an existing skill')
     .option('--changelog <text>', 'Changelog text')
     .option('--clawscan-note <text>', CLAWSCAN_NOTE_HELP)
     .option('--tags <tags>', 'Comma-separated tags', 'latest')
+    .option('--category <category>', 'Category (required on first publish in non-interactive mode)')
+    .option('--yes', 'Skip overwrite confirmation')
     .action(async (folder, options) => {
         const opts = await resolveGlobalOpts();
         await cmdPublish(opts, folder, options);

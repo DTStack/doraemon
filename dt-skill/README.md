@@ -15,6 +15,22 @@ npx dt-skill --help
 node dt-skill/bin/dt-skill.js --help
 ```
 
+## Registry
+
+Out of the box the CLI talks to the intranet deploy registry:
+
+`http://172.16.100.225:7001`
+
+Override for local Doraemon (`npm run dev` on :7001) or another environment:
+
+```bash
+export DT_SKILL_REGISTRY=http://127.0.0.1:7001
+# or one-shot
+dt-skill --registry http://127.0.0.1:7001 search "query"
+```
+
+Priority: `--registry` → `DT_SKILL_REGISTRY` → cached global config → `--site` / `DT_SKILL_SITE` discovery → built-in default.
+
 ## Skill Package Installation
 
 When you install a skill package (a parent skill containing multiple child skills), the CLI presents an interactive fuzzy-search multiselect prompt so you can choose which sub-skills to install:
@@ -156,9 +172,8 @@ dt-skill sync --root ../clawdis/skills --all --dry-run
 
 ## Defaults
 
-- Registry: no static default. Commands copied from the Doraemon Skills page include `--registry <window.location.origin>`.
-- Registry resolution order: `--registry`, `CLAWHUB_REGISTRY` (legacy `CLAWDHUB_REGISTRY`), cached config, then discovery from an explicit site.
-- Explicit registry addresses are cached for later commands. Override the config path via `CLAWHUB_CONFIG_PATH` (legacy `CLAWDHUB_CONFIG_PATH`).
-- Site discovery: opt in with `--site`, `CLAWHUB_SITE`, or legacy `CLAWDHUB_SITE`; the site must expose `/.well-known/clawhub.json`.
-- Workdir: current directory (falls back to Clawdbot workspace if configured; override via `--workdir` or `CLAWHUB_WORKDIR`)
-- Install dir: `./skills` under workdir (override via `--dir`)
+- Registry built-in default: `http://172.16.100.225:7001` (intranet deploy).
+- Registry resolution order: `--registry` → `DT_SKILL_REGISTRY` → cached global config → `--site` / `DT_SKILL_SITE` discovery → built-in default.
+- Successful resolutions are cached for later commands.
+- Workdir: current directory (override via `--workdir` or `DT_SKILL_WORKDIR`).
+- Canonical skills dir: `<base>/.agents/skills` (see CLI `--global` / project layout).

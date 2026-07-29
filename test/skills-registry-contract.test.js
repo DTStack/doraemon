@@ -287,6 +287,7 @@ test('getSkillDetail returns full skill object', async () => {
         },
     });
     service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
 
     const data = await service.getSkillDetail('my-skill');
     assert.ok(data);
@@ -298,6 +299,8 @@ test('getSkillDetail returns full skill object', async () => {
     assert.deepEqual(data.skill.stats, { stars: 42, downloads: 0 });
     assert.equal(data.skill.createdAt, new Date('2026-05-21T10:00:00Z').getTime());
     assert.equal(data.skill.updatedAt, new Date('2026-05-21T10:00:00Z').getTime());
+    assert.equal(data.skill.fingerprint, null);
+    // fingerprint is only on skill (single-slot current content)
     assert.deepEqual(data.latestVersion, {
         version: '1.2.3',
         createdAt: new Date('2026-05-21T10:00:00Z').getTime(),
@@ -570,6 +573,15 @@ test('isBinaryBuffer detects invalid UTF-8 content', () => {
     assert.equal(service.isBinaryBuffer(Buffer.from([0x61, 0x00, 0x62])), true);
 });
 
+test('isBinaryBuffer does not reject valid UTF-8 split at the 4096-byte sample boundary', () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    // 4094 ASCII + multi-byte 答 would be truncated mid-sequence if we only decoded 4096 bytes.
+    const prefix = 'a'.repeat(4094);
+    const buffer = Buffer.from(`${prefix}答后续内容 fan-out：已就绪`, 'utf8');
+    assert.equal(buffer.subarray(0, 4096).toString('hex').endsWith('e7ad'), true);
+    assert.equal(service.isBinaryBuffer(buffer), false);
+});
+
 test('publishSkill rejects missing SKILL.md', async () => {
     const service = Object.create(SkillsRegistryService.prototype);
     service.app = createMockApp({
@@ -609,9 +621,11 @@ test('publishSkill returns ok: true and string skillId and versionId', async () 
         },
         SkillsFile: {
             create: async () => ({}),
+            update: async () => ({}),
         },
     });
     service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
 
     const result = await service.publishSkill(
         { slug: 'test-skill', displayName: 'Test Skill', version: '1.0.0' },
@@ -621,6 +635,309 @@ test('publishSkill returns ok: true and string skillId and versionId', async () 
     assert.equal(result.ok, true);
     assert.equal(typeof result.skillId, 'string');
     assert.equal(result.versionId, 'v1.0.0');
+    assert.equal(typeof result.fingerprint, 'string');
+    assert.equal(result.unchanged, false);
+});
+
+test('publishSkill rejects invalid category', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    service.app = createMockApp();
+    service.ctx = createMockCtx();
+    service.ctx.throw = (status, message) => {
+        const err = new Error(message);
+        err.status = status;
+        throw err;
+    };
+
+    await assert.rejects(
+        () =>
+            service.publishSkill(
+                {
+                    slug: 'bad-cat',
+                    displayName: 'Bad',
+                    category: 'not-a-real-category',
+                },
+                [{ filepath: 'SKILL.md', content: '# x\n' }]
+            ),
+        /category 无效/
+    );
+});
+
+test('publishSkill accepts missing version (defaults to 0.0.0)', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => null,
+            create: async (data) => ({ id: 124, ...data, update: async () => {} }),
+        },
+        SkillsSource: {
+            findOne: async () => ({ id: 1 }),
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill(
+        { slug: 'hash-skill', displayName: 'Hash Skill', category: '工程效率' },
+        [{ filepath: 'SKILL.md', content: '# hash skill\n' }]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.versionId, 'v0.0.0');
+    assert.equal(typeof result.fingerprint, 'string');
+});
+
+test('publishSkill re-publish without category keeps existing category', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    const updatePayloads = [];
+    const skillRow = {
+        id: 51,
+        slug: 'keep-cat',
+        name: 'Keep Cat',
+        version: '0.0.0',
+        category: '安全',
+        is_delete: 0,
+        update: async (data) => {
+            updatePayloads.push(data);
+            Object.assign(skillRow, data);
+        },
+    };
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => skillRow,
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => [
+                {
+                    file_path: 'SKILL.md',
+                    content: '# old\n',
+                    is_binary: 0,
+                },
+            ],
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill({ slug: 'keep-cat', displayName: 'Keep Cat' }, [
+        { filepath: 'SKILL.md', content: '# new content\n' },
+    ]);
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, false);
+    const mainUpdate = updatePayloads.find((p) => Object.prototype.hasOwnProperty.call(p, 'name'));
+    assert.ok(mainUpdate, 'skill.update should run the main re-publish payload');
+    assert.equal(mainUpdate.category, '安全');
+});
+
+test('publishSkill same content is unchanged no-op', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    const skillRow = {
+        id: 50,
+        slug: 'same-skill',
+        name: 'Same',
+        version: '0.0.0',
+        is_delete: 0,
+        update: async () => {
+            throw new Error('should not update when content unchanged and no contributor');
+        },
+    };
+    const files = [
+        {
+            file_path: 'SKILL.md',
+            content: '# same\n',
+            is_binary: 0,
+        },
+    ];
+    let findAllOptions = null;
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => skillRow,
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async (options) => {
+                findAllOptions = options;
+                return files;
+            },
+            create: async () => {
+                throw new Error('should not create on no-op');
+            },
+            update: async () => {
+                throw new Error('should not soft-delete on no-op');
+            },
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill({ slug: 'same-skill', displayName: 'Same' }, [
+        { filepath: 'SKILL.md', content: '# same\n' },
+    ]);
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, true);
+    assert.equal(typeof result.fingerprint, 'string');
+    // Fingerprint read must join the publish transaction (mock tx is {}).
+    assert.ok(findAllOptions);
+    assert.ok(Object.prototype.hasOwnProperty.call(findAllOptions, 'transaction'));
+});
+
+test('publishSkill same content still updates contributor when provided', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    let metaUpdate = null;
+    const skillRow = {
+        id: 51,
+        slug: 'same-contrib',
+        name: 'Same',
+        version: '0.0.0',
+        is_delete: 0,
+        contributor: '旧署名',
+        update: async (payload) => {
+            metaUpdate = payload;
+        },
+    };
+    const files = [
+        {
+            file_path: 'SKILL.md',
+            content: '# same\n',
+            is_binary: 0,
+        },
+    ];
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => skillRow,
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => files,
+            create: async () => {
+                throw new Error('should not create on content no-op');
+            },
+            update: async () => {
+                throw new Error('should not soft-delete on content no-op');
+            },
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill(
+        {
+            slug: 'same-contrib',
+            displayName: 'Same',
+            contributor: '新署名',
+        },
+        [{ filepath: 'SKILL.md', content: '# same\n' }]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, true);
+    assert.deepEqual(metaUpdate, { contributor: '新署名' });
+});
+
+test('publishSkill stores contributor on create when payload includes it', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    let createdPayload = null;
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => null,
+            create: async (data) => {
+                createdPayload = data;
+                return { id: 201, ...data, update: async () => {} };
+            },
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill(
+        {
+            slug: 'with-contributor',
+            displayName: 'With Contributor',
+            version: '1.0.0',
+            contributor: '  张三  ',
+        },
+        [{ filepath: 'SKILL.md', content: '# c\n' }]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(createdPayload.contributor, '张三');
+});
+
+test('publishSkill does not set contributor on create when payload omits it', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    let createdPayload = null;
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => null,
+            create: async (data) => {
+                createdPayload = data;
+                return { id: 202, ...data, update: async () => {} };
+            },
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    await service.publishSkill(
+        { slug: 'no-contributor', displayName: 'No Contributor', version: '1.0.0' },
+        [{ filepath: 'SKILL.md', content: '# n\n' }]
+    );
+
+    assert.equal(Object.prototype.hasOwnProperty.call(createdPayload, 'contributor'), false);
+});
+
+test('publishSkill rejects contributor longer than 50 characters', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    service.app = createMockApp();
+    service.ctx = createMockCtx();
+    service.ctx.throw = (status, message) => {
+        const err = new Error(message);
+        err.status = status;
+        throw err;
+    };
+
+    await assert.rejects(
+        () =>
+            service.publishSkill(
+                {
+                    slug: 'long-contributor',
+                    displayName: 'Long',
+                    contributor: 'x'.repeat(51),
+                },
+                [{ filepath: 'SKILL.md', content: '# x\n' }]
+            ),
+        /贡献者不能超过 50/
+    );
 });
 
 // ============================================================
@@ -736,8 +1053,8 @@ test('resolveFingerprint returns match and latestVersion for matching fingerprin
     const fp = await service.computeSkillFingerprint(1);
     const result = await service.resolveFingerprint('skill-a', fp);
     assert.ok(result);
-    assert.deepEqual(result.match, { version: '1.0.0' });
-    assert.deepEqual(result.latestVersion, { version: '1.0.0' });
+    assert.deepEqual(result.match, { version: '1.0.0', fingerprint: fp });
+    assert.deepEqual(result.latestVersion, { version: '1.0.0', fingerprint: fp });
 });
 
 test('resolveFingerprint returns null match for unmatched fingerprint but valid slug', async () => {
@@ -752,10 +1069,11 @@ test('resolveFingerprint returns null match for unmatched fingerprint but valid 
     });
     service.ctx = createMockCtx();
 
+    const fp = await service.computeSkillFingerprint(1);
     const result = await service.resolveFingerprint('skill-a', 'wrong_hash');
     assert.ok(result);
     assert.equal(result.match, null);
-    assert.deepEqual(result.latestVersion, { version: '1.0.0' });
+    assert.deepEqual(result.latestVersion, { version: '1.0.0', fingerprint: fp });
 });
 
 test('resolveFingerprint returns null values for missing slug', async () => {

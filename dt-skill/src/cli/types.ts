@@ -15,8 +15,3 @@ export type GlobalOpts = {
     /** Skip interactive prompts. */
     yes?: boolean;
 };
-
-export type ResolveResult = {
-    match: { version: string } | null;
-    latestVersion: { version: string } | null;
-};

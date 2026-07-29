@@ -3,19 +3,51 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import semver from 'semver';
 
-import { apiRequestForm } from '../../http.js';
+import { apiRequest, apiRequestForm } from '../../http.js';
 import {
     ApiRoutes,
     ApiV1PublishResponseSchema,
+    ApiV1SkillResponseSchema,
     normalizeClawScanNote,
 } from '../../schema/index.js';
-import { listPublishFiles } from '../../skills.js';
+import { hashSkillFiles, listPublishFiles } from '../../skills.js';
+import { resolvePublishContributor } from '../gitContributor.js';
 import { searchMultiselect } from '../prompts/search-multiselect.js';
 import { getRegistry } from '../registry.js';
 import { findSkillFolders } from '../scanSkills.js';
+import { SKILL_CATEGORY_OPTIONS, SKILL_CATEGORY_SET } from '../skillCategories.js';
 import { sanitizeSlug, titleCase } from '../slug.js';
 import type { GlobalOpts } from '../types.js';
-import { createSpinner, fail, formatError, isInteractive } from '../ui.js';
+import {
+    createSpinner,
+    fail,
+    formatError,
+    isInteractive,
+    promptConfirm,
+    selectCategory,
+} from '../ui.js';
+
+/** Re-export shared market category list (contracts/skill-categories). */
+export { SKILL_CATEGORY_OPTIONS };
+
+/** Internal compatibility version when author omits --version (hash is the change signal). */
+const DEFAULT_PUBLISH_VERSION = '0.0.0';
+
+/**
+ * Resolve contributor from cwd git user.name (Decision: local publish only).
+ * Logs when set; silent when unset; fails when name exceeds server length limit.
+ */
+function resolveContributorForPublish(): string | null {
+    try {
+        const contributor = resolvePublishContributor(process.cwd());
+        if (contributor) {
+            console.log(`contributor: ${contributor} (from git user.name)`);
+        }
+        return contributor;
+    } catch (error) {
+        fail(formatError(error));
+    }
+}
 
 export async function cmdPublish(
     opts: GlobalOpts,
@@ -32,6 +64,7 @@ export async function cmdPublish(
         migrateOwner?: boolean;
         all?: boolean;
         category?: string;
+        yes?: boolean;
     }
 ) {
     // Resolve folder path against the project base (parent of the canonical
@@ -56,11 +89,14 @@ export async function cmdPublish(
 
     // Single skill mode (existing logic)
     const registry = await getRegistry(opts, { cache: true });
+    const contributor = resolveContributorForPublish();
 
     const slug = options.slug ?? sanitizeSlug(basename(folder));
     const displayName = options.name ?? titleCase(basename(folder));
     const ownerHandle = options.owner?.trim().replace(/^@+/, '');
-    const version = options.version;
+    // Version is optional for authors; default is a compatibility placeholder. Change detection uses content hash.
+    const version = options.version?.trim() || DEFAULT_PUBLISH_VERSION;
+    if (!semver.valid(version)) fail('--version must be valid semver when provided');
     const changelog = options.changelog ?? '';
     let clawScanNote: string | undefined;
     try {
@@ -79,9 +115,43 @@ export async function cmdPublish(
 
     if (!slug) fail('--slug required');
     if (!displayName) fail('--name required');
-    if (!version || !semver.valid(version)) fail('--version must be valid semver');
 
-    const spinner = createSpinner(`Preparing ${slug}@${version}`);
+    // Detect whether slug already exists on registry (first publish needs category).
+    let existingCategory: string | null = null;
+    let existingFingerprint: string | null = null;
+    let skillExists = false;
+    try {
+        const existing = await apiRequest(
+            registry,
+            { method: 'GET', path: `${ApiRoutes.skills}/${encodeURIComponent(slug)}` },
+            ApiV1SkillResponseSchema
+        );
+        skillExists = Boolean(existing?.skill);
+        if (existing?.skill?.category) existingCategory = String(existing.skill.category);
+        // Canonical: skill.fingerprint only (single-slot current content)
+        existingFingerprint = existing?.skill?.fingerprint ?? null;
+    } catch {
+        skillExists = false;
+    }
+
+    let category = options.category?.trim() || '';
+    if (category && !SKILL_CATEGORY_SET.has(category)) {
+        fail(`--category must be one of: ${SKILL_CATEGORY_OPTIONS.join(', ')}`);
+    }
+    if (!skillExists && !category) {
+        if (isInteractive()) {
+            const picked = await selectCategory(SKILL_CATEGORY_OPTIONS);
+            if (!picked) fail('Category required for first publish');
+            category = picked;
+        } else {
+            fail('First publish requires --category <category> in non-interactive mode');
+        }
+    }
+    if (skillExists && !category && existingCategory) {
+        category = existingCategory;
+    }
+
+    const spinner = createSpinner(`Preparing ${slug}`);
     try {
         const filesOnDisk = await ensureRootManifestFile(folder, await listPublishFiles(folder));
         if (filesOnDisk.length === 0) fail('No files found');
@@ -92,6 +162,27 @@ export async function cmdPublish(
             })
         ) {
             fail('SKILL.md required');
+        }
+
+        // Confirm overwrite only when remote exists AND content hash differs (Decision 18).
+        const localFingerprint = hashSkillFiles(
+            filesOnDisk.map((file) => ({
+                relPath: file.relPath,
+                bytes: file.bytes,
+            }))
+        ).fingerprint;
+        const contentChanged =
+            skillExists && Boolean(existingFingerprint) && localFingerprint !== existingFingerprint;
+        if (contentChanged && isInteractive() && !options.yes) {
+            spinner.stop();
+            const ok = await promptConfirm(
+                `Skill "${slug}" exists and content changed. Overwrite remote?`
+            );
+            if (!ok) {
+                console.log('Publish cancelled');
+                return;
+            }
+            spinner.start(`Publishing ${slug}`);
         }
 
         const form = new FormData();
@@ -107,7 +198,9 @@ export async function cmdPublish(
                 ...(clawScanNote ? { clawScanNote } : {}),
                 acceptLicenseTerms: true,
                 tags,
+                ...(category ? { category } : {}),
                 ...(forkOf ? { forkOf } : {}),
+                ...(contributor ? { contributor } : {}),
             })
         );
 
@@ -121,14 +214,26 @@ export async function cmdPublish(
             form.append('files', blob, file.relPath);
         }
 
-        spinner.text = `Publishing ${slug}@${version}`;
+        spinner.text = `Publishing ${slug}`;
         const result = await apiRequestForm(
             registry,
             { method: 'POST', path: ApiRoutes.skills, form },
             ApiV1PublishResponseSchema
         );
 
-        spinner.succeed(`OK. Published ${slug}@${version} (${result.versionId})`);
+        if (result.unchanged) {
+            spinner.succeed(
+                `OK. Already up to date ${slug}${
+                    result.fingerprint ? ` (${result.fingerprint.slice(0, 12)}…)` : ''
+                }`
+            );
+        } else {
+            spinner.succeed(
+                `OK. Published ${slug}${
+                    result.fingerprint ? ` hash=${result.fingerprint.slice(0, 12)}…` : ''
+                } (${result.versionId})`
+            );
+        }
     } catch (error) {
         spinner.fail(formatError(error));
         throw error;
@@ -212,6 +317,7 @@ export async function cmdPublishBatch(
     }
 ) {
     const registry = await getRegistry(opts, { cache: true });
+    const contributor = resolveContributorForPublish();
 
     let selectedSkills = discoveredSkills;
 
@@ -265,6 +371,7 @@ export async function cmdPublishBatch(
         if (packageBaseName) form.set('packageName', packageBaseName);
         if (options.category) form.set('category', options.category);
         if (options.tags) form.set('tags', options.tags);
+        if (contributor) form.set('contributor', contributor);
 
         const result = await apiRequestForm<{
             success: boolean;

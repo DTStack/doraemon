@@ -129,6 +129,14 @@ test/               # 主项目测试文件（Node.js 内置 test runner）
 - **构建**: `node ./scripts/build.mjs`，输出到 `dist/`。
 - **测试**: Vitest，配置在 `vitest.config.ts`（测试 `src/**/*.test.ts`）。
 - **Node 版本要求**: `>=20`（与主项目的 `>=18` 不同）。
+- **默认 Registry**: 内网部署 `http://172.16.100.225:7001`（无 flag/env 时开箱即用）。
+- **本地开发覆盖**:
+  ```bash
+  export DT_SKILL_REGISTRY=http://127.0.0.1:7001
+  # 或
+  node bin/dt-skill.js --registry http://127.0.0.1:7001 search foo
+  ```
+  优先级：`--registry` > `DT_SKILL_REGISTRY` > 本机缓存 > site 发现 > 内置默认。
 
 ## 测试
 
@@ -156,3 +164,17 @@ test/               # 主项目测试文件（Node.js 内置 test runner）
 - `dev`: 主开发分支。
 - `feat_版本号_xxx`: 新特性分支，从 `master` 切出，开发完 PR 到 `dev`。
 - `hotfix_版本号_xxx`: Bug 修复分支，从 `master` 切出，修复完 PR 到 `dev`，验证后合并到 `master`。
+
+## Agent skills
+
+### Issue tracker
+
+Issues / specs / tickets live as **local markdown** under `.scratch/<feature-slug>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix` (written as `Status:` on local ticket files). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+**Single-context** layout: optional root `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.
