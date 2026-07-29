@@ -1,15 +1,15 @@
 {
     "name": "dt-skill",
-    "version": "0.1.0",
+    "version": "0.18.4",
     "description": "dt-skill CLI — install, update, search, and publish agent skills.",
-    "homepage": "https://github.com/TreeTreeDi/doraemon",
+    "homepage": "https://github.com/DTStack/doraemon/tree/master/dt-skill",
     "bugs": {
-        "url": "https://github.com/TreeTreeDi/doraemon/issues"
+        "url": "https://github.com/DTStack/doraemon/issues"
     },
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/TreeTreeDi/doraemon.git",
+        "url": "git+https://github.com/DTStack/doraemon.git",
         "directory": "dt-skill"
     },
     "bin": {
