@@ -791,6 +791,7 @@ test('persistSkillsForSource - multi-skill source creates parent package with ch
             version: '1.0.0',
             tags: ['a'],
             allowedTools: [],
+            contributor: '张三',
             updatedAt: new Date(),
             sourceRepo: '',
             sourcePath: 'skills/alpha',
@@ -805,6 +806,7 @@ test('persistSkillsForSource - multi-skill source creates parent package with ch
             version: '1.0.0',
             tags: ['b'],
             allowedTools: [],
+            contributor: '张三',
             updatedAt: new Date(),
             sourceRepo: '',
             sourcePath: 'skills/beta',
@@ -819,6 +821,7 @@ test('persistSkillsForSource - multi-skill source creates parent package with ch
             version: '1.0.0',
             tags: ['g'],
             allowedTools: [],
+            contributor: '张三',
             updatedAt: new Date(),
             sourceRepo: '',
             sourcePath: 'skills/gamma',
@@ -841,6 +844,7 @@ test('persistSkillsForSource - multi-skill source creates parent package with ch
     assert.equal(parent.parent_slug, null, 'Parent should have null parent_slug');
     assert.equal(parent.name, 'mega-pack');
     assert.equal(parent.source_path, '.');
+    assert.equal(parent.contributor, '张三');
     assert.ok(
         parent.description.includes('alpha-skill'),
         'Parent description should list children'
@@ -853,6 +857,7 @@ test('persistSkillsForSource - multi-skill source creates parent package with ch
             `Child ${child.slug} should reference parent slug`
         );
         assert.equal(child.is_package, 0, `Child ${child.slug} should NOT be a package`);
+        assert.equal(child.contributor, '张三');
     }
 });
 

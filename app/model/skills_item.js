@@ -92,6 +92,11 @@ module.exports = (app) => {
                 allowNull: true,
                 comment: '所属技能包的 slug',
             },
+            contributor: {
+                type: STRING(50),
+                allowNull: true,
+                comment: '贡献者',
+            },
             created_at: {
                 type: DATE,
                 allowNull: false,

@@ -335,6 +335,7 @@ CREATE TABLE `skills_items` (
   `version` varchar(128) NOT NULL DEFAULT '' COMMENT '技能版本号',
   `tags` longtext COMMENT 'JSON字符串数组',
   `allowed_tools` longtext COMMENT 'JSON字符串数组',
+  `contributor` varchar(50) DEFAULT NULL COMMENT '贡献者',
   `stars` int NOT NULL DEFAULT '0',
   `updated_at_remote` datetime DEFAULT NULL COMMENT '源仓库文件更新时间',
   `source_repo` varchar(1000) DEFAULT NULL COMMENT '仓库地址',

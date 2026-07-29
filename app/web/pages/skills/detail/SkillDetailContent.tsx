@@ -313,6 +313,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
                         downloadCommand={downloadCommand}
                         agentTerminalCommand={agentTerminalCommand}
                         manualDownloadUrl={manualDownloadUrl}
+                        contributor={detail?.contributor || ''}
                     />
                 ) : null}
             </div>

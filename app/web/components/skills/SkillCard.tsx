@@ -116,12 +116,9 @@ export const SkillCard: React.FC<SkillCardProps> = ({
             {showMeta && (
                 <div className="card-meta">
                     <span className="meta-item">
-                        <span className="meta-label">来源</span>
-                        <span
-                            className="meta-value"
-                            title={skill.sourceRepo || skill.sourcePath || '-'}
-                        >
-                            {skill.sourceRepo || skill.sourcePath || '-'}
+                        <span className="meta-label">贡献者</span>
+                        <span className="meta-value" title={skill.contributor || '-'}>
+                            {skill.contributor || '-'}
                         </span>
                     </span>
                     <span className="meta-separator">·</span>

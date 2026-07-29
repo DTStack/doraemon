@@ -186,7 +186,6 @@ const SkillSummaryModalContent: React.FC<SkillSummaryModalContentProps> = ({ slu
     }
 
     const detailTags = (detail.tags || []).filter((tag) => tag && tag !== detail.category);
-    const detailSource = detail.sourceRepo || detail.sourcePath || '-';
     const detailUpdatedAt = detail.updatedAt
         ? new Date(detail.updatedAt).toLocaleString('zh-CN')
         : '-';
@@ -207,8 +206,8 @@ const SkillSummaryModalContent: React.FC<SkillSummaryModalContentProps> = ({ slu
             value: detailUpdatedAt,
         },
         {
-            label: '来源',
-            value: detailSource,
+            label: '贡献者',
+            value: detail.contributor || '-',
             className: 'is-wide',
         },
     ];

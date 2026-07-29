@@ -4,8 +4,6 @@ import { Button } from 'antd';
 import agentIcon from '@/asset/images/skills-detail-figma/agent.svg';
 import chevronDownIcon from '@/asset/images/skills-detail-figma/chevron-down.svg';
 import chevronRightIcon from '@/asset/images/skills-detail-figma/chevron-right.svg';
-import contributorOne from '@/asset/images/skills-detail-figma/contributor-1.png';
-import contributorTwo from '@/asset/images/skills-detail-figma/contributor-2.png';
 import copyDarkIcon from '@/asset/images/skills-detail-figma/copy-dark.svg';
 import downloadIcon from '@/asset/images/skills-detail-figma/download.svg';
 import emptyRelatedIcon from '@/asset/images/skills-detail-figma/empty-related.svg';
@@ -39,6 +37,7 @@ interface SkillInstallPanelProps {
     downloadCommand: string;
     agentTerminalCommand: string;
     manualDownloadUrl: string;
+    contributor?: string;
 }
 
 const renderInlineCommand = (command: string, copyMessage: string, compact = false) => (
@@ -94,6 +93,7 @@ export const SkillInstallPanel: React.FC<SkillInstallPanelProps> = ({
     downloadCommand,
     agentTerminalCommand,
     manualDownloadUrl,
+    contributor = '',
 }) => (
     <aside className="detail-right-sidebar">
         <section className="install-panel">
@@ -286,11 +286,9 @@ export const SkillInstallPanel: React.FC<SkillInstallPanelProps> = ({
             </div>
             <div className="meta-row is-contributors">
                 <span>贡献者</span>
-                <div className="contributors-stack">
-                    <img alt="contributor 1" src={contributorOne} />
-                    <img alt="contributor 2" src={contributorTwo} />
-                    <span>+3</span>
-                </div>
+                <span className="contributor-name" title={contributor || '-'}>
+                    {contributor || '-'}
+                </span>
             </div>
         </section>
     </aside>
