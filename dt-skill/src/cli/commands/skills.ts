@@ -1,4 +1,4 @@
-import { lstat, mkdir, rm, stat } from 'node:fs/promises';
+import { lstat, mkdir, rm } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -50,7 +50,7 @@ import {
     selectInstallMethod,
     selectScope,
 } from '../ui.js';
-import { normalizeSkillSlugOrFail } from './skillHelpers.js';
+import { fileExists, normalizeSkillSlugOrFail } from './skillHelpers.js';
 
 const SUSPICIOUS_WARNING =
     '\n⚠️  Warning: "{slug}" is flagged for ClawHub security review.\n' +
@@ -934,13 +934,4 @@ function resolveExploreSort(raw?: string): { sort: ExploreSort; apiSort: ApiExpl
     return fail(
         `Invalid sort "${raw}". Use newest, updated, downloads, rating, installs, installsAllTime, or trending.`
     );
-}
-
-async function fileExists(path: string) {
-    try {
-        await stat(path);
-        return true;
-    } catch {
-        return false;
-    }
 }
