@@ -453,7 +453,9 @@ class SkillsRegistryService extends Service {
 
     async tryPublishUnchanged(skill, incomingFingerprint, version, meta = {}, transaction) {
         if (!skill || skill.is_delete !== 0) return null;
-        const existingFingerprint = await this.computeSkillFingerprint(skill.id);
+        // Read files in the same transaction as publish so concurrent writers cannot
+        // make the no-op decision against a non-transactional snapshot.
+        const existingFingerprint = await this.computeSkillFingerprint(skill.id, transaction);
         if (!existingFingerprint || existingFingerprint !== incomingFingerprint) return null;
         // Content unchanged: still apply optional metadata (e.g. contributor) without re-storing files.
         if (meta.hasContributor) {
@@ -592,12 +594,16 @@ class SkillsRegistryService extends Service {
     }
 
     // Compute SHA256 fingerprint for a skill
-    async computeSkillFingerprint(skillId) {
+    async computeSkillFingerprint(skillId, transaction) {
         const { SkillsFile } = this.app.model;
-        const files = await SkillsFile.findAll({
+        const query = {
             where: { skill_id: skillId, is_delete: 0 },
             order: [['file_path', 'ASC']],
-        });
+        };
+        if (transaction) {
+            query.transaction = transaction;
+        }
+        const files = await SkillsFile.findAll(query);
         const fingerprintIgnore = this.createFingerprintIgnore(files);
 
         return skillFingerprint.buildSkillFingerprintFromStoredFiles(files, {

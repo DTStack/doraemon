@@ -759,6 +759,7 @@ test('publishSkill same content is unchanged no-op', async () => {
             is_binary: 0,
         },
     ];
+    let findAllOptions = null;
     service.app = createMockApp({
         SkillsItem: {
             findOne: async () => skillRow,
@@ -767,7 +768,10 @@ test('publishSkill same content is unchanged no-op', async () => {
             findOrCreate: async () => [{ id: 1 }],
         },
         SkillsFile: {
-            findAll: async () => files,
+            findAll: async (options) => {
+                findAllOptions = options;
+                return files;
+            },
             create: async () => {
                 throw new Error('should not create on no-op');
             },
@@ -786,6 +790,9 @@ test('publishSkill same content is unchanged no-op', async () => {
     assert.equal(result.ok, true);
     assert.equal(result.unchanged, true);
     assert.equal(typeof result.fingerprint, 'string');
+    // Fingerprint read must join the publish transaction (mock tx is {}).
+    assert.ok(findAllOptions);
+    assert.ok(Object.prototype.hasOwnProperty.call(findAllOptions, 'transaction'));
 });
 
 test('publishSkill same content still updates contributor when provided', async () => {
