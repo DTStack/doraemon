@@ -792,10 +792,7 @@ test('publishSkill updates installKey-aliased skill without creating new slug', 
         skills: {
             ensureSkillCache: async () => ({
                 byInstallKey: new Map([
-                    [
-                        'weekly-report',
-                        { slug: longSlug, installKey: 'weekly-report' },
-                    ],
+                    ['weekly-report', { slug: longSlug, installKey: 'weekly-report' }],
                 ]),
             }),
         },
@@ -1142,8 +1139,7 @@ test('publishSkill re-publish with description updates description', async () =>
 test('publishSkill same content backfills empty card from SKILL.md', async () => {
     const service = Object.create(SkillsRegistryService.prototype);
     let metaUpdate = null;
-    const skillMd =
-        '---\nname: backfill\ndescription: card should fill\n---\n\n# Title\n';
+    const skillMd = '---\nname: backfill\ndescription: card should fill\n---\n\n# Title\n';
     const skillRow = {
         id: 55,
         slug: 'backfill-desc',
@@ -1183,10 +1179,9 @@ test('publishSkill same content backfills empty card from SKILL.md', async () =>
     service.ctx = createMockCtx();
     service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
 
-    const result = await service.publishSkill(
-        { slug: 'backfill-desc', displayName: 'Backfill' },
-        [{ filepath: 'SKILL.md', content: skillMd }]
-    );
+    const result = await service.publishSkill({ slug: 'backfill-desc', displayName: 'Backfill' }, [
+        { filepath: 'SKILL.md', content: skillMd },
+    ]);
 
     assert.equal(result.ok, true);
     assert.equal(result.unchanged, true);
