@@ -740,6 +740,455 @@ test('publishSkill re-publish without category keeps existing category', async (
     assert.equal(mainUpdate.category, '安全');
 });
 
+test('publishSkill updates installKey-aliased skill without creating new slug', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    const updatePayloads = [];
+    const createCalls = [];
+    const longSlug = 'upload-weekly-report-weekly-report-7bfcdc00-default-weekly-report';
+    const skillRow = {
+        id: 91,
+        slug: longSlug,
+        name: 'weekly-report',
+        description: 'old market copy',
+        version: '0.0.0',
+        category: '其他',
+        is_delete: 0,
+        update: async (data) => {
+            updatePayloads.push(data);
+            Object.assign(skillRow, data);
+        },
+    };
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async (options) => {
+                const whereSlug = options?.where?.slug;
+                if (whereSlug === 'weekly-report') return null;
+                if (whereSlug === longSlug) return skillRow;
+                return null;
+            },
+            create: async (data) => {
+                createCalls.push(data);
+                return { id: 999, ...data, update: async () => {} };
+            },
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => [
+                {
+                    file_path: 'SKILL.md',
+                    content: '# old\n',
+                    is_binary: 0,
+                },
+            ],
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+    service.ctx.service = {
+        skills: {
+            ensureSkillCache: async () => ({
+                byInstallKey: new Map([
+                    ['weekly-report', { slug: longSlug, installKey: 'weekly-report' }],
+                ]),
+            }),
+        },
+    };
+
+    const result = await service.publishSkill(
+        { slug: 'weekly-report', displayName: 'weekly-report' },
+        [
+            {
+                filename: 'SKILL.md',
+                content: '---\nname: weekly-report\ndescription: from frontmatter\n---\n\n# Body\n',
+            },
+        ]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, false);
+    assert.equal(createCalls.length, 0, 'must not create a second skill row');
+    assert.ok(updatePayloads.length > 0, 'must update existing aliased skill');
+    assert.equal(skillRow.slug, longSlug, 'remote primary slug must stay unchanged');
+    // Content-changing publish without payload.description → keep existing market card
+    assert.equal(skillRow.description, 'old market copy');
+});
+
+test('publishSkill uses payload.filePaths to preserve nested directories', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    const createdFiles = [];
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => null,
+            create: async (data) => ({
+                id: 90,
+                ...data,
+                update: async (fields) => Object.assign(data, fields),
+            }),
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => [],
+            create: async (row) => {
+                createdFiles.push(row);
+                return row;
+            },
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    // Multipart often delivers basename-only filenames; filePaths restores nesting.
+    const result = await service.publishSkill(
+        {
+            slug: 'nested-skill',
+            displayName: 'nested-skill',
+            filePaths: ['SKILL.md', 'agents/openai.yaml'],
+        },
+        [
+            { filename: 'SKILL.md', content: '# nested\n' },
+            { filename: 'openai.yaml', content: 'interface: {}\n' },
+        ]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, false);
+    const paths = createdFiles.map((f) => f.file_path).sort();
+    assert.deepEqual(paths, ['SKILL.md', 'agents/openai.yaml']);
+});
+
+test('publishSkill rejects filePaths length mismatch', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    service.app = createMockApp({
+        SkillsItem: { findOne: async () => null, create: async () => ({ id: 1 }) },
+        SkillsSource: { findOrCreate: async () => [{ id: 1 }] },
+        SkillsFile: { findAll: async () => [], create: async () => ({}), update: async () => ({}) },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    await assert.rejects(
+        () =>
+            service.publishSkill(
+                {
+                    slug: 'bad-paths',
+                    displayName: 'bad-paths',
+                    filePaths: ['SKILL.md'],
+                },
+                [
+                    { filename: 'SKILL.md', content: '# a\n' },
+                    { filename: 'extra.md', content: '# b\n' },
+                ]
+            ),
+        (err) => err.status === 400 && /filePaths 数量/.test(err.message)
+    );
+});
+
+test('publishSkill rejects non-array filePaths', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    service.app = createMockApp({
+        SkillsItem: { findOne: async () => null, create: async () => ({ id: 1 }) },
+        SkillsSource: { findOrCreate: async () => [{ id: 1 }] },
+        SkillsFile: { findAll: async () => [], create: async () => ({}), update: async () => ({}) },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    await assert.rejects(
+        () =>
+            service.publishSkill(
+                {
+                    slug: 'bad-type',
+                    displayName: 'bad-type',
+                    filePaths: 'SKILL.md',
+                },
+                [{ filename: 'SKILL.md', content: '# a\n' }]
+            ),
+        (err) => err.status === 400 && /filePaths 必须是字符串数组/.test(err.message)
+    );
+});
+
+test('publishSkill rejects filePaths with path traversal', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    service.app = createMockApp({
+        SkillsItem: { findOne: async () => null, create: async () => ({ id: 1 }) },
+        SkillsSource: { findOrCreate: async () => [{ id: 1 }] },
+        SkillsFile: { findAll: async () => [], create: async () => ({}), update: async () => ({}) },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    await assert.rejects(
+        () =>
+            service.publishSkill(
+                {
+                    slug: 'evil-path',
+                    displayName: 'evil-path',
+                    filePaths: ['SKILL.md', '../etc/passwd'],
+                },
+                [
+                    { filename: 'SKILL.md', content: '# a\n' },
+                    { filename: 'passwd', content: 'x\n' },
+                ]
+            ),
+        (err) => err.status === 400 && /非法文件路径/.test(err.message)
+    );
+});
+
+test('publishSkill create without description uses SKILL.md frontmatter', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    let created = null;
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => null,
+            create: async (data) => {
+                created = {
+                    id: 60,
+                    ...data,
+                    update: async () => {},
+                };
+                return created;
+            },
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => [],
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const skillMd =
+        '---\nname: zentao-api\ndescription: 通过禅道 HTTP API 获取 Bug 详情。\n---\n\n# Body\n';
+    const result = await service.publishSkill(
+        { slug: 'from-fm', displayName: 'from-fm', category: '前端' },
+        [{ filename: 'SKILL.md', content: skillMd }]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(created.description, '通过禅道 HTTP API 获取 Bug 详情。');
+});
+
+test('publishSkill re-publish without description keeps existing market card', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    const updatePayloads = [];
+    const skillRow = {
+        id: 52,
+        slug: 'keep-desc',
+        name: 'Keep Desc',
+        description: 'original card summary',
+        version: '0.0.0',
+        category: '通用',
+        is_delete: 0,
+        update: async (data) => {
+            updatePayloads.push(data);
+            Object.assign(skillRow, data);
+        },
+    };
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => skillRow,
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => [
+                {
+                    file_path: 'SKILL.md',
+                    content: '# old\n',
+                    is_binary: 0,
+                },
+            ],
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    // CLI-shaped payload: no description field → keep market card (sticky override).
+    const result = await service.publishSkill({ slug: 'keep-desc', displayName: 'Keep Desc' }, [
+        {
+            filepath: 'SKILL.md',
+            content: '---\nname: keep-desc\ndescription: refreshed from package\n---\n\n# new\n',
+        },
+    ]);
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, false);
+    const mainUpdate = updatePayloads.find((p) => Object.prototype.hasOwnProperty.call(p, 'name'));
+    assert.ok(mainUpdate, 'skill.update should run the main re-publish payload');
+    assert.equal(mainUpdate.description, 'original card summary');
+    assert.equal(skillRow.description, 'original card summary');
+});
+
+test('publishSkill re-publish without description backfills empty card from SKILL.md', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    const updatePayloads = [];
+    const skillRow = {
+        id: 56,
+        slug: 'empty-desc',
+        name: 'Empty Desc',
+        description: '',
+        version: '0.0.0',
+        category: '通用',
+        is_delete: 0,
+        update: async (data) => {
+            updatePayloads.push(data);
+            Object.assign(skillRow, data);
+        },
+    };
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => skillRow,
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => [
+                {
+                    file_path: 'SKILL.md',
+                    content: '# old\n',
+                    is_binary: 0,
+                },
+            ],
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill({ slug: 'empty-desc', displayName: 'Empty Desc' }, [
+        {
+            filepath: 'SKILL.md',
+            content: '---\nname: empty-desc\ndescription: filled from package\n---\n\n# new\n',
+        },
+    ]);
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, false);
+    const mainUpdate = updatePayloads.find((p) => Object.prototype.hasOwnProperty.call(p, 'name'));
+    assert.ok(mainUpdate);
+    assert.equal(mainUpdate.description, 'filled from package');
+    assert.equal(skillRow.description, 'filled from package');
+});
+
+test('publishSkill re-publish with description updates description', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    const updatePayloads = [];
+    const skillRow = {
+        id: 53,
+        slug: 'set-desc',
+        name: 'Set Desc',
+        description: 'old summary',
+        version: '0.0.0',
+        is_delete: 0,
+        update: async (data) => {
+            updatePayloads.push(data);
+            Object.assign(skillRow, data);
+        },
+    };
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => skillRow,
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => [
+                {
+                    file_path: 'SKILL.md',
+                    content: '# old\n',
+                    is_binary: 0,
+                },
+            ],
+            create: async () => ({}),
+            update: async () => ({}),
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill(
+        { slug: 'set-desc', displayName: 'Set Desc', description: '  new summary  ' },
+        [{ filepath: 'SKILL.md', content: '# new content\n' }]
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, false);
+    const mainUpdate = updatePayloads.find((p) => Object.prototype.hasOwnProperty.call(p, 'name'));
+    assert.ok(mainUpdate);
+    assert.equal(mainUpdate.description, 'new summary');
+    assert.equal(skillRow.description, 'new summary');
+});
+
+test('publishSkill same content backfills empty card from SKILL.md', async () => {
+    const service = Object.create(SkillsRegistryService.prototype);
+    let metaUpdate = null;
+    const skillMd = '---\nname: backfill\ndescription: card should fill\n---\n\n# Title\n';
+    const skillRow = {
+        id: 55,
+        slug: 'backfill-desc',
+        name: 'Backfill',
+        description: '',
+        version: '0.0.0',
+        is_delete: 0,
+        update: async (payload) => {
+            metaUpdate = payload;
+            Object.assign(skillRow, payload);
+        },
+    };
+    const files = [
+        {
+            file_path: 'SKILL.md',
+            content: skillMd,
+            is_binary: 0,
+        },
+    ];
+    service.app = createMockApp({
+        SkillsItem: {
+            findOne: async () => skillRow,
+        },
+        SkillsSource: {
+            findOrCreate: async () => [{ id: 1 }],
+        },
+        SkillsFile: {
+            findAll: async () => files,
+            create: async () => {
+                throw new Error('should not create on no-op');
+            },
+            update: async () => {
+                throw new Error('should not soft-delete on no-op');
+            },
+        },
+    });
+    service.ctx = createMockCtx();
+    service.ctx.logger = { warn: () => {}, info: () => {}, error: () => {} };
+
+    const result = await service.publishSkill({ slug: 'backfill-desc', displayName: 'Backfill' }, [
+        { filepath: 'SKILL.md', content: skillMd },
+    ]);
+
+    assert.equal(result.ok, true);
+    assert.equal(result.unchanged, true);
+    assert.deepEqual(metaUpdate, { description: 'card should fill' });
+    assert.equal(skillRow.description, 'card should fill');
+});
+
 test('publishSkill same content is unchanged no-op', async () => {
     const service = Object.create(SkillsRegistryService.prototype);
     const skillRow = {

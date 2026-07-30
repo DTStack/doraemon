@@ -1,7 +1,7 @@
 import { readdir, stat } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 
-import { sanitizeSlug, titleCase } from './slug.js';
+import { sanitizeSlug } from './slug.js';
 
 export type SkillFolder = {
     folder: string;
@@ -35,7 +35,8 @@ async function isSkillFolder(folder: string): Promise<SkillFolder | null> {
     const base = basename(folder);
     const slug = sanitizeSlug(base);
     if (!slug) return null;
-    const displayName = titleCase(base);
+    // Match single-skill publish: display name = folder basename, not Title Case.
+    const displayName = base;
     return { folder, slug, displayName };
 }
 

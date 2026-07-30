@@ -307,15 +307,12 @@
         }
     }
     .hero-description {
-        max-width: 760px;
         margin-bottom: 0;
         color: #566166;
         font-size: 14px;
         line-height: 24px;
-        display: -webkit-box;
-        overflow: hidden;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
+        // Use full hero-copy width; do not force early wrap with max-width / line-clamp.
+        word-break: break-word;
     }
     .hero-actions {
         display: flex;

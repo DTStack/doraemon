@@ -81,9 +81,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
     const agentTerminalCommand = isInstallable ? skillInstallCommand : downloadCommand;
     const heroSummary = useMemo(() => {
         const rawText = (detail?.description || '').replace(/\s+/g, ' ').trim();
-        if (!rawText) return '暂无描述';
-        const sentence = rawText.split(/(?<=[.!?。！？])/)[0]?.trim() || rawText;
-        return sentence;
+        return rawText || '暂无描述';
     }, [detail?.description]);
 
     const handleSelectFile = (nextPath: string) => {
