@@ -311,6 +311,10 @@ registerCommand(program, ['publish'])
     .option('--tags <tags>', 'Comma-separated tags', 'latest')
     .option('--all', 'Batch mode: upload all discovered skills without interactive selection')
     .option('--category <category>', 'Category (required on first publish in non-interactive mode)')
+    .option(
+        '--description <text>',
+        'Optional market card summary (create defaults from SKILL.md; re-publish keeps card unless set)'
+    )
     .option('--yes', 'Skip overwrite confirmation')
     .action(async (folder, options) => {
         const opts = await resolveGlobalOpts();
@@ -375,6 +379,10 @@ registerCommand(skill, ['skill', 'publish'])
     .option('--clawscan-note <text>', CLAWSCAN_NOTE_HELP)
     .option('--tags <tags>', 'Comma-separated tags', 'latest')
     .option('--category <category>', 'Category (required on first publish in non-interactive mode)')
+    .option(
+        '--description <text>',
+        'Optional market card summary (create defaults from SKILL.md; re-publish keeps card unless set)'
+    )
     .option('--yes', 'Skip overwrite confirmation')
     .action(async (folder, options) => {
         const opts = await resolveGlobalOpts();

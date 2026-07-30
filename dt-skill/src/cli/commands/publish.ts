@@ -16,7 +16,7 @@ import { searchMultiselect } from '../prompts/search-multiselect.js';
 import { getRegistry } from '../registry.js';
 import { findSkillFolders } from '../scanSkills.js';
 import { SKILL_CATEGORY_OPTIONS, SKILL_CATEGORY_SET } from '../skillCategories.js';
-import { sanitizeSlug, titleCase } from '../slug.js';
+import { sanitizeSlug } from '../slug.js';
 import type { GlobalOpts } from '../types.js';
 import {
     createSpinner,
@@ -64,6 +64,11 @@ export async function cmdPublish(
         migrateOwner?: boolean;
         all?: boolean;
         category?: string;
+        /**
+         * Optional market card summary.
+         * Omit: create uses SKILL.md; re-publish keeps existing card (empty → SKILL.md backfill).
+         */
+        description?: string;
         yes?: boolean;
     }
 ) {
@@ -91,8 +96,12 @@ export async function cmdPublish(
     const registry = await getRegistry(opts, { cache: true });
     const contributor = resolveContributorForPublish();
 
-    const slug = options.slug ?? sanitizeSlug(basename(folder));
-    const displayName = options.name ?? titleCase(basename(folder));
+    // Requested identity from folder / --slug. May be rewritten to remote slug if registry
+    // already has this skill under another primary key (installKey alias / legacy upload-*).
+    const requestedSlug = options.slug ?? sanitizeSlug(basename(folder));
+    let slug = requestedSlug;
+    // Display name follows folder name as-is (no Title Case / 大驼峰转换).
+    const displayName = options.name?.trim() || basename(folder);
     const ownerHandle = options.owner?.trim().replace(/^@+/, '');
     // Version is optional for authors; default is a compatibility placeholder. Change detection uses content hash.
     const version = options.version?.trim() || DEFAULT_PUBLISH_VERSION;
@@ -116,20 +125,33 @@ export async function cmdPublish(
     if (!slug) fail('--slug required');
     if (!displayName) fail('--name required');
 
+    // Optional market override. Omit → server fills from SKILL.md on create / empty card only.
+    const descriptionOption = options.description;
+    const hasDescription = typeof descriptionOption === 'string';
+    const description = hasDescription ? descriptionOption.trim() : undefined;
+
     // Detect whether slug already exists on registry (first publish needs category).
+    // GET resolves installKey aliases — if remote slug differs, keep it (do not create a second skill).
     let existingCategory: string | null = null;
     let existingFingerprint: string | null = null;
     let skillExists = false;
     try {
         const existing = await apiRequest(
             registry,
-            { method: 'GET', path: `${ApiRoutes.skills}/${encodeURIComponent(slug)}` },
+            { method: 'GET', path: `${ApiRoutes.skills}/${encodeURIComponent(requestedSlug)}` },
             ApiV1SkillResponseSchema
         );
         skillExists = Boolean(existing?.skill);
         if (existing?.skill?.category) existingCategory = String(existing.skill.category);
         // Canonical: skill.fingerprint only (single-slot current content)
         existingFingerprint = existing?.skill?.fingerprint ?? null;
+        const remoteSlug = String(existing?.skill?.slug || '').trim();
+        if (skillExists && remoteSlug && remoteSlug !== requestedSlug) {
+            console.log(
+                `Remote skill already exists as "${remoteSlug}" (matched "${requestedSlug}"); keeping remote slug on overwrite.`
+            );
+            slug = remoteSlug;
+        }
     } catch {
         skillExists = false;
     }
@@ -185,6 +207,9 @@ export async function cmdPublish(
             spinner.start(`Publishing ${slug}`);
         }
 
+        // Explicit paths: multipart filename often strips directories (agents/foo → foo).
+        const filePaths = filesOnDisk.map((file) => file.relPath);
+
         const form = new FormData();
         form.set(
             'payload',
@@ -201,6 +226,8 @@ export async function cmdPublish(
                 ...(category ? { category } : {}),
                 ...(forkOf ? { forkOf } : {}),
                 ...(contributor ? { contributor } : {}),
+                ...(hasDescription ? { description: description ?? '' } : {}),
+                filePaths,
             })
         );
 
@@ -211,7 +238,8 @@ export async function cmdPublish(
             const blob = new Blob([Buffer.from(file.bytes)], {
                 type: file.contentType ?? 'text/plain',
             });
-            form.append('files', blob, file.relPath);
+            // Keep basename in multipart filename; real path is in payload.filePaths[i].
+            form.append('files', blob, basename(file.relPath));
         }
 
         spinner.text = `Publishing ${slug}`;
