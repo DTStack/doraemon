@@ -8,6 +8,7 @@ export interface SkillItem {
     tags: string[];
     allowedTools: string[];
     stars: number;
+    downloads: number;
     updatedAt: string;
     sourceRepo: string;
     sourcePath: string;

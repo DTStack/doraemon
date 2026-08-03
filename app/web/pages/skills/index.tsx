@@ -105,6 +105,9 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
     const updateQueryAndFetch = (patch: Partial<typeof query>) => {
         const next = { ...queryRef.current, ...patch };
         setQuery(next);
+        if (Object.prototype.hasOwnProperty.call(patch, 'keyword')) {
+            setKeywordInput(String(patch.keyword ?? ''));
+        }
         setSelectedSlugs(new Set());
         fetchSkills(next);
     };
@@ -351,6 +354,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                         onChange={(value) => updateQueryAndFetch({ sortBy: value, pageNum: 1 })}
                     >
                         <Option value="stars">按 Stars 排序</Option>
+                        <Option value="downloads">按下载量排序</Option>
                         <Option value="recent">按最近更新</Option>
                     </Select>
                     <Select

@@ -67,7 +67,7 @@ class SkillsRegistryService extends Service {
             newest: { key: 'newest', field: 'updated_at', type: 'date' },
             createdAt: { key: 'newest', field: 'updated_at', type: 'date' },
             updated: { key: 'newest', field: 'updated_at', type: 'date' },
-            downloads: { key: 'stars', field: 'stars', type: 'number' },
+            downloads: { key: 'downloads', field: 'downloads', type: 'number' },
             stars: { key: 'stars', field: 'stars', type: 'number' },
         };
         const sortConfig = sortMap[sort] || sortMap.newest;
@@ -107,7 +107,10 @@ class SkillsRegistryService extends Service {
         return {
             items: items.map((skill) => {
                 const tags = this.parseJsonArray(skill.tags);
-                const stats = { stars: skill.stars || 0, downloads: 0 };
+                const stats = {
+                    stars: skill.stars || 0,
+                    downloads: Number(skill.downloads) || 0,
+                };
                 const item = {
                     slug: skill.slug,
                     displayName: skill.name,
@@ -161,7 +164,10 @@ class SkillsRegistryService extends Service {
 
         const version = skill.version || '';
         const tags = this.parseJsonArray(skill.tags);
-        const stats = { stars: skill.stars || 0, downloads: 0 };
+        const stats = {
+            stars: skill.stars || 0,
+            downloads: Number(skill.downloads) || 0,
+        };
         const createdAt = skill.created_at ? new Date(skill.created_at).getTime() : 0;
         const updatedAt = skill.updated_at ? new Date(skill.updated_at).getTime() : 0;
         let fingerprint = null;
@@ -210,12 +216,19 @@ class SkillsRegistryService extends Service {
                 summary: child.description || null,
                 version: child.version || null,
                 tags: this.parseJsonArray(child.tags),
-                stats: { stars: child.stars || 0, downloads: 0 },
+                stats: {
+                    stars: child.stars || 0,
+                    downloads: Number(child.downloads) || 0,
+                },
                 createdAt: child.created_at ? new Date(child.created_at).getTime() : 0,
                 updatedAt: child.updated_at ? new Date(child.updated_at).getTime() : 0,
                 isPackage: false,
                 parentSlug: child.parent_slug,
             }));
+            detail.skill.stats.downloads = detail.skill.children.reduce(
+                (sum, child) => sum + (Number(child.stats.downloads) || 0),
+                0
+            );
         }
 
         return detail;
@@ -359,9 +372,14 @@ class SkillsRegistryService extends Service {
         }
 
         const version = skill.version || 'latest';
+        const content = zip.toBuffer();
+        // Count successful zip delivery (CLI install uses this endpoint).
+        if (this.ctx.service?.skills?.incrementDownloads) {
+            await this.ctx.service.skills.incrementDownloads(skill.slug);
+        }
         return {
             fileName: `${slug}-${version}.zip`,
-            content: zip.toBuffer(),
+            content,
         };
     }
 

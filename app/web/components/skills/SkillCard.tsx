@@ -1,6 +1,12 @@
 import React from 'react';
-import { FileTextOutlined, FolderOutlined, StarOutlined } from '@ant-design/icons';
+import {
+    DownloadOutlined,
+    FileTextOutlined,
+    FolderOutlined,
+    StarOutlined,
+} from '@ant-design/icons';
 import { Card, Checkbox, Tag } from 'antd';
+import moment from 'moment';
 
 import type { SkillItem } from '@/pages/skills/types';
 import './style.scss';
@@ -64,8 +70,11 @@ export const SkillCard: React.FC<SkillCardProps> = ({
                                     技能包
                                 </Tag>
                             )}
-                            <span className="stars-badge">
+                            <span className="stars-badge" title="Stars">
                                 <StarOutlined /> {skill.stars || 0}
+                            </span>
+                            <span className="downloads-badge" title="下载量">
+                                <DownloadOutlined /> {skill.downloads || 0}
                             </span>
                             {onEdit && (
                                 <button
@@ -126,7 +135,7 @@ export const SkillCard: React.FC<SkillCardProps> = ({
                         <span className="meta-label">更新</span>
                         <span className="meta-value">
                             {skill.updatedAt
-                                ? new Date(skill.updatedAt).toLocaleDateString('zh-CN')
+                                ? moment(skill.updatedAt).format('YYYY-MM-DD HH:mm:ss')
                                 : '-'}
                         </span>
                     </span>

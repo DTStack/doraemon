@@ -118,6 +118,7 @@ class SkillsService extends Service {
             await this.ensureSkillsItemVersionColumn();
             await this.ensureSkillsItemPackageColumns();
             await this.ensureSkillsItemContributorColumn();
+            await this.ensureSkillsItemDownloadsColumn();
             this.storageReady = true;
         })();
 
@@ -173,6 +174,56 @@ class SkillsService extends Service {
         });
     }
 
+    async ensureSkillsItemDownloadsColumn() {
+        const queryInterface = this.app.model.getQueryInterface();
+        const table = await queryInterface.describeTable('skills_items');
+        if (!table.downloads) {
+            await queryInterface.addColumn('skills_items', 'downloads', {
+                type: this.app.Sequelize.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+                comment: 'zip 成功下发次数（Web 下载 + CLI install）',
+            });
+        }
+
+        // Index is not declared on the model: sync would try ADD INDEX before the
+        // column exists on upgraded DBs. Create it here once the column is present.
+        try {
+            await queryInterface.addIndex('skills_items', ['downloads'], {
+                name: 'idx_skills_downloads',
+            });
+        } catch (error) {
+            const msg = String(error.message || '');
+            if (!/Duplicate|already exists|ER_DUP_KEYNAME/i.test(msg)) {
+                throw error;
+            }
+        }
+    }
+
+    /**
+     * Count one successful zip delivery for a skill slug.
+     * Failures are logged only — download response must not depend on this.
+     */
+    async incrementDownloads(slug) {
+        const value = String(slug || '').trim();
+        if (!value) return;
+
+        try {
+            await this.ensureStorageReady();
+            const { SkillsItem } = this.app.model;
+            await SkillsItem.increment('downloads', {
+                by: 1,
+                where: { slug: value, is_delete: 0 },
+                // Do not bump updated_at — downloads must not reorder "recent" sort.
+                silent: true,
+            });
+        } catch (error) {
+            this.ctx.logger.warn(
+                `[skills] increment downloads failed for ${value}: ${error.message}`
+            );
+        }
+    }
+
     parseJsonArray(value) {
         if (!value) return [];
         if (Array.isArray(value)) return value;
@@ -197,6 +248,7 @@ class SkillsService extends Service {
             tags: skill.tags,
             allowedTools: skill.allowedTools,
             stars: skill.stars,
+            downloads: skill.downloads,
             updatedAt: skill.updatedAt,
             sourceRepo: skill.sourceRepo,
             sourcePath: skill.sourcePath,
@@ -220,6 +272,7 @@ class SkillsService extends Service {
             tags: this.parseJsonArray(row.tags),
             allowedTools: this.parseJsonArray(row.allowed_tools),
             stars: Number(row.stars) || 0,
+            downloads: Number(row.downloads) || 0,
             updatedAt: (
                 row.updated_at ||
                 row.updated_at_remote ||
@@ -279,22 +332,33 @@ class SkillsService extends Service {
         const safePageSize = Math.max(parseInt(pageSize, 10) || 20, 1);
         const { skills, categories } = this.skillCache;
 
-        // Aggregate child stars by parent slug for package star totals
+        // Aggregate child stars/downloads by parent for package list totals
         const childStarsByParent = new Map();
+        const childDownloadsByParent = new Map();
         for (const item of skills) {
             if (item.parentSlug) {
-                const current = childStarsByParent.get(item.parentSlug) || 0;
-                childStarsByParent.set(item.parentSlug, current + (Number(item.stars) || 0));
+                const starsCurrent = childStarsByParent.get(item.parentSlug) || 0;
+                childStarsByParent.set(item.parentSlug, starsCurrent + (Number(item.stars) || 0));
+                const downloadsCurrent = childDownloadsByParent.get(item.parentSlug) || 0;
+                childDownloadsByParent.set(
+                    item.parentSlug,
+                    downloadsCurrent + (Number(item.downloads) || 0)
+                );
             }
         }
 
         let list = [...skills]
             .filter((item) => !item.parentSlug)
             .map((item) => {
-                if (item.isPackage === 1 && childStarsByParent.has(item.slug)) {
-                    return { ...item, stars: childStarsByParent.get(item.slug) };
+                if (item.isPackage !== 1) return item;
+                const next = { ...item };
+                if (childStarsByParent.has(item.slug)) {
+                    next.stars = childStarsByParent.get(item.slug);
                 }
-                return item;
+                if (childDownloadsByParent.has(item.slug)) {
+                    next.downloads = childDownloadsByParent.get(item.slug);
+                }
+                return next;
             });
         if (keyword) {
             const value = String(keyword).toLowerCase();
@@ -314,6 +378,10 @@ class SkillsService extends Service {
 
         list.sort((a, b) => {
             if (sortBy === 'recent') {
+                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            }
+            if (sortBy === 'downloads') {
+                if (b.downloads !== a.downloads) return b.downloads - a.downloads;
                 return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
             }
             if (b.stars !== a.stars) return b.stars - a.stars;
@@ -395,6 +463,10 @@ class SkillsService extends Service {
             detail.children = children.map((row) => this.toPublicSkill(this.toSkillDto(row)));
             detail.stars = detail.children.reduce(
                 (sum, child) => sum + (Number(child.stars) || 0),
+                0
+            );
+            detail.downloads = detail.children.reduce(
+                (sum, child) => sum + (Number(child.downloads) || 0),
                 0
             );
         }
@@ -487,7 +559,10 @@ class SkillsService extends Service {
             });
         }
 
+        // Pure zip build — do not count here. getInstallMeta also builds zip for sha256;
+        // counting belongs only on the real download HTTP handler.
         return {
+            slug: skill.slug,
             fileName: `${rootFolder}.zip`,
             content: zip.toBuffer(),
         };
