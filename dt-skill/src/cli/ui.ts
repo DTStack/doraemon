@@ -177,10 +177,12 @@ function byLabel(a: AgentType, b: AgentType): number {
 }
 
 /** Project vs Global scope selection. Returns true=global, false=project, null=cancelled. */
-export async function selectScope(): Promise<boolean | null> {
+export async function selectScope(
+    message = 'Installation scope'
+): Promise<boolean | null> {
     if (!isInteractive()) return null;
     const scope = await select({
-        message: 'Installation scope',
+        message,
         options: [
             {
                 value: false,
@@ -196,6 +198,35 @@ export async function selectScope(): Promise<boolean | null> {
     });
     if (isCancel(scope)) return null;
     return scope as boolean;
+}
+
+/** Update scope (vercel-aligned). Returns null if cancelled. */
+export type UpdateScopeChoice = 'project' | 'global' | 'both';
+
+export async function selectUpdateScope(): Promise<UpdateScopeChoice | null> {
+    if (!isInteractive()) return null;
+    const scope = await select({
+        message: 'Update scope',
+        options: [
+            {
+                value: 'project' as const,
+                label: 'Project',
+                hint: 'Update skills in current directory',
+            },
+            {
+                value: 'global' as const,
+                label: 'Global',
+                hint: 'Update skills in home directory',
+            },
+            {
+                value: 'both' as const,
+                label: 'Both',
+                hint: 'Update all skills',
+            },
+        ],
+    });
+    if (isCancel(scope)) return null;
+    return scope as UpdateScopeChoice;
 }
 
 /** Skill market category selection (first publish). Returns null=cancelled. */

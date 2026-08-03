@@ -46,12 +46,15 @@ const mockIsInteractive = vi.fn(() => false);
 const mockPromptConfirm = vi.fn(async () => false);
 vi.mock('../../http.js', () => httpMocks.moduleFactory());
 vi.mock('../registry.js', () => registryMocks.moduleFactory());
+const mockSelectUpdateScope = vi.fn(async () => 'project' as const);
 vi.mock('../ui.js', () => ({
     createSpinner: vi.fn(() => mockSpinner),
     fail: (message: string) => uiMocks.fail(message),
     formatError: (error: unknown) => (error instanceof Error ? error.message : String(error)),
     isInteractive: mockIsInteractive,
     promptConfirm: mockPromptConfirm,
+    selectScope: vi.fn(async () => false),
+    selectUpdateScope: (...args: unknown[]) => mockSelectUpdateScope(...args),
 }));
 
 const extractZipToDirMock = vi.spyOn(skillStore, 'extractZipToDir');
@@ -79,6 +82,7 @@ const {
     cmdUpdate,
     formatExploreLine,
 } = await import('./skills.js');
+const { resolveUpdateScope, hasProjectSkills } = await import('./update.js');
 const { extractZipToDir, hashSkillFiles, listTextFiles, readSkillOrigin, writeSkillOrigin } =
     skillStore;
 const { readLockfile, writeLockfile } = lockStore;
@@ -103,6 +107,8 @@ beforeEach(() => {
     readSkillOriginMock.mockResolvedValue(null);
     writeLockfileMock.mockResolvedValue(undefined);
     writeSkillOriginMock.mockResolvedValue(undefined);
+    mockIsInteractive.mockReturnValue(false);
+    mockSelectUpdateScope.mockResolvedValue('project');
 });
 
 afterEach(() => {
@@ -275,7 +281,92 @@ describe('cmdSearch', () => {
     });
 });
 
+describe('resolveUpdateScope (vercel-aligned)', () => {
+    it('named skill without flags resolves to both', async () => {
+        const scope = await resolveUpdateScope(
+            {},
+            { inputAllowed: true, projectWorkdir: '/work/.agents', hasSkillNames: true }
+        );
+        expect(scope).toBe('both');
+        expect(mockSelectUpdateScope).not.toHaveBeenCalled();
+    });
+
+    it('-g only resolves to global', async () => {
+        const scope = await resolveUpdateScope(
+            { global: true },
+            { inputAllowed: true, projectWorkdir: '/work/.agents', hasSkillNames: false }
+        );
+        expect(scope).toBe('global');
+    });
+
+    it('-p only resolves to project', async () => {
+        const scope = await resolveUpdateScope(
+            { project: true },
+            { inputAllowed: true, projectWorkdir: '/work/.agents', hasSkillNames: false }
+        );
+        expect(scope).toBe('project');
+    });
+
+    it('-g and -p resolve to both', async () => {
+        const scope = await resolveUpdateScope(
+            { global: true, project: true },
+            { inputAllowed: false, projectWorkdir: '/work/.agents', hasSkillNames: false }
+        );
+        expect(scope).toBe('both');
+    });
+
+    it('non-interactive uses hasProjectSkills (no lock → global)', async () => {
+        vi.mocked(stat).mockRejectedValue(new Error('missing'));
+        const scope = await resolveUpdateScope(
+            { yes: true },
+            { inputAllowed: true, projectWorkdir: '/work/.agents', hasSkillNames: false }
+        );
+        expect(scope).toBe('global');
+    });
+
+    it('non-interactive with lock file → project', async () => {
+        vi.mocked(stat).mockImplementation(async (path: string) => {
+            if (String(path).includes('lock.json')) {
+                return {} as Awaited<ReturnType<typeof stat>>;
+            }
+            throw new Error('missing');
+        });
+        const scope = await resolveUpdateScope(
+            { yes: true },
+            { inputAllowed: true, projectWorkdir: '/work/.agents', hasSkillNames: false }
+        );
+        expect(scope).toBe('project');
+    });
+
+    it('interactive bare update calls selectUpdateScope', async () => {
+        mockIsInteractive.mockReturnValue(true);
+        mockSelectUpdateScope.mockResolvedValueOnce('both');
+        const scope = await resolveUpdateScope(
+            {},
+            { inputAllowed: true, projectWorkdir: '/work/.agents', hasSkillNames: false }
+        );
+        expect(scope).toBe('both');
+        expect(mockSelectUpdateScope).toHaveBeenCalled();
+        mockIsInteractive.mockReturnValue(false);
+    });
+});
+
+describe('hasProjectSkills', () => {
+    it('is true when lock.json exists', async () => {
+        vi.mocked(stat).mockImplementation(async (path: string) => {
+            if (String(path).endsWith('lock.json')) {
+                return {} as Awaited<ReturnType<typeof stat>>;
+            }
+            throw new Error('missing');
+        });
+        await expect(hasProjectSkills('/work/.agents')).resolves.toBe(true);
+    });
+});
+
 describe('cmdUpdate', () => {
+    /** Force project scope so tests use makeOpts().workdir without interactive prompt. */
+    const projectYes = { project: true as const, yes: true as const };
+
     it('fails when directly updating a pinned skill', async () => {
         vi.mocked(readLockfile).mockResolvedValue({
             version: 1,
@@ -284,9 +375,9 @@ describe('cmdUpdate', () => {
             },
         });
 
-        await expect(cmdUpdate(makeOpts(), 'demo', { force: true }, false)).rejects.toThrow(
-            /is pinned/i
-        );
+        await expect(
+            cmdUpdate(makeOpts(), 'demo', { force: true, ...projectYes }, false)
+        ).rejects.toThrow(/is pinned/i);
 
         expect(mockApiRequest).not.toHaveBeenCalled();
         expect(mockDownloadZip).not.toHaveBeenCalled();
@@ -303,7 +394,7 @@ describe('cmdUpdate', () => {
         vi.mocked(listTextFiles).mockResolvedValue([]);
         vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
 
-        await expect(cmdUpdate(makeOpts(), 'demo', { force: true }, false)).rejects.toThrow(
+        await expect(cmdUpdate(makeOpts(), 'demo', { force: true, ...projectYes }, false)).rejects.toThrow(
             /Failed to update 1 skill|download failed/
         );
 
@@ -326,7 +417,7 @@ describe('cmdUpdate', () => {
         vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
         vi.mocked(extractZipToDir).mockRejectedValue(new Error('extract failed'));
 
-        await expect(cmdUpdate(makeOpts(), 'demo', { force: true }, false)).rejects.toThrow(
+        await expect(cmdUpdate(makeOpts(), 'demo', { force: true, ...projectYes }, false)).rejects.toThrow(
             /Failed to update 1 skill|extract failed/
         );
 
@@ -359,7 +450,7 @@ describe('cmdUpdate', () => {
         vi.mocked(stat).mockRejectedValue(new Error('missing'));
         vi.mocked(rm).mockResolvedValue();
 
-        await cmdUpdate(makeOpts(), undefined, { all: true }, false);
+        await cmdUpdate(makeOpts(), undefined, { all: true, ...projectYes }, false);
 
         expect(mockApiRequest).toHaveBeenCalledTimes(1);
         const [, args] = mockApiRequest.mock.calls[0] ?? [];
@@ -402,7 +493,7 @@ describe('cmdUpdate', () => {
         vi.mocked(rm).mockResolvedValue();
 
         // bare update (no slug, no --all)
-        await cmdUpdate(makeOpts(), undefined, {}, false);
+        await cmdUpdate(makeOpts(), undefined, { ...projectYes }, false);
 
         expect(mockApiRequest).toHaveBeenCalledTimes(1);
         const [, args] = mockApiRequest.mock.calls[0] ?? [];
@@ -440,7 +531,7 @@ describe('cmdUpdate', () => {
         vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: sharedFp, files: [] });
         vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>);
 
-        await cmdUpdate(makeOpts(), 'demo', {}, false);
+        await cmdUpdate(makeOpts(), 'demo', { ...projectYes }, false);
 
         expect(mockDownloadZip).not.toHaveBeenCalled();
         expect(writeLockfile).not.toHaveBeenCalled();
@@ -481,7 +572,7 @@ describe('cmdUpdate', () => {
         vi.mocked(stat).mockRejectedValue(new Error('missing'));
         vi.mocked(rm).mockResolvedValue();
 
-        await expect(cmdUpdate(makeOpts(), undefined, { all: true }, false)).rejects.toThrow(
+        await expect(cmdUpdate(makeOpts(), undefined, { all: true, ...projectYes }, false)).rejects.toThrow(
             /Failed to update 1 skill/
         );
 
@@ -509,7 +600,7 @@ describe('cmdUpdate', () => {
         vi.mocked(stat).mockRejectedValue(new Error('missing'));
         vi.mocked(rm).mockResolvedValue();
 
-        await cmdUpdate(makeOpts(), 'demo', {}, false);
+        await cmdUpdate(makeOpts(), 'demo', { ...projectYes }, false);
 
         const [, args] = mockApiRequest.mock.calls[0] ?? [];
         expect(args?.path).toBe(`${ApiRoutes.skills}/${encodeURIComponent('demo')}`);
@@ -547,7 +638,7 @@ describe('cmdUpdate', () => {
         vi.mocked(stat).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof stat>>);
         vi.mocked(rm).mockResolvedValue();
 
-        await cmdUpdate(makeOpts(), 'demo', {}, false);
+        await cmdUpdate(makeOpts(), 'demo', { ...projectYes }, false);
 
         expect(mockApiRequest).toHaveBeenCalledTimes(1);
         expect(mockDownloadZip).toHaveBeenCalledWith(
