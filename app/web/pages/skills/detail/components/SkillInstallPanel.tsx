@@ -40,23 +40,6 @@ interface SkillInstallPanelProps {
     contributor?: string;
 }
 
-const renderInlineCommand = (command: string, copyMessage: string, compact = false) => (
-    <div className={`command-surface is-light ${compact ? 'is-compact' : ''}`.trim()}>
-        <div className="command-surface-inline">
-            <div className="command-inline-code-wrap">
-                <code>{command || '暂无可复制命令'}</code>
-            </div>
-            <Button
-                type="text"
-                className="command-copy-btn is-inline-copy"
-                icon={<DetailIcon src={copyDarkIcon} className="is-copy-dark" />}
-                onClick={() => copyToClipboard(command, copyMessage)}
-                disabled={!command}
-            />
-        </div>
-    </div>
-);
-
 const renderTerminalCommand = (command: string, copyMessage: string) => (
     <div className="command-surface is-dark is-terminal">
         <div className="terminal-head">
