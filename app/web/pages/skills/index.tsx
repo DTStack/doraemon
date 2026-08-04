@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import debounce from 'lodash/debounce';
 import {
     CopyOutlined,
     DeleteOutlined,
@@ -25,6 +24,7 @@ import {
     Typography,
     Upload,
 } from 'antd';
+import debounce from 'lodash/debounce';
 
 import { API } from '@/api';
 import { SkillCard } from '@/components/skills/SkillCard';

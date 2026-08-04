@@ -64,7 +64,12 @@
         align-items: center;
         justify-content: center;
         flex: 0 0 auto;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.12) 100%);
+        background:
+            linear-gradient(
+                135deg,
+                rgba(59, 130, 246, 0.08) 0%,
+                rgba(99, 102, 241, 0.12) 100%
+            );
         border: 1px solid rgba(219, 234, 254, 0.5);
         .is-package-icon {
             color: #EC4899;
