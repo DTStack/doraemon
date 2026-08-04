@@ -1,0 +1,36 @@
+app/web/pages/skills/style.scss
+  s_e842f02b55c70f::t_35c2f1daaa396e 8,18,26,100,102,106,118,121
+app/web/components/skills/style.scss
+  s_e842f02b55c70f::t_35c2f1daaa396e 5,10,14,16,28,30,67-71,74,78,98,120,140,148-149,155,168-170,178-180,193,197,214,216,230,234
+app/web/pages/skills/detail/stitchAssets.scss
+  s_e842f02b55c70f::t_35c2f1daaa396e 6-7,15,23,27-31,47,49
+app/web/pages/skills/index.tsx
+  s_e842f02b55c70f::t_9ee1bce377105b 27
+app/web/pages/skills/detail/summaryModal.scss
+  s_e842f02b55c70f::t_35c2f1daaa396e 17,19,27,31,33,43,49,68-70,87,95,102,104,124-125,128-129,138,144,151,162-164,179,191,197,210-212,215-217,227,229,237,241,253,257,273,275-276,280-282,285-286
+app/web/pages/skills/detail/style.scss
+  s_e842f02b55c70f::t_35c2f1daaa396e 1,7,9,124,163,183,214,220-221,241-242,246-248,255,267,291,301,331,336,343,345,355-356,360,376-378,381,391-392,397,402-403,406,412,429,441,448,472,485,492,514,519,529,538-539,545,556,563,584,586,589,600,608,630,634,641,684-686,694-696,699-701,733,736-737,812,829,837,879,882,889,896,945,957,980-984,988-992,996-1000,1011,1018,1025,1035,1038,1116,1120,1122,1139,1146
+app/web/pages/skills/detail/utils/skillDetailUtils.ts
+  s_e842f02b55c70f::t_03ba2699f64b1d 156-158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "057d89dfaa980afb2f6c278e78dcf7b55984daed",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_e842f02b55c70f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c0cf2edb-afd4-4ee8-8934-848ccaf0632e",
+        "model": "mimo-v2.5-pro"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
