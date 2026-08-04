@@ -4,6 +4,7 @@ const fs = require('fs');
 const ignore = require('ignore');
 const path = require('path');
 const skillUtils = require('../utils/skill-utils');
+const { coerceCount, sumCounts } = require('../utils/skill-stats');
 const skillFingerprint = require('../../contracts/skill-fingerprint');
 const {
     SKILL_CATEGORY_OPTIONS,
@@ -108,8 +109,8 @@ class SkillsRegistryService extends Service {
             items: items.map((skill) => {
                 const tags = this.parseJsonArray(skill.tags);
                 const stats = {
-                    stars: skill.stars || 0,
-                    downloads: Number(skill.downloads) || 0,
+                    stars: coerceCount(skill.stars),
+                    downloads: coerceCount(skill.downloads),
                 };
                 const item = {
                     slug: skill.slug,
@@ -165,8 +166,8 @@ class SkillsRegistryService extends Service {
         const version = skill.version || '';
         const tags = this.parseJsonArray(skill.tags);
         const stats = {
-            stars: skill.stars || 0,
-            downloads: Number(skill.downloads) || 0,
+            stars: coerceCount(skill.stars),
+            downloads: coerceCount(skill.downloads),
         };
         const createdAt = skill.created_at ? new Date(skill.created_at).getTime() : 0;
         const updatedAt = skill.updated_at ? new Date(skill.updated_at).getTime() : 0;
@@ -217,18 +218,19 @@ class SkillsRegistryService extends Service {
                 version: child.version || null,
                 tags: this.parseJsonArray(child.tags),
                 stats: {
-                    stars: child.stars || 0,
-                    downloads: Number(child.downloads) || 0,
+                    stars: coerceCount(child.stars),
+                    downloads: coerceCount(child.downloads),
                 },
                 createdAt: child.created_at ? new Date(child.created_at).getTime() : 0,
                 updatedAt: child.updated_at ? new Date(child.updated_at).getTime() : 0,
                 isPackage: false,
                 parentSlug: child.parent_slug,
             }));
-            detail.skill.stats.downloads = detail.skill.children.reduce(
-                (sum, child) => sum + (Number(child.stats.downloads) || 0),
-                0
+            detail.skill.stats.downloads = sumCounts(
+                detail.skill.children,
+                (child) => child.stats.downloads
             );
+            detail.skill.stats.stars = sumCounts(detail.skill.children, (child) => child.stats.stars);
         }
 
         return detail;

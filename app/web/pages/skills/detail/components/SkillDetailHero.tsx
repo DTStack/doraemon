@@ -37,7 +37,7 @@ export const SkillDetailHero: React.FC<SkillDetailHeroProps> = ({
         },
         {
             label: '下载',
-            value: String(detail.downloads || 0),
+            value: String(detail.downloads ?? 0),
         },
         {
             label: '最近更新',

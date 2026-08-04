@@ -10,6 +10,12 @@ const {
     createUniqueSkillNames,
 } = require('../utils/skill-install-key');
 const { normalizeRelativePath: normalizeRelativeFilePath } = require('../utils/skill-utils');
+const {
+    coerceCount,
+    sumCounts,
+    aggregateCountsByParent,
+    isDuplicateIndexError,
+} = require('../utils/skill-stats');
 const GitHubStarsClient = require('../utils/github-stars');
 const CommandRunner = require('../utils/command-runner');
 
@@ -186,17 +192,14 @@ class SkillsService extends Service {
             });
         }
 
-        // Index is not declared on the model: sync would try ADD INDEX before the
-        // column exists on upgraded DBs. Create it here once the column is present.
+        // Index is not on the model: sync would ADD INDEX before the column exists
+        // on upgraded DBs. Create once the column is present; ignore duplicate index.
         try {
             await queryInterface.addIndex('skills_items', ['downloads'], {
                 name: 'idx_skills_downloads',
             });
         } catch (error) {
-            const msg = String(error.message || '');
-            if (!/Duplicate|already exists|ER_DUP_KEYNAME/i.test(msg)) {
-                throw error;
-            }
+            if (!isDuplicateIndexError(error)) throw error;
         }
     }
 
@@ -271,8 +274,8 @@ class SkillsService extends Service {
             version: row.version || '',
             tags: this.parseJsonArray(row.tags),
             allowedTools: this.parseJsonArray(row.allowed_tools),
-            stars: Number(row.stars) || 0,
-            downloads: Number(row.downloads) || 0,
+            stars: coerceCount(row.stars),
+            downloads: coerceCount(row.downloads),
             updatedAt: (
                 row.updated_at ||
                 row.updated_at_remote ||
@@ -332,20 +335,11 @@ class SkillsService extends Service {
         const safePageSize = Math.max(parseInt(pageSize, 10) || 20, 1);
         const { skills, categories } = this.skillCache;
 
-        // Aggregate child stars/downloads by parent for package list totals
-        const childStarsByParent = new Map();
-        const childDownloadsByParent = new Map();
-        for (const item of skills) {
-            if (item.parentSlug) {
-                const starsCurrent = childStarsByParent.get(item.parentSlug) || 0;
-                childStarsByParent.set(item.parentSlug, starsCurrent + (Number(item.stars) || 0));
-                const downloadsCurrent = childDownloadsByParent.get(item.parentSlug) || 0;
-                childDownloadsByParent.set(
-                    item.parentSlug,
-                    downloadsCurrent + (Number(item.downloads) || 0)
-                );
-            }
-        }
+        const { stars: childStarsByParent, downloads: childDownloadsByParent } =
+            aggregateCountsByParent(skills, {
+                parentKey: 'parentSlug',
+                fields: ['stars', 'downloads'],
+            });
 
         let list = [...skills]
             .filter((item) => !item.parentSlug)
@@ -461,14 +455,8 @@ class SkillsService extends Service {
                 ],
             });
             detail.children = children.map((row) => this.toPublicSkill(this.toSkillDto(row)));
-            detail.stars = detail.children.reduce(
-                (sum, child) => sum + (Number(child.stars) || 0),
-                0
-            );
-            detail.downloads = detail.children.reduce(
-                (sum, child) => sum + (Number(child.downloads) || 0),
-                0
-            );
+            detail.stars = sumCounts(detail.children, (child) => child.stars);
+            detail.downloads = sumCounts(detail.children, (child) => child.downloads);
         }
 
         return detail;

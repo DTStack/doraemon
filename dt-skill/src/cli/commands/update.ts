@@ -211,11 +211,9 @@ export async function cmdUpdate(
     }
 
     if (skippedPinned.length > 0 && updated.length === 0 && alreadyCurrent.length === 0 && !slug) {
-        // only pins in scope(s)
         console.log(
             `Skipped ${skippedPinned.length} pinned skill(s): ${skippedPinned.join(', ')}`
         );
-        // still print summary below
     }
 
     console.log('');
@@ -268,7 +266,6 @@ async function updateSkillsInOneScope(args: {
         fail(`skill "${slug}" is pinned; run \`dt-skill unpin ${slug}\` first`);
     }
 
-    // Named skill absent from this scope → no-op for this scope
     if (slug) {
         const onDisk = await fileExists(join(installDir, slug));
         if (!lock.skills[slug] && !onDisk) {

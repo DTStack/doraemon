@@ -204,7 +204,7 @@ const SkillSummaryModalContent: React.FC<SkillSummaryModalContentProps> = ({ slu
         },
         {
             label: '下载',
-            value: String(detail.downloads || 0),
+            value: String(detail.downloads ?? 0),
         },
         {
             label: '最近更新',

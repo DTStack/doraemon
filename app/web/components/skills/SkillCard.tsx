@@ -71,10 +71,10 @@ export const SkillCard: React.FC<SkillCardProps> = ({
                                 </Tag>
                             )}
                             <span className="stars-badge" title="Stars">
-                                <StarOutlined /> {skill.stars || 0}
+                                <StarOutlined /> {skill.stars ?? 0}
                             </span>
                             <span className="downloads-badge" title="下载量">
-                                <DownloadOutlined /> {skill.downloads || 0}
+                                <DownloadOutlined /> {skill.downloads ?? 0}
                             </span>
                             {onEdit && (
                                 <button

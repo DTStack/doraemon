@@ -54,7 +54,11 @@ const INITIAL_QUERY = {
     pageSize: 12,
 };
 
-const SkillsMarket: React.FC<any> = ({ history }) => {
+interface SkillsMarketProps {
+    history: { push: (path: string) => void };
+}
+
+const SkillsMarket: React.FC<SkillsMarketProps> = ({ history }) => {
     const [loading, setLoading] = useState(false);
     const [skills, setSkills] = useState<SkillItem[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
