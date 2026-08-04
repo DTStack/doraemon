@@ -397,9 +397,9 @@ describe('cmdUpdate', () => {
         vi.mocked(listTextFiles).mockResolvedValue([]);
         vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
 
-        await expect(cmdUpdate(makeOpts(), 'demo', { force: true, ...projectYes }, false)).rejects.toThrow(
-            /Failed to update 1 skill|download failed/
-        );
+        await expect(
+            cmdUpdate(makeOpts(), 'demo', { force: true, ...projectYes }, false)
+        ).rejects.toThrow(/Failed to update 1 skill|download failed/);
 
         expect(rm).not.toHaveBeenCalledWith('/work/.agents/skills/demo', {
             recursive: true,
@@ -420,9 +420,9 @@ describe('cmdUpdate', () => {
         vi.mocked(stat).mockResolvedValue({} as Awaited<ReturnType<typeof stat>>);
         vi.mocked(extractZipToDir).mockRejectedValue(new Error('extract failed'));
 
-        await expect(cmdUpdate(makeOpts(), 'demo', { force: true, ...projectYes }, false)).rejects.toThrow(
-            /Failed to update 1 skill|extract failed/
-        );
+        await expect(
+            cmdUpdate(makeOpts(), 'demo', { force: true, ...projectYes }, false)
+        ).rejects.toThrow(/Failed to update 1 skill|extract failed/);
 
         expect(renameMock).not.toHaveBeenCalled();
         expect(rm).not.toHaveBeenCalledWith('/work/.agents/skills/demo', {
@@ -575,9 +575,9 @@ describe('cmdUpdate', () => {
         vi.mocked(stat).mockRejectedValue(new Error('missing'));
         vi.mocked(rm).mockResolvedValue();
 
-        await expect(cmdUpdate(makeOpts(), undefined, { all: true, ...projectYes }, false)).rejects.toThrow(
-            /Failed to update 1 skill/
-        );
+        await expect(
+            cmdUpdate(makeOpts(), undefined, { all: true, ...projectYes }, false)
+        ).rejects.toThrow(/Failed to update 1 skill/);
 
         expect(mockDownloadZip).toHaveBeenCalledTimes(2);
         expect(mockLog).toHaveBeenCalledWith(

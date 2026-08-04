@@ -177,9 +177,7 @@ function byLabel(a: AgentType, b: AgentType): number {
 }
 
 /** Project vs Global scope selection. Returns true=global, false=project, null=cancelled. */
-export async function selectScope(
-    message = 'Installation scope'
-): Promise<boolean | null> {
+export async function selectScope(message = 'Installation scope'): Promise<boolean | null> {
     if (!isInteractive()) return null;
     const options: Array<{ value: boolean; label: string; hint: string }> = [
         {

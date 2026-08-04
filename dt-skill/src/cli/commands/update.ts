@@ -211,9 +211,7 @@ export async function cmdUpdate(
     }
 
     if (skippedPinned.length > 0 && updated.length === 0 && alreadyCurrent.length === 0 && !slug) {
-        console.log(
-            `Skipped ${skippedPinned.length} pinned skill(s): ${skippedPinned.join(', ')}`
-        );
+        console.log(`Skipped ${skippedPinned.length} pinned skill(s): ${skippedPinned.join(', ')}`);
     }
 
     console.log('');

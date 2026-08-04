@@ -230,7 +230,10 @@ class SkillsRegistryService extends Service {
                 detail.skill.children,
                 (child) => child.stats.downloads
             );
-            detail.skill.stats.stars = sumCounts(detail.skill.children, (child) => child.stats.stars);
+            detail.skill.stats.stars = sumCounts(
+                detail.skill.children,
+                (child) => child.stats.stars
+            );
         }
 
         return detail;
