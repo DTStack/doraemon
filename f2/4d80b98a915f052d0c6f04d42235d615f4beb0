@@ -1,0 +1,42 @@
+app/web/pages/skills/index.tsx
+  s_e842f02b55c70f::t_4874abafaac394 321,324
+  s_e842f02b55c70f::t_d4e8d0004b6c87 118
+  s_e842f02b55c70f::t_88370c0982368c 117
+  s_e842f02b55c70f::t_fdb25be66eabf9 97
+  s_e842f02b55c70f::t_4f34a1b445d38d 1
+  s_e842f02b55c70f::t_b1e7956e262ba7 322,327-330
+  s_e842f02b55c70f::t_21142ca10889e8 101
+  s_e842f02b55c70f::t_c51c6bb09a7795 2
+  s_e842f02b55c70f::t_c082f6f03f9870 317
+  s_e842f02b55c70f::t_761c664bcc96dc 106,109
+  s_e842f02b55c70f::t_b507cff39b78ed 112-113
+  s_e842f02b55c70f::t_bc00bfccf2b9b1 114-116
+  s_e842f02b55c70f::t_f1485ee428dbcc 72-73
+  s_e842f02b55c70f::t_abe55fdee1cb2b 323,326
+  s_e842f02b55c70f::t_c05c746d9fb5eb 70
+  s_e842f02b55c70f::t_807e00d6c8c0c7 99-100,102-103
+  s_e842f02b55c70f::t_8915522150d83a 325,331
+  s_e842f02b55c70f::t_920376dc90f804 98
+  s_e842f02b55c70f::t_fad67fd35b01c0 119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "f24d80b98a915f052d0c6f04d42235d615f4beb0",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_e842f02b55c70f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c0cf2edb-afd4-4ee8-8934-848ccaf0632e",
+        "model": "mimo-v2.5-pro"
+      },
+      "human_author": null
+    }
+  }
+}
