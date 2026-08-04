@@ -1,7 +1,3 @@
-/**
- * Coerce a DB/API count field to a non-negative integer.
- * Prefer over `Number(x) || 0` so explicit 0 is not special-cased via truthiness.
- */
 function coerceCount(value) {
     const n = Number(value);
     if (!Number.isFinite(n) || n <= 0) return 0;
@@ -17,7 +13,6 @@ function sumCounts(items, getCount) {
 }
 
 /**
- * Sum numeric fields of child rows grouped by parent key (package totals).
  * @param {Array<object>} items
  * @param {{ parentKey: string, fields: string[] }} opts
  * @returns {Record<string, Map<string, number>>}
@@ -42,7 +37,6 @@ function isDuplicateIndexError(error) {
     const code = error?.original?.code || error?.parent?.code || error?.code;
     if (code === 'ER_DUP_KEYNAME') return true;
     const errno = error?.original?.errno ?? error?.parent?.errno ?? error?.errno;
-    // MySQL ER_DUP_KEYNAME
     return errno === 1061;
 }
 

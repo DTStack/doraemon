@@ -374,14 +374,10 @@ class SkillsRegistryService extends Service {
         }
 
         const version = skill.version || 'latest';
-        const content = zip.toBuffer();
-        // Count successful zip delivery (CLI install uses this endpoint).
-        if (this.ctx.service?.skills?.incrementDownloads) {
-            await this.ctx.service.skills.incrementDownloads(skill.slug);
-        }
         return {
+            slug: skill.slug,
             fileName: `${slug}-${version}.zip`,
-            content,
+            content: zip.toBuffer(),
         };
     }
 
@@ -709,7 +705,7 @@ class SkillsRegistryService extends Service {
     encodeListCursor(skill, sortConfig) {
         const rawValue = skill[sortConfig.field];
         const value =
-            sortConfig.type === 'date' ? new Date(rawValue).getTime() : Number(rawValue) || 0;
+            sortConfig.type === 'date' ? new Date(rawValue).getTime() : coerceCount(rawValue);
         return Buffer.from(
             JSON.stringify({
                 sort: sortConfig.key,

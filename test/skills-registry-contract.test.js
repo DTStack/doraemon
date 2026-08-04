@@ -528,6 +528,7 @@ test('buildSkillZip returns zip buffer', async () => {
 
     const result = await service.buildSkillZip('my-skill');
     assert.ok(result);
+    assert.equal(result.slug, 'my-skill');
     assert.ok(result.fileName.includes('my-skill'));
     assert.ok(Buffer.isBuffer(result.content));
     assert.ok(result.content.length > 0);
@@ -569,6 +570,7 @@ test('buildSkillZip packages skill package nested structure when is_package is 1
 
     const result = await service.buildSkillZip('my-skills-pack');
     assert.ok(result);
+    assert.equal(result.slug, 'my-skills-pack');
     assert.ok(result.fileName.includes('my-skills-pack'));
     assert.ok(Buffer.isBuffer(result.content));
 

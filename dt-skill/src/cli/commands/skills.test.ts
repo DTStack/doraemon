@@ -12,6 +12,8 @@ import {
 import * as lockStore from '../../lockfile.js';
 import { ApiRoutes } from '../../schema/index.js';
 import * as skillStore from '../../skills.js';
+import type { UpdateScopeChoice } from '../ui.js';
+import type { UpdateScopeOptions } from './update.js';
 
 const fsMocks = vi.hoisted(() => ({
     mkdir: vi.fn(),
@@ -46,7 +48,8 @@ const mockIsInteractive = vi.fn(() => false);
 const mockPromptConfirm = vi.fn(async () => false);
 vi.mock('../../http.js', () => httpMocks.moduleFactory());
 vi.mock('../registry.js', () => registryMocks.moduleFactory());
-const mockSelectUpdateScope = vi.fn(async () => 'project' as const);
+
+const mockSelectUpdateScope = vi.fn(async (): Promise<UpdateScopeChoice> => 'project');
 vi.mock('../ui.js', () => ({
     createSpinner: vi.fn(() => mockSpinner),
     fail: (message: string) => uiMocks.fail(message),
@@ -365,7 +368,7 @@ describe('hasProjectSkills', () => {
 
 describe('cmdUpdate', () => {
     /** Force project scope so tests use makeOpts().workdir without interactive prompt. */
-    const projectYes = { project: true as const, yes: true as const };
+    const projectYes: UpdateScopeOptions = { project: true, yes: true };
 
     it('fails when directly updating a pinned skill', async () => {
         vi.mocked(readLockfile).mockResolvedValue({
