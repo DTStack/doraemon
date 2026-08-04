@@ -1,0 +1,28 @@
+app/web/pages/skills/detail/utils/skillDetailUtils.ts
+  s_e842f02b55c70f::t_03ba2699f64b1d 156-158
+app/web/pages/skills/index.tsx
+  s_e842f02b55c70f::t_9ee1bce377105b 27
+app/web/components/skills/style.scss
+  s_e842f02b55c70f::t_b5a7fd919780c0 67-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "c6ac8d448f04013a1e939f290a1bd3dcbd0f4d38",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_e842f02b55c70f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c0cf2edb-afd4-4ee8-8934-848ccaf0632e",
+        "model": "mimo-v2.5-pro"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
