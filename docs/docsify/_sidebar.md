@@ -15,5 +15,6 @@
   + [Remote Hosts](zh-cn/guide/RemoteHosts)
   + [文章订阅](zh-cn/guide/文章订阅)
   + [意见反馈](zh-cn/guide/意见反馈)
+  + [Skills Hub](zh-cn/guide/dt-skill)
 + [贡献指南](zh-cn/other/贡献者文档)
 + [ChangeLog](zh-cn/other/CHANGELOG)

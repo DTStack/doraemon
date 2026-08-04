@@ -73,6 +73,19 @@
     .skills-grid {
         flex-shrink: 0;
     }
+    .help-icon {
+        width: 60px;
+        height: 60px;
+        padding: 12px;
+        border-radius: 50%;
+        background-color: #fff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.28);
+        cursor: pointer;
+        position: fixed;
+        bottom: 120px;
+        right: 60px;
+        z-index: 10;
+    }
     .pagination-wrap {
         display: flex;
         justify-content: flex-end;
