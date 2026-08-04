@@ -1,0 +1,60 @@
+app/web/components/skills/style.scss
+  s_e842f02b55c70f::t_b5a7fd919780c0 67-72
+app/web/pages/skills/detail/utils/skillDetailUtils.ts
+  s_e842f02b55c70f::t_03ba2699f64b1d 156-158
+  s_e842f02b55c70f::t_e235672017cd4f 155
+config/config.default.js
+  s_e842f02b55c70f::t_2444b17fe36f0a 68
+app/web/pages/skills/index.tsx
+  s_e842f02b55c70f::t_c05c746d9fb5eb 70
+  s_e842f02b55c70f::t_d4e8d0004b6c87 118
+  s_e842f02b55c70f::t_c082f6f03f9870 317
+  s_e842f02b55c70f::t_b507cff39b78ed 112-113
+  s_e842f02b55c70f::t_f1485ee428dbcc 72-73
+  s_e842f02b55c70f::t_8915522150d83a 325,331
+  s_e842f02b55c70f::t_fad67fd35b01c0 119
+  s_e842f02b55c70f::t_4874abafaac394 321,324
+  s_e842f02b55c70f::t_761c664bcc96dc 106,109
+  s_e842f02b55c70f::t_88370c0982368c 117
+  s_e842f02b55c70f::t_4f34a1b445d38d 1
+  s_e842f02b55c70f::t_fdb25be66eabf9 97
+  s_e842f02b55c70f::t_920376dc90f804 98
+  s_e842f02b55c70f::t_bc00bfccf2b9b1 114-116
+  s_e842f02b55c70f::t_807e00d6c8c0c7 99-100,102-103
+  s_e842f02b55c70f::t_9ee1bce377105b 27
+  s_e842f02b55c70f::t_b1e7956e262ba7 322,327-330
+  s_e842f02b55c70f::t_abe55fdee1cb2b 323,326
+  s_e842f02b55c70f::t_21142ca10889e8 101
+app/web/pages/skills/detail/components/SkillInstallPanel.tsx
+  s_e842f02b55c70f::t_9c0c8adfdcd15a 169
+  s_e842f02b55c70f::t_44dd510ed72968 178-186,194-195
+  s_e842f02b55c70f::t_ca25249f45d9e9 167-168,170
+  s_e842f02b55c70f::t_c6aea1f68d450b 187
+  s_e842f02b55c70f::t_c4ea7720b7c8e7 83
+  s_e842f02b55c70f::t_3d035585382bca 188-191
+  s_e842f02b55c70f::t_414293919d20a4 192-193
+app/web/pages/skills/detail/style.scss
+  s_e842f02b55c70f::t_86f643d46a52d2 695,708-714
+  s_e842f02b55c70f::t_4e0d5d1ea4a8a7 715-716
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "2d0d765fd2760771731de0bca97dfbbcab961823",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_e842f02b55c70f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c0cf2edb-afd4-4ee8-8934-848ccaf0632e",
+        "model": "mimo-v2.5-pro"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
