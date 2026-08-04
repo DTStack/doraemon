@@ -97,10 +97,7 @@ export const SkillInstallPanel: React.FC<SkillInstallPanelProps> = ({
 }) => (
     <aside className="detail-right-sidebar">
         <section className="install-panel">
-            <div className="sidebar-section-title">
-                安装方式
-                <span className="install-soon-badge">SOON</span>
-            </div>
+            <div className="sidebar-section-title">安装方式</div>
 
             <div
                 className={`install-option-card ${
@@ -184,20 +181,10 @@ export const SkillInstallPanel: React.FC<SkillInstallPanelProps> = ({
                     }`.trim()}
                 >
                     <div className="install-option-body-inner">
-                        <div className="human-command-card">
-                            <div className="human-command-title">先安装 Doraemon CLI</div>
-                            {renderInlineCommand('', 'CLI 安装命令已复制到剪贴板', false)}
-                        </div>
-                        <div className="human-command-card">
-                            <div className="human-command-title">再安装当前技能</div>
-                            {renderInlineCommand(
-                                isInstallable ? skillInstallCommand : downloadCommand,
-                                isInstallable
-                                    ? '技能安装命令已复制到剪贴板'
-                                    : '下载命令已复制到剪贴板',
-                                false
-                            )}
-                        </div>
+                        {renderTerminalCommand(
+                            isInstallable ? skillInstallCommand : downloadCommand,
+                            '命令已复制到剪贴板'
+                        )}
                     </div>
                 </div>
             </div>
@@ -205,16 +192,24 @@ export const SkillInstallPanel: React.FC<SkillInstallPanelProps> = ({
 
         <section className="download-panel">
             <div className="sidebar-section-title">手动下载</div>
-            <Button
-                type="default"
-                block
-                className="download-btn"
-                onClick={() => safeOpenUrl(manualDownloadUrl)}
-            >
-                <DetailIcon src={downloadIcon} className="is-download" />
-                下载 .zip
-            </Button>
-            {renderInlineCommand(downloadCommand, '下载命令已复制到剪贴板', true)}
+            <div className="download-btn-row">
+                <Button
+                    type="default"
+                    className="download-btn"
+                    onClick={() => safeOpenUrl(manualDownloadUrl)}
+                >
+                    <DetailIcon src={downloadIcon} className="is-download" />
+                    下载 .zip
+                </Button>
+                <Button
+                    type="text"
+                    className="command-copy-btn is-download-copy"
+                    icon={<DetailIcon src={copyDarkIcon} className="is-copy-dark" />}
+                    onClick={() => copyToClipboard(manualDownloadUrl, '下载链接已复制到剪贴板')}
+                    disabled={!manualDownloadUrl}
+                />
+            </div>
+            {renderTerminalCommand(downloadCommand, '下载命令已复制到剪贴板')}
         </section>
 
         <section className="related-panel">
