@@ -1,0 +1,33 @@
+app/web/pages/skills/detail/style.scss
+  s_e842f02b55c70f::t_86f643d46a52d2 706,719-725
+  s_e842f02b55c70f::t_4e0d5d1ea4a8a7 726-727
+app/web/pages/skills/detail/components/SkillInstallPanel.tsx
+  s_e842f02b55c70f::t_c4ea7720b7c8e7 100
+  s_e842f02b55c70f::t_9c0c8adfdcd15a 186
+  s_e842f02b55c70f::t_44dd510ed72968 195-203,211-212
+  s_e842f02b55c70f::t_3d035585382bca 205-208
+  s_e842f02b55c70f::t_ca25249f45d9e9 184-185,187
+  s_e842f02b55c70f::t_c6aea1f68d450b 204
+  s_e842f02b55c70f::t_414293919d20a4 209-210
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "2c60f5c9beb344a27748d37fdcc49bacad3d05af",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_e842f02b55c70f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c0cf2edb-afd4-4ee8-8934-848ccaf0632e",
+        "model": "mimo-v2.5-pro"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
