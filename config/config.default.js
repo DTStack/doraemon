@@ -65,6 +65,7 @@ module.exports = (app) => {
         mode: 'file', // 使用文件模式，直接保存到临时文件
         tmpdir: path.join(app.baseDir, 'cache/uploads'), // 临时文件目录
         fields: 100, // 允许的最多字段数量
+        files: 50, // 允许的最多文件数量（默认10，Skills上传需要更多）
         cleanSchedule: {
             // 清理上传的临时文件
             cron: '0 30 4 * * *', // 每天4:30清理

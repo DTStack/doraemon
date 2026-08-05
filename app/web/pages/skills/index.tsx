@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     CopyOutlined,
     DeleteOutlined,
@@ -24,6 +24,7 @@ import {
     Typography,
     Upload,
 } from 'antd';
+import debounce from 'lodash/debounce';
 
 import { API } from '@/api';
 import { SkillCard } from '@/components/skills/SkillCard';
@@ -66,7 +67,10 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
     const [importForm] = Form.useForm();
     const [editForm] = Form.useForm();
     const [query, setQuery] = useState(INITIAL_QUERY);
+    const [keywordInput, setKeywordInput] = useState('');
     const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
+    const queryRef = useRef(query);
+    queryRef.current = query;
 
     const fetchSkills = useCallback(async (nextQuery) => {
         setLoading(true);
@@ -90,13 +94,28 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
 
     useEffect(() => {
         fetchSkills(query);
-    }, [fetchSkills, query]);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            debouncedFetchRef.current.cancel();
+        };
+    }, []);
 
     const updateQueryAndFetch = (patch: Partial<typeof query>) => {
-        const next = { ...query, ...patch };
+        const next = { ...queryRef.current, ...patch };
         setQuery(next);
         setSelectedSlugs(new Set());
+        fetchSkills(next);
     };
+
+    const debouncedFetchRef = useRef(
+        debounce((keyword: string) => {
+            const next = { ...queryRef.current, keyword, pageNum: 1 };
+            setQuery(next);
+            fetchSkills(next);
+        }, 300)
+    );
 
     const handleSelect = (skill: SkillItem, selected: boolean) => {
         setSelectedSlugs((prev) => {
@@ -295,12 +314,21 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
             <div className="search-filter-row">
                 <Search
                     allowClear
-                    value={query.keyword}
+                    value={keywordInput}
                     className="keyword-search"
                     placeholder="搜索名称、描述、标签或贡献者..."
                     enterButton={<SearchOutlined />}
-                    onChange={(e) => setQuery({ ...query, keyword: e.target.value })}
-                    onSearch={(value) => updateQueryAndFetch({ keyword: value, pageNum: 1 })}
+                    onChange={(e) => {
+                        setKeywordInput(e.target.value);
+                        debouncedFetchRef.current(e.target.value);
+                    }}
+                    onSearch={(value) => {
+                        debouncedFetchRef.current.cancel();
+                        setKeywordInput(value);
+                        const next = { ...queryRef.current, keyword: value, pageNum: 1 };
+                        setQuery(next);
+                        fetchSkills(next);
+                    }}
                 />
                 <Space size={12}>
                     <Button

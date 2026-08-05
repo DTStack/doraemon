@@ -581,17 +581,6 @@
         align-items: center;
         gap: 6px;
     }
-    .install-soon-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 2px 6px;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        color: #C2410C;
-        background: #FED7AA;
-        border-radius: 4px;
-    }
     .install-option-card {
         border: 1px solid #DBE5F0;
         border-radius: 8px;
@@ -682,17 +671,6 @@
         flex-direction: column;
         gap: 12px;
     }
-    .human-command-card {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .human-command-title {
-        color: #566166;
-        font-size: 12px;
-        font-weight: 600;
-        line-height: 16px;
-    }
     .download-panel,
     .related-panel,
     .meta-panel {
@@ -700,7 +678,6 @@
     }
     .download-btn {
         height: 28px;
-        margin-bottom: 12px;
         padding: 0 12px;
         border-radius: 4px;
         font-size: 12px;
@@ -712,6 +689,7 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
+        flex: 1;
         &:hover,
         &:focus {
             background: #1B2438;
@@ -722,6 +700,15 @@
             background: #0B1220;
             border-color: #0B1220;
             color: #FFF;
+        }
+    }
+    .download-btn-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 12px;
+        .is-download-copy {
+            flex: 0 0 auto;
         }
     }
     .install-panel,
