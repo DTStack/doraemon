@@ -177,25 +177,60 @@ function byLabel(a: AgentType, b: AgentType): number {
 }
 
 /** Project vs Global scope selection. Returns true=global, false=project, null=cancelled. */
-export async function selectScope(): Promise<boolean | null> {
+export async function selectScope(message = 'Installation scope'): Promise<boolean | null> {
+    if (!isInteractive()) return null;
+    const options: Array<{ value: boolean; label: string; hint: string }> = [
+        {
+            value: false,
+            label: 'Project',
+            hint: 'Install in current directory (committed with your project)',
+        },
+        {
+            value: true,
+            label: 'Global',
+            hint: 'Install in home directory (available across all projects)',
+        },
+    ];
+    const scope = await select({ message, options });
+    if (isCancel(scope)) return null;
+    if (scope === true || scope === false) return scope;
+    return null;
+}
+
+/** Update scope (vercel-aligned). Returns null if cancelled. */
+export type UpdateScopeChoice = 'project' | 'global' | 'both';
+
+const UPDATE_SCOPE_OPTIONS: Array<{
+    value: UpdateScopeChoice;
+    label: string;
+    hint: string;
+}> = [
+    {
+        value: 'project',
+        label: 'Project',
+        hint: 'Update skills in current directory',
+    },
+    {
+        value: 'global',
+        label: 'Global',
+        hint: 'Update skills in home directory',
+    },
+    {
+        value: 'both',
+        label: 'Both',
+        hint: 'Update all skills',
+    },
+];
+
+export async function selectUpdateScope(): Promise<UpdateScopeChoice | null> {
     if (!isInteractive()) return null;
     const scope = await select({
-        message: 'Installation scope',
-        options: [
-            {
-                value: false,
-                label: 'Project',
-                hint: 'Install in current directory (committed with your project)',
-            },
-            {
-                value: true,
-                label: 'Global',
-                hint: 'Install in home directory (available across all projects)',
-            },
-        ],
+        message: 'Update scope',
+        options: UPDATE_SCOPE_OPTIONS,
     });
     if (isCancel(scope)) return null;
-    return scope as boolean;
+    if (scope === 'project' || scope === 'global' || scope === 'both') return scope;
+    return null;
 }
 
 /** Skill market category selection (first publish). Returns null=cancelled. */

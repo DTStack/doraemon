@@ -36,6 +36,10 @@ export const SkillDetailHero: React.FC<SkillDetailHeroProps> = ({
             value: detail.category || '通用',
         },
         {
+            label: '下载',
+            value: String(detail.downloads || 0),
+        },
+        {
             label: '最近更新',
             value: formatCompactDate(detail.updatedAt),
         },

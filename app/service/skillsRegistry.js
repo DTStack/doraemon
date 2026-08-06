@@ -4,6 +4,7 @@ const fs = require('fs');
 const ignore = require('ignore');
 const path = require('path');
 const skillUtils = require('../utils/skill-utils');
+const { coerceCount, sumCounts } = require('../utils/skill-stats');
 const skillFingerprint = require('../../contracts/skill-fingerprint');
 const {
     SKILL_CATEGORY_OPTIONS,
@@ -67,7 +68,7 @@ class SkillsRegistryService extends Service {
             newest: { key: 'newest', field: 'updated_at', type: 'date' },
             createdAt: { key: 'newest', field: 'updated_at', type: 'date' },
             updated: { key: 'newest', field: 'updated_at', type: 'date' },
-            downloads: { key: 'stars', field: 'stars', type: 'number' },
+            downloads: { key: 'downloads', field: 'downloads', type: 'number' },
             stars: { key: 'stars', field: 'stars', type: 'number' },
         };
         const sortConfig = sortMap[sort] || sortMap.newest;
@@ -107,7 +108,10 @@ class SkillsRegistryService extends Service {
         return {
             items: items.map((skill) => {
                 const tags = this.parseJsonArray(skill.tags);
-                const stats = { stars: skill.stars || 0, downloads: 0 };
+                const stats = {
+                    stars: coerceCount(skill.stars),
+                    downloads: coerceCount(skill.downloads),
+                };
                 const item = {
                     slug: skill.slug,
                     displayName: skill.name,
@@ -161,7 +165,10 @@ class SkillsRegistryService extends Service {
 
         const version = skill.version || '';
         const tags = this.parseJsonArray(skill.tags);
-        const stats = { stars: skill.stars || 0, downloads: 0 };
+        const stats = {
+            stars: coerceCount(skill.stars),
+            downloads: coerceCount(skill.downloads),
+        };
         const createdAt = skill.created_at ? new Date(skill.created_at).getTime() : 0;
         const updatedAt = skill.updated_at ? new Date(skill.updated_at).getTime() : 0;
         let fingerprint = null;
@@ -210,12 +217,23 @@ class SkillsRegistryService extends Service {
                 summary: child.description || null,
                 version: child.version || null,
                 tags: this.parseJsonArray(child.tags),
-                stats: { stars: child.stars || 0, downloads: 0 },
+                stats: {
+                    stars: coerceCount(child.stars),
+                    downloads: coerceCount(child.downloads),
+                },
                 createdAt: child.created_at ? new Date(child.created_at).getTime() : 0,
                 updatedAt: child.updated_at ? new Date(child.updated_at).getTime() : 0,
                 isPackage: false,
                 parentSlug: child.parent_slug,
             }));
+            detail.skill.stats.downloads = sumCounts(
+                detail.skill.children,
+                (child) => child.stats.downloads
+            );
+            detail.skill.stats.stars = sumCounts(
+                detail.skill.children,
+                (child) => child.stats.stars
+            );
         }
 
         return detail;
@@ -360,6 +378,7 @@ class SkillsRegistryService extends Service {
 
         const version = skill.version || 'latest';
         return {
+            slug: skill.slug,
             fileName: `${slug}-${version}.zip`,
             content: zip.toBuffer(),
         };
@@ -759,7 +778,7 @@ class SkillsRegistryService extends Service {
     encodeListCursor(skill, sortConfig) {
         const rawValue = skill[sortConfig.field];
         const value =
-            sortConfig.type === 'date' ? new Date(rawValue).getTime() : Number(rawValue) || 0;
+            sortConfig.type === 'date' ? new Date(rawValue).getTime() : coerceCount(rawValue);
         return Buffer.from(
             JSON.stringify({
                 sort: sortConfig.key,

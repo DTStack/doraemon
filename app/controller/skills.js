@@ -33,7 +33,13 @@ class SkillsController extends Controller {
     async downloadSkillArchive() {
         const { ctx } = this;
         const { slug } = ctx.query;
-        const { fileName, content } = await ctx.service.skills.getSkillArchive(slug);
+        const {
+            slug: resolvedSlug,
+            fileName,
+            content,
+        } = await ctx.service.skills.getSkillArchive(slug);
+        // Count only on actual zip download (not install-meta sha256 rebuild).
+        await ctx.service.skills.incrementDownloads(resolvedSlug);
         ctx.set('Content-Type', 'application/zip');
         ctx.set('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
         ctx.body = content;

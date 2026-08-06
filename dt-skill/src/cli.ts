@@ -54,7 +54,10 @@ const program = new Command()
         collectAgent,
         []
     )
-    .option('--global', 'Install skills to the global canonical directory (~/.agents/skills)')
+    .option(
+        '--global',
+        'Use global scope (~/.agents/skills + lock). Required for update/uninstall of global installs; install may also prompt Project vs Global without this flag'
+    )
     .option('--copy', 'Copy files into each agent dir instead of symlinking')
     .option('-y, --yes', 'Skip interactive prompts')
     .option('--no-input', 'Disable prompts')
@@ -215,9 +218,25 @@ registerCommand(program, ['update'])
     .option('--all', 'Update all installed skills (same as bare update)')
     .option('--version <version>', 'Update to specific version (single slug only, legacy)')
     .option('--force', 'Overwrite when local files do not match registry content')
+    .option('-g, --global', 'Update global skills only (~/.agents)')
+    .option('-p, --project', 'Update project skills only')
     .action(async (slug, options) => {
         const opts = await resolveGlobalOpts();
-        await cmdUpdate(opts, slug, options, isInputAllowed());
+        const programOpts = program.opts<{ global?: boolean; yes?: boolean }>();
+        await cmdUpdate(
+            opts,
+            slug,
+            {
+                all: options.all,
+                version: options.version,
+                force: options.force,
+                // Prefer update-local -g; fall back to program --global
+                global: Boolean(options.global ?? programOpts.global),
+                project: Boolean(options.project),
+                yes: Boolean(programOpts.yes) || !isInputAllowed(),
+            },
+            isInputAllowed()
+        );
     });
 
 registerCommand(program, ['uninstall'])

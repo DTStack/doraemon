@@ -27,7 +27,9 @@ import {
 import debounce from 'lodash/debounce';
 
 import { API } from '@/api';
+import helpIcon from '@/asset/images/help-icon.png';
 import { SkillCard } from '@/components/skills/SkillCard';
+import config from '../../../../env.json';
 import { SkillItem, SkillListResponse } from './types';
 import './style.scss';
 
@@ -52,7 +54,11 @@ const INITIAL_QUERY = {
     pageSize: 12,
 };
 
-const SkillsMarket: React.FC<any> = ({ history }) => {
+interface SkillsMarketProps {
+    history: { push: (path: string) => void };
+}
+
+const SkillsMarket: React.FC<SkillsMarketProps> = ({ history }) => {
     const [loading, setLoading] = useState(false);
     const [skills, setSkills] = useState<SkillItem[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
@@ -105,6 +111,9 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
     const updateQueryAndFetch = (patch: Partial<typeof query>) => {
         const next = { ...queryRef.current, ...patch };
         setQuery(next);
+        if (Object.prototype.hasOwnProperty.call(patch, 'keyword')) {
+            setKeywordInput(String(patch.keyword ?? ''));
+        }
         setSelectedSlugs(new Set());
         fetchSkills(next);
     };
@@ -302,6 +311,12 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
         });
     };
 
+    const handleHelpIcon = () => {
+        if (config.skillsHelpDocUrl) {
+            window.open(config.skillsHelpDocUrl, '_blank', 'noopener,noreferrer');
+        }
+    };
+
     return (
         <div className="page-skills">
             <div className="skills-header">
@@ -310,6 +325,16 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                     <p className="page-subtitle">发现、筛选并导入本地可用的 Skills 能力</p>
                 </div>
             </div>
+
+            {config.skillsHelpDocUrl ? (
+                <img
+                    className="help-icon"
+                    src={helpIcon}
+                    onClick={handleHelpIcon}
+                    alt="帮助文档"
+                    title="Skills Hub 帮助文档"
+                />
+            ) : null}
 
             <div className="search-filter-row">
                 <Search
@@ -351,6 +376,7 @@ const SkillsMarket: React.FC<any> = ({ history }) => {
                         onChange={(value) => updateQueryAndFetch({ sortBy: value, pageNum: 1 })}
                     >
                         <Option value="stars">按 Stars 排序</Option>
+                        <Option value="downloads">按下载量排序</Option>
                         <Option value="recent">按最近更新</Option>
                     </Select>
                     <Select

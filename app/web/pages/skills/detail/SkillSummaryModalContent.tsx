@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CopyOutlined, LinkOutlined, ShareAltOutlined, StarOutlined } from '@ant-design/icons';
 import { Button, Empty, Spin, Tabs, Tag, Typography } from 'antd';
+import moment from 'moment';
 
 import { API } from '@/api';
 import { copyToClipboard } from '@/utils/copyUtils';
@@ -187,7 +188,7 @@ const SkillSummaryModalContent: React.FC<SkillSummaryModalContentProps> = ({ slu
 
     const detailTags = (detail.tags || []).filter((tag) => tag && tag !== detail.category);
     const detailUpdatedAt = detail.updatedAt
-        ? new Date(detail.updatedAt).toLocaleString('zh-CN')
+        ? moment(detail.updatedAt).format('YYYY-MM-DD HH:mm:ss')
         : '-';
     const agentFallbackInstruction = [
         '当前 skill 不支持 doraemon-skills 直接安装。',
@@ -200,6 +201,10 @@ const SkillSummaryModalContent: React.FC<SkillSummaryModalContentProps> = ({ slu
             label: 'Stars',
             value: String(detail.stars || 0),
             className: 'is-accent',
+        },
+        {
+            label: '下载',
+            value: String(detail.downloads || 0),
         },
         {
             label: '最近更新',

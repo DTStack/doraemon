@@ -132,6 +132,7 @@ test('listSkills returns items with cursor pagination', async () => {
                     version: '1.0.0',
                     tags: '["test"]',
                     stars: 3,
+                    downloads: 7,
                     created_at: new Date('2026-05-21T10:00:00Z'),
                     updated_at: new Date('2026-05-21T10:00:00Z'),
                 },
@@ -143,6 +144,7 @@ test('listSkills returns items with cursor pagination', async () => {
                     version: '2.0.0',
                     tags: '[]',
                     stars: 10,
+                    downloads: 2,
                     created_at: new Date('2026-05-21T09:00:00Z'),
                     updated_at: new Date('2026-05-21T09:00:00Z'),
                 },
@@ -161,7 +163,7 @@ test('listSkills returns items with cursor pagination', async () => {
     assert.equal(first.displayName, 'Skill B');
     assert.equal(first.summary, 'Desc B');
     assert.deepEqual(first.tags, ['test']);
-    assert.deepEqual(first.stats, { stars: 3, downloads: 0 });
+    assert.deepEqual(first.stats, { stars: 3, downloads: 7 });
     assert.equal(first.createdAt, new Date('2026-05-21T10:00:00Z').getTime());
     assert.equal(first.updatedAt, new Date('2026-05-21T10:00:00Z').getTime());
     assert.deepEqual(first.latestVersion, {
@@ -170,6 +172,38 @@ test('listSkills returns items with cursor pagination', async () => {
         changelog: '',
         license: null,
     });
+});
+
+test('listSkills sort=downloads orders by downloads field (not stars)', async () => {
+    const calls = [];
+    const service = Object.create(SkillsRegistryService.prototype);
+    service.app = createMockApp({
+        SkillsItem: {
+            findAll: async (options) => {
+                calls.push(options);
+                return [
+                    {
+                        id: 2,
+                        slug: 'hot-skill',
+                        name: 'Hot',
+                        tags: '[]',
+                        stars: 1,
+                        downloads: 99,
+                        created_at: new Date('2026-05-21T10:00:00Z'),
+                        updated_at: new Date('2026-05-21T10:00:00Z'),
+                    },
+                ];
+            },
+        },
+    });
+    service.ctx = createMockCtx();
+
+    const data = await service.listSkills(null, 'downloads', 10);
+    assert.deepEqual(calls[0].order, [
+        ['downloads', 'DESC'],
+        ['id', 'DESC'],
+    ]);
+    assert.deepEqual(data.items[0].stats, { stars: 1, downloads: 99 });
 });
 
 test('listSkills uses a composite cursor that matches newest sorting', async () => {
@@ -281,6 +315,7 @@ test('getSkillDetail returns full skill object', async () => {
                 version: '1.2.3',
                 tags: '["test"]',
                 stars: 42,
+                downloads: 11,
                 created_at: new Date('2026-05-21T10:00:00Z'),
                 updated_at: new Date('2026-05-21T10:00:00Z'),
             }),
@@ -296,7 +331,7 @@ test('getSkillDetail returns full skill object', async () => {
     assert.equal(data.skill.summary, 'A test skill');
     assert.equal(data.skill.version, '1.2.3');
     assert.deepEqual(data.skill.tags, ['test']);
-    assert.deepEqual(data.skill.stats, { stars: 42, downloads: 0 });
+    assert.deepEqual(data.skill.stats, { stars: 42, downloads: 11 });
     assert.equal(data.skill.createdAt, new Date('2026-05-21T10:00:00Z').getTime());
     assert.equal(data.skill.updatedAt, new Date('2026-05-21T10:00:00Z').getTime());
     assert.equal(data.skill.fingerprint, null);
@@ -493,6 +528,7 @@ test('buildSkillZip returns zip buffer', async () => {
 
     const result = await service.buildSkillZip('my-skill');
     assert.ok(result);
+    assert.equal(result.slug, 'my-skill');
     assert.ok(result.fileName.includes('my-skill'));
     assert.ok(Buffer.isBuffer(result.content));
     assert.ok(result.content.length > 0);
@@ -534,6 +570,7 @@ test('buildSkillZip packages skill package nested structure when is_package is 1
 
     const result = await service.buildSkillZip('my-skills-pack');
     assert.ok(result);
+    assert.equal(result.slug, 'my-skills-pack');
     assert.ok(result.fileName.includes('my-skills-pack'));
     assert.ok(Buffer.isBuffer(result.content));
 

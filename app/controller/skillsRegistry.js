@@ -87,6 +87,8 @@ class SkillsRegistryController extends Controller {
             ctx.body = { error: '技能不存在' };
             return;
         }
+        // Count only on successful zip download (same seam as web controller).
+        await ctx.service.skills.incrementDownloads(result.slug);
         ctx.set('Content-Type', 'application/zip');
         ctx.set(
             'Content-Disposition',

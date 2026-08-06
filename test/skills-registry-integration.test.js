@@ -43,6 +43,9 @@ function buildController(serviceMethods) {
     controller.ctx.service = {
         skillsRegistry: serviceMethods,
         skillLike: skillLikeService,
+        skills: {
+            incrementDownloads: async () => {},
+        },
     };
     return controller;
 }
@@ -88,12 +91,20 @@ test('detail endpoint returns 404 for missing skill', async () => {
 });
 
 test('download endpoint sets correct headers', async () => {
+    let countedSlug = null;
     const controller = buildController({
         buildSkillZip: async (slug) => {
             assert.equal(slug, 'my-skill');
-            return { fileName: 'my-skill-1.0.0.zip', content: Buffer.from('PK') };
+            return {
+                slug: 'my-skill',
+                fileName: 'my-skill-1.0.0.zip',
+                content: Buffer.from('PK'),
+            };
         },
     });
+    controller.ctx.service.skills.incrementDownloads = async (slug) => {
+        countedSlug = slug;
+    };
     controller.ctx.query = { slug: 'my-skill', version: '1.0.0' };
     const headers = {};
     controller.ctx.set = (k, v) => {
@@ -104,6 +115,7 @@ test('download endpoint sets correct headers', async () => {
     assert.equal(headers['Content-Type'], 'application/zip');
     assert.ok(headers['Content-Disposition'].includes('my-skill-1.0.0.zip'));
     assert.ok(Buffer.isBuffer(controller.ctx.body));
+    assert.equal(countedSlug, 'my-skill');
 });
 
 test('publish endpoint parses multipart payload JSON string', async () => {

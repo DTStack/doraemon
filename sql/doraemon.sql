@@ -337,6 +337,7 @@ CREATE TABLE `skills_items` (
   `allowed_tools` longtext COMMENT 'JSON字符串数组',
   `contributor` varchar(50) DEFAULT NULL COMMENT '贡献者',
   `stars` int NOT NULL DEFAULT '0',
+  `downloads` int NOT NULL DEFAULT '0' COMMENT 'zip 成功下发次数（Web 下载 + CLI install）',
   `updated_at_remote` datetime DEFAULT NULL COMMENT '源仓库文件更新时间',
   `source_repo` varchar(1000) DEFAULT NULL COMMENT '仓库地址',
   `source_path` varchar(1000) DEFAULT NULL COMMENT '仓库内 skill 相对路径',
@@ -351,6 +352,7 @@ CREATE TABLE `skills_items` (
   KEY `idx_skills_source_id` (`source_id`),
   KEY `idx_skills_category` (`category`),
   KEY `idx_skills_stars` (`stars`),
+  KEY `idx_skills_downloads` (`downloads`),
   KEY `idx_skills_updated_at_remote` (`updated_at_remote`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='技能条目表';
 

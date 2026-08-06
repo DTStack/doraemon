@@ -51,6 +51,12 @@ module.exports = (app) => {
                 allowNull: false,
                 defaultValue: 0,
             },
+            downloads: {
+                type: INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+                comment: 'zip 成功下发次数（Web 下载 + CLI install）',
+            },
             updated_at_remote: {
                 type: DATE,
                 comment: '源仓库文件更新时间',
@@ -119,6 +125,8 @@ module.exports = (app) => {
                 { fields: ['source_id'] },
                 { fields: ['category'] },
                 { fields: ['stars'] },
+                // downloads index is created in ensureSkillsItemDownloadsColumn
+                // after the column exists (sync cannot add index for a missing column).
                 { fields: ['updated_at_remote'] },
             ],
         }
