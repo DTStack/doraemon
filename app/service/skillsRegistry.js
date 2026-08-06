@@ -421,11 +421,37 @@ class SkillsRegistryService extends Service {
         });
     }
 
-    /** Normalize multipart/in-memory uploads into stored-file shape. Requires SKILL.md. */
-    normalizePublishFiles(files) {
+    /**
+     * Normalize multipart/in-memory uploads into stored-file shape. Requires SKILL.md.
+     * @param {Array} files multipart or in-memory file objects
+     * @param {{ filePaths?: string[] }} [options]
+     *   filePaths: optional parallel list of skill-relative paths (same order as files).
+     *   Multipart Content-Disposition filenames often strip directories (RFC 7578),
+     *   so clients should send explicit paths when nesting folders (e.g. agents/openai.yaml).
+     */
+    normalizePublishFiles(files, options = {}) {
+        // Present but wrong type → hard fail (do not silently flatten nested paths).
+        if (options.filePaths != null && !Array.isArray(options.filePaths)) {
+            this.ctx.throw(400, 'filePaths 必须是字符串数组');
+        }
+        const filePaths = Array.isArray(options.filePaths) ? options.filePaths : null;
+        if (filePaths && filePaths.length > 0 && filePaths.length !== files.length) {
+            this.ctx.throw(
+                400,
+                `filePaths 数量 (${filePaths.length}) 与上传文件数量 (${files.length}) 不一致`
+            );
+        }
+
         const processedFiles = [];
-        for (const file of files) {
-            const originalName = file.filename || path.basename(file.filepath || '');
+        for (let i = 0; i < files.length; i += 1) {
+            const file = files[i];
+            // Prefer explicit path map; then multipart filename; then basename of temp filepath.
+            const declaredPath =
+                filePaths && filePaths[i] != null && String(filePaths[i]).trim()
+                    ? String(filePaths[i]).trim()
+                    : null;
+            const originalName =
+                declaredPath || file.filename || path.basename(file.filepath || '');
             const relPath = skillUtils.normalizeRelativePath(originalName);
             if (!relPath) {
                 this.ctx.throw(400, `非法文件路径: ${originalName}`);
@@ -452,18 +478,19 @@ class SkillsRegistryService extends Service {
                 this.ctx.throw(400, `上传文件不存在: ${originalName}`);
             }
             processedFiles.push({
-                filename: originalName,
+                filename: path.basename(relPath),
                 relPath,
                 content,
                 isBinary,
             });
         }
 
-        const skillMdFile = processedFiles.find(
-            (f) => f.filename && f.filename.toLowerCase().endsWith('skill.md')
-        );
+        const skillMdFile = processedFiles.find((f) => {
+            const p = String(f.relPath || f.filename || '').toLowerCase();
+            return p === 'skill.md' || p.endsWith('/skill.md');
+        });
         if (!skillMdFile) {
-            const uploadedNames = processedFiles.map((f) => f.filename).join(', ');
+            const uploadedNames = processedFiles.map((f) => f.relPath || f.filename).join(', ');
             this.ctx.throw(400, `上传内容必须包含 SKILL.md。已上传: ${uploadedNames}`);
         }
 
@@ -476,12 +503,26 @@ class SkillsRegistryService extends Service {
         // make the no-op decision against a non-transactional snapshot.
         const existingFingerprint = await this.computeSkillFingerprint(skill.id, transaction);
         if (!existingFingerprint || existingFingerprint !== incomingFingerprint) return null;
-        // Content unchanged: still apply optional metadata (e.g. contributor) without re-storing files.
+        // Content unchanged: optional metadata only (no file rewrite).
+        const patch = {};
         if (meta.hasContributor) {
-            await skill.update(
-                { contributor: meta.contributor || null },
-                transaction ? { transaction } : undefined
-            );
+            patch.contributor = meta.contributor || null;
+        }
+        const nextDescription = skillUtils.resolveMarketCardDescription({
+            hasDescription: Boolean(meta.hasDescription),
+            description: meta.description,
+            currentDescription: skill.description,
+            fromSkillMd: meta.fromSkillMd,
+        });
+        const currentDesc = String(skill.description || '').trim();
+        // Always apply explicit override (incl. clear to ""); else only when card changes (e.g. empty backfill).
+        if (meta.hasDescription || nextDescription !== currentDesc) {
+            if (meta.hasDescription || nextDescription) {
+                patch.description = nextDescription;
+            }
+        }
+        if (Object.keys(patch).length > 0) {
+            await skill.update(patch, transaction ? { transaction } : undefined);
         }
         return {
             ok: true,
@@ -528,13 +569,18 @@ class SkillsRegistryService extends Service {
         const category = this.resolvePublishCategory(payload.category);
         const hasContributor = Object.prototype.hasOwnProperty.call(payload, 'contributor');
         const contributor = hasContributor ? this.validateContributor(payload.contributor) : '';
+        // description: present (incl. "") = market override; omit = SKILL.md default / keep card.
+        const hasDescription = Object.prototype.hasOwnProperty.call(payload, 'description');
 
         if (!SKILL_SLUG_PATTERN.test(String(slug || ''))) {
             this.ctx.throw(400, 'slug 格式无效');
         }
 
         const parsedTags = Array.isArray(tags) ? tags : [];
-        const { processedFiles, skillMdFile } = this.normalizePublishFiles(files);
+        const { processedFiles, skillMdFile } = this.normalizePublishFiles(files, {
+            filePaths: payload.filePaths,
+        });
+        const fromSkillMd = skillUtils.extractSkillMdDescription(skillMdFile.content || '');
         const incomingFingerprint = this.computeIncomingFingerprint(processedFiles);
 
         return await this.app.model.transaction(async (t) => {
@@ -548,7 +594,18 @@ class SkillsRegistryService extends Service {
                 transaction: t,
             });
 
+            // Exact slug first; if missing, resolve installKey / alias so overwrite
+            // does not create a second skill with a different primary slug.
             let skill = await SkillsItem.findOne({ where: { slug }, transaction: t });
+            if (!skill) {
+                const aliased = await this._resolveSlug(slug);
+                if (aliased && aliased.slug && aliased.slug !== slug) {
+                    skill = await SkillsItem.findOne({
+                        where: { slug: aliased.slug },
+                        transaction: t,
+                    });
+                }
+            }
 
             const noop = await this.tryPublishUnchanged(
                 skill,
@@ -557,6 +614,9 @@ class SkillsRegistryService extends Service {
                 {
                     hasContributor,
                     contributor,
+                    hasDescription,
+                    description: payload.description,
+                    fromSkillMd,
                 },
                 t
             );
@@ -565,12 +625,17 @@ class SkillsRegistryService extends Service {
             if (skill) {
                 const updatePayload = {
                     name: displayName,
-                    description: payload.description || '',
                     version,
                     tags: JSON.stringify(parsedTags),
                     skill_md: skillMdFile.content || '',
                     is_delete: 0,
                     source_id: source.id,
+                    description: skillUtils.resolveMarketCardDescription({
+                        hasDescription,
+                        description: payload.description,
+                        currentDescription: skill.description,
+                        fromSkillMd,
+                    }),
                 };
                 // Explicit preserve: do not rely on partial-update omitting the field.
                 if (category) {
@@ -587,7 +652,12 @@ class SkillsRegistryService extends Service {
                     source_id: source.id,
                     slug,
                     name: displayName,
-                    description: payload.description || '',
+                    description: skillUtils.resolveMarketCardDescription({
+                        hasDescription,
+                        description: payload.description,
+                        currentDescription: '',
+                        fromSkillMd,
+                    }),
                     version,
                     tags: JSON.stringify(parsedTags),
                     skill_md: skillMdFile.content || '',

@@ -9,7 +9,11 @@ const {
     resolveSkillIdentifier,
     createUniqueSkillNames,
 } = require('../utils/skill-install-key');
-const { normalizeRelativePath: normalizeRelativeFilePath } = require('../utils/skill-utils');
+const {
+    normalizeRelativePath: normalizeRelativeFilePath,
+    extractSkillMdDescription,
+    resolveMarketCardDescription,
+} = require('../utils/skill-utils');
 const {
     coerceCount,
     sumCounts,
@@ -883,14 +887,6 @@ class SkillsService extends Service {
         return '';
     }
 
-    extractDescription(content) {
-        const stripped = content
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line && !line.startsWith('#') && !line.startsWith('---'));
-        return stripped[0] || '';
-    }
-
     parseFrontmatter(content) {
         const result = {};
         const text = String(content || '');
@@ -1498,13 +1494,11 @@ class SkillsService extends Service {
         const content = fs.readFileSync(skillFilePath, 'utf8');
         const stat = fs.statSync(skillFilePath);
         const frontmatter = this.parseFrontmatter(content);
-        const body = frontmatter.__body || content;
 
         const name =
             String(frontmatter.name || path.basename(skillDir)).trim() || path.basename(skillDir);
-        const description =
-            String(frontmatter.description || this.extractDescription(body)).trim() ||
-            this.extractDescription(content);
+        // Same helper as registry publish / CLI default card summary.
+        const description = extractSkillMdDescription(content);
         const version = String(frontmatter.version || '').trim();
         const allowedTools = this.parseArrayLike(
             frontmatter['allowed-tools'] || frontmatter.allowedTools || frontmatter.allowed_tools
@@ -1980,6 +1974,8 @@ class SkillsService extends Service {
                 transaction,
             });
 
+            // Same sticky card rules as registry publish (CLI): explicit wins; else keep / backfill.
+            const hasDescription = Object.prototype.hasOwnProperty.call(params, 'description');
             const payload = {
                 name,
                 category,
@@ -1988,6 +1984,14 @@ class SkillsService extends Service {
             };
             if (hasContributor) {
                 payload.contributor = contributor || null;
+            }
+            if (hasDescription) {
+                payload.description = resolveMarketCardDescription({
+                    hasDescription: true,
+                    description: params.description,
+                    currentDescription: itemRow.description,
+                    fromSkillMd: '',
+                });
             }
 
             if (!hasZipUpload) {
@@ -2030,7 +2034,12 @@ class SkillsService extends Service {
             await itemRow.update(
                 {
                     ...payload,
-                    description: nextRecord.description,
+                    description: resolveMarketCardDescription({
+                        hasDescription,
+                        description: params.description,
+                        currentDescription: itemRow.description,
+                        fromSkillMd: nextRecord.description,
+                    }),
                     allowed_tools: JSON.stringify(nextRecord.allowedTools || []),
                     updated_at_remote: nextRecord.updatedAt,
                     source_repo: nextRecord.sourceRepo,
@@ -2227,11 +2236,32 @@ class SkillsService extends Service {
                     record.name,
                     usedSlugs
                 );
+                const globalExisting = await SkillsItem.findOne({
+                    where: { slug },
+                    transaction,
+                });
+
+                if (
+                    globalExisting &&
+                    globalExisting.is_delete === 0 &&
+                    globalExisting.name !== record.name
+                ) {
+                    this.ctx.throw(400, 'slug 已存在');
+                }
+
+                const targetRow = globalExisting || oldRowMap.get(slug);
+                // Web zip re-import: sticky market card (same as CLI registry re-publish).
+                const description = resolveMarketCardDescription({
+                    hasDescription: false,
+                    description: '',
+                    currentDescription: targetRow ? targetRow.description : '',
+                    fromSkillMd: record.description,
+                });
                 const payload = {
                     source_id: sourceId,
                     slug,
                     name: record.name,
-                    description: record.description,
+                    description,
                     category: record.category,
                     version: record.version || '',
                     tags: JSON.stringify(record.tags || []),
@@ -2248,20 +2278,6 @@ class SkillsService extends Service {
                     is_package: 0,
                     parent_slug: parentSlug || null,
                 };
-                const globalExisting = await SkillsItem.findOne({
-                    where: { slug },
-                    transaction,
-                });
-
-                if (
-                    globalExisting &&
-                    globalExisting.is_delete === 0 &&
-                    globalExisting.name !== record.name
-                ) {
-                    this.ctx.throw(400, 'slug 已存在');
-                }
-
-                const targetRow = globalExisting || oldRowMap.get(slug);
                 let itemRow;
                 if (targetRow) {
                     itemRow = targetRow;

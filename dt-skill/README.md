@@ -4,6 +4,8 @@ dt-skill CLI — install, update, search, and publish agent skills plus OpenClaw
 
 ## Install
 
+Requires **Node.js >= 18.17** (works on Node 18 used by Doraemon, and Node 20+).
+
 ```bash
 # Global install
 npm install -g dt-skill

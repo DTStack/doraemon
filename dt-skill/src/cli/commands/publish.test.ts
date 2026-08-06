@@ -258,8 +258,187 @@ describe('cmdPublish', () => {
             );
             expect(payload.acceptLicenseTerms).toBe(true);
             expect(payload.tags).toEqual(['latest']);
+            expect(payload.filePaths.sort()).toEqual(['SKILL.md', 'notes.md']);
             const files = publishForm.getAll('files') as Array<Blob & { name?: string }>;
             expect(files.map((file) => file.name ?? '').sort()).toEqual(['SKILL.md', 'notes.md']);
+        } finally {
+            await rm(workdir, { recursive: true, force: true });
+        }
+    });
+
+    it('keeps remote slug when GET resolves installKey alias (no second skill)', async () => {
+        const workdir = await makeTmpWorkdir();
+        const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+        try {
+            const folder = join(workdir, 'weekly-report');
+            await mkdir(folder, { recursive: true });
+            await writeFile(join(folder, 'SKILL.md'), '# weekly\n', 'utf8');
+
+            httpMocks.apiRequest.mockResolvedValueOnce({
+                skill: {
+                    slug: 'upload-weekly-report-weekly-report-7bfcdc00-default-weekly-report',
+                    displayName: 'weekly-report',
+                    summary: 'old desc',
+                    tags: [],
+                    stats: {},
+                    createdAt: 1,
+                    updatedAt: 1,
+                    category: '其他',
+                    fingerprint: 'remote-fp-different',
+                },
+                latestVersion: null,
+                owner: null,
+                moderation: null,
+            });
+            httpMocks.apiRequestForm.mockResolvedValueOnce({
+                ok: true,
+                skillId: '1',
+                versionId: 'v0.0.0',
+                fingerprint: 'local-fp',
+                unchanged: false,
+            });
+
+            await cmdPublish(makeOpts(workdir), 'weekly-report', {
+                category: '其他',
+                yes: true,
+            });
+
+            const publishCall = httpMocks.apiRequestForm.mock.calls.find((call) => {
+                const req = call[1] as { path?: string } | undefined;
+                return req?.path === '/api/v1/skills';
+            });
+            if (!publishCall) throw new Error('Missing publish call');
+            const publishForm = (publishCall[1] as { form?: FormData }).form as FormData;
+            const payloadEntry = publishForm.get('payload');
+            if (typeof payloadEntry !== 'string') throw new Error('Missing publish payload');
+            const payload = JSON.parse(payloadEntry);
+            expect(payload.slug).toBe(
+                'upload-weekly-report-weekly-report-7bfcdc00-default-weekly-report'
+            );
+            expect(payload.slug).not.toBe('weekly-report');
+            expect(logSpy).toHaveBeenCalledWith(
+                expect.stringContaining('keeping remote slug on overwrite')
+            );
+        } finally {
+            logSpy.mockRestore();
+            await rm(workdir, { recursive: true, force: true });
+        }
+    });
+
+    it('sends nested filePaths so agents/openai.yaml is not flattened', async () => {
+        const workdir = await makeTmpWorkdir();
+        try {
+            const folder = join(workdir, 'nested-skill');
+            await mkdir(join(folder, 'agents'), { recursive: true });
+            await writeFile(join(folder, 'SKILL.md'), '# nested\n', 'utf8');
+            await writeFile(join(folder, 'agents', 'openai.yaml'), 'interface: {}\n', 'utf8');
+
+            httpMocks.apiRequest.mockRejectedValueOnce(new Error('not found'));
+            httpMocks.apiRequestForm.mockResolvedValueOnce({
+                ok: true,
+                skillId: 'skill_n',
+                versionId: 'v0.0.0',
+                fingerprint: 'fpn',
+                unchanged: false,
+            });
+
+            await cmdPublish(makeOpts(workdir), 'nested-skill', {
+                category: '通用',
+                yes: true,
+            });
+
+            const publishCall = httpMocks.apiRequestForm.mock.calls.find((call) => {
+                const req = call[1] as { path?: string } | undefined;
+                return req?.path === '/api/v1/skills';
+            });
+            if (!publishCall) throw new Error('Missing publish call');
+            const publishForm = (publishCall[1] as { form?: FormData }).form as FormData;
+            const payloadEntry = publishForm.get('payload');
+            if (typeof payloadEntry !== 'string') throw new Error('Missing publish payload');
+            const payload = JSON.parse(payloadEntry);
+            expect(payload.filePaths.sort()).toEqual(['SKILL.md', 'agents/openai.yaml']);
+            const files = publishForm.getAll('files') as Array<Blob & { name?: string }>;
+            // Multipart names are basenames; hierarchy lives in filePaths.
+            expect(files.map((file) => file.name ?? '').sort()).toEqual([
+                'SKILL.md',
+                'openai.yaml',
+            ]);
+        } finally {
+            await rm(workdir, { recursive: true, force: true });
+        }
+    });
+
+    it('defaults displayName to folder basename (not Title Case)', async () => {
+        const workdir = await makeTmpWorkdir();
+        try {
+            const folder = join(workdir, 'weekly-report');
+            await mkdir(folder, { recursive: true });
+            await writeFile(join(folder, 'SKILL.md'), '# weekly\n', 'utf8');
+
+            httpMocks.apiRequest.mockRejectedValueOnce(new Error('not found'));
+            httpMocks.apiRequestForm.mockResolvedValueOnce({
+                ok: true,
+                skillId: 'skill_wr',
+                versionId: 'v0.0.0',
+                fingerprint: 'fp1',
+                unchanged: false,
+            });
+
+            await cmdPublish(makeOpts(workdir), 'weekly-report', {
+                category: '其他',
+                yes: true,
+            });
+
+            const publishCall = httpMocks.apiRequestForm.mock.calls.find((call) => {
+                const req = call[1] as { path?: string } | undefined;
+                return req?.path === '/api/v1/skills';
+            });
+            if (!publishCall) throw new Error('Missing publish call');
+            const publishForm = (publishCall[1] as { form?: FormData }).form as FormData;
+            const payloadEntry = publishForm.get('payload');
+            if (typeof payloadEntry !== 'string') throw new Error('Missing publish payload');
+            const payload = JSON.parse(payloadEntry);
+            expect(payload.slug).toBe('weekly-report');
+            expect(payload.displayName).toBe('weekly-report');
+            expect(payload.displayName).not.toBe('Weekly Report');
+            expect(payload).not.toHaveProperty('description');
+        } finally {
+            await rm(workdir, { recursive: true, force: true });
+        }
+    });
+
+    it('includes description in payload only when --description is provided', async () => {
+        const workdir = await makeTmpWorkdir();
+        try {
+            const folder = join(workdir, 'with-desc');
+            await mkdir(folder, { recursive: true });
+            await writeFile(join(folder, 'SKILL.md'), '# with desc\n', 'utf8');
+
+            httpMocks.apiRequest.mockRejectedValueOnce(new Error('not found'));
+            httpMocks.apiRequestForm.mockResolvedValueOnce({
+                ok: true,
+                skillId: 'skill_d',
+                versionId: 'v0.0.0',
+                fingerprint: 'fpd',
+                unchanged: false,
+            });
+
+            await cmdPublish(makeOpts(workdir), 'with-desc', {
+                category: '通用',
+                yes: true,
+                description: '  周报助手卡片描述  ',
+            });
+
+            const publishCall = httpMocks.apiRequestForm.mock.calls.find((call) => {
+                const req = call[1] as { path?: string } | undefined;
+                return req?.path === '/api/v1/skills';
+            });
+            if (!publishCall) throw new Error('Missing publish call');
+            const publishForm = (publishCall[1] as { form?: FormData }).form as FormData;
+            const payloadEntry = publishForm.get('payload');
+            if (typeof payloadEntry !== 'string') throw new Error('Missing publish payload');
+            const payload = JSON.parse(payloadEntry);
+            expect(payload.description).toBe('周报助手卡片描述');
         } finally {
             await rm(workdir, { recursive: true, force: true });
         }
@@ -288,11 +467,12 @@ describe('cmdPublish', () => {
 
             const publishCall = httpMocks.apiRequestForm.mock.calls[0];
             const publishForm = (publishCall?.[1] as { form?: FormData }).form as FormData;
+            const payloadEntry = publishForm.get('payload');
+            if (typeof payloadEntry !== 'string') throw new Error('Missing publish payload');
+            const payload = JSON.parse(payloadEntry);
+            expect(payload.filePaths.sort()).toEqual(['SKILL.md', 'assets/logo.png']);
             const files = publishForm.getAll('files') as Array<Blob & { name?: string }>;
-            expect(files.map((file) => file.name ?? '').sort()).toEqual([
-                'SKILL.md',
-                'assets/logo.png',
-            ]);
+            expect(files.map((file) => file.name ?? '').sort()).toEqual(['SKILL.md', 'logo.png']);
         } finally {
             await rm(workdir, { recursive: true, force: true });
         }

@@ -128,7 +128,7 @@ test/               # 主项目测试文件（Node.js 内置 test runner）
 - **入口**: `bin/dt-skill.js`。
 - **构建**: `node ./scripts/build.mjs`，输出到 `dist/`。
 - **测试**: Vitest，配置在 `vitest.config.ts`（测试 `src/**/*.test.ts`）。
-- **Node 版本要求**: `>=20`（与主项目的 `>=18` 不同）。
+- **Node 版本要求**: `>=18.17`（与主项目 Node 18 对齐；`npx dt-skill` / `test:src` 均可在 18 上运行）。
 - **默认 Registry**: 内网部署 `http://172.16.100.225:7001`（无 flag/env 时开箱即用）。
 - **本地开发覆盖**:
   ```bash
