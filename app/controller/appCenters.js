@@ -3,10 +3,6 @@ const _ = require('lodash');
 const moment = require('moment');
 const path = require('path');
 const fs = require('fs');
-// 异步二进制 写入流
-const awaitWriteStream = require('await-stream-ready').write;
-// 管道读入一个虫洞。
-const sendToWormhole = require('stream-wormhole');
 
 class AppCentersController extends Controller {
     async getAppCenterList() {
@@ -126,10 +122,17 @@ class AppCentersController extends Controller {
     async uploadLogo() {
         const { app, ctx } = this;
         const id = ctx.params.id;
-        // 读取文件流
-        const stream = await this.ctx.getFileStream();
-        // 文件名
-        const fileName = stream.filename;
+        const files = ctx.request.files
+            ? Array.isArray(ctx.request.files)
+                ? ctx.request.files
+                : [ctx.request.files]
+            : [];
+        const file = files[0];
+        if (!file) {
+            ctx.throw(400, '缺少上传文件');
+        }
+        // 全局 multipart 已经是 file 模式，这里直接复用临时文件，避免重复消费请求体
+        const fileName = file.filename;
         // 目标文件夹，没有就创建，创建多级目录存储
         const date = new Date();
         const dirTree = [
@@ -142,14 +145,14 @@ class AppCentersController extends Controller {
         const dir = app.utils.createFolder(dirTree);
         // 创建文件
         const target = path.join(dir, fileName);
-        const writeStream = fs.createWriteStream(target);
         try {
-            // 异步把文件流 写入
-            await awaitWriteStream(stream.pipe(writeStream));
+            fs.copyFileSync(file.filepath, target);
         } catch (err) {
-            // 如果出现错误，关闭管道
-            await sendToWormhole(stream);
             throw new Error('图片上传出错');
+        } finally {
+            if (file.filepath && fs.existsSync(file.filepath)) {
+                fs.unlinkSync(file.filepath);
+            }
         }
         const result = await this.ctx.model.AppCenters.update(
             { logoUrl: [...dirTree, fileName].join('/') },
