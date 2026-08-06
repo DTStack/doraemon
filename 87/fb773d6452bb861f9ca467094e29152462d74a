@@ -1,0 +1,24 @@
+app/controller/appCenters.js
+  s_d6b10e6b801123::t_90bc3cdd9e5407 125-135,149,152-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "87fb773d6452bb861f9ca467094e29152462d74a",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_d6b10e6b801123": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd202-085d-7f62-b9ca-e50376164c5b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
