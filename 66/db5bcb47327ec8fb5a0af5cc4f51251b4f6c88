@@ -1,0 +1,193 @@
+.gitignore
+  s_b1f111c2a305af::t_59e94cbf2b95b9 9
+app/web/layouts/basicLayout/index.tsx
+  s_b1f111c2a305af::t_9bd6071d91e1a8 8,15
+app/model/agent_skill.js
+  s_b1f111c2a305af::t_0f741f86e56c78 1-64
+test/agent-list-layout.test.js
+  s_b1f111c2a305af::t_9f6230d33af91b 33-45
+  s_b1f111c2a305af::t_6c6d6ab11c591d 27-31
+  s_b1f111c2a305af::t_6f8b71aaed939a 1-26,32
+app/service/agents.js
+  s_b1f111c2a305af::t_8a959d515a3882 266,268
+  s_b1f111c2a305af::t_a4f6e196d0d436 278-284,286-290,292,294,375
+  s_b1f111c2a305af::t_99445a33ffdea3 930
+  s_b1f111c2a305af::t_c6e0361c9c76ae 939,950
+  s_b1f111c2a305af::t_9c07b511915e06 368
+  s_b1f111c2a305af::t_0f741f86e56c78 1-264,297-314,319-351,353-355,357-367,370-374,376-516,518-851,855-929,931-938,940-949,951-1126
+  s_b1f111c2a305af::t_2b67e8313129f0 265,267,269-277,285,291,293,295-296,352,356,517
+  s_b1f111c2a305af::t_5e650e17d51a04 852-854
+  s_b1f111c2a305af::t_3b34452905bae1 315-318
+  s_b1f111c2a305af::t_c5a1bccf4600fd 369
+test/agent-market-controller.test.js
+  s_b1f111c2a305af::t_290ef7ede0241f 1-72
+app/web/pages/skills/style.scss
+  s_b1f111c2a305af::t_4239853d06a307 16-18,28,150-158
+  s_b1f111c2a305af::t_4e69aa7766abc4 159
+app/web/pages/skills/index.tsx
+  h_3070dc1062bb3b 324
+app/controller/agents.js
+  s_b1f111c2a305af::t_0f741f86e56c78 1-5,8-10,13-15,19-21,24,28-30,35-38,40-42,48-52,54-59,62-65
+  s_b1f111c2a305af::t_1c02ddab7dfba5 6-7,11-12,16-18,22-23,25-27,31-34,39,43-47,53,60-61
+app/web/pages/agents/detail/style.scss
+  s_b1f111c2a305af::t_825101d8dc4607 167-174,176-180,186-194,196,198-199,204,207-208,214-215,218,222-225,227-229,234-238,240,243-245
+  h_3070dc1062bb3b 24-26,100,107,131,137-138,141-145,185,210,279,291
+  s_b1f111c2a305af::t_b1aee035535222 151,200-202,230-232
+  s_b1f111c2a305af::t_bc1aaf28323066 2,4,12,28-35,77,83,156,161,175,181-184,197,203,209,216,226,233,239,246,337-341
+  s_b1f111c2a305af::t_74dc4e30e1b839 241,247
+  s_b1f111c2a305af::t_d69120df03cd1f 252-253,256,258-263,275-278,280-286,290,292,331-333
+  s_b1f111c2a305af::t_b6762ccf059a4f 320,327
+  s_b1f111c2a305af::t_891e89b8ba6f9d 130,132-135
+  s_b1f111c2a305af::t_abe68f55ed9339 6,22,39,51,67,122-123,312
+  s_b1f111c2a305af::t_5e650e17d51a04 1,3,5,7-11,13-21,23,27,36-38,40-50,52-66,68-76,78-82,84,110-121,124-129,136,139-140,146-147,250-251,254-255,257,264-274,287-289,293-311,313-319,321-326,328-330,342-348
+  s_b1f111c2a305af::t_6676c381d4167b 148-150,152-155,157-160,162-166,195,205-206,211-213,217,219-221,248-249
+  s_b1f111c2a305af::t_a4f6e196d0d436 85-99,102-106,108-109,334-336
+  s_b1f111c2a305af::t_c6e0361c9c76ae 101,242
+app/web/pages/agents/detail/index.tsx
+  s_b1f111c2a305af::t_5e650e17d51a04 1-10
+app/web/layouts/header/nav-config.js
+  s_b1f111c2a305af::t_f9970b8237b92b 85-123,133
+  s_b1f111c2a305af::t_fa1c7418710850 1-84,124,128-132,134-136
+  s_b1f111c2a305af::t_1fdc6bf7ab1864 125-127
+config/config.local.js
+  s_b1f111c2a305af::t_59e94cbf2b95b9 1,49
+  s_b1f111c2a305af::t_3f38556a0faf89 50-51
+test/header-nav-config.test.js
+  s_b1f111c2a305af::t_9596e74349bf48 63-85
+  s_b1f111c2a305af::t_414e1d38e1a9dc 1-2,5-8,10-32,44-48,62
+  s_b1f111c2a305af::t_3020c3dec784c0 9,33-43
+  s_b1f111c2a305af::t_f97b7ab74ff391 3-4,49-61
+app/model/agent_file.js
+  s_9f25f5acd59ed2::t_6db53c0756c936 18
+  s_b1f111c2a305af::t_0f741f86e56c78 1-17,19-81
+app/web/layouts/header/style.scss
+  s_b1f111c2a305af::t_479235b9f6fb08 13-25
+app/web/layouts/basicLayout/layout-flags.js
+  s_b1f111c2a305af::t_9bd6071d91e1a8 1-10
+test/config-local-agent-market.test.js
+  s_b1f111c2a305af::t_259e66f8b38dc2 1-12
+app/web/pages/agents/detail/capability-utils.js
+  s_b1f111c2a305af::t_bc0d726bfe8de1 1-30
+docs/docsify/zh-cn/guide/dt-skill.md
+  h_3070dc1062bb3b 3,39
+test/agent-capability-utils.test.js
+  s_b1f111c2a305af::t_bc0d726bfe8de1 1-23
+docs/superpowers/plans/2026-08-11-agent-market.md
+  s_b1f111c2a305af::t_6dee8e5a8b7e60 1-6,8-12,14-245
+  h_3070dc1062bb3b 7,13
+app/web/layouts/header/header.tsx
+  s_b1f111c2a305af::t_fa1c7418710850 10,31-42,75-77,81,85,93
+  s_b1f111c2a305af::t_1f74d00f101861 12
+  s_b1f111c2a305af::t_f9970b8237b92b 24,48-50,53-55,72-73
+  s_b1f111c2a305af::t_f10b6925f80747 43
+AGENTS.md
+  h_3070dc1062bb3b 5
+sql/doraemon.sql
+  s_b1f111c2a305af::t_290ef7ede0241f 380-423,425-457
+  s_9f25f5acd59ed2::t_26dccefaeaecec 424
+app/web/pages/agents/detail/intro-utils.js
+  s_b1f111c2a305af::t_67d0b4933f78bd 1-21
+app/web/pages/agents/index.tsx
+  s_b1f111c2a305af::t_815b49ec91d07c 31
+  s_b1f111c2a305af::t_1510847af19bef 50-51,67,103-109,266-272,275-284
+  s_b1f111c2a305af::t_4239853d06a307 200-202,209,212
+  s_b1f111c2a305af::t_5e650e17d51a04 1-30,32-49,52-66,68-92,95-96,98,100-102,110-199,203-208,210-211,213-265,273-274,285-291,293-350
+  s_b1f111c2a305af::t_6c6d6ab11c591d 292
+  s_b1f111c2a305af::t_bca9944e9cfada 93-94,97,99
+docs/superpowers/specs/2026-08-11-agent-market-design.md
+  h_3070dc1062bb3b 264,285,297
+test/agent-intro-utils.test.js
+  s_b1f111c2a305af::t_67d0b4933f78bd 1-30
+test/agent-market-service.test.js
+  s_b1f111c2a305af::t_a78bd76e62b101 126,252-264,267,272-275
+  s_b1f111c2a305af::t_45e6bdfb94f1da 248-251,265-266,268-271,276-333,346-350
+  s_b1f111c2a305af::t_266f2c3f59e5b7 351-367
+  s_b1f111c2a305af::t_df96144099b67b 1-125,127-247,368-415
+  s_b1f111c2a305af::t_a4f6e196d0d436 334-345
+test/agent-detail-layout.test.js
+  s_b1f111c2a305af::t_a4d6fac3e0637a 1-29,35
+  s_b1f111c2a305af::t_c2cc1177ce2677 36-52,71-83,102-103
+  s_b1f111c2a305af::t_9f6230d33af91b 53-70
+  s_b1f111c2a305af::t_778f4e70ae95a9 122-140,153
+  s_b1f111c2a305af::t_45da0907a6f1f5 30-34,84-101
+  s_3e6c0c79bf6b83::t_dbda9a1f814f9b 154-161,163-166
+  s_3e6c0c79bf6b83::t_2e349f5f4b8ae4 162
+  s_b1f111c2a305af::t_956cb1d2e7a414 141-152
+  s_b1f111c2a305af::t_a4f6e196d0d436 104-121
+app/web/pages/agents/style.scss
+  s_b1f111c2a305af::t_5e650e17d51a04 1-3,5-6,8-11,27,32,34,45-46,48-50,53-62,64-69,71-89,91-97,111-112,114-127,129-147,159-167
+  s_b1f111c2a305af::t_abe68f55ed9339 4,51-52,63,90,128
+  h_3070dc1062bb3b 70,104,113
+  s_b1f111c2a305af::t_dbb53d39c909eb 98-100,102,107-110
+  s_b1f111c2a305af::t_6c6d6ab11c591d 101,103,105-106
+  s_b1f111c2a305af::t_4239853d06a307 7,12-26,28-31,33,35-44,47,148-158
+config/config.default.js
+  s_b1f111c2a305af::t_290ef7ede0241f 46-52
+  s_b1f111c2a305af::t_98346677ce677f 53
+test/basic-layout-flags.test.js
+  s_b1f111c2a305af::t_2028061498c208 1-12
+app/router.js
+  h_3070dc1062bb3b 150
+  s_b1f111c2a305af::t_290ef7ede0241f 166-174
+  s_b1f111c2a305af::t_2ca339c41e9a71 165
+app/web/api/url.ts
+  s_b1f111c2a305af::t_5e650e17d51a04 404-427
+  h_3070dc1062bb3b 342
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  s_b1f111c2a305af::t_74dc4e30e1b839 17,131-134,206,208-209,216-218
+  s_b1f111c2a305af::t_35899b1caef754 38-41
+  s_b1f111c2a305af::t_a4f6e196d0d436 9,12,207,210-214,220-229
+  s_b1f111c2a305af::t_352631dc4420b7 18,121-129,258-262,264-279,292-297,301-308,310,322-332
+  s_b1f111c2a305af::t_a913d7a2ad978d 29
+  s_3e6c0c79bf6b83::t_48ac20a236092d 394-407
+  s_b1f111c2a305af::t_825101d8dc4607 2-8,263,280-291,298,300,309,311-321
+  s_b1f111c2a305af::t_5e650e17d51a04 1,10-11,13-16,19-28,30-37,42-120,130,135-189,191-198,200-205,230-250,252-257,333-382,384-385,388-393,408-416
+  h_3070dc1062bb3b 190,215,219,251,383,386-387
+  s_b1f111c2a305af::t_b1aee035535222 299
+  s_b1f111c2a305af::t_891e89b8ba6f9d 199
+app/web/router/index.ts
+  s_b1f111c2a305af::t_985e91e2aab68a 4-5
+  s_b1f111c2a305af::t_5e650e17d51a04 127-134
+app/web/pages/agents/types.ts
+  s_b1f111c2a305af::t_5e650e17d51a04 1-5,12-53,55-58
+  s_b1f111c2a305af::t_a4f6e196d0d436 6-11,54
+app/model/agent.js
+  s_b1f111c2a305af::t_0f741f86e56c78 1-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "66db5bcb47327ec8fb5a0af5cc4f51251b4f6c88",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_3e6c0c79bf6b83": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff148-1c59-7f90-88e5-d82f3f9119df",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    },
+    "s_9f25f5acd59ed2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0f4693a2-738c-49da-a232-d3d4cb10c4cb",
+        "model": "deepseek-v4-pro"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    },
+    "s_b1f111c2a305af": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff036-c499-7870-8e25-3e14ba5ac14b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
