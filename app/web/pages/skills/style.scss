@@ -13,6 +13,9 @@
         flex-shrink: 0;
     }
     .title-group {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
         .page-title {
             margin: 0;
             color: #2A3439;
@@ -22,7 +25,7 @@
             letter-spacing: -0.025em;
         }
         .page-subtitle {
-            margin: 8px 0 0;
+            margin: 0;
             color: #64748B;
         }
     }
@@ -143,4 +146,14 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+    .page-skills {
+        .title-group {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+    }
 }

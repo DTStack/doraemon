@@ -1,3 +1,4 @@
+const path = require('path');
 const ip = require('ip');
 const EasyWebpack = require('easywebpack-react');
 
@@ -45,6 +46,9 @@ module.exports = () => {
     };
 
     exports.security = { domainWhiteList };
+    exports.agentMarket = {
+        storageDir: path.join(process.cwd(), 'agent-market'),
+    };
 
     // exports.ssh =  {
     //     host: '172.16.100.225',

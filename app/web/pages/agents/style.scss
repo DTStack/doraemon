@@ -1,0 +1,167 @@
+.page-agents {
+    min-height: 100%;
+    padding: 24px 32px 32px;
+    background: #F5F7FB;
+    .agents-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+    .title-group {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        .page-title {
+            margin: 0;
+            color: #2A3439;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+        .page-subtitle {
+            margin: 0;
+            color: #64748B;
+        }
+    }
+    .search-filter-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-top: 18px;
+        margin-bottom: 20px;
+        .keyword-search {
+            width: 620px;
+            max-width: 100%;
+            .ant-input-group > .ant-input-affix-wrapper:not(:last-child) {
+                padding-left: 14px;
+            }
+            .ant-input-group > .ant-input-affix-wrapper:not(:last-child) .ant-input {
+                padding-left: 0;
+            }
+        }
+    }
+    .category-filter {
+        width: 220px;
+    }
+    .agents-empty {
+        padding: 72px 0;
+        background: #FFF;
+        border: 1px solid #EDF0F5;
+        border-radius: 16px;
+    }
+    .agents-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .agent-card {
+        height: 100%;
+        border-radius: 16px;
+        border: 1px solid #EDF0F5;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+        .ant-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+            padding: 6px 20px;
+        }
+    }
+    .agent-card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .agent-card-brand {
+        display: flex;
+        gap: 12px;
+        min-width: 0;
+    }
+    .agent-card-logo {
+        width: 52px;
+        height: 52px;
+        flex: 0 0 52px;
+        border-radius: 14px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #EFF4FF, #EEF2FF);
+    }
+    .agent-card-meta {
+        min-width: 0;
+        h4 {
+            margin-bottom: 4px;
+        }
+    }
+    .agent-card-subline {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #98A2B3;
+        .ant-typography {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .dot {
+            color: #98A2B3;
+        }
+    }
+    .agent-card-description {
+        flex: 1;
+        font-size: 14px;
+        min-height: 66px;
+        margin-bottom: 0;
+        color: #344054;
+    }
+    .agent-card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .agent-card-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #EDF0F5;
+    }
+    .agents-pagination {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+
+    @media screen and (max-width: 1200px) {
+        .agents-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        padding: 16px;
+        .agents-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .title-group {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .search-filter-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .category-filter {
+            width: 100%;
+        }
+        .agents-grid {
+            grid-template-columns: 1fr;
+        }
+        .agent-card-footer {
+            flex-direction: column;
+        }
+    }
+}

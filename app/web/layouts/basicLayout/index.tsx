@@ -5,13 +5,14 @@ import { Layout, Modal } from 'antd';
 import classnames from 'classnames';
 
 import Header from '../header/header';
+const { shouldUseSkillDetailLayout } = require('./layout-flags');
 import './style.scss';
 const { Content } = Layout;
 
 const BasicLayout = (props: any) => {
     const { className, route, location } = props;
     const { pathname } = location;
-    const isSkillDetailPage = /^\/page\/skills\/[^/]+$/.test(pathname);
+    const isSkillDetailPage = shouldUseSkillDetailLayout(pathname);
 
     // 如果弹出过哆啦A梦 Chrome 插件的弹框，则后续不再弹出
     React.useEffect(() => {

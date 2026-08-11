@@ -147,7 +147,7 @@ module.exports = (app) => {
     app.post('/api/mcp-servers/health/all', app.controller.mcp.checkAllMCPServersHealth);
 
     /**
-     * Skills 市场
+     * Skill 市场
      */
     app.get('/api/skills/list', app.controller.skills.getSkillList);
     app.get('/api/skills/detail', app.controller.skills.getSkillDetail);
@@ -161,6 +161,16 @@ module.exports = (app) => {
     app.post('/api/skills/like', app.controller.skillLike.like);
     app.post('/api/skills/unlike', app.controller.skillLike.unlike);
     app.get('/api/skills/like-status', app.controller.skillLike.getLikeStatus);
+
+    /**
+     * Agent 市场
+     */
+    app.get('/api/agents/list', app.controller.agents.getAgentList);
+    app.get('/api/agents/detail', app.controller.agents.getAgentDetail);
+    app.get('/api/agents/related', app.controller.agents.getRelatedAgents);
+    app.get('/api/agents/asset', app.controller.agents.getAgentAsset);
+    app.post('/api/agents/import-file', app.controller.agents.importAgentFile);
+    app.post('/api/agents/delete', app.controller.agents.deleteAgent);
 
     /**
      * Skills Registry API (v1)

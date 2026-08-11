@@ -6,6 +6,7 @@ cache
 .history
 public
 resources
+agent-market
 app/view
 
 # Research docs (working notes, not for commit)

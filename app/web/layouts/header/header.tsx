@@ -7,7 +7,9 @@ import {
     CloudOutlined,
     CloudServerOutlined,
     DesktopOutlined,
+    MoreOutlined,
     QuestionCircleOutlined,
+    RobotOutlined,
     SettingOutlined,
     SyncOutlined,
     TagOutlined,
@@ -19,82 +21,38 @@ import { bindActionCreators } from 'redux';
 import logo from '@/asset/images/logo.png';
 import * as actions from '@/store/actions';
 import config from '../../../../env.json';
+import { getMenuState, NAV_MENU_LIST } from './nav-config';
 import './style.scss';
 
 const { SubMenu } = Menu;
 
 const { Header } = Layout;
 
-const navMenuList: any = [
-    {
-        name: '应用中心',
-        path: '/page/toolbox',
-        icon: <AppstoreOutlined />,
-        routers: ['toolbox', 'switch-hosts-list', 'switch-hosts-edit', 'article-subscription-list'],
-    },
-    {
-        name: '代理服务',
-        path: '/page/proxy-server',
-        icon: <CloudOutlined />,
-        routers: ['proxy-server'],
-    },
-    {
-        name: 'MCP',
-        path: '/page/mcp-server-market',
-        icon: <UngroupOutlined />,
-        routers: [
-            'mcp-server-market',
-            'mcp-server-registry',
-            'mcp-server-management',
-            'mcp-server-detail',
-            'mcp-server-inspector',
-        ],
-    },
-    {
-        name: 'Skills',
-        path: '/page/skills',
-        icon: <BookOutlined />,
-        routers: ['skills'],
-    },
-    {
-        name: '主机管理',
-        path: '/page/host-management',
-        icon: <CloudServerOutlined />,
-        routers: ['host-management'],
-    },
-    {
-        name: '环境管理',
-        path: '/page/env-management',
-        icon: <DesktopOutlined />,
-        routers: ['env-management'],
-    },
-    {
-        name: '配置中心',
-        path: '/page/config-center',
-        icon: <SettingOutlined />,
-        routers: ['config-center', 'config-detail'],
-    },
-    {
-        name: '标签管理',
-        path: '/page/tags',
-        icon: <TagOutlined />,
-        routers: ['tags'],
-    },
-];
+const iconMap: Record<string, React.ReactNode> = {
+    appstore: <AppstoreOutlined />,
+    cloud: <CloudOutlined />,
+    ungroup: <UngroupOutlined />,
+    book: <BookOutlined />,
+    robot: <RobotOutlined />,
+    more: <MoreOutlined />,
+    'cloud-server': <CloudServerOutlined />,
+    desktop: <DesktopOutlined />,
+    setting: <SettingOutlined />,
+    tag: <TagOutlined />,
+};
+
 const HeaderComponent = (props: any) => {
     const { location } = props;
     const { localIp = '127.0.0.1' } = useSelector((state: any) => state.global);
     const { pathname } = location;
-    const [selectedKeys, setSelectedKeys] = useState([pathname]);
+    const initialMenuState = getMenuState(pathname, NAV_MENU_LIST);
+    const [selectedKeys, setSelectedKeys] = useState(initialMenuState.selectedKeys);
+    const [openKeys, setOpenKeys] = useState(initialMenuState.openKeys);
     const { changeLocalIp } = bindActionCreators(actions, useDispatch());
-    const handleSelectedKeys = (e: any) => {
-        setSelectedKeys(e.key);
-    };
     useEffect(() => {
-        const current = navMenuList.filter((item) =>
-            item.routers.some((ele) => pathname.indexOf(ele) > -1)
-        );
-        current.length && setSelectedKeys([current[0].path]);
+        const nextMenuState = getMenuState(pathname, NAV_MENU_LIST);
+        setSelectedKeys(nextMenuState.selectedKeys);
+        setOpenKeys(nextMenuState.openKeys);
     }, [pathname]);
 
     return (
@@ -110,19 +68,21 @@ const HeaderComponent = (props: any) => {
                 <Menu
                     mode="horizontal"
                     theme="dark"
-                    onClick={handleSelectedKeys}
                     selectedKeys={selectedKeys}
+                    openKeys={openKeys}
+                    onOpenChange={(keys) => setOpenKeys(keys as string[])}
                 >
-                    {navMenuList.map((nav: any) => {
-                        const { children, name, path, icon } = nav;
+                    {NAV_MENU_LIST.map((nav: any) => {
+                        const { children, name, path, iconKey } = nav;
+                        const icon = iconMap[iconKey];
                         if (Array.isArray(children) && children.length > 0) {
                             return (
                                 <SubMenu
-                                    key={name}
+                                    key={path}
                                     title={
                                         <span>
                                             {icon}
-                                            <span>Navigation Two</span>
+                                            <span>{name}</span>
                                         </span>
                                     }
                                 >
@@ -130,7 +90,7 @@ const HeaderComponent = (props: any) => {
                                         <Menu.Item key={navChild.path}>
                                             {/* @ts-ignore */}
                                             <Link to={navChild.path}>
-                                                {navChild.icon}
+                                                {iconMap[navChild.iconKey]}
                                                 <span>{navChild.name}</span>
                                             </Link>
                                         </Menu.Item>

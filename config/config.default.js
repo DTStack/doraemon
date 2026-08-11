@@ -43,6 +43,14 @@ module.exports = (app) => {
         githubToken: process.env.GITHUB_TOKEN || '',
         gitlabHostWhitelist: ['gitlab.prod.dtstack.cn'],
     };
+    exports.agentMarket = {
+        storageDir: process.env.AGENT_MARKET_STORAGE_DIR || '/data/doraemon/agent-market',
+        maxZipSize: 50 * 1024 * 1024,
+        maxExtractedSize: 200 * 1024 * 1024,
+        maxFileCount: 500,
+        maxSingleFileSize: 20 * 1024 * 1024,
+        maxImageSize: 5 * 1024 * 1024,
+    };
 
     exports.middleware = ['access'];
 

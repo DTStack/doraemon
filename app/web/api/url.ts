@@ -339,7 +339,7 @@ export default {
     },
 
     /**
-     * Skills 市场
+     * Skill 市场
      */
     // 获取 Skills 列表
     getSkillList: {
@@ -400,5 +400,29 @@ export default {
     getSkillLikeStatus: {
         method: 'get',
         url: '/api/skills/like-status',
+    },
+
+    /**
+     * Agent 市场
+     */
+    getAgentList: {
+        method: 'get',
+        url: '/api/agents/list',
+    },
+    getAgentDetail: {
+        method: 'get',
+        url: '/api/agents/detail',
+    },
+    getRelatedAgents: {
+        method: 'get',
+        url: '/api/agents/related',
+    },
+    importAgentFile: {
+        method: 'postForm',
+        url: '/api/agents/import-file',
+    },
+    deleteAgent: {
+        method: 'post',
+        url: '/api/agents/delete',
     },
 };
