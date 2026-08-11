@@ -1,0 +1,24 @@
+docs/superpowers/specs/2026-08-11-agent-market-design.md
+  s_b1f111c2a305af::t_50a97fe69ee6bf 30,220,404
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6f7c041adfabf836242836ede8717a763bdcf3d5",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_b1f111c2a305af": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff036-c499-7870-8e25-3e14ba5ac14b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
