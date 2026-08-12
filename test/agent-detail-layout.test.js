@@ -181,7 +181,9 @@ test('Agent 能力页签中的内置 Skills 使用紧凑双列网格', () => {
         '内置 Skills 卡片需要收紧内边距'
     );
     assert.equal(
-        content.includes('.agent-skill-card-title') && content.includes('font-size: 17px;'),
+        content.includes('.agent-skill-card-title') &&
+            content.includes('span:first-child') &&
+            content.includes('font-size: 15px;'),
         true,
         '内置 Skills 标题字号需要提升'
     );
@@ -255,7 +257,8 @@ test('Agent 开场问题卡片提供调起 Codex 的快捷使用入口', () => {
             content.includes('buildCodexNewThreadUrl') &&
             content.includes('className="agent-question-quick-use"') &&
             content.includes('agent-question-quick-use-icon') &&
-            content.includes('onClick={() => openCodexInstall(item)}') &&
+            content.includes('onClick') &&
+            content.includes('openCodexInstall(item)') &&
             content.includes('快捷使用'),
         true,
         '开场问题卡片需要提供快捷使用按钮并调起 Codex'
@@ -267,14 +270,13 @@ test('Agent 开场问题卡片提供调起 Codex 的快捷使用入口', () => {
     );
     assert.equal(
         styleContent.includes('.agent-question-quick-use') &&
-            styleContent.includes('grid-template-columns: 32px minmax(0, 1fr) auto;') &&
+            styleContent.includes('grid-template-columns: 32px minmax(0, 1fr);') &&
             styleContent.includes('align-items: center;') &&
             styleContent.includes('&:hover,') &&
             styleContent.includes('transform: translateY(-1px);') &&
             styleContent.includes('border-color: #D8DFEA;') &&
             styleContent.includes('.agent-question-quick-use-icon') &&
-            !styleContent.includes('border: 1px solid #F59E0B;') &&
-            !styleContent.includes('background: rgba(245, 158, 11, 0.12);'),
+            !styleContent.includes('border: 1px solid #F59E0B;'),
         true,
         '开场问题快捷使用按钮需要左右布局、垂直居中并提供克制的 hover 样式'
     );

@@ -650,6 +650,11 @@ class AgentsService extends Service {
             this.ctx.throw(400, '仅支持上传 .zip 文件');
         }
 
+        const config = this.getAgentMarketConfig();
+        if (file.size && file.size > config.maxZipSize) {
+            this.ctx.throw(400, `ZIP 文件超过大小限制 ${config.maxZipSize / 1024 / 1024}MB`);
+        }
+
         await this.ensureStorageReady();
 
         const parsed = await this.parseAgentZip(file.filepath);
