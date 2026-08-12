@@ -984,6 +984,9 @@ class AgentsService extends Service {
                       name: skillMap.get(entrypoint.skill_slug)
                           ? skillMap.get(entrypoint.skill_slug).name
                           : entrypoint.skill_slug,
+                      description: skillMap.get(entrypoint.skill_slug)
+                          ? skillMap.get(entrypoint.skill_slug).description || ''
+                          : '',
                       collected: Boolean(skillMap.get(entrypoint.skill_slug)),
                       path: `/page/skills/${entrypoint.skill_slug}`,
                   }
