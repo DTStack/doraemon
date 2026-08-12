@@ -1,0 +1,28 @@
+app/web/pages/agents/detail/style.scss
+  s_db4d0406c23c20::t_8725bd603abf6c 46-48,56-57,80,88,106-107
+app/web/pages/skills/detail/components/SkillInstallPanel.tsx
+  s_db4d0406c23c20::t_8725bd603abf6c 44
+app/web/pages/skills/detail/style.scss
+  s_db4d0406c23c20::t_8725bd603abf6c 738,800,817,830,838,874
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "e66d1d0d1deeb75953115d8767b315f5d6eae7c8",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_db4d0406c23c20": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff5f8-8a43-7c73-b281-8ab3fd0fe9b0",
+        "model": "gpt-5.4"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
