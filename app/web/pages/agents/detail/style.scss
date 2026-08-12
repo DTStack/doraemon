@@ -176,11 +176,11 @@
         gap: 8px;
     }
     .agent-capability-card {
+        position: relative;
         min-width: 0;
         padding: 10px 12px;
         border: 1px solid #E9EEF5;
         border-radius: 10px;
-        background: linear-gradient(180deg, #FFF 0%, #FBFDFF 100%);
         .ant-typography:first-child {
             display: block;
             margin-bottom: 2px;
@@ -195,6 +195,17 @@
             line-height: 1.5;
             font-size: 13px;
         }
+    }
+    .agent-capability-card-index {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        color: #98A2B3;
+        font-size: 14px;
+        line-height: 1;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.02em;
     }
     .agent-prompts {
         display: grid;

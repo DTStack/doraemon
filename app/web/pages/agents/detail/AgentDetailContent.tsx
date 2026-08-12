@@ -236,6 +236,9 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                                         key={`${item.id || item.name}-${index}`}
                                                         className="agent-capability-card"
                                                     >
+                                                        <span className="agent-capability-card-index">
+                                                            {String(index + 1).padStart(2, '0')}
+                                                        </span>
                                                         <Text strong>{item.name}</Text>
                                                         {item.description ? (
                                                             <Paragraph>
