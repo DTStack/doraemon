@@ -1,0 +1,61 @@
+app/web/pages/agents/index.tsx
+  s_3e6c0c79bf6b83::t_073479216112f3 21-22,194-199,216-224
+  s_3e6c0c79bf6b83::t_f5ee6ca35cac2b 225
+env.json
+  s_3e6c0c79bf6b83::t_073479216112f3 9
+docs/docsify/zh-cn/configuration/envConfig.md
+  s_3e6c0c79bf6b83::t_073479216112f3 10-11,93-117
+  s_3e6c0c79bf6b83::t_c1b10b69784a06 118
+app/controller/common.js
+  s_9f25f5acd59ed2::t_12d9190726ce87 22-23
+test/agent-list-layout.test.js
+  s_3e6c0c79bf6b83::t_f0f78984450f6e 46-56
+docs/docsify/index.html
+  s_9f25f5acd59ed2::t_d317dfbfaba580 12
+docs/docsify/zh-cn/_sidebar.md
+  s_3e6c0c79bf6b83::t_ca7e9994873c77 19
+test/agent-help-doc-config.test.js
+  s_3e6c0c79bf6b83::t_34908e6a13ae8f 1-14
+docs/docsify/_sidebar.md
+  s_3e6c0c79bf6b83::t_ca7e9994873c77 19
+docs/docsify/zh-cn/guide/agent-market.md
+  s_3e6c0c79bf6b83::t_e0cd4727b0ee53 179-198
+  s_3e6c0c79bf6b83::t_a99e95544fda1a 176,203-210,212-253
+  s_3e6c0c79bf6b83::t_141a34a12e3d96 1-9,11-30,32-34,37-42,44-57,59-68,83,86-110,113,124,127-175,177-178,199-202,211,254-267
+  s_3e6c0c79bf6b83::t_c0609a62620095 10,70-72,75-82,121-122
+  h_3070dc1062bb3b 31,43,58,69
+  s_3e6c0c79bf6b83::t_073479216112f3 35-36,84-85,111-112,114-120,123,125-126
+  s_3e6c0c79bf6b83::t_d4acc29b85d16e 73-74
+app/web/pages/agents/style.scss
+  s_3e6c0c79bf6b83::t_073479216112f3 60-72,179-181
+  s_3e6c0c79bf6b83::t_9e9087bd9b7530 182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "bb03d7d8baf4f15f98e098a53b687bb39e4180fe",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_3e6c0c79bf6b83": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff148-1c59-7f90-88e5-d82f3f9119df",
+        "model": "gpt-5.4"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    },
+    "s_9f25f5acd59ed2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0f4693a2-738c-49da-a232-d3d4cb10c4cb",
+        "model": "deepseek-v4-pro"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
