@@ -1,0 +1,19 @@
+config/config.default.js
+  s_9f25f5acd59ed2::t_3b93bf666da068 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "135df4c669fed31e17ec0a11627a6c9b74d280b1",
+  "prompts": {},
+  "sessions": {
+    "s_9f25f5acd59ed2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0f4693a2-738c-49da-a232-d3d4cb10c4cb",
+        "model": "deepseek-v4-pro"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
