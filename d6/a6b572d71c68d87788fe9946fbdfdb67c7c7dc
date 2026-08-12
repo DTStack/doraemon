@@ -1,0 +1,99 @@
+app/web/pages/agents/detail/style.scss
+  s_3e6c0c79bf6b83::t_8099a2d157498d 92,97,99-100,102-104,107
+  s_3e6c0c79bf6b83::t_f66930cbdccb7d 110-114
+  s_3e6c0c79bf6b83::t_1b903bc49ed2a4 175-176,180,182,186,189,194-195,440-441
+  s_3e6c0c79bf6b83::t_111e497590148f 30-45,47-67,69-78,80-86,88-91,93-96,101,106,108-109
+  s_3e6c0c79bf6b83::t_5ef140d852a592 12-13,15,29,202,207-221,223-224,226-236,442,455-457
+  h_3070dc1062bb3b 28,257-258,323
+  s_3e6c0c79bf6b83::t_3754bc8343fa2d 46,68,79,87,98,105,222,225
+app/service/agents.js
+  s_9f25f5acd59ed2::t_5f5b69d40b8cc0 791
+  s_3e6c0c79bf6b83::t_f66930cbdccb7d 351,618-626,673,693,696-697,1096-1124,1126
+  s_3e6c0c79bf6b83::t_36b03dd3d142d7 10-13,125-127,158,241-243,254-257,272,348-350,599,796-800,802-805,1125,1127
+app/web/api/url.ts
+  s_3e6c0c79bf6b83::t_f66930cbdccb7d 420-423
+test/agent-market-controller.test.js
+  s_3e6c0c79bf6b83::t_d7530173b9e40b 73-97
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  h_3070dc1062bb3b 11,218,246,427-433,435,458,462-464
+  s_3e6c0c79bf6b83::t_111e497590148f 3,14,141-147,434,436-453
+  s_3e6c0c79bf6b83::t_2ddefc11ea04e3 259,266-268
+  s_3e6c0c79bf6b83::t_5ef140d852a592 91,98,247-258,260-265,269-274,276-280,283-289
+  s_3e6c0c79bf6b83::t_f66930cbdccb7d 4,15,454-457,459-461,465-467
+  s_3e6c0c79bf6b83::t_d4e02943d55ba3 212-214
+app/controller/agents.js
+  s_3e6c0c79bf6b83::t_f218cfdebc6f4a 30-32
+  s_3e6c0c79bf6b83::t_f66930cbdccb7d 29,33-37
+  s_3e6c0c79bf6b83::t_d3493c01cf4760 22-23
+app/router.js
+  s_3e6c0c79bf6b83::t_f66930cbdccb7d 172
+test/header-nav-config.test.js
+  s_b1f111c2a305af::t_993df0806cb6dc 18,21,30-35
+  s_b1f111c2a305af::t_fe93f32c732d53 36-37
+  s_3e6c0c79bf6b83::t_e7dfe9c0c7cf21 50-57,66
+test/agent-market-service.test.js
+  s_3e6c0c79bf6b83::t_704a2261ad620b 440
+  s_3e6c0c79bf6b83::t_d7530173b9e40b 210,405-421,423-439,441-464
+  s_3e6c0c79bf6b83::t_8451f6e918b33b 207-209
+  s_3e6c0c79bf6b83::t_ec264a3f58d3e3 422
+  s_3e6c0c79bf6b83::t_56cef4012a0ee5 63,155-157,232
+app/web/layouts/header/nav-config.js
+  s_b1f111c2a305af::t_993df0806cb6dc 43-47,52
+  s_b1f111c2a305af::t_462daca793610d 42
+  s_3e6c0c79bf6b83::t_d06d35ac1e5720 89-91
+test/agent-detail-layout.test.js
+  s_3e6c0c79bf6b83::t_b849c72649417c 138,142-145,148,154-162
+  s_3e6c0c79bf6b83::t_da8257255b1569 83-111,113,115
+  s_3e6c0c79bf6b83::t_d7530173b9e40b 8,32,77,242-255
+  s_3e6c0c79bf6b83::t_0e02ade1571c40 78,213-216,231,233-239
+  s_3e6c0c79bf6b83::t_36f2b44fe21c3f 207-212,217-225,229-230,240-241
+  s_3e6c0c79bf6b83::t_150bb12addd643 226-228
+  s_3e6c0c79bf6b83::t_ef2d9bcaaa6aa4 61,63-69,71-75
+  s_3e6c0c79bf6b83::t_236115da68665e 76
+  s_3e6c0c79bf6b83::t_02f3b6bfdb5e50 82
+  s_3e6c0c79bf6b83::t_f2cbe4b755766b 232
+  s_3e6c0c79bf6b83::t_c4e73156659625 22,152,179,184,189
+app/model/agent_file.js
+  s_3e6c0c79bf6b83::t_b39204f063295d 76-79
+app/web/layouts/basicLayout/index.tsx
+  s_3e6c0c79bf6b83::t_cddc27901238d8 9
+app/web/pages/agents/index.tsx
+  s_3e6c0c79bf6b83::t_8bc83abaf6e15c 2,199-203,286-289,301-303
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d6a6b572d71c68d87788fe9946fbdfdb67c7c7dc",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_3e6c0c79bf6b83": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff148-1c59-7f90-88e5-d82f3f9119df",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    },
+    "s_9f25f5acd59ed2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0f4693a2-738c-49da-a232-d3d4cb10c4cb",
+        "model": "deepseek-v4-pro"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    },
+    "s_b1f111c2a305af": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff036-c499-7870-8e25-3e14ba5ac14b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
