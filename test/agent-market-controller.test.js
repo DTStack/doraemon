@@ -70,3 +70,28 @@ test('getRelatedAgents 透传 limit 参数', async () => {
     assert.equal(controller.ctx.body.success, true);
     assert.equal(controller.ctx.body.data.length, 1);
 });
+
+test('downloadAgentArchive 返回 ZIP 文件流和下载响应头', async () => {
+    const headers = {};
+    const stream = { pipe() {} };
+    const controller = buildController({
+        getAgentArchiveStream: async (name) => {
+            assert.equal(name, 'bugfix-agent');
+            return {
+                stream,
+                fileName: 'bugfix-agent.zip',
+                mimeType: 'application/zip',
+            };
+        },
+    });
+    controller.ctx.query = { name: 'bugfix-agent' };
+    controller.ctx.set = (key, value) => {
+        headers[key] = value;
+    };
+
+    await controller.downloadAgentArchive();
+
+    assert.equal(headers['Content-Type'], 'application/zip');
+    assert.equal(headers['Content-Disposition'], 'attachment; filename="bugfix-agent.zip"');
+    assert.equal(controller.ctx.body, stream);
+});

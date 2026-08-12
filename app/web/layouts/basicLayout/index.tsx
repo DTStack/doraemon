@@ -5,8 +5,8 @@ import { Layout, Modal } from 'antd';
 import classnames from 'classnames';
 
 import Header from '../header/header';
-const { shouldUseSkillDetailLayout } = require('./layout-flags');
 import './style.scss';
+const { shouldUseSkillDetailLayout } = require('./layout-flags');
 const { Content } = Layout;
 
 const BasicLayout = (props: any) => {

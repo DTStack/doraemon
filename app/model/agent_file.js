@@ -73,7 +73,10 @@ module.exports = (app) => {
             timestamps: true,
             createdAt: 'created_at',
             updatedAt: 'updated_at',
-            indexes: [{ unique: true, fields: ['agent_id', 'file_path'] }, { fields: ['agent_id'] }],
+            indexes: [
+                { unique: true, fields: ['agent_id', 'file_path'] },
+                { fields: ['agent_id'] },
+            ],
         }
     );
 

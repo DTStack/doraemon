@@ -1,14 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+    CopyOutlined,
+    DownloadOutlined,
     MessageOutlined,
     OrderedListOutlined,
     QuestionCircleOutlined,
     ReadOutlined,
     UserOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Empty, message, Space, Spin, Tabs, Tag, Typography } from 'antd';
+import { Button, Card, Empty, message, Spin, Tabs, Tag, Typography } from 'antd';
 
 import { API } from '@/api';
+import { copyToClipboard } from '@/utils/copyUtils';
+import { safeOpenUrl } from '@/utils/safeOpenUrl';
 import type { AgentCapability, AgentDetail, AgentItem, AgentSkillRelation } from '../types';
 import './style.scss';
 
@@ -84,12 +88,14 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
     const [loading, setLoading] = useState(true);
     const [detail, setDetail] = useState<AgentDetail | null>(null);
     const [related, setRelated] = useState<AgentItem[]>([]);
+    const [selectedDemoIndex, setSelectedDemoIndex] = useState(0);
 
     useEffect(() => {
         let cancelled = false;
 
         const load = async () => {
             setLoading(true);
+            setSelectedDemoIndex(0);
             try {
                 const [detailRes, relatedRes] = await Promise.all([
                     API.getAgentDetail({ name }),
@@ -132,6 +138,13 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
         () => normalizeAgentCapabilities(detail?.capabilities || []),
         [detail?.capabilities]
     );
+    const currentOrigin = useMemo(() => {
+        if (typeof window === 'undefined') return '';
+        return window.location.origin;
+    }, []);
+    const installCommand = detail
+        ? `curl -fsSL ${currentOrigin}/agent-market/install.sh | bash -s -- ${detail.name}`
+        : '';
 
     if (loading) {
         return (
@@ -196,13 +209,13 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                             <div className="agent-section-stack">
                                 <Card className="agent-section-card">
                                     <Title level={4}>你可以使用该 Agent 做什么</Title>
-                                    <Paragraph className="agent-overview-description">
-                                        {detail.description || '暂无描述'}
-                                    </Paragraph>
+                                    <div className="agent-intro-panel agent-profile-copy agent-overview-description">
+                                        <Paragraph>{detail.description || '暂无描述'}</Paragraph>
+                                    </div>
                                 </Card>
 
                                 <Card className="agent-section-card">
-                                    <Title level={4}>Agent 能力</Title>
+                                    <Title level={4}>能力范围</Title>
                                     {normalizedCapabilities.length > 0 ? (
                                         <div className="agent-capability-grid">
                                             {normalizedCapabilities.map(
@@ -230,17 +243,50 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                 </Card>
 
                                 <Card className="agent-section-card">
-                                    <Title level={4}>Demo</Title>
-                                    <div className="agent-demo-images">
-                                        {(detail.demoImages || []).map((item) => (
-                                            <div key={item.path} className="agent-demo-image-item">
+                                    <Title level={4}>Agent 演示</Title>
+                                    {detail.demoImages.length > 0 ? (
+                                        <div className="agent-demo-gallery">
+                                            <div className="agent-demo-thumbnails">
+                                                {detail.demoImages.map((item, index) => (
+                                                    <button
+                                                        key={item.path}
+                                                        type="button"
+                                                        className={`agent-demo-thumbnail ${
+                                                            selectedDemoIndex === index
+                                                                ? 'is-active'
+                                                                : ''
+                                                        }`}
+                                                        onClick={() => setSelectedDemoIndex(index)}
+                                                        aria-label={`查看演示图片 ${index + 1}`}
+                                                    >
+                                                        <img
+                                                            src={item.url}
+                                                            alt={
+                                                                item.alt ||
+                                                                `${detail.displayName} 演示 ${
+                                                                    index + 1
+                                                                }`
+                                                            }
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="agent-demo-preview">
                                                 <img
-                                                    src={item.url}
-                                                    alt={item.alt || detail.displayName}
+                                                    src={detail.demoImages[selectedDemoIndex].url}
+                                                    alt={
+                                                        detail.demoImages[selectedDemoIndex].alt ||
+                                                        detail.displayName
+                                                    }
                                                 />
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    ) : (
+                                        <Empty
+                                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                            description="暂无演示图片"
+                                        />
+                                    )}
                                 </Card>
                             </div>
                         </TabPane>
@@ -378,15 +424,47 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                 </main>
 
                 <aside className="agent-detail-side">
-                    <Card className="agent-side-actions">
-                        <Space direction="vertical" style={{ width: '100%' }} size={12}>
-                            <Button block onClick={() => message.info('敬请期待')}>
-                                安装
-                            </Button>
-                            <Button type="primary" block onClick={() => message.info('敬请期待')}>
-                                敬请期待
-                            </Button>
-                        </Space>
+                    <Card className="agent-side-actions" title="安装命令">
+                        <div className="agent-install-terminal">
+                            <div className="agent-install-terminal-head">
+                                <span className="agent-install-terminal-dots">
+                                    <i />
+                                    <i />
+                                    <i />
+                                </span>
+                                <span>BASH</span>
+                            </div>
+                            <div className="agent-install-terminal-body">
+                                <span className="agent-install-prompt">$</span>
+                                <code>{installCommand}</code>
+                                <Button
+                                    type="text"
+                                    className="agent-install-copy"
+                                    icon={<CopyOutlined />}
+                                    aria-label="复制 Agent 安装命令"
+                                    onClick={() =>
+                                        copyToClipboard(
+                                            installCommand,
+                                            'Agent 安装命令已复制到剪贴板'
+                                        )
+                                    }
+                                />
+                            </div>
+                        </div>
+                        <Button
+                            block
+                            className="agent-archive-download"
+                            icon={<DownloadOutlined />}
+                            onClick={() => {
+                                safeOpenUrl(
+                                    `/api/agents/download?name=${encodeURIComponent(detail.name)}`,
+                                    '_self'
+                                );
+                                message.info('Agent ZIP 下载已开始');
+                            }}
+                        >
+                            下载 Agent ZIP
+                        </Button>
                     </Card>
 
                     <Card className="agent-side-related" title="相关 Agent">

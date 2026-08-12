@@ -40,22 +40,22 @@ const NAV_MENU_LIST = [
         routers: ['agents'],
     },
     {
+        name: '环境管理',
+        path: '/page/env-management',
+        iconKey: 'desktop',
+        routers: ['env-management'],
+    },
+    {
         name: '更多',
         path: MORE_MENU_PATH,
         iconKey: 'more',
-        routers: ['host-management', 'env-management', 'config-center', 'config-detail', 'tags'],
+        routers: ['host-management', 'config-center', 'config-detail', 'tags'],
         children: [
             {
                 name: '主机管理',
                 path: '/page/host-management',
                 iconKey: 'cloud-server',
                 routers: ['host-management'],
-            },
-            {
-                name: '环境管理',
-                path: '/page/env-management',
-                iconKey: 'desktop',
-                routers: ['env-management'],
             },
             {
                 name: '配置中心',
@@ -86,7 +86,9 @@ function findMatchedMenu(pathname, navMenuList = NAV_MENU_LIST) {
     const targetPathname = String(pathname || '');
 
     for (const item of navMenuList) {
-        const directMatched = (item.routers || []).some((router) => targetPathname.indexOf(router) > -1);
+        const directMatched = (item.routers || []).some(
+            (router) => targetPathname.indexOf(router) > -1
+        );
         if (directMatched && !Array.isArray(item.children)) {
             return {
                 selectedPath: item.path,

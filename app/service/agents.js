@@ -7,7 +7,10 @@ const yaml = require('js-yaml');
 const mime = require('mime-types');
 
 const { normalizeRelativePath } = require('../utils/skill-utils');
-const { isValidSkillCategory, SKILL_CATEGORY_OPTIONS } = require('../../contracts/skill-categories');
+const {
+    isValidSkillCategory,
+    SKILL_CATEGORY_OPTIONS,
+} = require('../../contracts/skill-categories');
 
 const AGENT_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SEMVER_PATTERN =
@@ -119,7 +122,9 @@ class AgentsService extends Service {
     }
 
     parseSemver(version) {
-        const match = String(version || '').trim().match(SEMVER_PATTERN);
+        const match = String(version || '')
+            .trim()
+            .match(SEMVER_PATTERN);
         if (!match) {
             this.ctx.throw(400, 'metadata.version 必须是有效的 SemVer 格式');
         }
@@ -150,12 +155,7 @@ class AgentsService extends Service {
     detectImageMime(buffer) {
         if (!buffer || buffer.length < 12) return '';
 
-        if (
-            buffer[0] === 0x89 &&
-            buffer[1] === 0x50 &&
-            buffer[2] === 0x4e &&
-            buffer[3] === 0x47
-        ) {
+        if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
             return 'image/png';
         }
 
@@ -238,7 +238,9 @@ class AgentsService extends Service {
             .filter((item) => item && item.name !== target.name)
             .map((item) => {
                 const dependencies = Array.isArray(item.dependencies) ? item.dependencies : [];
-                const overlap = dependencies.filter((skill) => targetDependencies.has(skill)).length;
+                const overlap = dependencies.filter((skill) =>
+                    targetDependencies.has(skill)
+                ).length;
                 return {
                     ...item,
                     overlapCount: overlap,
@@ -249,7 +251,10 @@ class AgentsService extends Service {
                 if (right.overlapCount !== left.overlapCount) {
                     return right.overlapCount - left.overlapCount;
                 }
-                return new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime();
+                return (
+                    new Date(right.updatedAt || 0).getTime() -
+                    new Date(left.updatedAt || 0).getTime()
+                );
             })
             .slice(0, Number(limit) || 3);
     }
@@ -264,10 +269,7 @@ class AgentsService extends Service {
 
     getDemoImagePath(item, index) {
         // demo.images 只接受 src，避免和其他文件路径字段语义混淆
-        return this.normalizeAgentPath(
-            item?.src || '',
-            `spec.demo.images[${index}] 路径非法`
-        );
+        return this.normalizeAgentPath(item?.src || '', `spec.demo.images[${index}] 路径非法`);
     }
 
     normalizeCapabilities(capabilities) {
@@ -343,7 +345,10 @@ class AgentsService extends Service {
             this.ctx.throw(400, `Logo 文件不存在: ${logoPath}`);
         }
 
-        const entrypointRef = this.normalizeAgentPath(entrypoint.ref, 'spec.entrypoint.ref 路径非法');
+        const entrypointRef = this.normalizeAgentPath(
+            entrypoint.ref,
+            'spec.entrypoint.ref 路径非法'
+        );
         if (!fileMap.has(`${entrypointRef}/SKILL.md`) && !fileMap.has(entrypointRef)) {
             this.ctx.throw(400, `入口 Skill 不存在: ${entrypointRef}`);
         }
@@ -591,10 +596,7 @@ class AgentsService extends Service {
             demoImages,
             files,
             skillRelations: this.buildSkillRelations(validated.name, manifest),
-            assetFiles: [
-                logo,
-                ...demoImages,
-            ],
+            assetFiles: [logo, ...demoImages],
         };
     }
 
@@ -611,6 +613,15 @@ class AgentsService extends Service {
         });
 
         return touchedDirs;
+    }
+
+    async writeAgentArchive(agent, sourcePath) {
+        const storageDir = this.getAgentMarketConfig().storageDir;
+        const archiveDir = path.join(storageDir, agent.name, agent.contentHash);
+        const archivePath = path.join(archiveDir, `${agent.name}.zip`);
+        fs.mkdirSync(archiveDir, { recursive: true });
+        fs.copyFileSync(sourcePath, archivePath);
+        return archiveDir;
     }
 
     removeDirectory(targetPath) {
@@ -659,6 +670,7 @@ class AgentsService extends Service {
             }
 
             if (existing.content_hash === parsed.agent.contentHash) {
+                await this.writeAgentArchive(parsed.agent, file.filepath);
                 return {
                     unchanged: true,
                     name: parsed.agent.name,
@@ -678,9 +690,11 @@ class AgentsService extends Service {
             }
         }
 
-        const touchedDirs = await this.writeAssetFiles(parsed.assetFiles);
+        let touchedDirs = new Set();
 
         try {
+            touchedDirs = await this.writeAssetFiles(parsed.assetFiles);
+            touchedDirs.add(await this.writeAgentArchive(parsed.agent, file.filepath));
             const result = await this.app.model.transaction(async (transaction) => {
                 let agentId = existing ? existing.id : null;
 
@@ -774,14 +788,21 @@ class AgentsService extends Service {
                     id: agentId,
                     name: parsed.agent.name,
                     version: parsed.agent.version,
-                    updated: Boolean(existing),
+                    updated: existing && Number(existing.is_delete) !== 1,
                     contentHash: parsed.agent.contentHash,
                 };
             });
 
-            if (existing && existing.content_hash && existing.content_hash !== parsed.agent.contentHash) {
+            if (
+                existing &&
+                existing.content_hash &&
+                existing.content_hash !== parsed.agent.contentHash
+            ) {
                 this.removeDirectory(
-                    path.join(this.getAgentMarketConfig().storageDir, `${parsed.agent.name}/${existing.content_hash}`)
+                    path.join(
+                        this.getAgentMarketConfig().storageDir,
+                        `${parsed.agent.name}/${existing.content_hash}`
+                    )
                 );
             }
 
@@ -1069,6 +1090,38 @@ class AgentsService extends Service {
             cacheControl: requestedPath.includes(`/${row.content_hash}/`)
                 ? 'public, max-age=31536000, immutable'
                 : 'public, max-age=300',
+        };
+    }
+
+    async getAgentArchiveStream(name) {
+        await this.ensureStorageReady();
+        const agentName = this.validateAgentName(name);
+        const { Agent } = this.app.model;
+        const row = await Agent.findOne({
+            where: {
+                name: agentName,
+                is_delete: 0,
+            },
+        });
+        if (!row) {
+            this.ctx.throw(404, 'Agent 不存在');
+        }
+
+        const fileName = `${row.name}.zip`;
+        const archivePath = path.join(
+            this.getAgentMarketConfig().storageDir,
+            row.name,
+            row.content_hash,
+            fileName
+        );
+        if (!fs.existsSync(archivePath)) {
+            this.ctx.throw(404, 'Agent 原始 ZIP 不存在，请重新导入后再试');
+        }
+
+        return {
+            stream: fs.createReadStream(archivePath),
+            fileName,
+            mimeType: 'application/zip',
         };
     }
 

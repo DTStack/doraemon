@@ -60,8 +60,7 @@ function createAgentZip(manifestOverrides = {}, extraEntries = []) {
             prompts: [
                 {
                     title: '修复 Bug 并部署 OMP online 环境',
-                    prompt:
-                        '$bugfix-workflow 156343 dataApi 6.0.x，使用来源分支 dataApi/release_6.0.x，并部署到匹配的 OMP online 环境',
+                    prompt: '$bugfix-workflow 156343 dataApi 6.0.x，使用来源分支 dataApi/release_6.0.x，并部署到匹配的 OMP online 环境',
                 },
                 {
                     title: '仅分析 Bug',
@@ -153,18 +152,9 @@ function createAgentZip(manifestOverrides = {}, extraEntries = []) {
         `${root}/subagents/bugfix-worker.toml`,
         Buffer.from('name = "bugfix-worker"\n', 'utf8')
     );
-    zip.addFile(
-        `${root}/assets/logo.png`,
-        Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex')
-    );
-    zip.addFile(
-        `${root}/assets/demo1.png`,
-        Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex')
-    );
-    zip.addFile(
-        `${root}/assets/demo2.png`,
-        Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex')
-    );
+    zip.addFile(`${root}/assets/logo.png`, Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex'));
+    zip.addFile(`${root}/assets/demo1.png`, Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex'));
+    zip.addFile(`${root}/assets/demo2.png`, Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex'));
 
     extraEntries.forEach((entry) => {
         zip.addFile(entry.name, Buffer.from(entry.content || '', entry.encoding || 'utf8'));
@@ -214,7 +204,10 @@ test('parseAgentZip 解析单 Agent ZIP 并拆出结构化字段与文件快照'
             parsed.files.some((item) => item.filePath === 'skills/bugfix-workflow/SKILL.md'),
             true
         );
-        assert.equal(parsed.files.some((item) => item.filePath === 'agent.yaml'), true);
+        assert.equal(
+            parsed.files.some((item) => item.filePath === 'agent.yaml'),
+            true
+        );
     } finally {
         fixture.cleanup();
     }
@@ -236,10 +229,7 @@ test('parseAgentZip 拒绝非法分类', async () => {
     });
 
     try {
-        await assert.rejects(
-            () => service.parseAgentZip(fixture.zipPath),
-            /category 无效/
-        );
+        await assert.rejects(() => service.parseAgentZip(fixture.zipPath), /category 无效/);
     } finally {
         fixture.cleanup();
     }
@@ -283,7 +273,6 @@ test('parseAgentZip 支持 capabilities 使用对象数组并提取 name', async
     const fixture = createAgentZip();
 
     const zip = new AdmZip(fixture.zipPath);
-    const agentYamlEntry = zip.getEntry('bugfix-agent/agent.yaml');
     const yamlContent = [
         'apiVersion: doraemon.dtstack.com/v1',
         'kind: Agent',
@@ -412,4 +401,64 @@ test('buildRelatedAgents 仅按依赖 Skills 交集排序且忽略入口 Skill',
         related.map((item) => item.name),
         ['review-agent', 'release-conflict-agent']
     );
+});
+
+test('writeAgentArchive 将原始 ZIP 保存到当前内容 hash 目录', async () => {
+    const storageDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-archive-storage-'));
+    const sourceDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-archive-source-'));
+    const sourcePath = path.join(sourceDir, 'uploaded.zip');
+    fs.writeFileSync(sourcePath, Buffer.from('original-agent-zip'));
+    const service = createService();
+    service.app.config.agentMarket.storageDir = storageDir;
+
+    try {
+        const archiveDir = await service.writeAgentArchive(
+            {
+                name: 'bugfix-agent',
+                contentHash: 'hash-v2',
+            },
+            sourcePath
+        );
+        const archivePath = path.join(storageDir, 'bugfix-agent', 'hash-v2', 'bugfix-agent.zip');
+
+        assert.equal(archiveDir, path.dirname(archivePath));
+        assert.equal(fs.readFileSync(archivePath, 'utf8'), 'original-agent-zip');
+    } finally {
+        fs.rmSync(storageDir, { recursive: true, force: true });
+        fs.rmSync(sourceDir, { recursive: true, force: true });
+    }
+});
+
+test('getAgentArchiveStream 返回当前 hash 对应的原始 ZIP', async () => {
+    const storageDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-archive-download-'));
+    const archiveDir = path.join(storageDir, 'bugfix-agent', 'hash-current');
+    const archivePath = path.join(archiveDir, 'bugfix-agent.zip');
+    fs.mkdirSync(archiveDir, { recursive: true });
+    fs.writeFileSync(archivePath, Buffer.from('download-agent-zip'));
+    const service = createService();
+    service.app.config.agentMarket.storageDir = storageDir;
+    service.storageReady = true;
+    service.app.model = {
+        Agent: {
+            async findOne() {
+                return {
+                    name: 'bugfix-agent',
+                    content_hash: 'hash-current',
+                    is_delete: 0,
+                };
+            },
+        },
+    };
+
+    try {
+        const result = await service.getAgentArchiveStream('bugfix-agent');
+        const chunks = [];
+        for await (const chunk of result.stream) chunks.push(chunk);
+
+        assert.equal(Buffer.concat(chunks).toString('utf8'), 'download-agent-zip');
+        assert.equal(result.fileName, 'bugfix-agent.zip');
+        assert.equal(result.mimeType, 'application/zip');
+    } finally {
+        fs.rmSync(storageDir, { recursive: true, force: true });
+    }
 });

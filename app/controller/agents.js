@@ -19,11 +19,19 @@ class AgentsController extends Controller {
     }
 
     async getAgentAsset() {
-        const { stream, mimeType, cacheControl } = await this.ctx.service.agents.getAgentAssetStream(
-            this.ctx.query
-        );
+        const { stream, mimeType, cacheControl } =
+            await this.ctx.service.agents.getAgentAssetStream(this.ctx.query);
         this.ctx.set('Content-Type', mimeType);
         this.ctx.set('Cache-Control', cacheControl);
+        this.ctx.body = stream;
+    }
+
+    async downloadAgentArchive() {
+        const { stream, fileName, mimeType } = await this.ctx.service.agents.getAgentArchiveStream(
+            this.ctx.query.name
+        );
+        this.ctx.set('Content-Type', mimeType);
+        this.ctx.set('Content-Disposition', `attachment; filename="${fileName}"`);
         this.ctx.body = stream;
     }
 

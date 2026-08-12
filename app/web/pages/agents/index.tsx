@@ -1,10 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-    DeleteOutlined,
-    ImportOutlined,
-    SearchOutlined,
-    UploadOutlined,
-} from '@ant-design/icons';
+import { DeleteOutlined, ImportOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
 import {
     Button,
     Card,
@@ -201,7 +196,11 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                     <h1 className="page-title">Agent 市场</h1>
                     <p className="page-subtitle">发现并导入适用于不同研发场景的 Agent</p>
                 </div>
-                <Button type="primary" icon={<ImportOutlined />} onClick={() => setImportVisible(true)}>
+                <Button
+                    type="primary"
+                    icon={<ImportOutlined />}
+                    onClick={() => setImportVisible(true)}
+                >
                     导入 Agent
                 </Button>
             </div>
@@ -284,7 +283,10 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                                     ) : null}
                                 </div>
 
-                                <Paragraph className="agent-card-description" ellipsis={{ rows: 3 }}>
+                                <Paragraph
+                                    className="agent-card-description"
+                                    ellipsis={{ rows: 3 }}
+                                >
                                     {agent.description || '暂无描述'}
                                 </Paragraph>
 
@@ -296,7 +298,9 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
 
                                 <div className="agent-card-footer">
                                     <Text type="secondary">版本 {agent.version || '-'}</Text>
-                                    <Text type="secondary">内置 Skills {agent.dependencyCount}</Text>
+                                    <Text type="secondary">
+                                        内置 Skills {agent.dependencyCount}
+                                    </Text>
                                 </div>
                             </Card>
                         ))}

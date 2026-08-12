@@ -417,6 +417,10 @@ export default {
         method: 'get',
         url: '/api/agents/related',
     },
+    downloadAgentArchive: {
+        method: 'get',
+        url: '/api/agents/download',
+    },
     importAgentFile: {
         method: 'postForm',
         url: '/api/agents/import-file',
