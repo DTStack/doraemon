@@ -343,12 +343,15 @@
     }
     .agent-question-card-body {
         display: grid;
-        grid-template-columns: 32px minmax(0, 1fr);
+        grid-template-columns: 32px minmax(0, 1fr) auto;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
     }
     .agent-question-copy {
         flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
         .ant-typography:first-child {
             display: block;
             margin-bottom: 4px;
@@ -361,6 +364,48 @@
             line-height: 1.6;
             font-size: 14px;
         }
+    }
+    .agent-question-quick-use {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 36px;
+        padding: 0 16px 0 12px;
+        border-color: #D8DFEA;
+        border-radius: 10px;
+        color: #344054;
+        background: #FFF;
+        font-weight: 600;
+        white-space: nowrap;
+        box-shadow: none;
+        transition:
+            transform 0.18s ease,
+            border-color 0.18s ease,
+            color 0.18s ease,
+            background 0.18s ease,
+            box-shadow 0.18s ease;
+        &:hover,
+        &:focus {
+            border-color: #F6B85A;
+            color: #B66A00;
+            background: #FFF9EF;
+            box-shadow: 0 6px 14px rgba(245, 158, 11, 0.12);
+            transform: translateY(-1px);
+        }
+        &:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 8px rgba(245, 158, 11, 0.1);
+        }
+        .anticon {
+            margin-right: 8px;
+        }
+    }
+    .agent-question-quick-use-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #F59E0B;
+        font-size: 14px;
     }
     .agent-skill-grid {
         display: grid;
@@ -464,6 +509,13 @@
         .agent-hero-brand {
             flex-direction: column;
             align-items: flex-start;
+        }
+        .agent-question-card-body {
+            grid-template-columns: 32px minmax(0, 1fr);
+        }
+        .agent-question-quick-use {
+            grid-column: 2;
+            justify-self: flex-end;
         }
     }
 }
