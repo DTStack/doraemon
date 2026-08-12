@@ -1,6 +1,8 @@
 import Loadable from 'react-loadable';
 
 import BasicLayout from '@/layouts/basicLayout';
+import AgentMarket from '@/pages/agents';
+import AgentDetail from '@/pages/agents/detail';
 // 文章订阅管理
 import ArticleSubscriptionList from '@/pages/articleSubscription';
 // 配置中心
@@ -121,6 +123,14 @@ const routes: any = [
             {
                 path: `${urlPrefix}/mcp-server-management`,
                 component: McpServerManagement,
+            },
+            {
+                path: `${urlPrefix}/agents/:name`,
+                component: AgentDetail,
+            },
+            {
+                path: `${urlPrefix}/agents`,
+                component: AgentMarket,
             },
             {
                 path: `${urlPrefix}/skills/:parentSlug/:slug`,

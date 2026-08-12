@@ -378,6 +378,84 @@ CREATE TABLE `skills_files` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='技能文件表';
 
 -- ----------------------------
+-- Table structure for agents
+-- ----------------------------
+DROP TABLE IF EXISTS `agents`;
+CREATE TABLE `agents` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL COMMENT 'Agent 唯一标识',
+  `display_name` varchar(255) NOT NULL COMMENT 'Agent 展示名称',
+  `version` varchar(64) NOT NULL DEFAULT '' COMMENT 'Agent 版本号',
+  `description` text COMMENT '列表摘要',
+  `profile` longtext COMMENT 'Agent 详细简介',
+  `author_name` varchar(255) DEFAULT NULL COMMENT '作者',
+  `category` varchar(64) NOT NULL DEFAULT '通用' COMMENT '分类',
+  `tags` longtext COMMENT 'JSON 字符串数组',
+  `prompts` longtext COMMENT 'JSON 字符串数组',
+  `capabilities` longtext COMMENT 'JSON 字符串数组',
+  `demo_images` longtext COMMENT 'JSON 字符串数组',
+  `entrypoint_host` varchar(64) DEFAULT NULL COMMENT '入口宿主',
+  `entrypoint_type` varchar(64) DEFAULT NULL COMMENT '入口类型',
+  `entrypoint_name` varchar(255) DEFAULT NULL COMMENT '入口名称',
+  `entrypoint_ref` varchar(1000) DEFAULT NULL COMMENT '入口路径',
+  `logo_path` varchar(1000) DEFAULT NULL COMMENT 'Logo 相对路径',
+  `logo_mime_type` varchar(100) DEFAULT NULL COMMENT 'Logo MIME',
+  `logo_size` int NOT NULL DEFAULT '0' COMMENT 'Logo 大小',
+  `logo_hash` varchar(128) DEFAULT NULL COMMENT 'Logo 哈希',
+  `content_hash` varchar(128) NOT NULL COMMENT '内容哈希',
+  `source_file_name` varchar(255) DEFAULT NULL COMMENT '上传文件名',
+  `file_count` int NOT NULL DEFAULT '0' COMMENT '文件数量',
+  `is_delete` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_agents_name` (`name`),
+  KEY `idx_agents_category` (`category`),
+  KEY `idx_agents_updated_at` (`updated_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Agent 条目表';
+
+-- ----------------------------
+-- Table structure for agent_files
+-- ----------------------------
+DROP TABLE IF EXISTS `agent_files`;
+CREATE TABLE `agent_files` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `agent_id` int NOT NULL COMMENT 'agents.id',
+  `file_path` varchar(512) NOT NULL COMMENT 'Agent 内相对路径',
+  `mime_type` varchar(100) DEFAULT NULL COMMENT '文件 MIME',
+  `size` int NOT NULL DEFAULT '0' COMMENT '文件大小',
+  `is_binary` tinyint NOT NULL DEFAULT '0' COMMENT '是否二进制',
+  `encoding` varchar(20) NOT NULL DEFAULT 'utf8' COMMENT '内容编码',
+  `mode` int NOT NULL DEFAULT '0' COMMENT 'Unix 权限',
+  `content` longtext COMMENT '文件内容',
+  `is_delete` tinyint NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_agent_files_agent_path` (`agent_id`,`file_path`),
+  KEY `idx_agent_files_agent_id` (`agent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Agent 文件快照表';
+
+-- ----------------------------
+-- Table structure for agent_skills
+-- ----------------------------
+DROP TABLE IF EXISTS `agent_skills`;
+CREATE TABLE `agent_skills` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `agent_id` int NOT NULL COMMENT 'agents.id',
+  `skill_slug` varchar(255) NOT NULL COMMENT 'Skill slug',
+  `skill_id` int DEFAULT NULL COMMENT 'skills_items.id',
+  `relation_type` varchar(20) NOT NULL COMMENT 'entrypoint 或 dependency',
+  `sort_order` int NOT NULL DEFAULT '0' COMMENT '展示顺序',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_agent_skills_agent_id` (`agent_id`),
+  KEY `idx_agent_skills_skill_slug` (`skill_slug`),
+  KEY `idx_agent_skills_relation_type` (`relation_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Agent 关联 Skill 表';
+
+-- ----------------------------
 -- Table structure for skill_likes
 -- ----------------------------
 DROP TABLE IF EXISTS `skill_likes`;

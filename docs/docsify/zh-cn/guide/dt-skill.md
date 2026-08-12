@@ -1,6 +1,6 @@
 # Skills Hub（dt-skill）
 
-Skills Hub 是 Doraemon 的 **Agent Skills 市场**能力：Web 端可浏览、下载；命令行 **`dt-skill`** 负责安装、更新、卸载本机 skill，以及把本地 skill **上传（upload）** 到 Registry。
+Skills Hub 是 Doraemon 的 **Agent Skill 市场**能力：Web 端可浏览、下载；命令行 **`dt-skill`** 负责安装、更新、卸载本机 skill，以及把本地 skill **上传（upload）** 到 Registry。
 
 - **Node.js 18 及以上**（与 Doraemon / `dt-skill` package `engines` 对齐，推荐 18.x）
 - 默认 Registry：`http://172.16.100.225:7001`
@@ -36,7 +36,7 @@ npx dt-skill --registry http://127.0.0.1:7001 list
 
 ## 安装 skill（install）
 
-从 Skills 市场安装到本机，并链接到你使用的 Agent。
+从 Skill 市场安装到本机，并链接到你使用的 Agent。
 
 ```bash
 npx dt-skill install zentao-api

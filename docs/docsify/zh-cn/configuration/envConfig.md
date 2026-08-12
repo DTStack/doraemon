@@ -7,7 +7,8 @@
     "webhookUrls": [],
     "articleResultWebhook": "",
     "msgSingleUrl": "https://dtstack.github.io/doraemon/docsify/#/",
-    "helpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/"
+    "helpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/",
+    "agentHelpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/zh-cn/guide/agent-market"
 }
 ```
 
@@ -86,6 +87,32 @@ dingBot 的通知模板的跳转路径，默认跳转到帮助文档，可自行
 ```json
 {
     "articleHelpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/zh-cn/guide/文章订阅"
+}
+```
+
+## skillsHelpDocUrl
+
+- 类型：String
+- 默认值：'https://dtstack.github.io/doraemon/docsify/#/zh-cn/guide/dt-skill'
+
+Skills 首页右下角帮助文档入口跳转链接
+
+```json
+{
+    "skillsHelpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/zh-cn/guide/dt-skill"
+}
+```
+
+## agentHelpDocUrl
+
+- 类型：String
+- 默认值：'https://dtstack.github.io/doraemon/docsify/#/zh-cn/guide/agent-market'
+
+Agent 市场首页右下角帮助文档入口跳转链接
+
+```json
+{
+    "agentHelpDocUrl": "https://dtstack.github.io/doraemon/docsify/#/zh-cn/guide/agent-market"
 }
 ```
 

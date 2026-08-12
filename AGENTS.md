@@ -2,7 +2,7 @@
 
 This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
-**项目**: dt-doraemon (哆啦A梦) — 开发者工具箱平台，包含代理服务、主机管理、配置中心、MCP 服务器注册中心、Skills 市场等模块。
+**项目**: dt-doraemon (哆啦A梦) — 开发者工具箱平台，包含代理服务、主机管理、配置中心、MCP 服务器注册中心、Skill 市场、Agent 市场等模块。
 
 **技术栈**: Egg.js 2.x + React 16 SSR + MySQL (Sequelize) + Webpack 4 + Redux + Socket.IO。
 

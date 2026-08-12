@@ -10,6 +10,19 @@
             font-size: 14px;
         }
     }
+    .ant-menu-dark.ant-menu-horizontal > .ant-menu-submenu {
+        top: 0;
+        > .ant-menu-submenu-title:hover,
+        > .ant-menu-submenu-title:focus,
+        &.ant-menu-submenu-open > .ant-menu-submenu-title,
+        &.ant-menu-submenu-active > .ant-menu-submenu-title {
+            color: #3F87FF;
+            background-color: rgba(40, 123, 247, 0.157);
+            .anticon {
+                color: #3F87FF;
+            }
+        }
+    }
     .help-link {
         color: #FFF;
         font-size: 18px;

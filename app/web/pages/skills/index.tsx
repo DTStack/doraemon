@@ -321,7 +321,7 @@ const SkillsMarket: React.FC<SkillsMarketProps> = ({ history }) => {
         <div className="page-skills">
             <div className="skills-header">
                 <div className="title-group">
-                    <h1 className="page-title">Skills 市场</h1>
+                    <h1 className="page-title">Skill 市场</h1>
                     <p className="page-subtitle">发现、筛选并导入本地可用的 Skills 能力</p>
                 </div>
             </div>
