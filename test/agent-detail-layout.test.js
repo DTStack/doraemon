@@ -240,6 +240,46 @@ test('Agent 详情右侧展示可复制的自动安装命令', () => {
     );
 });
 
+test('Agent 开场问题卡片提供调起 Codex 的快捷使用入口', () => {
+    const content = fs.readFileSync(
+        path.join(__dirname, '../app/web/pages/agents/detail/AgentDetailContent.tsx'),
+        'utf8'
+    );
+    const styleContent = fs.readFileSync(
+        path.join(__dirname, '../app/web/pages/agents/detail/style.scss'),
+        'utf8'
+    );
+
+    assert.equal(
+        content.includes('buildAgentDetailCodexPrompt') &&
+            content.includes('buildCodexNewThreadUrl') &&
+            content.includes('className="agent-question-quick-use"') &&
+            content.includes('agent-question-quick-use-icon') &&
+            content.includes('onClick={() => openCodexInstall(item)}') &&
+            content.includes('快捷使用'),
+        true,
+        '开场问题卡片需要提供快捷使用按钮并调起 Codex'
+    );
+    assert.equal(
+        content.includes('className="agent-quick-use"'),
+        false,
+        '右侧不应再展示独立快捷使用按钮'
+    );
+    assert.equal(
+        styleContent.includes('.agent-question-quick-use') &&
+            styleContent.includes('grid-template-columns: 32px minmax(0, 1fr) auto;') &&
+            styleContent.includes('align-items: center;') &&
+            styleContent.includes('&:hover,') &&
+            styleContent.includes('transform: translateY(-1px);') &&
+            styleContent.includes('border-color: #D8DFEA;') &&
+            styleContent.includes('.agent-question-quick-use-icon') &&
+            !styleContent.includes('border: 1px solid #F59E0B;') &&
+            !styleContent.includes('background: rgba(245, 158, 11, 0.12);'),
+        true,
+        '开场问题快捷使用按钮需要左右布局、垂直居中并提供克制的 hover 样式'
+    );
+});
+
 test('Agent 详情右侧提供当前原始 ZIP 下载入口', () => {
     const content = fs.readFileSync(
         path.join(__dirname, '../app/web/pages/agents/detail/AgentDetailContent.tsx'),

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+    CodeOutlined,
     CopyOutlined,
     DownloadOutlined,
     MessageOutlined,
@@ -13,6 +14,7 @@ import { Button, Card, Empty, message, Spin, Tabs, Tag, Typography } from 'antd'
 import { API } from '@/api';
 import { copyToClipboard } from '@/utils/copyUtils';
 import { safeOpenUrl } from '@/utils/safeOpenUrl';
+import { buildAgentDetailCodexPrompt, buildCodexNewThreadUrl } from '../codex-button-utils';
 import type { AgentCapability, AgentDetail, AgentItem, AgentSkillRelation } from '../types';
 import './style.scss';
 
@@ -145,6 +147,16 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
     const installCommand = detail
         ? `curl -fsSL ${currentOrigin}/agent-market/install.sh | bash -s -- ${detail.name}`
         : '';
+
+    const openCodexInstall = (selectedPrompt?: { title?: string; prompt?: string }) => {
+        if (!detail) return;
+
+        const originUrl = typeof window !== 'undefined' ? window.location.href : '';
+        const prompt = buildAgentDetailCodexPrompt(detail, originUrl, selectedPrompt);
+        const codexUrl = buildCodexNewThreadUrl({ prompt, originUrl });
+
+        window.location.href = codexUrl;
+    };
 
     if (loading) {
         return (
@@ -364,6 +376,20 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                                                         {item.prompt}
                                                                     </Paragraph>
                                                                 </div>
+                                                                <Button
+                                                                    size="small"
+                                                                    className="agent-question-quick-use"
+                                                                    icon={
+                                                                        <span className="agent-question-quick-use-icon">
+                                                                            <CodeOutlined />
+                                                                        </span>
+                                                                    }
+                                                                    onClick={() =>
+                                                                        openCodexInstall(item)
+                                                                    }
+                                                                >
+                                                                    快捷使用
+                                                                </Button>
                                                             </div>
                                                         </Card>
                                                     )
