@@ -1,0 +1,25 @@
+app/service/agents.js
+  h_3070dc1062bb3b 987-988
+  s_9f25f5acd59ed2::t_28b46ae63281d8 989
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "1a95d2ea96d50f33cc79f4a5198d37c3b66bbd1d",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_9f25f5acd59ed2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0f4693a2-738c-49da-a232-d3d4cb10c4cb",
+        "model": "deepseek-v4-pro"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
