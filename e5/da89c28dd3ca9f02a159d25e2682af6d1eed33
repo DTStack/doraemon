@@ -1,0 +1,14 @@
+config/config.default.js
+  h_3070dc1062bb3b 34-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "e5da89c28dd3ca9f02a159d25e2682af6d1eed33",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
