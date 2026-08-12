@@ -34,7 +34,9 @@ module.exports = (app) => {
             {
                 prefix: '/agent-market/',
                 dir: path.resolve(app.baseDir, '../agent-market/'),
-                maxAge: 0,
+                maxAge: 0, // maxAge 缓存，默认 1 年
+                buffer: false, // 不读进内存，改文件立即生效
+                dynamic: true, // 实时读取文件，支持热更新
             },
         ],
     };
