@@ -34,6 +34,7 @@ module.exports = (app) => {
             {
                 prefix: '/agent-market/',
                 dir: path.resolve(app.baseDir, '../agent-market/'),
+                maxAge: 0,
             },
         ],
     };
