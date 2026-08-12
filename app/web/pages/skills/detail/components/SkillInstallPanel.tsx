@@ -41,7 +41,7 @@ interface SkillInstallPanelProps {
 }
 
 const renderTerminalCommand = (command: string, copyMessage: string) => (
-    <div className="command-surface is-dark is-terminal">
+    <div className="command-surface is-light is-terminal">
         <div className="terminal-head">
             <div className="terminal-dots">
                 <span />
