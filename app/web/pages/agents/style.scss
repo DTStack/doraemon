@@ -57,6 +57,19 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 16px;
     }
+    .help-icon {
+        width: 60px;
+        height: 60px;
+        padding: 12px;
+        border-radius: 50%;
+        background-color: #FFF;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.28);
+        cursor: pointer;
+        position: fixed;
+        bottom: 120px;
+        right: 60px;
+        z-index: 10;
+    }
     .agent-card {
         height: 100%;
         border-radius: 16px;
@@ -162,6 +175,10 @@
         }
         .agent-card-footer {
             flex-direction: column;
+        }
+        .help-icon {
+            right: 24px;
+            bottom: 100px;
         }
     }
 }

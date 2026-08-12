@@ -18,6 +18,8 @@ import {
 import debounce from 'lodash/debounce';
 
 import { API } from '@/api';
+import helpIcon from '@/asset/images/help-icon.png';
+import config from '../../../../env.json';
 import type { AgentItem, AgentListResponse } from './types';
 import './style.scss';
 
@@ -189,6 +191,12 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
         [categories]
     );
 
+    const handleHelpIcon = () => {
+        if (config.agentHelpDocUrl) {
+            window.open(config.agentHelpDocUrl, '_blank', 'noopener,noreferrer');
+        }
+    };
+
     return (
         <div className="page-agents">
             <div className="agents-header">
@@ -204,6 +212,16 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                     导入 Agent
                 </Button>
             </div>
+
+            {config.agentHelpDocUrl ? (
+                <img
+                    className="help-icon"
+                    src={helpIcon}
+                    onClick={handleHelpIcon}
+                    alt="帮助文档"
+                    title="Agent 市场帮助文档"
+                />
+            ) : null}
 
             <div className="search-filter-row">
                 <Search
