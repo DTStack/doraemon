@@ -31,6 +31,10 @@ module.exports = (app) => {
                 prefix: '/resources/',
                 dir: path.join(app.baseDir, 'resources'),
             },
+            {
+                prefix: '/agent-market/',
+                dir: path.resolve(app.baseDir, '../agent-market/'),
+            },
         ],
     };
     exports.keys = '123456';
