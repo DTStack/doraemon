@@ -1,0 +1,60 @@
+docs/superpowers/specs/2026-08-13-dt-skill-batch-commands-codex-install-design.md
+  s_9a02b0d3acc57a::t_67de7d0f6f166e 1-104
+  s_9a02b0d3acc57a::t_fbdda4238298af 105-107
+  s_070ca0032b20e3::t_3763bc1c2e214a 108-121
+dt-skill/README.md
+  s_ce10511bc3ff5a::t_571ff6b4d191e2 54-86,95,99-100
+dt-skill/src/cli/commands/publish.test.ts
+  s_ce10511bc3ff5a::t_7111cd4ca1c2e6 903-981
+dt-skill/src/cli/commands/skills.test.ts
+  s_ce10511bc3ff5a::t_42b96b83a4c961 509-576
+dt-skill/src/cli/installer.test.ts
+  s_ce10511bc3ff5a::t_97c37686cf6e08 1-67
+dt-skill/src/cli.ts
+  s_070ca0032b20e3::t_a4e85db2cbce0e 217,223,228,318,338,340,390,406,408
+dt-skill/src/cli/commands/publish.ts
+  s_070ca0032b20e3::t_90bd705b40a621 52-71,74-75,77-88,109-177,180-181,289,342,349,448
+dt-skill/src/cli/commands/skills.ts
+  s_070ca0032b20e3::t_85527dc8299538 3,31,797,800-802
+dt-skill/src/cli/commands/update.ts
+  s_070ca0032b20e3::t_556233259f814b 3,20,138-159,166,170-172,179,194,202,208-211,220-223,227,237-242,269,282,292-296,299-305,309-314,316,326
+dt-skill/src/cli/installer.ts
+  s_070ca0032b20e3::t_a7e3db8e054239 78-87,179-182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b87395673051b755ddd498b8e96c107f5645f9b3",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_070ca0032b20e3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6c742239-c3be-43ab-ba82-b3dfaade989d",
+        "model": "unknown"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    },
+    "s_9a02b0d3acc57a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff8c7-dac2-7531-9b6d-b60fc795636a",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    },
+    "s_ce10511bc3ff5a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa75c-216d-74e1-a8e4-ee1ac171a76e",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
