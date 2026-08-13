@@ -506,6 +506,74 @@ describe('cmdUpdate', () => {
         expect(writeLockfile).toHaveBeenCalledTimes(1);
     });
 
+    it('parses a path argument into its folder basename slug', async () => {
+        mockApiRequest.mockResolvedValue({
+            latestVersion: { version: '2.0.0' },
+            moderation: null,
+        });
+        mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: { 'bbb-skill': { version: '1.0.0', installedAt: 123 } },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(readSkillOrigin).mockResolvedValue(null);
+        vi.mocked(writeSkillOrigin).mockResolvedValue();
+        vi.mocked(extractZipToDir).mockResolvedValue();
+        vi.mocked(listTextFiles).mockResolvedValue([]);
+        vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: 'hash', files: [] });
+        vi.mocked(stat).mockRejectedValue(new Error('missing'));
+        vi.mocked(rm).mockResolvedValue();
+
+        await cmdUpdate(makeOpts(), ['aaa/bbb-skill'], { force: true, ...projectYes }, false);
+
+        expect(mockApiRequest).toHaveBeenCalledTimes(1);
+        const [, args] = mockApiRequest.mock.calls[0] ?? [];
+        expect(args?.path).toBe(`${ApiRoutes.skills}/${encodeURIComponent('bbb-skill')}`);
+    });
+
+    it('updates multiple slugs from a mix of slugs and paths', async () => {
+        mockApiRequest.mockResolvedValue({
+            latestVersion: { version: '2.0.0' },
+            moderation: null,
+        });
+        mockDownloadZip.mockResolvedValue(new Uint8Array([1, 2, 3]));
+        vi.mocked(readLockfile).mockResolvedValue({
+            version: 1,
+            skills: {
+                'plain-slug': { version: '1.0.0', installedAt: 1 },
+                'path-slug': { version: '1.0.0', installedAt: 2 },
+            },
+        });
+        vi.mocked(writeLockfile).mockResolvedValue();
+        vi.mocked(readSkillOrigin).mockResolvedValue(null);
+        vi.mocked(writeSkillOrigin).mockResolvedValue();
+        vi.mocked(extractZipToDir).mockResolvedValue();
+        vi.mocked(listTextFiles).mockResolvedValue([]);
+        vi.mocked(hashSkillFiles).mockReturnValue({ fingerprint: 'hash', files: [] });
+        vi.mocked(stat).mockRejectedValue(new Error('missing'));
+        vi.mocked(rm).mockResolvedValue();
+
+        await cmdUpdate(
+            makeOpts(),
+            ['plain-slug', 'some/dir/path-slug'],
+            { force: true, ...projectYes },
+            false
+        );
+
+        expect(mockApiRequest).toHaveBeenCalledTimes(2);
+        const paths = mockApiRequest.mock.calls.map((call) => {
+            const [, args] = call as unknown as [
+                unknown,
+                { path?: string } | undefined,
+                unknown
+            ];
+            return args?.path;
+        });
+        expect(paths).toContain(`${ApiRoutes.skills}/${encodeURIComponent('plain-slug')}`);
+        expect(paths).toContain(`${ApiRoutes.skills}/${encodeURIComponent('path-slug')}`);
+    });
+
     it('reports up to date when local fingerprint matches skill.fingerprint', async () => {
         const sharedFp = 'same-content-fp-abc';
         mockApiRequest.mockResolvedValue({

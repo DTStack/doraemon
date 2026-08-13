@@ -51,6 +51,39 @@ Interaction guide:
 
 Selected child skills are installed into individual folders under your skills directory (`<dir>/<child-slug>`).
 
+## Install location
+
+The canonical install dir is `<base>/.agents/skills` (`base` = home for `--global`, project root otherwise). When a target agent declares its own global skills dir, the CLI symlinks there instead:
+
+```bash
+dt-skill install my-skill --agent codex --global   # → ~/.codex/skills/my-skill
+dt-skill install my-skill --agent cursor --global  # → ~/.cursor/skills/my-skill
+```
+
+Codex, Cursor, Gemini CLI, GitHub Copilot, and OpenCode all get their dedicated
+global dirs rather than the shared `.agents/skills`.
+
+## Batch upload & update
+
+`upload`/`publish` and `update` accept multiple positional arguments. Each
+argument may be a skill slug, a skill folder path, or (for upload) a directory
+whose first-level subfolders are each uploaded as a skill. Slugs are deduplicated.
+
+```bash
+# Upload three skills individually (slugs resolved from folder names)
+dt-skill upload omp-skill zentao-api aaa/bbb-skill
+
+# Upload every first-level skill folder under ./skills
+dt-skill upload ./skills
+
+# Update several installed skills (slug or path both work)
+dt-skill update omp-skill zentao-api aaa/bbb-skill
+```
+
+For upload, `--slug/--name/--fork-of/--description/--migrate-owner` require a
+single skill path; batch mode publishes each skill independently via
+`/api/v1/skills` (not the `/api/skills/import-file` package route).
+
 ## Examples
 
 ```bash
@@ -59,9 +92,12 @@ dt-skill install my-skill-pack
 dt-skill pin bear-notes --reason "scanner-flagged while awaiting moderation"
 dt-skill update --all
 dt-skill update --all --no-input --force
+dt-skill update omp-skill zentao-api aaa/bbb-skill   # batch update (slugs or paths)
 dt-skill unpin bear-notes
 dt-skill skill publish ./my-skill-pack --slug my-skill-pack --name "My Skill Pack" --version 1.2.0 --changelog "Fixes + docs"
 dt-skill skill publish ./org-skill --owner openclaw --version 1.2.0 --changelog "Org publish"
+dt-skill upload omp-skill zentao-api aaa/bbb-skill   # batch upload multiple skills
+dt-skill upload ./skills                              # upload first-level subfolders as skills
 dt-skill package explore --family skill
 dt-skill package explore --family code-plugin
 dt-skill package inspect @openclaw/example-plugin

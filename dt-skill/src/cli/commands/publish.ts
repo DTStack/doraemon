@@ -49,29 +49,43 @@ function resolveContributorForPublish(): string | null {
     }
 }
 
+export type PublishOptions = {
+    slug?: string;
+    name?: string;
+    owner?: string;
+    version?: string;
+    changelog?: string;
+    tags?: string;
+    forkOf?: string;
+    clawscanNote?: string;
+    migrateOwner?: boolean;
+    all?: boolean;
+    category?: string;
+    /**
+     * Optional market card summary.
+     * Omit: create uses SKILL.md; re-publish keeps existing card (empty → SKILL.md backfill).
+     */
+    description?: string;
+    yes?: boolean;
+};
+
 export async function cmdPublish(
     opts: GlobalOpts,
-    folderArg: string,
-    options: {
-        slug?: string;
-        name?: string;
-        owner?: string;
-        version?: string;
-        changelog?: string;
-        tags?: string;
-        forkOf?: string;
-        clawscanNote?: string;
-        migrateOwner?: boolean;
-        all?: boolean;
-        category?: string;
-        /**
-         * Optional market card summary.
-         * Omit: create uses SKILL.md; re-publish keeps existing card (empty → SKILL.md backfill).
-         */
-        description?: string;
-        yes?: boolean;
-    }
+    folderArg: string | string[],
+    options: PublishOptions
 ) {
+    const folders = (Array.isArray(folderArg) ? folderArg : [folderArg]).filter(Boolean);
+    if (folders.length === 0) fail('Path required');
+
+    if (folders.length === 1) {
+        await cmdPublishOne(opts, folders[0] as string, options);
+        return;
+    }
+
+    await cmdPublishMany(opts, folders, options);
+}
+
+async function cmdPublishOne(opts: GlobalOpts, folderArg: string, options: PublishOptions) {
     // Resolve folder path against the project base (parent of the canonical
     // .agents workdir), falling back to cwd so relative paths work from anywhere.
     const folder = folderArg ? await resolveFolderPath(dirname(opts.workdir), folderArg) : null;
@@ -92,9 +106,79 @@ export async function cmdPublish(
         }
     }
 
+    await publishSingleSkill(opts, folder, options);
+}
+
+async function cmdPublishMany(opts: GlobalOpts, folderArgs: string[], options: PublishOptions) {
+    if (
+        options.slug ||
+        options.name ||
+        options.forkOf ||
+        options.description ||
+        options.migrateOwner
+    ) {
+        fail('--slug/--name/--fork-of/--description/--migrate-owner require a single skill path');
+    }
+
+    const expanded: Array<{ folder: string; slug: string; displayName: string }> = [];
+    const seen = new Set<string>();
+    for (const f of folderArgs) {
+        const folder = await resolveFolderPath(dirname(opts.workdir), f);
+        const folderStat = await stat(folder).catch(() => null);
+        if (!folderStat || !folderStat.isDirectory()) {
+            fail(`Path must be a folder: ${f}`);
+        }
+        if (await looksLikePluginFolder(folder)) {
+            fail('This folder looks like a code plugin, not a skill. Use a folder with SKILL.md.');
+        }
+        const found = await findSkillFolders(folder);
+        for (const sf of found) {
+            if (seen.has(sf.slug)) continue;
+            seen.add(sf.slug);
+            expanded.push(sf);
+        }
+    }
+    if (expanded.length === 0) {
+        fail('No skills found in the given paths');
+    }
+
+    const contributor = resolveContributorForPublish();
+
+    let published = 0;
+    let unchanged = 0;
+    const failed: Array<{ slug: string; error: string }> = [];
+    for (const sf of expanded) {
+        try {
+            const outcome = await publishSingleSkill(opts, sf.folder, options, contributor);
+            if (outcome === 'unchanged') unchanged += 1;
+            else published += 1;
+        } catch (error) {
+            failed.push({ slug: sf.slug, error: formatError(error) });
+        }
+    }
+
+    console.log('');
+    console.log(
+        `Upload summary: ${published} published, ${unchanged} up to date, ${failed.length} failed`
+    );
+    for (const f of failed) {
+        console.log(`  failed ${f.slug}: ${f.error}`);
+    }
+    if (failed.length > 0) {
+        fail(`Failed to upload ${failed.length} skill(s)`);
+    }
+}
+
+async function publishSingleSkill(
+    opts: GlobalOpts,
+    folder: string,
+    options: PublishOptions,
+    contributorOverride?: string | null
+): Promise<'published' | 'unchanged'> {
     // Single skill mode (existing logic)
     const registry = await getRegistry(opts, { cache: true });
-    const contributor = resolveContributorForPublish();
+    const contributor =
+        contributorOverride !== undefined ? contributorOverride : resolveContributorForPublish();
 
     // Requested identity from folder / --slug. May be rewritten to remote slug if registry
     // already has this skill under another primary key (installKey alias / legacy upload-*).
@@ -202,7 +286,7 @@ export async function cmdPublish(
             );
             if (!ok) {
                 console.log('Publish cancelled');
-                return;
+                return 'unchanged';
             }
             spinner.start(`Publishing ${slug}`);
         }
@@ -255,12 +339,14 @@ export async function cmdPublish(
                     result.fingerprint ? ` (${result.fingerprint.slice(0, 12)}…)` : ''
                 }`
             );
+            return 'unchanged';
         } else {
             spinner.succeed(
                 `OK. Published ${slug}${
                     result.fingerprint ? ` hash=${result.fingerprint.slice(0, 12)}…` : ''
                 } (${result.versionId})`
             );
+            return 'published';
         }
     } catch (error) {
         spinner.fail(formatError(error));
@@ -359,6 +445,7 @@ export async function cmdPublishBatch(
         const selected = await searchMultiselect({
             message: `Select skills to publish (${discoveredSkills.length} found):`,
             items,
+            initialSelected: discoveredSkills.map((s) => s.slug),
             required: true,
         });
 

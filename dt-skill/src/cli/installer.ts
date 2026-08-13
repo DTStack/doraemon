@@ -73,13 +73,18 @@ export function getAgentSkillsDir(
     global: boolean,
     cwd: string = process.cwd()
 ): string {
-    if (isUniversalAgent(agentType)) {
-        return getCanonicalSkillsDir(global, cwd);
-    }
     const agent = AGENT_DEFINITIONS[agentType];
     if (global) {
-        // Callers filter out agents without globalSkillsDir before reaching here.
-        return agent.globalSkillsDir ?? join(homedir(), agent.skillsDir);
+        if (agent.globalSkillsDir !== undefined) {
+            return agent.globalSkillsDir;
+        }
+        if (isUniversalAgent(agentType)) {
+            return getCanonicalSkillsDir(true, cwd);
+        }
+        return join(homedir(), agent.skillsDir);
+    }
+    if (isUniversalAgent(agentType)) {
+        return getCanonicalSkillsDir(false, cwd);
     }
     return join(cwd, agent.skillsDir);
 }
@@ -171,8 +176,10 @@ export async function linkOrCopyToAgent(
         };
     }
 
-    // Universal agents already live in the canonical dir.
-    if (isUniversalAgent(agentType)) {
+    // If the agent's install dir IS the canonical dir, no extra entry is needed.
+    // Universal agents share .agents/skills; non-universal agents whose global dir
+    // differs from canonical (e.g. codex -> ~/.codex/skills) still need a symlink.
+    if (resolve(agentBase) === resolve(getCanonicalSkillsDir(global, cwd))) {
         return {
             success: true,
             path: canonicalDir,

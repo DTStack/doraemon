@@ -214,18 +214,18 @@ registerCommand(program, ['update'])
     .description(
         'Update installed skills to registry content (by hash). Bare update = all tracked skills.'
     )
-    .argument('[slug]', 'Skill slug (omit to update all)')
+    .argument('[slugs...]', 'Skill slugs or paths (omit to update all)')
     .option('--all', 'Update all installed skills (same as bare update)')
     .option('--version <version>', 'Update to specific version (single slug only, legacy)')
     .option('--force', 'Overwrite when local files do not match registry content')
     .option('-g, --global', 'Update global skills only (~/.agents)')
     .option('-p, --project', 'Update project skills only')
-    .action(async (slug, options) => {
+    .action(async (slugs, options) => {
         const opts = await resolveGlobalOpts();
         const programOpts = program.opts<{ global?: boolean; yes?: boolean }>();
         await cmdUpdate(
             opts,
-            slug,
+            slugs,
             {
                 all: options.all,
                 version: options.version,
@@ -315,7 +315,7 @@ registerCommand(program, ['publish'])
         'Publish a skill folder to the registry (push remote). Re-publish same slug overwrites by content hash.'
     )
     .alias('upload')
-    .argument('<path>', 'Skill folder path')
+    .argument('<paths...>', 'Skill folder path(s)')
     .option('--slug <slug>', 'Skill slug')
     .option('--name <name>', 'Display name')
     .option('--owner <handle>', 'Publish under an org/user publisher handle')
@@ -335,9 +335,9 @@ registerCommand(program, ['publish'])
         'Optional market card summary (create defaults from SKILL.md; re-publish keeps card unless set)'
     )
     .option('--yes', 'Skip overwrite confirmation')
-    .action(async (folder, options) => {
+    .action(async (folders, options) => {
         const opts = await resolveGlobalOpts();
-        await cmdPublish(opts, folder, options);
+        await cmdPublish(opts, folders, options);
     });
 
 registerCommand(program, ['delete'])
@@ -387,7 +387,7 @@ registerCommand(program, ['unhide'])
 const skill = registerCommandGroup(program, ['skill']).description('Manage published skills');
 registerCommand(skill, ['skill', 'publish'])
     .description('Publish a skill from folder (same as publish/upload)')
-    .argument('<path>', 'Skill folder path')
+    .argument('<paths...>', 'Skill folder path(s)')
     .option('--slug <slug>', 'Skill slug')
     .option('--name <name>', 'Display name')
     .option('--owner <handle>', 'Publish under an org/user publisher handle')
@@ -403,9 +403,9 @@ registerCommand(skill, ['skill', 'publish'])
         'Optional market card summary (create defaults from SKILL.md; re-publish keeps card unless set)'
     )
     .option('--yes', 'Skip overwrite confirmation')
-    .action(async (folder, options) => {
+    .action(async (folders, options) => {
         const opts = await resolveGlobalOpts();
-        await cmdPublish(opts, folder, options);
+        await cmdPublish(opts, folders, options);
     });
 
 registerCommand(program, ['star'])

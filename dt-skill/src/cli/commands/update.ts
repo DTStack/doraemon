@@ -1,6 +1,6 @@
 import { readdir, rm } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import semver from 'semver';
 
 import { apiRequest, downloadZip } from '../../http.js';
@@ -17,6 +17,7 @@ import {
 } from '../../schema/index.js';
 import { hashSkillFiles, listTextFiles, readSkillOrigin, writeSkillOrigin } from '../../skills.js';
 import { getRegistry } from '../registry.js';
+import { sanitizeSlug } from '../slug.js';
 import { decideSkillSync, remoteCurrentFromDetail } from '../skillSync.js';
 import type { GlobalOpts } from '../types.js';
 import {
@@ -134,26 +135,48 @@ export async function resolveUpdateScope(
     return picked;
 }
 
+function resolveUpdateSlugs(arg: string | string[] | undefined): string[] {
+    const raw = Array.isArray(arg) ? arg : arg ? [arg] : [];
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const item of raw) {
+        const trimmed = item.trim();
+        if (!trimmed) continue;
+        let slug: string;
+        if (trimmed.includes('/') || trimmed.includes('\\')) {
+            slug = sanitizeSlug(basename(resolve(trimmed)));
+            if (!slug) fail(`Invalid path slug: ${trimmed}`);
+        } else {
+            slug = normalizeSkillSlugOrFail(trimmed);
+        }
+        if (!seen.has(slug)) {
+            seen.add(slug);
+            out.push(slug);
+        }
+    }
+    return out;
+}
+
 /**
  * Update installed skills by content hash.
  * Scope selection matches vercel; remote identity is skill.fingerprint.
  */
 export async function cmdUpdate(
     opts: GlobalOpts,
-    slugArg: string | undefined,
+    slugArg: string | string[] | undefined,
     options: UpdateScopeOptions,
     inputAllowed: boolean
 ) {
-    const slug = slugArg ? normalizeSkillSlugOrFail(slugArg) : undefined;
-    if (slug && options.all) fail('Use either <slug> or --all');
-    if (options.version && !slug) fail('--version requires a single <slug>');
+    const slugs = resolveUpdateSlugs(slugArg);
+    if (slugs.length > 0 && options.all) fail('Use either <slug> or --all');
+    if (options.version && slugs.length !== 1) fail('--version requires a single <slug>');
     if (options.version && !semver.valid(options.version)) fail('--version must be valid semver');
 
     const roots = getUpdateScopeRoots(opts);
     const scope = await resolveUpdateScope(options, {
         inputAllowed,
         projectWorkdir: roots.project.workdir,
-        hasSkillNames: Boolean(slug),
+        hasSkillNames: slugs.length > 0,
     });
     if (scope === null) return;
 
@@ -168,6 +191,7 @@ export async function cmdUpdate(
     const registry = await getRegistry(opts, { cache: true });
     const allowPrompt = isInteractive() && inputAllowed && !options.yes;
 
+    const handled = new Set<string>();
     for (const scopeLabel of scopesToRun) {
         const { workdir, dir } = roots[scopeLabel];
         const result = await updateSkillsInOneScope({
@@ -175,12 +199,16 @@ export async function cmdUpdate(
             installDir: dir,
             scopeLabel,
             multiScope: scopesToRun.length > 1,
-            slug,
+            slugs,
             options,
             registry,
             allowPrompt,
         });
         const tag = (s: string) => (scopesToRun.length > 1 ? `${s} (${scopeLabel})` : s);
+        for (const s of result.updated) handled.add(s);
+        for (const s of result.alreadyCurrent) handled.add(s);
+        for (const s of result.skippedPinned) handled.add(s);
+        for (const f of result.failed) handled.add(f.slug);
         updated.push(...result.updated.map(tag));
         alreadyCurrent.push(...result.alreadyCurrent.map(tag));
         skippedPinned.push(...result.skippedPinned.map(tag));
@@ -189,18 +217,14 @@ export async function cmdUpdate(
         }
     }
 
-    if (
-        slug &&
-        updated.length === 0 &&
-        alreadyCurrent.length === 0 &&
-        skippedPinned.length === 0 &&
-        failed.length === 0
-    ) {
-        failed.push({ slug, error: 'not found', scope: scope === 'both' ? 'both' : scope });
+    for (const slug of slugs) {
+        if (!handled.has(slug)) {
+            failed.push({ slug, error: 'not found', scope: scope === 'both' ? 'both' : scope });
+        }
     }
 
     if (
-        !slug &&
+        slugs.length === 0 &&
         updated.length === 0 &&
         alreadyCurrent.length === 0 &&
         skippedPinned.length === 0 &&
@@ -210,7 +234,12 @@ export async function cmdUpdate(
         return;
     }
 
-    if (skippedPinned.length > 0 && updated.length === 0 && alreadyCurrent.length === 0 && !slug) {
+    if (
+        skippedPinned.length > 0 &&
+        updated.length === 0 &&
+        alreadyCurrent.length === 0 &&
+        slugs.length === 0
+    ) {
         console.log(`Skipped ${skippedPinned.length} pinned skill(s): ${skippedPinned.join(', ')}`);
     }
 
@@ -237,7 +266,7 @@ async function updateSkillsInOneScope(args: {
     installDir: string;
     scopeLabel: string;
     multiScope: boolean;
-    slug: string | undefined;
+    slugs: string[];
     options: UpdateScopeOptions;
     registry: string;
     allowPrompt: boolean;
@@ -250,7 +279,7 @@ async function updateSkillsInOneScope(args: {
     const {
         installWorkdir,
         installDir,
-        slug,
+        slugs,
         options,
         registry,
         allowPrompt,
@@ -260,26 +289,31 @@ async function updateSkillsInOneScope(args: {
 
     const lock = await readLockfile(installWorkdir);
 
-    if (slug && isPinnedSkillEntry(lock.skills[slug])) {
-        fail(`skill "${slug}" is pinned; run \`dt-skill unpin ${slug}\` first`);
-    }
-
-    if (slug) {
-        const onDisk = await fileExists(join(installDir, slug));
-        if (!lock.skills[slug] && !onDisk) {
-            return { updated: [], alreadyCurrent: [], skippedPinned: [], failed: [] };
+    if (slugs.length === 1) {
+        const only = slugs[0];
+        if (isPinnedSkillEntry(lock.skills[only])) {
+            fail(`skill "${only}" is pinned; run \`dt-skill unpin ${only}\` first`);
         }
     }
 
-    const requestedSlugs = slug ? [slug] : Object.keys(lock.skills).filter(isSafeSkillSlug);
-    const skippedPinned = slug
-        ? []
-        : requestedSlugs.filter((entry) => isPinnedSkillEntry(lock.skills[entry]));
-    const slugs = slug
-        ? requestedSlugs
-        : requestedSlugs.filter((entry) => !isPinnedSkillEntry(lock.skills[entry]));
+    const existingSlugs: string[] = [];
+    if (slugs.length > 0) {
+        for (const s of slugs) {
+            const onDisk = await fileExists(join(installDir, s));
+            if (lock.skills[s] || onDisk) {
+                existingSlugs.push(s);
+            }
+        }
+    }
 
-    if (slugs.length === 0) {
+    const requestedSlugs =
+        slugs.length > 0 ? existingSlugs : Object.keys(lock.skills).filter(isSafeSkillSlug);
+    const skippedPinned = requestedSlugs.filter((entry) => isPinnedSkillEntry(lock.skills[entry]));
+    const slugsToProcess = requestedSlugs.filter(
+        (entry) => !isPinnedSkillEntry(lock.skills[entry])
+    );
+
+    if (slugsToProcess.length === 0) {
         return { updated: [], alreadyCurrent: [], skippedPinned, failed: [] };
     }
 
@@ -289,7 +323,7 @@ async function updateSkillsInOneScope(args: {
     let lockDirty = false;
     const checkLabel = multiScope ? `Checking ${scopeLabel}` : 'Checking';
 
-    for (const entry of slugs) {
+    for (const entry of slugsToProcess) {
         const spinner = createSpinner(`${checkLabel} ${entry}`);
         try {
             const target = join(installDir, entry);
