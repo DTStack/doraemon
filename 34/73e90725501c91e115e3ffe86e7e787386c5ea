@@ -1,0 +1,24 @@
+docs/superpowers/specs/2026-08-13-dt-skill-batch-commands-codex-install-design.md
+  s_9a02b0d3acc57a::t_67de7d0f6f166e 1-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "3473e90725501c91e115e3ffe86e7e787386c5ea",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_9a02b0d3acc57a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff8c7-dac2-7531-9b6d-b60fc795636a",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
