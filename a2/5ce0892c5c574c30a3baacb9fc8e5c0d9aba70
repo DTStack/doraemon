@@ -1,0 +1,49 @@
+dt-skill/src/cli/agents/definitions.ts
+  s_070ca0032b20e3::t_ca191376f079dd 77,458,591
+dt-skill/src/cli/commands/skills.test.ts
+  s_070ca0032b20e3::t_2338bf926a8adc 573-579
+  s_ce10511bc3ff5a::t_42b96b83a4c961 566
+dt-skill/src/cli/installer.test.ts
+  s_070ca0032b20e3::t_917c31ef3b7566 38-45
+dt-skill/src/cli/commands/publish.ts
+  s_070ca0032b20e3::t_fc746c9197b1d6 123,138,145-151
+  s_5238a2f3de778f::t_da1ea8ddba603c 152-153
+dt-skill/src/cli/commands/update.ts
+  s_070ca0032b20e3::t_b9e4773788de86 147
+  s_070ca0032b20e3::t_86078b2bfa8485 21
+dt-skill/src/cli/commands/publish.test.ts
+  s_ce10511bc3ff5a::t_7111cd4ca1c2e6 956-960
+  s_070ca0032b20e3::t_0201093f1b2d3c 985-1005
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "a25ce0892c5c574c30a3baacb9fc8e5c0d9aba70",
+  "prompts": {},
+  "sessions": {
+    "s_070ca0032b20e3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6c742239-c3be-43ab-ba82-b3dfaade989d",
+        "model": "deepseek-v4-pro"
+      },
+      "human_author": null
+    },
+    "s_5238a2f3de778f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a7387c99-a079-4fb4-a114-2ba68801293f",
+        "model": "deepseek-v4-pro"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    },
+    "s_ce10511bc3ff5a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa75c-216d-74e1-a8e4-ee1ac171a76e",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
