@@ -120,7 +120,7 @@ async function cmdPublishMany(opts: GlobalOpts, folderArgs: string[], options: P
         fail('--slug/--name/--fork-of/--description/--migrate-owner require a single skill path');
     }
 
-    const expanded: Array<{ folder: string; slug: string; displayName: string }> = [];
+    const expanded: Array<{ folder: string; slug: string }> = [];
     const seen = new Set<string>();
     for (const f of folderArgs) {
         const folder = await resolveFolderPath(dirname(opts.workdir), f);
@@ -135,11 +135,20 @@ async function cmdPublishMany(opts: GlobalOpts, folderArgs: string[], options: P
         for (const sf of found) {
             if (seen.has(sf.slug)) continue;
             seen.add(sf.slug);
-            expanded.push(sf);
+            expanded.push({ folder: sf.folder, slug: sf.slug });
         }
     }
     if (expanded.length === 0) {
         fail('No skills found in the given paths');
+    }
+
+    // Validate shared options once before looping, so a bad --category or
+    // --version fails fast instead of repeating the same error per skill.
+    const version = options.version?.trim() || DEFAULT_PUBLISH_VERSION;
+    if (!semver.valid(version)) fail('--version must be valid semver when provided');
+    const category = options.category?.trim() || '';
+    if (category && !SKILL_CATEGORY_SET.has(category)) {
+        fail(`--category must be one of: ${SKILL_CATEGORY_OPTIONS.join(', ')}`);
     }
 
     const contributor = resolveContributorForPublish();

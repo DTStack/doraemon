@@ -35,6 +35,14 @@ describe('getAgentSkillsDir (global codex)', () => {
         const cwd = '/work';
         expect(getAgentSkillsDir('codex', false, cwd)).toBe(getCanonicalSkillsDir(false, cwd));
     });
+
+    it('keeps amp/replit/universal on the canonical global dir (pre-fix behavior)', () => {
+        for (const agent of ['amp', 'replit', 'universal'] as const) {
+            expect(getAgentSkillsDir(agent, true, '/work')).toBe(
+                getCanonicalSkillsDir(true, '/work')
+            );
+        }
+    });
 });
 
 describe('linkOrCopyToAgent (global codex symlink)', () => {

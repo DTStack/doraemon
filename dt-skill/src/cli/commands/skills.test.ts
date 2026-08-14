@@ -563,15 +563,18 @@ describe('cmdUpdate', () => {
 
         expect(mockApiRequest).toHaveBeenCalledTimes(2);
         const paths = mockApiRequest.mock.calls.map((call) => {
-            const [, args] = call as unknown as [
-                unknown,
-                { path?: string } | undefined,
-                unknown
-            ];
+            const [, args] = call as unknown as [unknown, { path?: string } | undefined, unknown];
             return args?.path;
         });
         expect(paths).toContain(`${ApiRoutes.skills}/${encodeURIComponent('plain-slug')}`);
         expect(paths).toContain(`${ApiRoutes.skills}/${encodeURIComponent('path-slug')}`);
+    });
+
+    it('rejects path arguments containing .. segments', async () => {
+        await expect(
+            cmdUpdate(makeOpts(), ['foo/../bar'], { force: true, ...projectYes }, false)
+        ).rejects.toThrow(/Invalid path slug/);
+        expect(mockApiRequest).not.toHaveBeenCalled();
     });
 
     it('reports up to date when local fingerprint matches skill.fingerprint', async () => {

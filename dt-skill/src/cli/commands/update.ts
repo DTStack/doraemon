@@ -17,8 +17,8 @@ import {
 } from '../../schema/index.js';
 import { hashSkillFiles, listTextFiles, readSkillOrigin, writeSkillOrigin } from '../../skills.js';
 import { getRegistry } from '../registry.js';
-import { sanitizeSlug } from '../slug.js';
 import { decideSkillSync, remoteCurrentFromDetail } from '../skillSync.js';
+import { sanitizeSlug } from '../slug.js';
 import type { GlobalOpts } from '../types.js';
 import {
     createSpinner,
@@ -144,6 +144,7 @@ function resolveUpdateSlugs(arg: string | string[] | undefined): string[] {
         if (!trimmed) continue;
         let slug: string;
         if (trimmed.includes('/') || trimmed.includes('\\')) {
+            if (trimmed.split(/[\\/]/).includes('..')) fail(`Invalid path slug: ${trimmed}`);
             slug = sanitizeSlug(basename(resolve(trimmed)));
             if (!slug) fail(`Invalid path slug: ${trimmed}`);
         } else {

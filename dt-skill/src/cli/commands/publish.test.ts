@@ -953,7 +953,11 @@ describe('cmdPublish', () => {
                 await mkdir(join(workdir, 'omp-skill'), { recursive: true });
                 await mkdir(join(workdir, 'nested', 'omp-skill'), { recursive: true });
                 await writeFile(join(workdir, 'omp-skill', 'SKILL.md'), '# OMP\n', 'utf8');
-                await writeFile(join(workdir, 'nested', 'omp-skill', 'SKILL.md'), '# OMP2\n', 'utf8');
+                await writeFile(
+                    join(workdir, 'nested', 'omp-skill', 'SKILL.md'),
+                    '# OMP2\n',
+                    'utf8'
+                );
 
                 httpMocks.apiRequest.mockRejectedValue(new Error('not found'));
                 httpMocks.apiRequestForm.mockResolvedValue({
@@ -974,6 +978,27 @@ describe('cmdPublish', () => {
                     return req?.path === '/api/v1/skills';
                 });
                 expect(v1Calls).toHaveLength(1); // dedup by slug
+            } finally {
+                await rm(workdir, { recursive: true, force: true });
+            }
+        });
+
+        it('fails fast on invalid --category before publishing any skill', async () => {
+            const workdir = await makeTmpWorkdir();
+            try {
+                await mkdir(join(workdir, 'skill-a'), { recursive: true });
+                await mkdir(join(workdir, 'skill-b'), { recursive: true });
+                await writeFile(join(workdir, 'skill-a', 'SKILL.md'), '# A\n', 'utf8');
+                await writeFile(join(workdir, 'skill-b', 'SKILL.md'), '# B\n', 'utf8');
+
+                await expect(
+                    cmdPublish(makeOpts(workdir), ['skill-a', 'skill-b'], {
+                        category: 'not-a-category',
+                        yes: true,
+                    })
+                ).rejects.toThrow(/--category must be one of/);
+
+                expect(httpMocks.apiRequestForm).not.toHaveBeenCalled();
             } finally {
                 await rm(workdir, { recursive: true, force: true });
             }
