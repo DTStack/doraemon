@@ -1,0 +1,36 @@
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  s_8aa3f0f28991de::t_ad5365857f836f 438-440,450-451
+test/agent-market-service.test.js
+  s_8aa3f0f28991de::t_f9384b69080a1a 465-584
+app/service/agents.js
+  s_8aa3f0f28991de::t_19ddfd459fc647 985-986,1010-1063
+  s_8aa3f0f28991de::t_be57902e74cfa7 949-950
+  s_8aa3f0f28991de::t_28cf5b60da6e7c 76-88
+  s_8aa3f0f28991de::t_b2aa44d4a808cf 9-13
+  s_8aa3f0f28991de::t_7ce858b4901d34 1086
+  s_8aa3f0f28991de::t_5ebea05607fd3e 1064
+app/utils/skill-utils.js
+  s_8aa3f0f28991de::t_693c027264ef2b 138
+  s_8aa3f0f28991de::t_c574e8614b2fc4 94-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "7040c59eca3acf92bd89cc33b070474c5eab8716",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_8aa3f0f28991de": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "363126c0-cbf1-42cf-b5dc-f880b819cfda",
+        "model": "deepseek-v4-flash-0731"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
