@@ -226,6 +226,24 @@ class AgentsService extends Service {
             });
         });
 
+        const privateSkills = Array.isArray(manifest?.spec?.privateSkills)
+            ? manifest.spec.privateSkills
+            : [];
+
+        privateSkills.forEach((item, index) => {
+            const skillSlug = String(item || '').trim();
+            if (!skillSlug) return;
+            const key = `private:${skillSlug}`;
+            if (used.has(key)) return;
+            used.add(key);
+            relations.push({
+                agentName,
+                skillSlug,
+                relationType: 'private',
+                sortOrder: index,
+            });
+        });
+
         return relations;
     }
 
@@ -878,7 +896,9 @@ class AgentsService extends Service {
                           agent_id: {
                               [Op.in]: agentIds,
                           },
-                          relation_type: 'dependency',
+                          relation_type: {
+                              [Op.in]: ['dependency', 'private'],
+                          },
                       },
                   })
                 : [];
@@ -956,6 +976,16 @@ class AgentsService extends Service {
                     path: skill ? `/page/skills/${item.skill_slug}` : '',
                 };
             });
+        const privateSkills = relations
+            .filter((item) => item.relation_type === 'private')
+            .map((item) => ({
+                slug: item.skill_slug,
+                name: item.skill_slug,
+                description: '',
+                collected: false,
+                builtin: true,
+                path: '',
+            }));
 
         const detail = row.toJSON();
         const demoImages = this.parseJsonArray(detail.demo_images).map((item) => ({
@@ -992,6 +1022,7 @@ class AgentsService extends Service {
                   }
                 : null,
             dependencies,
+            privateSkills,
             updatedAt: detail.updated_at ? detail.updated_at.toISOString() : '',
         };
     }

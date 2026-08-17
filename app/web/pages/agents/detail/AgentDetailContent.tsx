@@ -50,7 +50,11 @@ const SkillRelationCard: React.FC<{
         >
             <div className="agent-skill-card-title">
                 <span>{item.name}</span>
-                {!item.collected ? <Tag>暂未收录</Tag> : null}
+                {item.builtin ? (
+                    <Tag color="green">内置</Tag>
+                ) : !item.collected ? (
+                    <Tag>暂未收录</Tag>
+                ) : null}
             </div>
             <Paragraph ellipsis={{ rows: 2 }} className="agent-skill-card-description">
                 {item.description || '暂无描述'}
@@ -433,9 +437,9 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
 
                                 <Card className="agent-section-card">
                                     <Title level={4}>内置 Skills</Title>
-                                    {detail.dependencies.length > 0 ? (
+                                    {detail.privateSkills.length > 0 ? (
                                         <div className="agent-skill-grid">
-                                            {detail.dependencies.map((item) => (
+                                            {detail.privateSkills.map((item) => (
                                                 <SkillRelationCard
                                                     key={`${item.slug}-${item.name}`}
                                                     item={item}
@@ -447,6 +451,21 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                         <Empty description="暂无内置 Skills" />
                                     )}
                                 </Card>
+
+                                {detail.dependencies.length > 0 ? (
+                                    <Card className="agent-section-card">
+                                        <Title level={4}>依赖 Skills</Title>
+                                        <div className="agent-skill-grid">
+                                            {detail.dependencies.map((item) => (
+                                                <SkillRelationCard
+                                                    key={`${item.slug}-${item.name}`}
+                                                    item={item}
+                                                    history={history}
+                                                />
+                                            ))}
+                                        </div>
+                                    </Card>
+                                ) : null}
                             </div>
                         </TabPane>
                     </Tabs>

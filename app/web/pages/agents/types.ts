@@ -24,6 +24,7 @@ export interface AgentSkillRelation {
     name: string;
     description?: string;
     collected: boolean;
+    builtin?: boolean;
     path?: string;
 }
 
@@ -55,4 +56,5 @@ export interface AgentDetail extends AgentItem {
     demoImages: AgentDemoImage[];
     entrypoint: AgentSkillRelation | null;
     dependencies: AgentSkillRelation[];
+    privateSkills: AgentSkillRelation[];
 }

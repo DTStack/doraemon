@@ -27,7 +27,7 @@ module.exports = (app) => {
             relation_type: {
                 type: STRING(20),
                 allowNull: false,
-                comment: 'entrypoint 或 dependency',
+                comment: 'entrypoint、dependency 或 private',
             },
             sort_order: {
                 type: INTEGER,
