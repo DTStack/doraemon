@@ -1,6 +1,6 @@
 import { lstat, mkdir, rm } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 import { apiRequest, downloadZip, registryUrl } from '../../http.js';
 import {
@@ -28,6 +28,7 @@ import {
     getUniversalAgents,
 } from '../agents.js';
 import {
+    getAgentSkillsDir,
     getCanonicalPath,
     getCanonicalSkillsDir,
     getCanonicalWorkdir,
@@ -793,13 +794,12 @@ export async function cmdUninstall(
 /** Remove per-agent symlink/copy entries for a skill whose canonical dir was just removed. */
 async function removeAgentLinks(slug: string, global: boolean, base: string) {
     const agentTypes = Object.keys(AGENT_DEFINITIONS) as AgentType[];
+    const canonicalSkillsDir = getCanonicalSkillsDir(global, base);
     await Promise.all(
         agentTypes.map(async (agent) => {
-            const config = AGENT_DEFINITIONS[agent];
-            if (config.skillsDir === '.agents/skills') return; // universal — lives in canonical
-            const agentDir = global ? config.globalSkillsDir ?? null : join(base, config.skillsDir);
-            if (!agentDir) return;
-            const linkPath = join(agentDir, slug);
+            const agentBase = getAgentSkillsDir(agent, global, base);
+            if (resolve(agentBase) === resolve(canonicalSkillsDir)) return; // lives in canonical
+            const linkPath = join(agentBase, slug);
             try {
                 await lstat(linkPath);
             } catch {

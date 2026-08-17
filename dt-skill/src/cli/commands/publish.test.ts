@@ -900,4 +900,108 @@ describe('cmdPublish', () => {
             }
         });
     });
+
+    describe('cmdPublish multiple paths', () => {
+        it('publishes each path as an individual skill via /api/v1/skills (not import-file)', async () => {
+            const workdir = await makeTmpWorkdir();
+            try {
+                await mkdir(join(workdir, 'omp-skill'), { recursive: true });
+                await mkdir(join(workdir, 'zentao-api'), { recursive: true });
+                await writeFile(join(workdir, 'omp-skill', 'SKILL.md'), '# OMP\n', 'utf8');
+                await writeFile(join(workdir, 'zentao-api', 'SKILL.md'), '# Zentao\n', 'utf8');
+
+                httpMocks.apiRequest.mockRejectedValue(new Error('not found'));
+                httpMocks.apiRequestForm.mockResolvedValue({
+                    ok: true,
+                    skillId: '1',
+                    versionId: 'v0.0.0',
+                    fingerprint: 'abc',
+                    unchanged: false,
+                });
+
+                await cmdPublish(makeOpts(workdir), ['omp-skill', 'zentao-api'], {
+                    category: '通用',
+                    yes: true,
+                });
+
+                const v1Calls = httpMocks.apiRequestForm.mock.calls.filter((call: any[]) => {
+                    const req = call[1] as { path?: string } | undefined;
+                    return req?.path === '/api/v1/skills';
+                });
+                expect(v1Calls).toHaveLength(2);
+
+                const importCalls = httpMocks.apiRequestForm.mock.calls.filter((call: any[]) => {
+                    const req = call[1] as { path?: string } | undefined;
+                    return req?.path === '/api/skills/import-file';
+                });
+                expect(importCalls).toHaveLength(0);
+
+                const slugs = v1Calls.map((call: any[]) => {
+                    const form = (call[1] as { form?: FormData }).form as FormData;
+                    const payload = JSON.parse(String(form.get('payload')));
+                    return payload.slug;
+                });
+                expect(slugs.sort()).toEqual(['omp-skill', 'zentao-api']);
+            } finally {
+                await rm(workdir, { recursive: true, force: true });
+            }
+        });
+
+        it('dedups repeated slugs across paths', async () => {
+            const workdir = await makeTmpWorkdir();
+            try {
+                await mkdir(join(workdir, 'omp-skill'), { recursive: true });
+                await mkdir(join(workdir, 'nested', 'omp-skill'), { recursive: true });
+                await writeFile(join(workdir, 'omp-skill', 'SKILL.md'), '# OMP\n', 'utf8');
+                await writeFile(
+                    join(workdir, 'nested', 'omp-skill', 'SKILL.md'),
+                    '# OMP2\n',
+                    'utf8'
+                );
+
+                httpMocks.apiRequest.mockRejectedValue(new Error('not found'));
+                httpMocks.apiRequestForm.mockResolvedValue({
+                    ok: true,
+                    skillId: '1',
+                    versionId: 'v0.0.0',
+                    fingerprint: 'abc',
+                    unchanged: false,
+                });
+
+                await cmdPublish(makeOpts(workdir), ['omp-skill', 'nested/omp-skill'], {
+                    category: '通用',
+                    yes: true,
+                });
+
+                const v1Calls = httpMocks.apiRequestForm.mock.calls.filter((call: any[]) => {
+                    const req = call[1] as { path?: string } | undefined;
+                    return req?.path === '/api/v1/skills';
+                });
+                expect(v1Calls).toHaveLength(1); // dedup by slug
+            } finally {
+                await rm(workdir, { recursive: true, force: true });
+            }
+        });
+
+        it('fails fast on invalid --category before publishing any skill', async () => {
+            const workdir = await makeTmpWorkdir();
+            try {
+                await mkdir(join(workdir, 'skill-a'), { recursive: true });
+                await mkdir(join(workdir, 'skill-b'), { recursive: true });
+                await writeFile(join(workdir, 'skill-a', 'SKILL.md'), '# A\n', 'utf8');
+                await writeFile(join(workdir, 'skill-b', 'SKILL.md'), '# B\n', 'utf8');
+
+                await expect(
+                    cmdPublish(makeOpts(workdir), ['skill-a', 'skill-b'], {
+                        category: 'not-a-category',
+                        yes: true,
+                    })
+                ).rejects.toThrow(/--category must be one of/);
+
+                expect(httpMocks.apiRequestForm).not.toHaveBeenCalled();
+            } finally {
+                await rm(workdir, { recursive: true, force: true });
+            }
+        });
+    });
 });
