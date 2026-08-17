@@ -6,7 +6,11 @@ const path = require('path');
 const yaml = require('js-yaml');
 const mime = require('mime-types');
 
-const { normalizeRelativePath } = require('../utils/skill-utils');
+const {
+    normalizeRelativePath,
+    extractSkillMdDescription,
+    extractSkillMdName,
+} = require('../utils/skill-utils');
 const {
     isValidSkillCategory,
     SKILL_CATEGORY_OPTIONS,
@@ -67,6 +71,19 @@ class AgentsService extends Service {
             this.ctx.throw(400, message);
         }
         return normalized;
+    }
+
+    // agent.yaml 里的 ref 指向目录（skills/bugfix-workflow）或 SKILL.md 本身，
+    // 统一归一化为包内 SKILL.md 相对路径，供 agent_files 精确匹配。
+    resolveSkillMdPath(refOrPath) {
+        const normalized = String(refOrPath || '').trim();
+        if (!normalized) return '';
+        return normalized.toLowerCase().endsWith('.md') ? normalized : `${normalized}/SKILL.md`;
+    }
+
+    lookupSkillMd(skillMdMap, refOrPath) {
+        if (!skillMdMap) return '';
+        return skillMdMap.get(this.resolveSkillMdPath(refOrPath)) || '';
     }
 
     parseJsonArray(value) {
@@ -929,7 +946,8 @@ class AgentsService extends Service {
 
     async getAgentDetail(name) {
         await this.ensureStorageReady();
-        const { Agent, AgentSkill, SkillsItem } = this.app.model;
+        const { Agent, AgentSkill, SkillsItem, AgentFile } = this.app.model;
+        const { Op } = this.app.Sequelize;
         const row = await Agent.findOne({
             where: {
                 name,
@@ -964,6 +982,8 @@ class AgentsService extends Service {
         const skillMap = new Map(skillRows.map((item) => [item.slug, item]));
 
         const entrypoint = relations.find((item) => item.relation_type === 'entrypoint') || null;
+        const entrypointSkill = entrypoint ? skillMap.get(entrypoint.skill_slug) : null;
+
         const dependencies = relations
             .filter((item) => item.relation_type === 'dependency')
             .map((item) => {
@@ -987,6 +1007,67 @@ class AgentsService extends Service {
                 path: '',
             }));
 
+        // 未收录的入口 Skill 和内置 Skills 不在 SkillsItem 表，其真实 name/description
+        // 从 agent 包内自带的 SKILL.md 解析（agent_files 已在导入时保存文件内容）。
+        const skillMdPaths = [
+            ...(entrypoint && !entrypointSkill
+                ? [this.resolveSkillMdPath(row.entrypoint_ref)]
+                : []),
+            ...privateSkills.map((item) => `skills/${item.slug}/SKILL.md`),
+            ...dependencies
+                .filter((item) => !item.collected)
+                .map((item) => `skills/${item.slug}/SKILL.md`),
+        ].filter(Boolean);
+        const skillMdRows =
+            skillMdPaths.length > 0 && AgentFile
+                ? await AgentFile.findAll({
+                      where: {
+                          agent_id: row.id,
+                          file_path: { [Op.in]: skillMdPaths },
+                          is_delete: 0,
+                      },
+                  })
+                : [];
+        const skillMdMap = new Map(skillMdRows.map((item) => [item.file_path, item.content || '']));
+
+        // 入口 Skill：已收录用 SkillsItem 描述；未收录回填包内 SKILL.md 的 name/description
+        const entrypointItem = entrypoint
+            ? (() => {
+                  const skill = entrypointSkill;
+                  const skillMd = skill ? '' : this.lookupSkillMd(skillMdMap, row.entrypoint_ref);
+                  return {
+                      slug: entrypoint.skill_slug,
+                      name: skill
+                          ? skill.name
+                          : extractSkillMdName(skillMd) || entrypoint.skill_slug,
+                      description: skill
+                          ? skill.description || ''
+                          : extractSkillMdDescription(skillMd),
+                      collected: Boolean(skill),
+                      path: `/page/skills/${entrypoint.skill_slug}`,
+                  };
+              })()
+            : null;
+
+        // 内置 Skills：总是从包内 SKILL.md 回填
+        privateSkills.forEach((item) => {
+            const skillMd = skillMdMap.get(`skills/${item.slug}/SKILL.md`) || '';
+            const name = extractSkillMdName(skillMd);
+            if (name) item.name = name;
+            const description = extractSkillMdDescription(skillMd);
+            if (description) item.description = description;
+        });
+
+        // 未收录的依赖 Skills：包内有 SKILL.md 时同样回填
+        dependencies.forEach((item) => {
+            if (item.collected) return;
+            const skillMd = skillMdMap.get(`skills/${item.slug}/SKILL.md`) || '';
+            const name = extractSkillMdName(skillMd);
+            if (name) item.name = name;
+            const description = extractSkillMdDescription(skillMd);
+            if (description) item.description = description;
+        });
+
         const detail = row.toJSON();
         const demoImages = this.parseJsonArray(detail.demo_images).map((item) => ({
             ...item,
@@ -1008,19 +1089,7 @@ class AgentsService extends Service {
             logoUrl: this.buildAssetUrl(detail.name, detail.logo_path),
             logoPath: detail.logo_path,
             demoImages,
-            entrypoint: entrypoint
-                ? {
-                      slug: entrypoint.skill_slug,
-                      name: skillMap.get(entrypoint.skill_slug)
-                          ? skillMap.get(entrypoint.skill_slug).name
-                          : entrypoint.skill_slug,
-                      description: skillMap.get(entrypoint.skill_slug)
-                          ? skillMap.get(entrypoint.skill_slug).description || ''
-                          : '',
-                      collected: Boolean(skillMap.get(entrypoint.skill_slug)),
-                      path: `/page/skills/${entrypoint.skill_slug}`,
-                  }
-                : null,
+            entrypoint: entrypointItem,
             dependencies,
             privateSkills,
             updatedAt: detail.updated_at ? detail.updated_at.toISOString() : '',

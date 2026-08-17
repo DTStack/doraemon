@@ -91,6 +91,31 @@ function extractSkillMdDescription(skillMdContent) {
     return extractBodySummary(body) || extractBodySummary(normalized);
 }
 
+/** Frontmatter `name:` from SKILL.md, quoted-scalar aware. Empty when absent. */
+function extractSkillMdName(content) {
+    const text = String(content || '');
+    const normalized = text.replace(/\r\n/g, '\n');
+    if (!normalized.startsWith('---\n')) return '';
+    const endMarkerIndex = normalized.indexOf('\n---\n', 4);
+    if (endMarkerIndex === -1) return '';
+    const frontmatterText = normalized.slice(4, endMarkerIndex);
+    const lines = frontmatterText.split('\n');
+    for (let i = 0; i < lines.length; i += 1) {
+        const keyMatch = lines[i].match(/^name:\s*(.*)$/i);
+        if (!keyMatch) continue;
+        const rest = keyMatch[1].trim();
+        if (!rest) continue;
+        if (
+            (rest.startsWith('"') && rest.endsWith('"')) ||
+            (rest.startsWith("'") && rest.endsWith("'"))
+        ) {
+            return rest.slice(1, -1).trim();
+        }
+        return rest;
+    }
+    return '';
+}
+
 /**
  * Market card description (CLI registry + Web zip/import/update).
  * Explicit override wins; else keep non-empty card; else SKILL.md default.
@@ -110,6 +135,7 @@ function resolveMarketCardDescription(opts = {}) {
 module.exports = {
     normalizeRelativePath,
     extractSkillMdDescription,
+    extractSkillMdName,
     extractBodySummary,
     resolveMarketCardDescription,
 };

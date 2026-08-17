@@ -435,9 +435,9 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                     )}
                                 </Card>
 
-                                <Card className="agent-section-card">
-                                    <Title level={4}>内置 Skills</Title>
-                                    {detail.privateSkills.length > 0 ? (
+                                {detail.privateSkills.length > 0 ? (
+                                    <Card className="agent-section-card">
+                                        <Title level={4}>内置 Skills</Title>
                                         <div className="agent-skill-grid">
                                             {detail.privateSkills.map((item) => (
                                                 <SkillRelationCard
@@ -447,10 +447,8 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                                 />
                                             ))}
                                         </div>
-                                    ) : (
-                                        <Empty description="暂无内置 Skills" />
-                                    )}
-                                </Card>
+                                    </Card>
+                                ) : null}
 
                                 {detail.dependencies.length > 0 ? (
                                     <Card className="agent-section-card">

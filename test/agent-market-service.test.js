@@ -462,3 +462,127 @@ test('getAgentArchiveStream 返回当前 hash 对应的原始 ZIP', async () => 
         fs.rmSync(storageDir, { recursive: true, force: true });
     }
 });
+
+function createDetailService() {
+    const service = createService();
+    service.storageReady = true;
+    service.app.Sequelize = { Op: require('sequelize').Op };
+
+    const row = {
+        id: 1,
+        name: 'bugfix-agent',
+        display_name: 'Bugfix Agent',
+        description: 'Agent 简短描述',
+        profile: '简介',
+        author_name: 'DTStack',
+        category: '工程效率',
+        tags: '[]',
+        prompts: '[]',
+        capabilities: '[]',
+        version: '1.0.0',
+        logo_path: '',
+        demo_images: '[]',
+        updated_at: new Date('2026-01-01T00:00:00Z'),
+        entrypoint_ref: 'skills/bugfix-workflow',
+        toJSON() {
+            return { ...this };
+        },
+    };
+
+    const skillMdContents = {
+        'skills/bugfix-workflow/SKILL.md':
+            '---\nname: Bugfix Workflow\n---\n# Bugfix Workflow\n修复 Bug 的完整流程',
+        'skills/builtin-review/SKILL.md':
+            '---\nname: 内置审查 Skill\n---\n# 内置审查\n用于代码审查',
+        'skills/systematic-debugging/SKILL.md':
+            '---\nname: Systematic Debugging\n---\n# Systematic Debugging\n系统化调试方法论',
+    };
+
+    service.app.model = {
+        Agent: {
+            async findOne() {
+                return row;
+            },
+        },
+        AgentSkill: {
+            async findAll() {
+                return [
+                    { skill_slug: 'bugfix-workflow', relation_type: 'entrypoint', sort_order: 0 },
+                    { skill_slug: 'builtin-review', relation_type: 'private', sort_order: 0 },
+                    {
+                        skill_slug: 'systematic-debugging',
+                        relation_type: 'dependency',
+                        sort_order: 0,
+                    },
+                ];
+            },
+        },
+        SkillsItem: {
+            async findAll() {
+                return [];
+            },
+        },
+        AgentFile: {
+            async findAll({ where }) {
+                const { Op } = service.app.Sequelize;
+                const paths = where.file_path[Op.in] || [];
+                return paths
+                    .filter((filePath) => skillMdContents[filePath] !== undefined)
+                    .map((filePath) => ({
+                        file_path: filePath,
+                        content: skillMdContents[filePath],
+                    }));
+            },
+        },
+    };
+
+    return service;
+}
+
+test('getAgentDetail 未收录入口/内置/依赖 Skill 从包内 SKILL.md 回填描述', async () => {
+    const detail = await createDetailService().getAgentDetail('bugfix-agent');
+
+    // 核心工作流：未收录时回填 SKILL.md 的 name/description
+    assert.equal(detail.entrypoint.name, 'Bugfix Workflow');
+    assert.match(detail.entrypoint.description, /修复 Bug/);
+    assert.equal(detail.entrypoint.collected, false);
+
+    // 内置 Skills：总是回填，name 取 frontmatter，标记 builtin
+    assert.equal(detail.privateSkills.length, 1);
+    assert.equal(detail.privateSkills[0].name, '内置审查 Skill');
+    assert.match(detail.privateSkills[0].description, /代码审查/);
+    assert.equal(detail.privateSkills[0].builtin, true);
+    assert.equal(detail.privateSkills[0].path, '');
+
+    // 未收录的依赖 Skills：包内有 SKILL.md 时同样回填
+    assert.equal(detail.dependencies.length, 1);
+    assert.equal(detail.dependencies[0].name, 'Systematic Debugging');
+    assert.match(detail.dependencies[0].description, /系统化调试/);
+});
+
+test('getAgentDetail 已收录入口 Skill 用 SkillsItem 描述，且不查包内 SKILL.md', async () => {
+    const service = createDetailService();
+    service.app.model.SkillsItem.findAll = async () => [
+        {
+            slug: 'bugfix-workflow',
+            name: 'Bugfix Workflow(已收录)',
+            description: '来自 Skills Hub 的描述',
+        },
+    ];
+    // 包内不提供 SKILL.md，验证已收录场景不读取它
+    service.app.model.AgentFile.findAll = async ({ where }) => {
+        const { Op } = service.app.Sequelize;
+        const paths = where.file_path[Op.in] || [];
+        assert.equal(paths.length, 2); // 仅内置 + 未收录依赖，不再包含入口
+        return [];
+    };
+
+    const detail = await service.getAgentDetail('bugfix-agent');
+
+    assert.equal(detail.entrypoint.name, 'Bugfix Workflow(已收录)');
+    assert.equal(detail.entrypoint.description, '来自 Skills Hub 的描述');
+    assert.equal(detail.entrypoint.collected, true);
+    // 内置 Skill 无 SKILL.md：name 回退 slug，description 为空（前端显示"暂无描述"）
+    assert.equal(detail.privateSkills[0].name, 'builtin-review');
+    assert.equal(detail.privateSkills[0].description, '');
+});
