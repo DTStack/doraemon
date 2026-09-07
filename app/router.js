@@ -167,7 +167,6 @@ module.exports = (app) => {
      */
     app.get('/api/agents/list', app.controller.agents.getAgentList);
     app.get('/api/agents/detail', app.controller.agents.getAgentDetail);
-    app.get('/api/agents/related', app.controller.agents.getRelatedAgents);
     app.get('/api/agents/asset', app.controller.agents.getAgentAsset);
     app.get('/api/agents/download', app.controller.agents.downloadAgentArchive);
     app.post('/api/agents/import-file', app.controller.agents.importAgentFile);

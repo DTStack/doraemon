@@ -12,12 +12,6 @@ class AgentsController extends Controller {
         this.ctx.body = this.app.utils.response(true, data);
     }
 
-    async getRelatedAgents() {
-        const { name, limit = 3 } = this.ctx.query;
-        const data = await this.ctx.service.agents.getRelatedAgents(name, limit);
-        this.ctx.body = this.app.utils.response(true, data);
-    }
-
     async getAgentAsset() {
         const { stream, mimeType, cacheControl } =
             await this.ctx.service.agents.getAgentAssetStream(this.ctx.query);

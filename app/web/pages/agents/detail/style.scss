@@ -19,13 +19,9 @@
     }
     .agent-hero,
     .agent-section-card,
-    .agent-side-actions,
-    .agent-side-related {
+    .agent-side-actions {
         border-radius: 20px;
         border: 1px solid #EDF0F5;
-    }
-    .agent-side-related {
-        margin-top: 20px;
     }
     .agent-side-actions {
         .ant-card-head {
@@ -135,6 +131,7 @@
     .agent-hero-logo {
         width: 88px;
         height: 88px;
+        flex: 0 0 88px;
         border-radius: 24px;
         object-fit: cover;
         background: linear-gradient(135deg, #EFF4FF, #EEF2FF);
@@ -161,101 +158,17 @@
         flex-wrap: wrap;
         gap: 8px;
     }
-    .agent-detail-tabs {
-        .ant-tabs-nav {
-            margin-bottom: 16px;
-        }
+    .agent-detail-content {
+        min-width: 0;
     }
     .agent-section-stack {
         display: flex;
         flex-direction: column;
         gap: 12px;
     }
-    .agent-capability-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-    }
-    .agent-capability-card {
-        position: relative;
-        min-width: 0;
-        padding: 10px 12px;
-        border: 1px solid #E9EEF5;
-        border-radius: 10px;
-        .ant-typography:first-child {
-            display: block;
-            margin-bottom: 2px;
-            color: #1F2937;
-            font-size: 15px;
-            line-height: 1.4;
-        }
-        .ant-typography:last-child {
-            margin-top: 4px;
-            margin-bottom: 0;
-            color: #667085;
-            line-height: 1.5;
-            font-size: 13px;
-        }
-    }
-    .agent-capability-card-index {
-        position: absolute;
-        top: 10px;
-        right: 12px;
-        color: #98A2B3;
-        font-size: 14px;
-        line-height: 1;
-        font-weight: 500;
-        font-variant-numeric: tabular-nums;
-        letter-spacing: 0.02em;
-    }
     .agent-prompts {
         display: grid;
         gap: 12px;
-    }
-    .agent-demo-gallery {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-    .agent-demo-thumbnails {
-        display: flex;
-        gap: 10px;
-        overflow-x: auto;
-        padding: 2px;
-    }
-    .agent-demo-thumbnail {
-        width: 132px;
-        height: 80px;
-        flex: 0 0 132px;
-        padding: 4px;
-        overflow: hidden;
-        cursor: pointer;
-        border: 2px solid transparent;
-        border-radius: 10px;
-        background: #F8FAFC;
-        transition: border-color 0.2s ease;
-        &.is-active {
-            border-color: #3F86F7;
-        }
-        img {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-    }
-    .agent-demo-preview {
-        width: min(80%, 960px);
-        margin: 0 auto;
-        border-radius: 16px;
-        overflow: hidden;
-        background: #F8FAFC;
-        border: 1px solid #EDF0F5;
-        img {
-            display: block;
-            width: 100%;
-            height: auto;
-        }
     }
     .agent-overview-description {
         color: #344054;
@@ -310,31 +223,9 @@
         flex: 0 0 32px;
         border-radius: 10px;
         font-size: 16px;
-        &.is-message {
-            color: #F97316;
-            background: rgba(249, 115, 22, 0.12);
-        }
         &.is-question {
             color: #F59E0B;
             background: rgba(245, 158, 11, 0.12);
-        }
-    }
-    .agent-message-card {
-        .ant-card-body {
-            padding: 16px 18px;
-        }
-        .agent-message-card-body {
-            display: grid;
-            grid-template-columns: 32px minmax(0, 1fr);
-            align-items: center;
-            gap: 12px;
-        }
-        .ant-typography {
-            margin-bottom: 0;
-            flex: 1;
-            color: #344054;
-            line-height: 2;
-            font-size: 15px;
         }
     }
     .agent-prompts-compact {
@@ -419,99 +310,17 @@
         color: #F59E0B;
         font-size: 14px;
     }
-    .agent-skill-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px 12px;
-    }
-    .agent-skill-card {
-        padding: 14px 16px;
-        border-radius: 14px;
-        border: 1px solid #E9EEF5;
-        box-shadow: none;
-        background: linear-gradient(180deg, #FFF 0%, #FBFDFF 100%);
-        .ant-card-body {
-            padding: 0;
-        }
-        &.is-clickable {
-            cursor: pointer;
-        }
-        &.is-disabled {
-            cursor: default;
-            opacity: 0.78;
-        }
-    }
-    .agent-skill-card-title {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 6px;
-        span:first-child {
-            font-size: 15px;
-            line-height: 1.5;
-            font-weight: 600;
-            color: #1F2937;
-        }
-        .ant-tag {
-            margin-right: 0;
-        }
-    }
-    .agent-skill-card-description {
-        margin-bottom: 0;
-        color: #667085;
-        font-size: 14px;
-        line-height: 1.6;
-    }
-    .related-agent-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-    .related-agent-card {
-        border-radius: 14px;
-    }
-    .related-agent-head {
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-    }
-    .related-agent-logo {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        object-fit: cover;
-        background: linear-gradient(135deg, #EFF4FF, #EEF2FF);
-    }
-    .related-agent-meta {
-        min-width: 0;
-        .ant-typography {
-            margin-bottom: 0;
-        }
-    }
 
     @media screen and (max-width: 992px) {
         padding: 16px;
         .agent-detail-shell {
             grid-template-columns: 1fr;
         }
-        .agent-capability-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
     }
 
     @media screen and (max-width: 768px) {
         .agent-hero {
             padding: 20px;
-        }
-        .agent-skill-grid {
-            grid-template-columns: 1fr;
-        }
-        .agent-capability-grid {
-            grid-template-columns: 1fr;
-        }
-        .agent-demo-preview {
-            width: 100%;
         }
         .agent-section-card {
             .ant-card-body {

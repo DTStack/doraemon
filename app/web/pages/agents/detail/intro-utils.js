@@ -9,9 +9,8 @@ function splitParagraphs(content) {
 
 function buildAgentIntroBlocks(detail = {}) {
     return {
-        introParagraphs: splitParagraphs(detail.profile),
-        openingMessage: String(detail.description || detail.summary || '').trim(),
-        openingQuestions: Array.isArray(detail.prompts) ? detail.prompts : [],
+        introParagraphs: splitParagraphs(detail.longDescription),
+        openingQuestions: Array.isArray(detail.defaultPrompt) ? detail.defaultPrompt : [],
     };
 }
 

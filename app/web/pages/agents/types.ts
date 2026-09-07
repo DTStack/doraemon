@@ -9,25 +9,6 @@ export interface AgentCapability {
     description: string;
 }
 
-export interface AgentDemoImage {
-    path: string;
-    url: string;
-    alt: string;
-    mimeType: string;
-    size: number;
-    hash: string;
-    sortOrder: number;
-}
-
-export interface AgentSkillRelation {
-    slug: string;
-    name: string;
-    description?: string;
-    collected: boolean;
-    builtin?: boolean;
-    path?: string;
-}
-
 export interface AgentItem {
     name: string;
     displayName: string;
@@ -37,7 +18,6 @@ export interface AgentItem {
     tags: string[];
     version: string;
     updatedAt: string;
-    dependencyCount: number;
     logoUrl: string;
 }
 
@@ -50,11 +30,7 @@ export interface AgentListResponse {
 }
 
 export interface AgentDetail extends AgentItem {
-    profile: string;
-    prompts: AgentPrompt[];
+    longDescription: string;
+    defaultPrompt: AgentPrompt[];
     capabilities: AgentCapability[];
-    demoImages: AgentDemoImage[];
-    entrypoint: AgentSkillRelation | null;
-    dependencies: AgentSkillRelation[];
-    privateSkills: AgentSkillRelation[];
 }

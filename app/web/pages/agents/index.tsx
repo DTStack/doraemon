@@ -270,14 +270,16 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                             >
                                 <div className="agent-card-head">
                                     <div className="agent-card-brand">
-                                        <img
-                                            className="agent-card-logo"
-                                            src={agent.logoUrl}
-                                            alt={agent.displayName}
-                                            onError={(event) => {
-                                                event.currentTarget.style.visibility = 'hidden';
-                                            }}
-                                        />
+                                        {agent.logoUrl ? (
+                                            <img
+                                                className="agent-card-logo"
+                                                src={agent.logoUrl}
+                                                alt={agent.displayName}
+                                                onError={(event) => {
+                                                    event.currentTarget.style.display = 'none';
+                                                }}
+                                            />
+                                        ) : null}
                                         <div className="agent-card-meta">
                                             <Title level={4}>{agent.displayName}</Title>
                                             <div className="agent-card-subline">
@@ -316,9 +318,6 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
 
                                 <div className="agent-card-footer">
                                     <Text type="secondary">版本 {agent.version || '-'}</Text>
-                                    <Text type="secondary">
-                                        内置 Skills {agent.dependencyCount}
-                                    </Text>
                                 </div>
                             </Card>
                         ))}
@@ -353,7 +352,7 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
             >
                 <Space direction="vertical" style={{ width: '100%' }} size={16}>
                     <Text type="secondary">
-                        仅支持导入单个 Agent ZIP。Agent 信息会从包内 `agent.yaml` 自动解析。
+                        仅支持导入单个 Agent ZIP。Agent 信息会从包内 `.codex-plugin/plugin.json` 自动解析。
                     </Text>
                     <Upload
                         accept=".zip"
