@@ -952,14 +952,16 @@ class AgentsService extends Service {
             return [];
         }
 
-        // 统计各候选 Agent 的技能重叠数
-        const overlapCountMap = new Map();
+        // 统计各候选 Agent 的技能重叠数，使用 Set 防御重复关联
+        const overlapSkillMap = new Map();
         relatedSkillRows.forEach((item) => {
-            const current = overlapCountMap.get(item.agent_id) || 0;
-            overlapCountMap.set(item.agent_id, current + 1);
+            if (!overlapSkillMap.has(item.agent_id)) {
+                overlapSkillMap.set(item.agent_id, new Set());
+            }
+            overlapSkillMap.get(item.agent_id).add(item.skill_slug);
         });
 
-        const candidateIds = Array.from(overlapCountMap.keys());
+        const candidateIds = Array.from(overlapSkillMap.keys());
         const agentRows = await Agent.findAll({
             where: {
                 id: candidateIds,
@@ -968,10 +970,14 @@ class AgentsService extends Service {
         });
 
         return agentRows
-            .map((item) => ({
-                ...this.toAgentListItem(item),
-                overlapCount: overlapCountMap.get(item.id) || 0,
-            }))
+            .map((item) => {
+                const itemData = item?.toJSON ? item.toJSON() : item;
+                const overlapCount = overlapSkillMap.get(item.id)?.size || 0;
+                return {
+                    ...this.toAgentListItem(itemData),
+                    overlapCount,
+                };
+            })
             .filter((item) => item.overlapCount > 0)
             .sort((left, right) => {
                 if (right.overlapCount !== left.overlapCount) {

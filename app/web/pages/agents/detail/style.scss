@@ -215,18 +215,6 @@
         flex-direction: column;
         gap: 12px;
     }
-    .agent-capability-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-        .agent-capability-label {
-            color: #667085;
-        }
-        &.agent-overview-tags {
-            margin-top: 12px;
-        }
-    }
     .agent-skill-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
