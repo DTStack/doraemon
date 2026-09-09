@@ -11,7 +11,7 @@ import { API } from '@/api';
 import { copyToClipboard } from '@/utils/copyUtils';
 import { safeOpenUrl } from '@/utils/safeOpenUrl';
 import { buildAgentDetailCodexPrompt, buildCodexNewThreadUrl } from '../codex-button-utils';
-import type { AgentCapability, AgentDetail, AgentItem, AgentSkill } from '../types';
+import type { AgentDetail, AgentItem, AgentSkill } from '../types';
 import './style.scss';
 
 const { Paragraph, Text, Title } = Typography;
@@ -163,16 +163,18 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                     <span className="dot">•</span>
                                     <Text>{detail.category}</Text>
                                 </div>
-                                <div className="agent-hero-capabilities">
-                                    <Text className="agent-hero-capabilities-label">功能：</Text>
-                                    {normalizedCapabilities.map(
-                                        (item: AgentCapability, index: number) => (
-                                            <Tag key={`${item.id || item.name}-${index}`}>
-                                                {item.name}
-                                            </Tag>
-                                        )
-                                    )}
-                                </div>
+                                {normalizedCapabilities.length > 0 ? (
+                                    <div className="agent-hero-capabilities">
+                                        <Text className="agent-hero-capabilities-label">
+                                            功能：
+                                        </Text>
+                                        <Text>
+                                            {normalizedCapabilities
+                                                .map((item) => item.name)
+                                                .join(', ')}
+                                        </Text>
+                                    </div>
+                                ) : null}
                                 {detail.tags && detail.tags.length > 0 ? (
                                     <div className="agent-hero-capabilities">
                                         <Text className="agent-hero-capabilities-label">
