@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.8.0...v2.0.0) (2026-09-09)
+
+
+### Features
+
+* add agent marketplace ([#93](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/93)) ([ac7640a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/ac7640a4f00c89594953555ff690b762f25961d2))
+* add batch commands and codex install ([#95](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/95)) ([333bdb8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/333bdb8358ef99b36275ead284843cee22a7887f))
+* add contributor field to skills ([#88](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/88)) ([b2b57ea](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/b2b57eade04b6925eacce49a20647b4c7b184aea))
+* **agents:** add agent-market static file serving config ([e5da89c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e5da89c28dd3ca9f02a159d25e2682af6d1eed33))
+* **agents:** add index numbers to capability cards in detail page ([bd55508](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/bd55508981510623c777bfef583ecea359cfd7ac))
+* **agents:** agent 市场迁移为 codex-plugin 元数据并增强技能关联展示 ([#96](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/96)) ([ddf2cca](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/ddf2ccab47f85a23e7ca60f0d85e855a832e62b5))
+* **agents:** resolve built-in skill descriptions from agent SKILL.md ([feb73c1](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/feb73c1b536d5ec67415701d2c1c3f5bf11b7c1f))
+* Doraemon Skills kit — dt-skill CLI, registry API, and marketplace UISkills kit support ([#86](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/86)) ([7210d5e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7210d5ebbb10c139719ec45051884d8d43429779))
+* **skills:** content-hash publish/update, hide user-facing version ([#87](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/87)) ([5132137](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/5132137caa34619957c4e805bdafb6b58a86e06e))
+* **skills:** downloads count/sort, update scope, and Skills Hub docs ([#91](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/91)) ([203a3fd](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/203a3fd24e0e72c0d7ee175f2ca9180c507b5f50))
+* **skills:** Skills 市场 UI 优化与搜索防抖 ([#90](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/90)) ([7c1d50c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/7c1d50c922ad93a4d0a9af5ec4fdf518be31a92c))
+* support spec.privateSkills for built-in skills ([06f099a](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/06f099acca9aa22cd7e85a6da9ad908cbb0b3f4c))
+
+
+### Bug Fixes
+
+* **agent-market:** add buffer:false and dynamic:true for hot-reload ([2b673f8](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/2b673f82bfb330ea977942b300c91acd274e24ed))
+* **agent-market:** disable caching for agent-market static files ([135df4c](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/135df4c669fed31e17ec0a11627a6c9b74d280b1))
+* **agents:** add missing description field to entrypoint in agent detail ([1a95d2e](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/1a95d2ea96d50f33cc79f4a5198d37c3b66bbd1d))
+* fix logo upload handling ([#92](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/92)) ([4fd7496](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/4fd74966c745f2abe11e2b1198634311f7d95be7))
+* **skills:** market card sticky desc, nested paths + dt-skill Node 18 / 0.18.6 ([#89](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/89)) ([6ed4811](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/6ed48110f2c0c9bc414406f6174da92216f8785b))
+* switch terminal/command surfaces to light theme ([e66d1d0](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/e66d1d0d1deeb75953115d8767b315f5d6eae7c8))
+
+## [1.8.0](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.7.2...v1.8.0) (2026-03-25)
+
+
+### Features
+
+* add MCP ([46b6b99](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/46b6b99228c5fe6d5de290193da885ceae7063fe))
+
+
+### Bug Fixes
+
+* [#81](https://github.com/easy-team/egg-react-webpack-boilerplate/issues/81) sql file sync with the db model ([1f58698](https://github.com/easy-team/egg-react-webpack-boilerplate/commit/1f586982a6929c78d0bc1fb4a96b06f2071e3f6a))
+
 ### [1.7.2](https://github.com/easy-team/egg-react-webpack-boilerplate/compare/v1.7.1...v1.7.2) (2024-12-04)
 
 
