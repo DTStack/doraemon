@@ -318,6 +318,7 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
 
                                 <div className="agent-card-footer">
                                     <Text type="secondary">版本 {agent.version || '-'}</Text>
+                                    <Text type="secondary">Skills {agent.skillCount ?? 0}个</Text>
                                 </div>
                             </Card>
                         ))}

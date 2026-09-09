@@ -54,3 +54,16 @@ test('Agent 列表页提供帮助文档入口并读取独立配置', () => {
     assert.equal(content.includes('config.agentHelpDocUrl'), true, '应读取 Agent 独立帮助文档配置');
     assert.equal(content.includes('title="Agent 市场帮助文档"'), true, '应提供帮助文档提示文案');
 });
+
+test('Agent 列表卡片底部展示版本号与 Skills 数量', () => {
+    const content = fs.readFileSync(
+        path.join(__dirname, '../app/web/pages/agents/index.tsx'),
+        'utf8'
+    );
+
+    assert.equal(
+        content.includes('Skills {agent.skillCount ?? 0}个'),
+        true,
+        '列表卡片底部右侧应展示 Skills 数量'
+    );
+});

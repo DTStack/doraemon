@@ -491,3 +491,66 @@ test('ensureAgentSkillsTableCompatible 兼容处理历史 relation_type 非空�
     await service.ensureAgentSkillsTableCompatible();
     assert.equal(changed, true);
 });
+
+test('queryAgentList 返回列表中每个 Agent 的 skillCount 统计', async () => {
+    const service = createService();
+    service.storageReady = true;
+    service.app.Sequelize = { Op: { like: Symbol('like'), or: Symbol('or') } };
+    service.buildAssetUrl = (name, p) => `/asset/${name}/${p}`;
+
+    const agent1 = {
+        id: 101,
+        name: 'agent-101',
+        display_name: 'Agent 101',
+        version: '1.0.2',
+        updated_at: new Date('2026-01-01T00:00:00Z'),
+        toJSON() {
+            return { ...this };
+        },
+    };
+    const agent2 = {
+        id: 102,
+        name: 'agent-102',
+        display_name: 'Agent 102',
+        version: '2.0.0',
+        updated_at: new Date('2026-01-02T00:00:00Z'),
+        toJSON() {
+            return { ...this };
+        },
+    };
+
+    service.app.model = {
+        Agent: {
+            async findAndCountAll() {
+                return {
+                    count: 2,
+                    rows: [agent1, agent2],
+                };
+            },
+        },
+        AgentSkill: {
+            async findAll({ where }) {
+                assert.deepEqual(where.agent_id, [101, 102]);
+                return [
+                    { agent_id: 101, skill_slug: 'skill-1' },
+                    { agent_id: 101, skill_slug: 'skill-2' },
+                    { agent_id: 101, skill_slug: 'skill-3' },
+                    { agent_id: 101, skill_slug: 'skill-4' },
+                    { agent_id: 101, skill_slug: 'skill-5' },
+                    { agent_id: 101, skill_slug: 'skill-6' },
+                    { agent_id: 101, skill_slug: 'skill-7' },
+                    { agent_id: 101, skill_slug: 'skill-8' },
+                    { agent_id: 102, skill_slug: 'skill-a' },
+                ];
+            },
+        },
+    };
+
+    const res = await service.queryAgentList({});
+    assert.equal(res.total, 2);
+    assert.equal(res.list.length, 2);
+    assert.equal(res.list[0].name, 'agent-101');
+    assert.equal(res.list[0].skillCount, 8);
+    assert.equal(res.list[1].name, 'agent-102');
+    assert.equal(res.list[1].skillCount, 1);
+});
