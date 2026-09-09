@@ -1,0 +1,14 @@
+app/service/agents.js
+  h_3070dc1062bb3b 955-956,958-961,964,973-980
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "2b9c735334a97ef47440f217ae4da48f8ed0874f",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
