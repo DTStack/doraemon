@@ -25,12 +25,7 @@ test('buildAgentDetailCodexPrompt returns only the opening question prompt', () 
             displayName: 'Bug 修复 Agent',
             name: 'bugfix-agent',
             description: '用于修复 Bug',
-            entrypoint: { slug: 'bugfix-workflow', name: 'Bug 修复工作流' },
-            dependencies: [
-                { slug: 'zentao-api', name: '禅道 API' },
-                { slug: 'gitlab-mr-ci-watch', name: 'MR CI 观察' },
-            ],
-            prompts: [{ title: '修复 Bug', prompt: '$bugfix-workflow 12345' }],
+            defaultPrompt: [{ title: '修复 Bug', prompt: '$bugfix-workflow 12345' }],
         },
         'http://10.10.10.168:7001/page/agents/bugfix-agent'
     );
@@ -43,7 +38,7 @@ test('buildAgentDetailCodexPrompt can use the selected opening question', () => 
         {
             displayName: 'Bug 修复 Agent',
             name: 'bugfix-agent',
-            prompts: [{ title: '默认问题', prompt: '$bugfix-workflow 默认' }],
+            defaultPrompt: [{ title: '默认问题', prompt: '$bugfix-workflow 默认' }],
         },
         'http://10.10.10.168:7001/page/agents/bugfix-agent',
         { title: '自然语言', prompt: '帮我修 bug，禅道 Bug ID 是 156343' }

@@ -12,12 +12,6 @@ class AgentsController extends Controller {
         this.ctx.body = this.app.utils.response(true, data);
     }
 
-    async getRelatedAgents() {
-        const { name, limit = 3 } = this.ctx.query;
-        const data = await this.ctx.service.agents.getRelatedAgents(name, limit);
-        this.ctx.body = this.app.utils.response(true, data);
-    }
-
     async getAgentAsset() {
         const { stream, mimeType, cacheControl } =
             await this.ctx.service.agents.getAgentAssetStream(this.ctx.query);
@@ -33,6 +27,12 @@ class AgentsController extends Controller {
         this.ctx.set('Content-Type', mimeType);
         this.ctx.set('Content-Disposition', `attachment; filename="${fileName}"`);
         this.ctx.body = stream;
+    }
+
+    async getRelatedAgents() {
+        const { name, limit = 3 } = this.ctx.query;
+        const data = await this.ctx.service.agents.getRelatedAgents(name, limit);
+        this.ctx.body = this.app.utils.response(true, data);
     }
 
     async importAgentFile() {
@@ -54,11 +54,14 @@ class AgentsController extends Controller {
             );
             this.ctx.body = this.app.utils.response(true, data);
         } finally {
-            if (file?.filepath && fs.existsSync(file.filepath)) {
-                try {
-                    fs.unlinkSync(file.filepath);
-                } catch (error) {
-                    this.ctx.logger.warn(`[agents] 清理上传文件失败: ${error.message}`);
+            // 清理本次请求上传的所有临时文件，防止多文件或异常时泄漏
+            for (const item of files) {
+                if (item?.filepath && fs.existsSync(item.filepath)) {
+                    try {
+                        fs.unlinkSync(item.filepath);
+                    } catch (error) {
+                        this.ctx.logger.warn(`[agents] 清理上传文件失败: ${error.message}`);
+                    }
                 }
             }
         }

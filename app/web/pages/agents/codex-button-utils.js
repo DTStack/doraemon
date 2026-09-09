@@ -15,7 +15,7 @@ function buildCodexNewThreadUrl({ prompt, originUrl }) {
 
 function buildAgentDetailCodexPrompt(detail = {}, _originUrl, selectedPrompt) {
     const firstPrompt =
-        selectedPrompt || (Array.isArray(detail.prompts) ? detail.prompts[0] : null);
+        selectedPrompt || (Array.isArray(detail.defaultPrompt) ? detail.defaultPrompt[0] : null);
     return firstPrompt ? String(firstPrompt.prompt || '') : '';
 }
 

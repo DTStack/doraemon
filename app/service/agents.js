@@ -3,14 +3,10 @@ const AdmZip = require('adm-zip');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const yaml = require('js-yaml');
 const mime = require('mime-types');
 
-const {
-    normalizeRelativePath,
-    extractSkillMdDescription,
-    extractSkillMdName,
-} = require('../utils/skill-utils');
+const { normalizeRelativePath, extractSkillMdName } = require('../utils/skill-utils');
+const { resolveSkillIdentifier, sanitizeInstallKeySegment } = require('../utils/skill-install-key');
 const {
     isValidSkillCategory,
     SKILL_CATEGORY_OPTIONS,
@@ -55,6 +51,7 @@ class AgentsService extends Service {
             await Agent.sync();
             await AgentFile.sync();
             await AgentSkill.sync();
+            await this.ensureAgentSkillsTableCompatible();
             this.storageReady = true;
         })();
 
@@ -65,25 +62,31 @@ class AgentsService extends Service {
         }
     }
 
+    // 兼容历史 agent_skills 表结构，若存在 relation_type 且非空则修改为允许 NULL
+    async ensureAgentSkillsTableCompatible() {
+        try {
+            const queryInterface = this.app.model?.getQueryInterface?.();
+            if (!queryInterface?.describeTable || !queryInterface?.changeColumn) return;
+            const table = await queryInterface.describeTable('agent_skills');
+            if (table?.relation_type && !table.relation_type.allowNull) {
+                await queryInterface.changeColumn('agent_skills', 'relation_type', {
+                    type: this.app.Sequelize.STRING(20),
+                    allowNull: true,
+                    defaultValue: null,
+                    comment: '历史兼容字段',
+                });
+            }
+        } catch (error) {
+            this.ctx?.logger?.warn?.(`[agents] 兼容检查 agent_skills 表结构失败: ${error.message}`);
+        }
+    }
+
     normalizeAgentPath(filePath, message = '非法文件路径') {
         const normalized = normalizeRelativePath(String(filePath || '').replace(/^\.\//, ''));
         if (!normalized) {
             this.ctx.throw(400, message);
         }
         return normalized;
-    }
-
-    // agent.yaml 里的 ref 指向目录（skills/bugfix-workflow）或 SKILL.md 本身，
-    // 统一归一化为包内 SKILL.md 相对路径，供 agent_files 精确匹配。
-    resolveSkillMdPath(refOrPath) {
-        const normalized = String(refOrPath || '').trim();
-        if (!normalized) return '';
-        return normalized.toLowerCase().endsWith('.md') ? normalized : `${normalized}/SKILL.md`;
-    }
-
-    lookupSkillMd(skillMdMap, refOrPath) {
-        if (!skillMdMap) return '';
-        return skillMdMap.get(this.resolveSkillMdPath(refOrPath)) || '';
     }
 
     parseJsonArray(value) {
@@ -169,142 +172,26 @@ class AgentsService extends Service {
         return a.prerelease.localeCompare(b.prerelease);
     }
 
-    detectImageMime(buffer) {
-        if (!buffer || buffer.length < 12) return '';
-
-        if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
-            return 'image/png';
-        }
-
-        if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[buffer.length - 2] === 0xff) {
-            return 'image/jpeg';
-        }
-
-        if (
-            buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
-            buffer.subarray(8, 12).toString('ascii') === 'WEBP'
-        ) {
-            return 'image/webp';
-        }
-
-        return '';
-    }
-
-    buildAssetTargetPath(agentName, contentHash, filePath) {
-        const normalized = this.normalizeAgentPath(filePath);
-        const parts = normalized.split('/');
-        const assetsIndex = parts.indexOf('assets');
-        if (assetsIndex === -1) {
-            this.ctx.throw(400, '资源路径必须位于 assets 目录');
-        }
-        const assetSubPath = parts.slice(assetsIndex + 1).join('/');
-        if (!assetSubPath) {
-            this.ctx.throw(400, '资源路径必须位于 assets 目录');
-        }
-        return this.normalizeAgentPath(`${agentName}/${contentHash}/assets/${assetSubPath}`);
-    }
-
     buildAssetUrl(agentName, assetPath) {
         return `/api/agents/asset?name=${encodeURIComponent(agentName)}&path=${encodeURIComponent(
             assetPath
         )}`;
     }
 
-    buildSkillRelations(agentName, manifest) {
-        const relations = [];
-        const used = new Set();
-        const entrypointName = String(manifest?.spec?.entrypoint?.name || '').trim();
-
-        if (entrypointName) {
-            relations.push({
-                agentName,
-                skillSlug: entrypointName,
-                relationType: 'entrypoint',
-                sortOrder: 0,
-            });
-            used.add(`entrypoint:${entrypointName}`);
-        }
-
-        const dependencySkills = Array.isArray(manifest?.spec?.dependencies?.skills)
-            ? manifest.spec.dependencies.skills
-            : [];
-
-        dependencySkills.forEach((item, index) => {
-            const skillSlug = String(item || '').trim();
-            if (!skillSlug) return;
-            const key = `dependency:${skillSlug}`;
-            if (used.has(key)) return;
-            used.add(key);
-            relations.push({
-                agentName,
-                skillSlug,
-                relationType: 'dependency',
-                sortOrder: index,
-            });
-        });
-
-        const privateSkills = Array.isArray(manifest?.spec?.privateSkills)
-            ? manifest.spec.privateSkills
-            : [];
-
-        privateSkills.forEach((item, index) => {
-            const skillSlug = String(item || '').trim();
-            if (!skillSlug) return;
-            const key = `private:${skillSlug}`;
-            if (used.has(key)) return;
-            used.add(key);
-            relations.push({
-                agentName,
-                skillSlug,
-                relationType: 'private',
-                sortOrder: index,
-            });
-        });
-
-        return relations;
-    }
-
-    buildRelatedAgents(target, candidates = [], limit = 3) {
-        const targetDependencies = new Set(
-            (target?.dependencies || []).map((item) => String(item || '').trim()).filter(Boolean)
-        );
-
-        return candidates
-            .filter((item) => item && item.name !== target.name)
-            .map((item) => {
-                const dependencies = Array.isArray(item.dependencies) ? item.dependencies : [];
-                const overlap = dependencies.filter((skill) =>
-                    targetDependencies.has(skill)
-                ).length;
-                return {
-                    ...item,
-                    overlapCount: overlap,
-                };
-            })
-            .filter((item) => item.overlapCount > 0)
-            .sort((left, right) => {
-                if (right.overlapCount !== left.overlapCount) {
-                    return right.overlapCount - left.overlapCount;
-                }
-                return (
-                    new Date(right.updatedAt || 0).getTime() -
-                    new Date(left.updatedAt || 0).getTime()
-                );
-            })
-            .slice(0, Number(limit) || 3);
-    }
-
-    parseAgentYaml(rawContent) {
+    parseCodexPluginJson(rawContent) {
         try {
-            return yaml.load(rawContent);
+            return JSON.parse(rawContent);
         } catch (error) {
-            this.ctx.throw(400, `agent.yaml 解析失败: ${error.message}`);
+            this.ctx.throw(400, `.codex-plugin/plugin.json 解析失败: ${error.message}`);
         }
     }
 
-    getDemoImagePath(item, index) {
-        // demo.images 只接受 src，避免和其他文件路径字段语义混淆
-        return this.normalizeAgentPath(item?.src || '', `spec.demo.images[${index}] 路径非法`);
+    parseClaudePluginJson(rawContent) {
+        try {
+            return JSON.parse(rawContent);
+        } catch (error) {
+            this.ctx.throw(400, `.claude-plugin/plugin.json 解析失败: ${error.message}`);
+        }
     }
 
     normalizeCapabilities(capabilities) {
@@ -331,73 +218,60 @@ class AgentsService extends Service {
             .filter((item) => item && item.name);
     }
 
-    validateManifest(manifest, fileMap) {
+    mapCodexCategory(codexCategory) {
+        const map = {
+            Coding: '工程效率',
+        };
+        const mapped = map[String(codexCategory || '').trim()];
+        return mapped && isValidSkillCategory(mapped) ? mapped : '通用';
+    }
+
+    normalizeManifestPath(value, message) {
+        const normalized = String(value || '').trim();
+        if (!normalized.startsWith('./')) {
+            this.ctx.throw(400, `${message} 必须是 ./ 开头的相对路径`);
+        }
+        // manifest 目录路径可能带末尾斜杠，统一后再拼接子路径，避免出现 skills//xxx
+        return this.normalizeAgentPath(normalized.slice(2), message).replace(/\/+$/, '');
+    }
+
+    validateCodexManifest(manifest) {
         if (!manifest || typeof manifest !== 'object') {
-            this.ctx.throw(400, 'agent.yaml 内容无效');
-        }
-        if (manifest.apiVersion !== 'doraemon.dtstack.com/v1') {
-            this.ctx.throw(400, 'apiVersion 仅支持 doraemon.dtstack.com/v1');
-        }
-        if (manifest.kind !== 'Agent') {
-            this.ctx.throw(400, 'kind 必须为 Agent');
+            this.ctx.throw(400, '.codex-plugin/plugin.json 内容无效');
         }
 
-        const metadata = manifest.metadata || {};
-        const spec = manifest.spec || {};
-        const author = metadata.author || {};
-        const entrypoint = spec.entrypoint || {};
+        const iface = manifest.interface || {};
 
-        const name = this.validateAgentName(metadata.name);
-        const version = this.validateAgentVersion(metadata.version);
-        const category = String(metadata.category || '').trim();
+        const name = this.validateAgentName(manifest.name);
+        const version = this.validateAgentVersion(manifest.version);
 
-        if (!isValidSkillCategory(category)) {
-            this.ctx.throw(400, `category 无效，可选: ${SKILL_CATEGORY_OPTIONS.join(', ')}`);
-        }
-
-        const displayName = String(metadata.displayName || '').trim();
+        const displayName = String(iface.displayName || manifest.name || '').trim();
         if (!displayName) {
-            this.ctx.throw(400, 'metadata.displayName 不能为空');
+            this.ctx.throw(400, 'interface.displayName 不能为空');
         }
 
-        const description = String(metadata.description || '').trim();
+        const description = String(manifest.description || '').trim();
         if (!description) {
-            this.ctx.throw(400, 'metadata.description 不能为空');
+            this.ctx.throw(400, 'description 不能为空');
         }
 
-        const authorName = String(author.name || '').trim();
+        const authorName = String((manifest.author || {}).name || iface.developerName || '').trim();
         if (!authorName) {
-            this.ctx.throw(400, 'metadata.author.name 不能为空');
+            this.ctx.throw(400, 'author.name 不能为空');
         }
 
-        const profile = String(spec.profile || '').trim();
-        if (!profile) {
-            this.ctx.throw(400, 'spec.profile 不能为空');
+        const category = this.mapCodexCategory(iface.category);
+        const longDescription = String(iface.longDescription || description || '').trim();
+        const defaultPrompt = Array.isArray(iface.defaultPrompt) ? iface.defaultPrompt : [];
+        if (defaultPrompt.length > 3) {
+            this.ctx.throw(400, 'interface.defaultPrompt 最多支持 3 条');
+        }
+        if (defaultPrompt.some((item) => typeof item !== 'string' || item.length > 128)) {
+            this.ctx.throw(400, 'interface.defaultPrompt 每条必须是 128 字符以内的字符串');
         }
 
-        const logoPath = this.normalizeAgentPath(metadata.logo, 'metadata.logo 路径非法');
-        if (!fileMap.has(logoPath)) {
-            this.ctx.throw(400, `Logo 文件不存在: ${logoPath}`);
-        }
-
-        const entrypointRef = this.normalizeAgentPath(
-            entrypoint.ref,
-            'spec.entrypoint.ref 路径非法'
-        );
-        if (!fileMap.has(`${entrypointRef}/SKILL.md`) && !fileMap.has(entrypointRef)) {
-            this.ctx.throw(400, `入口 Skill 不存在: ${entrypointRef}`);
-        }
-
-        const prompts = Array.isArray(spec.prompts) ? spec.prompts : [];
-        const capabilities = this.normalizeCapabilities(spec.capabilities);
-        const demoImages = Array.isArray(spec?.demo?.images) ? spec.demo.images : [];
-
-        demoImages.forEach((item, index) => {
-            const targetPath = this.getDemoImagePath(item, index);
-            if (!fileMap.has(targetPath)) {
-                this.ctx.throw(400, `Demo 图片不存在: ${targetPath}`);
-            }
-        });
+        const skills = this.normalizeManifestPath(manifest.skills, 'skills');
+        const logoRef = iface.logo ? this.normalizeManifestPath(iface.logo, 'interface.logo') : '';
 
         return {
             name,
@@ -406,24 +280,33 @@ class AgentsService extends Service {
             description,
             authorName,
             category,
-            tags: Array.isArray(metadata.tags) ? metadata.tags.map((item) => String(item)) : [],
-            profile,
-            prompts: prompts.map((item) => ({
-                title: String(item?.title || '').trim(),
-                prompt: String(item?.prompt || '').trim(),
-            })),
-            capabilities,
-            logoPath,
-            demoImages,
-            entrypoint: {
-                host: String(entrypoint.host || '').trim(),
-                type: String(entrypoint.type || '').trim(),
-                name: String(entrypoint.name || '').trim(),
-                ref: entrypointRef,
-            },
-            dependencySkills: Array.isArray(spec?.dependencies?.skills)
-                ? spec.dependencies.skills.map((item) => String(item || '').trim()).filter(Boolean)
+            keywords: Array.isArray(manifest.keywords)
+                ? manifest.keywords.map((item) => String(item))
                 : [],
+            longDescription,
+            defaultPrompt,
+            capabilities: this.normalizeCapabilities(iface.capabilities),
+            skills,
+            logoRef,
+        };
+    }
+
+    validateClaudeManifest(manifest) {
+        if (!manifest || typeof manifest !== 'object') {
+            this.ctx.throw(400, '.claude-plugin/plugin.json 内容无效');
+        }
+
+        const name = this.validateAgentName(manifest.name);
+        const version = manifest.version ? this.validateAgentVersion(manifest.version) : '';
+        const agents = Array.isArray(manifest.agents) ? manifest.agents : [];
+        if (agents.length === 0) {
+            this.ctx.throw(400, '.claude-plugin/plugin.json 必须声明 agents');
+        }
+
+        return {
+            name,
+            version,
+            agents: agents.map((item) => this.normalizeManifestPath(item, 'agents')),
         };
     }
 
@@ -519,10 +402,15 @@ class AgentsService extends Service {
         }
 
         const [rootDir] = [...topLevelDirs];
-        const agentYamlPath = `${rootDir}/agent.yaml`;
-        const agentYamlEntry = fileMap.get(agentYamlPath);
-        if (!agentYamlEntry) {
-            this.ctx.throw(400, 'ZIP 中缺少根目录 agent.yaml');
+        const pluginJsonPath = `${rootDir}/.codex-plugin/plugin.json`;
+        const pluginJsonEntry = fileMap.get(pluginJsonPath);
+        if (!pluginJsonEntry) {
+            this.ctx.throw(400, 'ZIP 中缺少根目录 .codex-plugin/plugin.json');
+        }
+        const claudePluginJsonPath = `${rootDir}/.claude-plugin/plugin.json`;
+        const claudePluginJsonEntry = fileMap.get(claudePluginJsonPath);
+        if (!claudePluginJsonEntry) {
+            this.ctx.throw(400, 'ZIP 中缺少根目录 .claude-plugin/plugin.json');
         }
 
         const relativeFileMap = new Map();
@@ -535,8 +423,31 @@ class AgentsService extends Service {
             });
         });
 
-        const manifest = this.parseAgentYaml(agentYamlEntry.buffer.toString('utf8'));
-        const validated = this.validateManifest(manifest, relativeFileMap);
+        const manifest = this.parseCodexPluginJson(pluginJsonEntry.buffer.toString('utf8'));
+        const claudeManifest = this.parseClaudePluginJson(
+            claudePluginJsonEntry.buffer.toString('utf8')
+        );
+        const validated = this.validateCodexManifest(manifest);
+        const validatedClaude = this.validateClaudeManifest(claudeManifest);
+        if (validated.name !== rootDir || validatedClaude.name !== validated.name) {
+            this.ctx.throw(400, '两个 plugin manifest 的 name 必须与 Agent 目录名一致');
+        }
+        if (validatedClaude.version && validatedClaude.version !== validated.version) {
+            this.ctx.throw(400, '两个 plugin manifest 的 version 必须一致');
+        }
+        if (
+            ![...relativeFileMap.keys()].some(
+                (filePath) =>
+                    filePath === validated.skills || filePath.startsWith(`${validated.skills}/`)
+            )
+        ) {
+            this.ctx.throw(400, `Codex skills 路径不存在: ./${validated.skills}`);
+        }
+        validatedClaude.agents.forEach((agentPath) => {
+            if (!relativeFileMap.has(agentPath)) {
+                this.ctx.throw(400, `Claude agent 文件不存在: ./${agentPath}`);
+            }
+        });
         const contentHash = this.buildContentHash(
             fileRecords.map((item) => ({
                 filePath: item.filePath,
@@ -544,51 +455,61 @@ class AgentsService extends Service {
             }))
         );
 
-        const logoRecord = relativeFileMap.get(validated.logoPath);
-        const logoMimeType = this.detectImageMime(logoRecord.buffer);
-        if (!logoMimeType) {
-            this.ctx.throw(400, 'Logo 文件类型仅支持 PNG、JPEG、WebP');
-        }
-        if (logoRecord.size > config.maxImageSize) {
-            this.ctx.throw(400, `Logo 文件超过大小限制: ${validated.logoPath}`);
-        }
-
-        const demoImages = validated.demoImages.map((item, index) => {
-            const rawPath = this.getDemoImagePath(item, index);
-            const record = relativeFileMap.get(rawPath);
-            const mimeType = this.detectImageMime(record.buffer);
-            if (!mimeType) {
-                this.ctx.throw(400, `Demo 图片类型仅支持 PNG、JPEG、WebP: ${rawPath}`);
+        // logo 从包内 assets/logo.png 读取（支持 png/jpeg/webp），随 resource 落盘并记录元数据
+        const LOGO_ALLOWED = ['logo.png', 'logo.jpg', 'logo.jpeg', 'logo.webp'];
+        let logo = null;
+        const assetFiles = [];
+        const logoPaths = validated.logoRef
+            ? [validated.logoRef]
+            : [
+                  ...LOGO_ALLOWED.map((name) => `assets/${name}`),
+                  ...LOGO_ALLOWED.map((name) => `.codex-plugin/assets/${name}`),
+              ];
+        const hasExplicitLogo = Boolean(validated.logoRef);
+        for (const relativeLogoPath of logoPaths) {
+            const logoName = path.basename(relativeLogoPath);
+            // 兼容仓库内 assets 与 Codex 官方示例使用的 .codex-plugin/assets 两种布局
+            const isSupportedLogoPath =
+                relativeLogoPath.startsWith('assets/') ||
+                relativeLogoPath.startsWith('.codex-plugin/assets/');
+            if (!LOGO_ALLOWED.includes(logoName) || !isSupportedLogoPath) {
+                this.ctx.throw(
+                    400,
+                    'interface.logo 仅支持 assets/logo.{png,jpg,jpeg,webp} 或 .codex-plugin/assets/logo.{png,jpg,jpeg,webp}'
+                );
             }
-            if (record.size > config.maxImageSize) {
-                this.ctx.throw(400, `Demo 图片超过大小限制: ${rawPath}`);
+            const logoEntry = fileMap.get(`${rootDir}/${relativeLogoPath}`);
+            if (!logoEntry) {
+                if (hasExplicitLogo) {
+                    this.ctx.throw(400, `Logo 文件不存在: ./${relativeLogoPath}`);
+                }
+                continue;
             }
-
-            const storedPath = this.buildAssetTargetPath(validated.name, contentHash, rawPath);
-            return {
-                path: storedPath,
-                originalPath: rawPath,
+            if (logoEntry.size > config.maxImageSize) {
+                this.ctx.throw(400, `Logo 文件超过大小限制: ./${relativeLogoPath}`);
+            }
+            const mimeType = mime.lookup(logoName) || 'application/octet-stream';
+            logo = {
+                path: `${validated.name}/${contentHash}/${relativeLogoPath}`,
                 mimeType,
-                size: record.size,
-                hash: crypto.createHash('sha256').update(record.buffer).digest('hex'),
-                alt: String(item.alt || '').trim(),
-                sortOrder: index,
-                buffer: record.buffer,
+                size: logoEntry.size,
+                hash: this.buildContentHash([
+                    { filePath: relativeLogoPath, buffer: logoEntry.buffer },
+                ]),
             };
-        });
-
-        const logoPath = this.buildAssetTargetPath(validated.name, contentHash, validated.logoPath);
-        const logo = {
-            path: logoPath,
-            originalPath: validated.logoPath,
-            mimeType: logoMimeType,
-            size: logoRecord.size,
-            hash: crypto.createHash('sha256').update(logoRecord.buffer).digest('hex'),
-            buffer: logoRecord.buffer,
-        };
+            assetFiles.push({
+                path: logo.path,
+                buffer: logoEntry.buffer,
+            });
+            break;
+        }
 
         const files = [...relativeFileMap.values()]
-            .filter((item) => !item.relativePath.startsWith('assets/'))
+            .filter(
+                (item) =>
+                    !item.relativePath.startsWith('assets/') &&
+                    !item.relativePath.startsWith('.codex-plugin/assets/')
+            )
             .map((item) => {
                 const isBinary = this.isLikelyBinary(item.buffer);
                 return {
@@ -604,34 +525,44 @@ class AgentsService extends Service {
                 };
             });
 
+        // 解析 Agent 包内 skills 目录下的 SKILL.md，得到关联 Skill 的标识列表
+        const agentSkills = [];
+        if (validated.skills) {
+            const skillsPrefix = `${validated.skills}/`;
+            [...relativeFileMap.values()].forEach((item) => {
+                if (!item.relativePath.startsWith(skillsPrefix)) return;
+                if (path.basename(item.relativePath).toLowerCase() !== 'skill.md') return;
+
+                const content = item.buffer.toString('utf8');
+                let name = extractSkillMdName(content).trim();
+                if (!name) {
+                    const dir = path.posix.dirname(item.relativePath);
+                    name = dir.split('/').pop() || '';
+                }
+                if (!name) return;
+                if (!agentSkills.includes(name)) agentSkills.push(name);
+            });
+        }
+
         return {
             agent: {
                 name: validated.name,
                 displayName: validated.displayName,
                 version: validated.version,
                 description: validated.description,
-                profile: validated.profile,
+                longDescription: validated.longDescription,
                 authorName: validated.authorName,
                 category: validated.category,
-                tags: validated.tags,
-                prompts: validated.prompts,
+                keywords: validated.keywords,
+                defaultPrompt: validated.defaultPrompt,
                 capabilities: validated.capabilities,
-                entrypointHost: validated.entrypoint.host,
-                entrypointType: validated.entrypoint.type,
-                entrypointName: validated.entrypoint.name,
-                entrypointRef: validated.entrypoint.ref,
-                logoPath: logo.path,
-                logoMimeType: logo.mimeType,
-                logoSize: logo.size,
-                logoHash: logo.hash,
+                skills: agentSkills,
+                logo,
                 contentHash,
                 fileCount: fileRecords.length,
             },
-            logo,
-            demoImages,
             files,
-            skillRelations: this.buildSkillRelations(validated.name, manifest),
-            assetFiles: [logo, ...demoImages],
+            assetFiles,
         };
     }
 
@@ -664,19 +595,6 @@ class AgentsService extends Service {
         fs.rmSync(targetPath, { recursive: true, force: true });
     }
 
-    async findSkillIdBySlug(skillSlug, transaction) {
-        const { SkillsItem } = this.app.model;
-        if (!SkillsItem) return null;
-        const row = await SkillsItem.findOne({
-            where: {
-                slug: skillSlug,
-                is_delete: 0,
-            },
-            transaction,
-        });
-        return row ? row.id : null;
-    }
-
     async importAgentFile(params = {}, file) {
         if (!file?.filename || !file?.filepath) {
             this.ctx.throw(400, '上传文件无效');
@@ -693,7 +611,7 @@ class AgentsService extends Service {
         await this.ensureStorageReady();
 
         const parsed = await this.parseAgentZip(file.filepath);
-        const { Agent, AgentFile, AgentSkill } = this.app.model;
+        const { Agent, AgentFile } = this.app.model;
         const existing = await Agent.findOne({
             where: {
                 name: parsed.agent.name,
@@ -743,30 +661,21 @@ class AgentsService extends Service {
                     display_name: parsed.agent.displayName,
                     version: parsed.agent.version,
                     description: parsed.agent.description,
-                    profile: parsed.agent.profile,
+                    profile: parsed.agent.longDescription,
                     author_name: parsed.agent.authorName,
                     category: parsed.agent.category,
-                    tags: JSON.stringify(parsed.agent.tags || []),
-                    prompts: JSON.stringify(parsed.agent.prompts || []),
-                    capabilities: JSON.stringify(parsed.agent.capabilities || []),
-                    demo_images: JSON.stringify(
-                        parsed.demoImages.map((item) => ({
-                            path: item.path,
-                            mimeType: item.mimeType,
-                            size: item.size,
-                            hash: item.hash,
-                            alt: item.alt,
-                            sortOrder: item.sortOrder,
+                    tags: JSON.stringify(parsed.agent.keywords || []),
+                    prompts: JSON.stringify(
+                        (parsed.agent.defaultPrompt || []).map((prompt, index) => ({
+                            title: `开场问题 ${index + 1}`,
+                            prompt,
                         }))
                     ),
-                    entrypoint_host: parsed.agent.entrypointHost,
-                    entrypoint_type: parsed.agent.entrypointType,
-                    entrypoint_name: parsed.agent.entrypointName,
-                    entrypoint_ref: parsed.agent.entrypointRef,
-                    logo_path: parsed.agent.logoPath,
-                    logo_mime_type: parsed.agent.logoMimeType,
-                    logo_size: parsed.agent.logoSize,
-                    logo_hash: parsed.agent.logoHash,
+                    capabilities: JSON.stringify(parsed.agent.capabilities || []),
+                    logo_path: parsed.agent.logo ? parsed.agent.logo.path : null,
+                    logo_mime_type: parsed.agent.logo ? parsed.agent.logo.mimeType : null,
+                    logo_size: parsed.agent.logo ? parsed.agent.logo.size : null,
+                    logo_hash: parsed.agent.logo ? parsed.agent.logo.hash : null,
                     content_hash: parsed.agent.contentHash,
                     source_file_name: file.filename,
                     file_count: parsed.agent.fileCount,
@@ -783,10 +692,6 @@ class AgentsService extends Service {
                     });
                     agentId = existing.id;
                     await AgentFile.destroy({
-                        where: { agent_id: agentId },
-                        transaction,
-                    });
-                    await AgentSkill.destroy({
                         where: { agent_id: agentId },
                         transaction,
                     });
@@ -808,20 +713,21 @@ class AgentsService extends Service {
                     await AgentFile.bulkCreate(fileRows, { transaction });
                 }
 
-                const relationRows = [];
-                for (const item of parsed.skillRelations) {
-                    const skillId = await this.findSkillIdBySlug(item.skillSlug, transaction);
-                    relationRows.push({
-                        agent_id: agentId,
-                        skill_slug: item.skillSlug,
-                        skill_id: skillId,
-                        relation_type: item.relationType,
-                        sort_order: item.sortOrder,
-                    });
-                }
-
-                if (relationRows.length > 0) {
-                    await AgentSkill.bulkCreate(relationRows, { transaction });
+                // 持久化 Agent 关联的 Skill（先清后写，保证与本次包内容一致）
+                const { AgentSkill } = this.app.model;
+                const skillSlugs = Array.isArray(parsed.agent.skills) ? parsed.agent.skills : [];
+                await AgentSkill.destroy({
+                    where: { agent_id: agentId },
+                    transaction,
+                });
+                if (skillSlugs.length > 0) {
+                    await AgentSkill.bulkCreate(
+                        skillSlugs.map((skillSlug) => ({
+                            agent_id: agentId,
+                            skill_slug: skillSlug,
+                        })),
+                        { transaction }
+                    );
                 }
 
                 return {
@@ -854,7 +760,6 @@ class AgentsService extends Service {
     }
 
     toAgentListItem(row) {
-        const dependencies = this.parseJsonArray(row.dependencies || '[]');
         return {
             name: row.name,
             displayName: row.display_name,
@@ -864,14 +769,13 @@ class AgentsService extends Service {
             tags: this.parseJsonArray(row.tags),
             version: row.version || '',
             updatedAt: row.updated_at ? row.updated_at.toISOString() : '',
-            dependencyCount: dependencies.length,
-            logoUrl: this.buildAssetUrl(row.name, row.logo_path),
+            logoUrl: row.logo_path ? this.buildAssetUrl(row.name, row.logo_path) : '',
         };
     }
 
     async queryAgentList(params = {}) {
         await this.ensureStorageReady();
-        const { Agent, AgentSkill } = this.app.model;
+        const { Agent } = this.app.model;
         const keyword = String(params.keyword || '').trim();
         const category = String(params.category || '').trim();
         const pageNum = Math.max(Number(params.pageNum) || 1, 1);
@@ -905,35 +809,7 @@ class AgentsService extends Service {
             limit: pageSize,
         });
 
-        const agentIds = rows.map((row) => row.id);
-        const relationRows =
-            agentIds.length > 0
-                ? await AgentSkill.findAll({
-                      where: {
-                          agent_id: {
-                              [Op.in]: agentIds,
-                          },
-                          relation_type: {
-                              [Op.in]: ['dependency', 'private'],
-                          },
-                      },
-                  })
-                : [];
-
-        const dependencyMap = relationRows.reduce((acc, item) => {
-            if (!acc[item.agent_id]) {
-                acc[item.agent_id] = [];
-            }
-            acc[item.agent_id].push(item.skill_slug);
-            return acc;
-        }, {});
-
-        const list = rows.map((row) =>
-            this.toAgentListItem({
-                ...row.toJSON(),
-                dependencies: JSON.stringify(dependencyMap[row.id] || []),
-            })
-        );
+        const list = rows.map((row) => this.toAgentListItem(row.toJSON()));
 
         return {
             list,
@@ -944,10 +820,26 @@ class AgentsService extends Service {
         };
     }
 
+    // 用 Agent 关联的 skill 标识匹配 skill 市场，返回命中的 skill 或 null
+    // 优先精确匹配 slug/installKey，再尝试 sanitize 后的小写连字符形式（覆盖 SKILL.md name 与市场 name 不一致的情形）
+    matchMarketSkill(identifier, skillCache) {
+        if (!skillCache) return null;
+        const value = String(identifier || '').trim();
+        if (!value) return null;
+
+        const matched = resolveSkillIdentifier(value, skillCache);
+        if (matched) return matched;
+
+        const sanitized = sanitizeInstallKeySegment(value);
+        if (sanitized && sanitized !== value) {
+            return resolveSkillIdentifier(sanitized, skillCache) || null;
+        }
+        return null;
+    }
+
     async getAgentDetail(name) {
         await this.ensureStorageReady();
-        const { Agent, AgentSkill, SkillsItem, AgentFile } = this.app.model;
-        const { Op } = this.app.Sequelize;
+        const { Agent } = this.app.model;
         const row = await Agent.findOne({
             where: {
                 name,
@@ -958,150 +850,75 @@ class AgentsService extends Service {
             this.ctx.throw(404, 'Agent 不存在');
         }
 
-        const relations = await AgentSkill.findAll({
-            where: {
-                agent_id: row.id,
-            },
-            order: [
-                ['relation_type', 'ASC'],
-                ['sort_order', 'ASC'],
-                ['id', 'ASC'],
-            ],
+        const detail = row.toJSON();
+
+        // 读取 Agent 关联的 Skill，并判断是否已收录到 skill 市场（可点击跳转）
+        let skills = [];
+        const { AgentSkill } = this.app.model;
+        const skillRows = await AgentSkill.findAll({
+            where: { agent_id: row.id },
+            order: [['id', 'ASC']],
         });
-
-        const skillSlugs = relations.map((item) => item.skill_slug);
-        const skillRows =
-            skillSlugs.length > 0 && SkillsItem
-                ? await SkillsItem.findAll({
-                      where: {
-                          slug: skillSlugs,
-                          is_delete: 0,
-                      },
-                  })
-                : [];
-        const skillMap = new Map(skillRows.map((item) => [item.slug, item]));
-
-        const entrypoint = relations.find((item) => item.relation_type === 'entrypoint') || null;
-        const entrypointSkill = entrypoint ? skillMap.get(entrypoint.skill_slug) : null;
-
-        const dependencies = relations
-            .filter((item) => item.relation_type === 'dependency')
-            .map((item) => {
-                const skill = skillMap.get(item.skill_slug);
+        if (skillRows.length > 0) {
+            let skillCache = null;
+            try {
+                skillCache = await this.ctx.service.skills.ensureSkillCache();
+            } catch (error) {
+                this.app.logger.warn(
+                    `[agents] 加载 skill 市场缓存失败，Agent(${name}) skills 降级为未收录: ${error.message}`
+                );
+            }
+            skills = skillRows.map((item) => {
+                const identifier = item.skill_slug;
+                const matched = this.matchMarketSkill(identifier, skillCache);
+                if (matched) {
+                    return {
+                        slug: matched.slug,
+                        installKey: matched.installKey || matched.slug,
+                        name: matched.name || identifier,
+                        description: matched.description || '',
+                        isPackage: matched.isPackage ? 1 : 0,
+                        parentSlug: matched.parentSlug || null,
+                        installed: true,
+                    };
+                }
                 return {
-                    slug: item.skill_slug,
-                    name: skill ? skill.name : item.skill_slug,
-                    description: skill ? skill.description : '',
-                    collected: Boolean(skill),
-                    path: skill ? `/page/skills/${item.skill_slug}` : '',
+                    slug: identifier,
+                    installKey: identifier,
+                    name: identifier,
+                    description: '',
+                    isPackage: 0,
+                    parentSlug: null,
+                    installed: false,
                 };
             });
-        const privateSkills = relations
-            .filter((item) => item.relation_type === 'private')
-            .map((item) => ({
-                slug: item.skill_slug,
-                name: item.skill_slug,
-                description: '',
-                collected: false,
-                builtin: true,
-                path: '',
-            }));
-
-        // 未收录的入口 Skill 和内置 Skills 不在 SkillsItem 表，其真实 name/description
-        // 从 agent 包内自带的 SKILL.md 解析（agent_files 已在导入时保存文件内容）。
-        const skillMdPaths = [
-            ...(entrypoint && !entrypointSkill
-                ? [this.resolveSkillMdPath(row.entrypoint_ref)]
-                : []),
-            ...privateSkills.map((item) => `skills/${item.slug}/SKILL.md`),
-            ...dependencies
-                .filter((item) => !item.collected)
-                .map((item) => `skills/${item.slug}/SKILL.md`),
-        ].filter(Boolean);
-        const skillMdRows =
-            skillMdPaths.length > 0 && AgentFile
-                ? await AgentFile.findAll({
-                      where: {
-                          agent_id: row.id,
-                          file_path: { [Op.in]: skillMdPaths },
-                          is_delete: 0,
-                      },
-                  })
-                : [];
-        const skillMdMap = new Map(skillMdRows.map((item) => [item.file_path, item.content || '']));
-
-        // 入口 Skill：已收录用 SkillsItem 描述；未收录回填包内 SKILL.md 的 name/description
-        const entrypointItem = entrypoint
-            ? (() => {
-                  const skill = entrypointSkill;
-                  const skillMd = skill ? '' : this.lookupSkillMd(skillMdMap, row.entrypoint_ref);
-                  return {
-                      slug: entrypoint.skill_slug,
-                      name: skill
-                          ? skill.name
-                          : extractSkillMdName(skillMd) || entrypoint.skill_slug,
-                      description: skill
-                          ? skill.description || ''
-                          : extractSkillMdDescription(skillMd),
-                      collected: Boolean(skill),
-                      path: `/page/skills/${entrypoint.skill_slug}`,
-                  };
-              })()
-            : null;
-
-        // 内置 Skills：总是从包内 SKILL.md 回填
-        privateSkills.forEach((item) => {
-            const skillMd = skillMdMap.get(`skills/${item.slug}/SKILL.md`) || '';
-            const name = extractSkillMdName(skillMd);
-            if (name) item.name = name;
-            const description = extractSkillMdDescription(skillMd);
-            if (description) item.description = description;
-        });
-
-        // 未收录的依赖 Skills：包内有 SKILL.md 时同样回填
-        dependencies.forEach((item) => {
-            if (item.collected) return;
-            const skillMd = skillMdMap.get(`skills/${item.slug}/SKILL.md`) || '';
-            const name = extractSkillMdName(skillMd);
-            if (name) item.name = name;
-            const description = extractSkillMdDescription(skillMd);
-            if (description) item.description = description;
-        });
-
-        const detail = row.toJSON();
-        const demoImages = this.parseJsonArray(detail.demo_images).map((item) => ({
-            ...item,
-            url: this.buildAssetUrl(detail.name, item.path),
-        }));
-        const capabilities = this.normalizeCapabilities(this.parseJsonArray(detail.capabilities));
+        }
 
         return {
             name: detail.name,
             displayName: detail.display_name,
             description: detail.description || '',
-            profile: detail.profile || '',
+            longDescription: detail.profile || detail.description || '',
             authorName: detail.author_name || '',
             category: detail.category || '通用',
             tags: this.parseJsonArray(detail.tags),
-            prompts: this.parseJsonArray(detail.prompts),
-            capabilities,
+            defaultPrompt: this.parseJsonArray(detail.prompts),
+            capabilities: this.normalizeCapabilities(this.parseJsonArray(detail.capabilities)),
             version: detail.version || '',
-            logoUrl: this.buildAssetUrl(detail.name, detail.logo_path),
-            logoPath: detail.logo_path,
-            demoImages,
-            entrypoint: entrypointItem,
-            dependencies,
-            privateSkills,
+            logoUrl: detail.logo_path ? this.buildAssetUrl(detail.name, detail.logo_path) : '',
             updatedAt: detail.updated_at ? detail.updated_at.toISOString() : '',
+            skills,
         };
     }
 
+    // 根据 Agent 关联的 Skill 重叠度推荐相关 Agent（共同 skill 越多越相关）
     async getRelatedAgents(name, limit = 3) {
         await this.ensureStorageReady();
+        const nameValue = String(name || '').trim();
         const { Agent, AgentSkill } = this.app.model;
         const target = await Agent.findOne({
             where: {
-                name,
+                name: nameValue,
                 is_delete: 0,
             },
         });
@@ -1109,43 +926,69 @@ class AgentsService extends Service {
             this.ctx.throw(404, 'Agent 不存在');
         }
 
-        const [allAgents, allRelations] = await Promise.all([
-            Agent.findAll({
-                where: { is_delete: 0 },
-                order: [['updated_at', 'DESC']],
-            }),
-            AgentSkill.findAll({
-                where: { relation_type: 'dependency' },
-            }),
-        ]);
+        const safeLimit = Math.max(Number(limit) || 3, 1);
+        // 先查询当前 Agent 关联的技能，若无技能则无需进一步查询其他 Agent
+        const targetSkillRows = await AgentSkill.findAll({
+            where: { agent_id: target.id },
+            attributes: ['skill_slug'],
+        });
+        if (targetSkillRows.length === 0) {
+            return [];
+        }
 
-        const dependencyMap = allRelations.reduce((acc, item) => {
-            if (!acc[item.agent_id]) {
-                acc[item.agent_id] = [];
-            }
-            acc[item.agent_id].push(item.skill_slug);
-            return acc;
-        }, {});
+        const targetSkills = new Set(targetSkillRows.map((item) => item.skill_slug));
+        const { Op } = this.app.Sequelize || {};
+        const neOp = Op?.ne || '$ne';
 
-        const targetDependencies = dependencyMap[target.id] || [];
-        const candidates = allAgents.map((item) => ({
-            name: item.name,
-            displayName: item.display_name,
-            description: item.description || '',
-            logoUrl: this.buildAssetUrl(item.name, item.logo_path),
-            dependencies: dependencyMap[item.id] || [],
-            updatedAt: item.updated_at ? item.updated_at.toISOString() : '',
-        }));
-
-        return this.buildRelatedAgents(
-            {
-                name: target.name,
-                dependencies: targetDependencies,
-                entrypointName: target.entrypoint_name,
+        // 仅根据共同技能和非当前 Agent 过滤，利用已有索引避免全表扫描
+        const relatedSkillRows = await AgentSkill.findAll({
+            where: {
+                skill_slug: Array.from(targetSkills),
+                agent_id: { [neOp]: target.id },
             },
-            candidates,
-            limit
-        );
+            attributes: ['agent_id', 'skill_slug'],
+        });
+        if (relatedSkillRows.length === 0) {
+            return [];
+        }
+
+        // 统计各候选 Agent 的技能重叠数，使用 Set 防御重复关联
+        const overlapSkillMap = new Map();
+        relatedSkillRows.forEach((item) => {
+            if (!overlapSkillMap.has(item.agent_id)) {
+                overlapSkillMap.set(item.agent_id, new Set());
+            }
+            overlapSkillMap.get(item.agent_id).add(item.skill_slug);
+        });
+
+        const candidateIds = Array.from(overlapSkillMap.keys());
+        const agentRows = await Agent.findAll({
+            where: {
+                id: candidateIds,
+                is_delete: 0,
+            },
+        });
+
+        return agentRows
+            .map((item) => {
+                const itemData = item?.toJSON ? item.toJSON() : item;
+                const overlapCount = overlapSkillMap.get(item.id)?.size || 0;
+                return {
+                    ...this.toAgentListItem(itemData),
+                    overlapCount,
+                };
+            })
+            .filter((item) => item.overlapCount > 0)
+            .sort((left, right) => {
+                if (right.overlapCount !== left.overlapCount) {
+                    return right.overlapCount - left.overlapCount;
+                }
+                return (
+                    new Date(right.updatedAt || 0).getTime() -
+                    new Date(left.updatedAt || 0).getTime()
+                );
+            })
+            .slice(0, safeLimit);
     }
 
     async getAgentAssetStream(params = {}) {
@@ -1163,14 +1006,10 @@ class AgentsService extends Service {
             this.ctx.throw(404, 'Agent 不存在');
         }
 
-        const demoImages = this.parseJsonArray(row.demo_images);
         const allowedPaths = new Map();
         if (row.logo_path) {
             allowedPaths.set(row.logo_path, row.logo_mime_type || 'application/octet-stream');
         }
-        demoImages.forEach((item) => {
-            allowedPaths.set(item.path, item.mimeType || 'application/octet-stream');
-        });
 
         const mimeType = allowedPaths.get(requestedPath);
         if (!mimeType) {

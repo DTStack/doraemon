@@ -17,23 +17,7 @@ module.exports = (app) => {
             skill_slug: {
                 type: STRING(255),
                 allowNull: false,
-                comment: 'Skill slug',
-            },
-            skill_id: {
-                type: INTEGER,
-                allowNull: true,
-                comment: 'skills_items.id',
-            },
-            relation_type: {
-                type: STRING(20),
-                allowNull: false,
-                comment: 'entrypoint、dependency 或 private',
-            },
-            sort_order: {
-                type: INTEGER,
-                allowNull: false,
-                defaultValue: 0,
-                comment: '展示顺序',
+                comment: 'Skill 标识（包内 SKILL.md 解析出的 name 或目录名）',
             },
             created_at: {
                 type: DATE,
@@ -52,11 +36,7 @@ module.exports = (app) => {
             timestamps: true,
             createdAt: 'created_at',
             updatedAt: 'updated_at',
-            indexes: [
-                { fields: ['agent_id'] },
-                { fields: ['skill_slug'] },
-                { fields: ['relation_type'] },
-            ],
+            indexes: [{ fields: ['agent_id'] }, { fields: ['skill_slug'] }],
         }
     );
 

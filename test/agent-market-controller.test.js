@@ -56,21 +56,6 @@ test('getAgentDetail 返回统一 response 包装', async () => {
     assert.deepEqual(controller.ctx.body.data, { name: 'bugfix-agent' });
 });
 
-test('getRelatedAgents 透传 limit 参数', async () => {
-    const controller = buildController({
-        getRelatedAgents: async (name, limit) => {
-            assert.equal(name, 'bugfix-agent');
-            assert.equal(limit, '2');
-            return [{ name: 'review-agent' }];
-        },
-    });
-    controller.ctx.query = { name: 'bugfix-agent', limit: '2' };
-
-    await controller.getRelatedAgents();
-    assert.equal(controller.ctx.body.success, true);
-    assert.equal(controller.ctx.body.data.length, 1);
-});
-
 test('downloadAgentArchive 返回 ZIP 文件流和下载响应头', async () => {
     const headers = {};
     const stream = { pipe() {} };

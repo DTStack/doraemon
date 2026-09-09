@@ -56,26 +56,6 @@ module.exports = (app) => {
                 type: TEXT('long'),
                 comment: 'JSON 字符串数组',
             },
-            demo_images: {
-                type: TEXT('long'),
-                comment: 'JSON 字符串数组',
-            },
-            entrypoint_host: {
-                type: STRING(64),
-                comment: '入口宿主',
-            },
-            entrypoint_type: {
-                type: STRING(64),
-                comment: '入口类型',
-            },
-            entrypoint_name: {
-                type: STRING(255),
-                comment: '入口名称',
-            },
-            entrypoint_ref: {
-                type: STRING(1000),
-                comment: '入口路径',
-            },
             logo_path: {
                 type: STRING(1000),
                 comment: 'Logo 相对路径',

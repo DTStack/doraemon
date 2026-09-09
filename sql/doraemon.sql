@@ -393,11 +393,6 @@ CREATE TABLE `agents` (
   `tags` longtext COMMENT 'JSON 字符串数组',
   `prompts` longtext COMMENT 'JSON 字符串数组',
   `capabilities` longtext COMMENT 'JSON 字符串数组',
-  `demo_images` longtext COMMENT 'JSON 字符串数组',
-  `entrypoint_host` varchar(64) DEFAULT NULL COMMENT '入口宿主',
-  `entrypoint_type` varchar(64) DEFAULT NULL COMMENT '入口类型',
-  `entrypoint_name` varchar(255) DEFAULT NULL COMMENT '入口名称',
-  `entrypoint_ref` varchar(1000) DEFAULT NULL COMMENT '入口路径',
   `logo_path` varchar(1000) DEFAULT NULL COMMENT 'Logo 相对路径',
   `logo_mime_type` varchar(100) DEFAULT NULL COMMENT 'Logo MIME',
   `logo_size` int NOT NULL DEFAULT '0' COMMENT 'Logo 大小',
@@ -443,16 +438,12 @@ DROP TABLE IF EXISTS `agent_skills`;
 CREATE TABLE `agent_skills` (
   `id` int NOT NULL AUTO_INCREMENT,
   `agent_id` int NOT NULL COMMENT 'agents.id',
-  `skill_slug` varchar(255) NOT NULL COMMENT 'Skill slug',
-  `skill_id` int DEFAULT NULL COMMENT 'skills_items.id',
-  `relation_type` varchar(20) NOT NULL COMMENT 'entrypoint 或 dependency',
-  `sort_order` int NOT NULL DEFAULT '0' COMMENT '展示顺序',
+  `skill_slug` varchar(255) NOT NULL COMMENT 'Skill 标识',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_agent_skills_agent_id` (`agent_id`),
-  KEY `idx_agent_skills_skill_slug` (`skill_slug`),
-  KEY `idx_agent_skills_relation_type` (`relation_type`)
+  KEY `idx_agent_skills_skill_slug` (`skill_slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Agent 关联 Skill 表';
 
 -- ----------------------------
@@ -469,3 +460,4 @@ CREATE TABLE `skill_likes` (
   KEY `idx_skill_like_skill_id` (`skill_id`),
   KEY `idx_skill_like_ip` (`ip`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='技能点赞表';
+
