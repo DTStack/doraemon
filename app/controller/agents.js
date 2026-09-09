@@ -29,6 +29,12 @@ class AgentsController extends Controller {
         this.ctx.body = stream;
     }
 
+    async getRelatedAgents() {
+        const { name, limit = 3 } = this.ctx.query;
+        const data = await this.ctx.service.agents.getRelatedAgents(name, limit);
+        this.ctx.body = this.app.utils.response(true, data);
+    }
+
     async importAgentFile() {
         const files = this.ctx.request.files
             ? Array.isArray(this.ctx.request.files)

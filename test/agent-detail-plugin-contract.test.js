@@ -20,11 +20,13 @@ test('Agent 详情页只展示 plugin manifest 字段', () => {
     assert.doesNotMatch(component, /开场消息/);
     assert.doesNotMatch(component, /核心工作流/);
     assert.doesNotMatch(component, /Agent 能力/);
-    assert.doesNotMatch(component, /getRelatedAgents/);
     assert.doesNotMatch(component, /AgentSkillRelation/);
     assert.doesNotMatch(
         types,
         /AgentSkillRelation|entrypoint|dependencies|privateSkills|demoImages/
     );
-    assert.doesNotMatch(api, /getRelatedAgents|\/api\/agents\/related/);
+    // 相关 Agent 模块已恢复（独立接口，不注入 plugin 数据模型）
+    assert.match(component, /getRelatedAgents/);
+    assert.match(api, /getRelatedAgents|\/api\/agents\/related/);
+    assert.doesNotMatch(api, /\/api\/agents\/entrypoint/);
 });

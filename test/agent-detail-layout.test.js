@@ -25,19 +25,24 @@ test('Agent 详情页使用 plugin 的长描述和默认 prompt', () => {
     assert.doesNotMatch(component, /开场消息|openingMessage/);
 });
 
-test('Agent 详情页移除非 plugin 的关系和演示字段', () => {
+test('Agent 详情页已移除 demo 关系字段，并恢复相关 Agent 模块', () => {
     const { component, style } = readDetailFiles();
 
-    assert.doesNotMatch(component, /Agent 能力|核心工作流|相关 Agent|getRelatedAgents/);
-    assert.doesNotMatch(component, /AgentSkillRelation|agent-demo|agent-skill|related-agent/);
-    assert.doesNotMatch(style, /agent-demo|agent-skill|related-agent|agent-message/);
+    assert.doesNotMatch(component, /Agent 能力|核心工作流|agent-demo|AgentSkillRelation/);
+    assert.doesNotMatch(component, /agent-demo|agent-message/);
+    assert.doesNotMatch(style, /agent-demo|agent-message/);
+    // 相关 Agent 模块已恢复（侧栏）
+    assert.match(component, /相关 Agent/);
+    assert.match(component, /getRelatedAgents/);
+    assert.match(component, /related-agent-card/);
+    assert.match(style, /\.agent-side-related/);
 });
 
-test('概览页保留短描述和能力标签', () => {
+test('概览页保留短描述和顶部功能标签', () => {
     const { component } = readDetailFiles();
 
     assert.match(component, /detail\.description/);
-    assert.match(component, /agent-capability-tags/);
+    assert.match(component, /agent-hero-capabilities/);
     assert.doesNotMatch(component, /agent-capability-grid|<List/);
 });
 

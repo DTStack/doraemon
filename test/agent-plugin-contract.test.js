@@ -141,6 +141,11 @@ test('getAgentDetail 只返回 plugin 展示契约字段', async () => {
                 return row;
             },
         },
+        AgentSkill: {
+            async findAll() {
+                return [];
+            },
+        },
     };
 
     const detail = await service.getAgentDetail('bugfix-agent');
@@ -149,6 +154,7 @@ test('getAgentDetail 只返回 plugin 展示契约字段', async () => {
     assert.deepEqual(detail.defaultPrompt, [
         { title: '开场问题 1', prompt: '$bugfix-workflow 156343' },
     ]);
+    assert.deepEqual(detail.skills, []);
     assert.equal('profile' in detail, false);
     assert.equal('prompts' in detail, false);
     assert.equal('entrypoint' in detail, false);

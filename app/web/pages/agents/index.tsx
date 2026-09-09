@@ -352,7 +352,8 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
             >
                 <Space direction="vertical" style={{ width: '100%' }} size={16}>
                     <Text type="secondary">
-                        仅支持导入单个 Agent ZIP。Agent 信息会从包内 `.codex-plugin/plugin.json` 自动解析。
+                        仅支持导入单个 Agent ZIP。Agent 信息会从包内 `.codex-plugin/plugin.json`
+                        自动解析。
                     </Text>
                     <Upload
                         accept=".zip"

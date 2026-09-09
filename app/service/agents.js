@@ -5,7 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const mime = require('mime-types');
 
-const { normalizeRelativePath } = require('../utils/skill-utils');
+const { normalizeRelativePath, extractSkillMdName } = require('../utils/skill-utils');
+const { resolveSkillIdentifier, sanitizeInstallKeySegment } = require('../utils/skill-install-key');
 const {
     isValidSkillCategory,
     SKILL_CATEGORY_OPTIONS,
@@ -42,13 +43,14 @@ class AgentsService extends Service {
         }
 
         this.storageReadyPromise = (async () => {
-            const { Agent, AgentFile } = this.app.model;
-            if (!Agent || !AgentFile) {
+            const { Agent, AgentFile, AgentSkill } = this.app.model;
+            if (!Agent || !AgentFile || !AgentSkill) {
                 this.ctx.throw(500, 'Agent 数据模型未加载');
             }
 
             await Agent.sync();
             await AgentFile.sync();
+            await AgentSkill.sync();
             this.storageReady = true;
         })();
 
@@ -499,6 +501,25 @@ class AgentsService extends Service {
                 };
             });
 
+        // 解析 Agent 包内 skills 目录下的 SKILL.md，得到关联 Skill 的标识列表
+        const agentSkills = [];
+        if (validated.skills) {
+            const skillsPrefix = `${validated.skills}/`;
+            [...relativeFileMap.values()].forEach((item) => {
+                if (!item.relativePath.startsWith(skillsPrefix)) return;
+                if (path.basename(item.relativePath).toLowerCase() !== 'skill.md') return;
+
+                const content = item.buffer.toString('utf8');
+                let name = extractSkillMdName(content).trim();
+                if (!name) {
+                    const dir = path.posix.dirname(item.relativePath);
+                    name = dir.split('/').pop() || '';
+                }
+                if (!name) return;
+                if (!agentSkills.includes(name)) agentSkills.push(name);
+            });
+        }
+
         return {
             agent: {
                 name: validated.name,
@@ -511,6 +532,7 @@ class AgentsService extends Service {
                 keywords: validated.keywords,
                 defaultPrompt: validated.defaultPrompt,
                 capabilities: validated.capabilities,
+                skills: agentSkills,
                 logo,
                 contentHash,
                 fileCount: fileRecords.length,
@@ -667,6 +689,23 @@ class AgentsService extends Service {
                     await AgentFile.bulkCreate(fileRows, { transaction });
                 }
 
+                // 持久化 Agent 关联的 Skill（先清后写，保证与本次包内容一致）
+                const { AgentSkill } = this.app.model;
+                const skillSlugs = Array.isArray(parsed.agent.skills) ? parsed.agent.skills : [];
+                await AgentSkill.destroy({
+                    where: { agent_id: agentId },
+                    transaction,
+                });
+                if (skillSlugs.length > 0) {
+                    await AgentSkill.bulkCreate(
+                        skillSlugs.map((skillSlug) => ({
+                            agent_id: agentId,
+                            skill_slug: skillSlug,
+                        })),
+                        { transaction }
+                    );
+                }
+
                 return {
                     id: agentId,
                     name: parsed.agent.name,
@@ -757,6 +796,26 @@ class AgentsService extends Service {
         };
     }
 
+    // 用 Agent 关联的 skill 标识匹配 skill 市场，返回命中的 skill 或 null。
+    // 优先精确匹配 slug/installKey，再尝试 sanitize 后的小写连字符形式（覆盖 SKILL.md name 与市场 name 不一致的情形）。
+    matchMarketSkill(identifier, skillCache) {
+        if (!skillCache) return null;
+        const value = String(identifier || '').trim();
+        if (!value) return null;
+
+        const matched = resolveSkillIdentifier(value, skillCache);
+        if (matched) return matched;
+
+        const byInstallKey = skillCache.byInstallKey;
+        if (byInstallKey instanceof Map) {
+            const sanitized = sanitizeInstallKeySegment(value);
+            if (sanitized && byInstallKey.has(sanitized)) {
+                return byInstallKey.get(sanitized);
+            }
+        }
+        return null;
+    }
+
     async getAgentDetail(name) {
         await this.ensureStorageReady();
         const { Agent } = this.app.model;
@@ -772,6 +831,48 @@ class AgentsService extends Service {
 
         const detail = row.toJSON();
 
+        // 读取 Agent 关联的 Skill，并判断是否已收录到 skill 市场（可点击跳转）
+        let skills = [];
+        const { AgentSkill } = this.app.model;
+        const skillRows = await AgentSkill.findAll({
+            where: { agent_id: row.id },
+            order: [['id', 'ASC']],
+        });
+        if (skillRows.length > 0) {
+            let skillCache = null;
+            try {
+                skillCache = await this.ctx.service.skills.ensureSkillCache();
+            } catch (error) {
+                this.app.logger.warn(
+                    `[agents] 加载 skill 市场缓存失败，Agent(${name}) skills 降级为未收录: ${error.message}`
+                );
+            }
+            skills = skillRows.map((item) => {
+                const identifier = item.skill_slug;
+                const matched = this.matchMarketSkill(identifier, skillCache);
+                if (matched) {
+                    return {
+                        slug: matched.slug,
+                        installKey: matched.installKey || matched.slug,
+                        name: matched.name || identifier,
+                        description: matched.description || '',
+                        isPackage: matched.isPackage ? 1 : 0,
+                        parentSlug: matched.parentSlug || null,
+                        installed: true,
+                    };
+                }
+                return {
+                    slug: identifier,
+                    installKey: identifier,
+                    name: identifier,
+                    description: '',
+                    isPackage: 0,
+                    parentSlug: null,
+                    installed: false,
+                };
+            });
+        }
+
         return {
             name: detail.name,
             displayName: detail.display_name,
@@ -785,7 +886,67 @@ class AgentsService extends Service {
             version: detail.version || '',
             logoUrl: detail.logo_path ? this.buildAssetUrl(detail.name, detail.logo_path) : '',
             updatedAt: detail.updated_at ? detail.updated_at.toISOString() : '',
+            skills,
         };
+    }
+
+    // 根据 Agent 关联的 Skill 重叠度推荐相关 Agent（共同 skill 越多越相关）。
+    async getRelatedAgents(name, limit = 3) {
+        await this.ensureStorageReady();
+        const nameValue = String(name || '').trim();
+        const { Agent, AgentSkill } = this.app.model;
+        const target = await Agent.findOne({
+            where: {
+                name: nameValue,
+                is_delete: 0,
+            },
+        });
+        if (!target) {
+            this.ctx.throw(404, 'Agent 不存在');
+        }
+
+        const safeLimit = Math.max(Number(limit) || 3, 1);
+        const skillRows = await AgentSkill.findAll({
+            attributes: ['agent_id', 'skill_slug'],
+        });
+        const skillMap = new Map();
+        skillRows.forEach((item) => {
+            if (!skillMap.has(item.agent_id)) {
+                skillMap.set(item.agent_id, new Set());
+            }
+            skillMap.get(item.agent_id).add(item.skill_slug);
+        });
+
+        const targetSkills = skillMap.get(target.id) || new Set();
+        const agentRows = await Agent.findAll({
+            where: { is_delete: 0 },
+            order: [['updated_at', 'DESC']],
+        });
+
+        return agentRows
+            .filter((item) => item.id !== target.id)
+            .map((item) => {
+                const itemSkills = skillMap.get(item.id) || new Set();
+                let overlap = 0;
+                targetSkills.forEach((skill) => {
+                    if (itemSkills.has(skill)) overlap += 1;
+                });
+                return {
+                    ...this.toAgentListItem(item),
+                    overlapCount: overlap,
+                };
+            })
+            .filter((item) => item.overlapCount > 0)
+            .sort((left, right) => {
+                if (right.overlapCount !== left.overlapCount) {
+                    return right.overlapCount - left.overlapCount;
+                }
+                return (
+                    new Date(right.updatedAt || 0).getTime() -
+                    new Date(left.updatedAt || 0).getTime()
+                );
+            })
+            .slice(0, safeLimit);
     }
 
     async getAgentAssetStream(params = {}) {

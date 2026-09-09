@@ -432,6 +432,21 @@ CREATE TABLE `agent_files` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Agent 文件快照表';
 
 -- ----------------------------
+-- Table structure for agent_skills
+-- ----------------------------
+DROP TABLE IF EXISTS `agent_skills`;
+CREATE TABLE `agent_skills` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `agent_id` int NOT NULL COMMENT 'agents.id',
+  `skill_slug` varchar(255) NOT NULL COMMENT 'Skill 标识',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_agent_skills_agent_id` (`agent_id`),
+  KEY `idx_agent_skills_skill_slug` (`skill_slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Agent 关联 Skill 表';
+
+-- ----------------------------
 -- Table structure for skill_likes
 -- ----------------------------
 DROP TABLE IF EXISTS `skill_likes`;
