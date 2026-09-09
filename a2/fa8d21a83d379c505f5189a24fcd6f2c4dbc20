@@ -1,0 +1,18 @@
+app/controller/agents.js
+  h_3070dc1062bb3b 57-64
+app/service/agents.js
+  h_3070dc1062bb3b 54,65-83,458,508-512,823-824,833-835,914,930-948,951-959,962,964-967,971-974,1076,1099-1102
+test/agent-market-service.test.js
+  h_3070dc1062bb3b 324-493
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "a2fa8d21a83d379c505f5189a24fcd6f2c4dbc20",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
