@@ -1,0 +1,14 @@
+docs/docsify/zh-cn/other/CHANGELOG.md
+  h_3070dc1062bb3b 5-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "b5b147d64a676cb1017bc310524712a3b4ab6623",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
