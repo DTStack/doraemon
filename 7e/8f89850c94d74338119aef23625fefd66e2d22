@@ -1,0 +1,22 @@
+app/web/pages/agents/index.tsx
+  h_3070dc1062bb3b 321
+app/service/agents.js
+  h_3070dc1062bb3b 762-767,776-780,782,822-858,957
+app/web/pages/agents/types.ts
+  h_3070dc1062bb3b 32
+test/agent-list-layout.test.js
+  h_3070dc1062bb3b 57-69
+test/agent-market-service.test.js
+  h_3070dc1062bb3b 494-556
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "7e8f89850c94d74338119aef23625fefd66e2d22",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
