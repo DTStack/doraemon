@@ -1,0 +1,25 @@
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  s_7e39eb845a44ce::t_d68dd49cf7efa0 166-177
+  s_7e39eb845a44ce::t_72ef33b4db566e 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "4cf3125dc8de849c89cca4c311442c6e960a2463",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_7e39eb845a44ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "605da5eb-f12a-4cde-887a-12d624f74ef1",
+        "model": "deepseek-v4-flash-0731"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
