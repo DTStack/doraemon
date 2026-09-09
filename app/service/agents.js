@@ -759,7 +759,12 @@ class AgentsService extends Service {
         }
     }
 
-    toAgentListItem(row) {
+    toAgentListItem(row, skillCount = 0) {
+        const resolvedSkillCount =
+            skillCount !== undefined && skillCount !== null
+                ? Number(skillCount)
+                : Number(row.skillCount || 0);
+
         return {
             name: row.name,
             displayName: row.display_name,
@@ -768,8 +773,13 @@ class AgentsService extends Service {
             category: row.category || '通用',
             tags: this.parseJsonArray(row.tags),
             version: row.version || '',
-            updatedAt: row.updated_at ? row.updated_at.toISOString() : '',
+            updatedAt: row.updated_at
+                ? typeof row.updated_at === 'string'
+                    ? row.updated_at
+                    : row.updated_at.toISOString()
+                : '',
             logoUrl: row.logo_path ? this.buildAssetUrl(row.name, row.logo_path) : '',
+            skillCount: resolvedSkillCount,
         };
     }
 
@@ -809,7 +819,43 @@ class AgentsService extends Service {
             limit: pageSize,
         });
 
-        const list = rows.map((row) => this.toAgentListItem(row.toJSON()));
+        // 批量查询当前页 Agent 关联的 Skill 数量
+        const agentIds = rows
+            .map((row) => (row?.id ? row.id : row?.toJSON ? row.toJSON().id : undefined))
+            .filter(Boolean);
+        const skillCountMap = new Map();
+        if (agentIds.length > 0) {
+            const { AgentSkill } = this.app.model;
+            if (AgentSkill) {
+                try {
+                    const skillRows = await AgentSkill.findAll({
+                        where: { agent_id: agentIds },
+                        attributes: ['agent_id', 'skill_slug'],
+                    });
+                    const skillSetMap = new Map();
+                    skillRows.forEach((item) => {
+                        const id = item.agent_id;
+                        if (!skillSetMap.has(id)) {
+                            skillSetMap.set(id, new Set());
+                        }
+                        if (item.skill_slug) {
+                            skillSetMap.get(id).add(item.skill_slug);
+                        }
+                    });
+                    skillSetMap.forEach((set, id) => {
+                        skillCountMap.set(id, set.size);
+                    });
+                } catch (error) {
+                    this.app.logger?.warn?.(`[agents] 查询 Agent 技能统计失败: ${error.message}`);
+                }
+            }
+        }
+
+        const list = rows.map((row) => {
+            const rowData = row.toJSON ? row.toJSON() : row;
+            const skillCount = skillCountMap.get(rowData.id) || 0;
+            return this.toAgentListItem(rowData, skillCount);
+        });
 
         return {
             list,
@@ -908,6 +954,7 @@ class AgentsService extends Service {
             logoUrl: detail.logo_path ? this.buildAssetUrl(detail.name, detail.logo_path) : '',
             updatedAt: detail.updated_at ? detail.updated_at.toISOString() : '',
             skills,
+            skillCount: skills.length,
         };
     }
 

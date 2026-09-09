@@ -29,6 +29,7 @@ export interface AgentItem {
     version: string;
     updatedAt: string;
     logoUrl: string;
+    skillCount?: number;
 }
 
 export interface AgentListResponse {
