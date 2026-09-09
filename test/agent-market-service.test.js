@@ -321,3 +321,173 @@ test('getAgentDetail 返回规范化的 plugin 展示字段', async () => {
     assert.equal('dependencies' in detail, false);
     assert.equal('privateSkills' in detail, false);
 });
+
+test('getRelatedAgents 在无关联技能时返回空数组，不进行无效查询', async () => {
+    const service = createService();
+    service.storageReady = true;
+    service.app.model = {
+        Agent: {
+            async findOne() {
+                return { id: 1, name: 'agent-1' };
+            },
+        },
+        AgentSkill: {
+            async findAll() {
+                return [];
+            },
+        },
+    };
+
+    const result = await service.getRelatedAgents('agent-1');
+    assert.deepEqual(result, []);
+});
+
+test('getRelatedAgents 根据技能重叠数降序推荐相关 Agent 并排除自身', async () => {
+    const service = createService();
+    service.storageReady = true;
+    service.app.Sequelize = { Op: { ne: Symbol('ne') } };
+
+    service.app.model = {
+        Agent: {
+            async findOne({ where }) {
+                if (where.name === 'target-agent') {
+                    return { id: 1, name: 'target-agent' };
+                }
+                return null;
+            },
+            async findAll({ where }) {
+                const agents = [
+                    {
+                        id: 2,
+                        name: 'agent-high-overlap',
+                        display_name: 'High Overlap Agent',
+                        updated_at: new Date('2026-01-01T00:00:00Z'),
+                    },
+                    {
+                        id: 3,
+                        name: 'agent-low-overlap',
+                        display_name: 'Low Overlap Agent',
+                        updated_at: new Date('2026-01-02T00:00:00Z'),
+                    },
+                ];
+                return agents.filter((a) => where.id.includes(a.id));
+            },
+        },
+        AgentSkill: {
+            async findAll({ where }) {
+                // target agent skills query
+                if (where.agent_id === 1) {
+                    return [{ skill_slug: 'skill-a' }, { skill_slug: 'skill-b' }];
+                }
+                // related skills query
+                return [
+                    { agent_id: 2, skill_slug: 'skill-a' },
+                    { agent_id: 2, skill_slug: 'skill-b' },
+                    { agent_id: 3, skill_slug: 'skill-a' },
+                ];
+            },
+        },
+    };
+
+    const result = await service.getRelatedAgents('target-agent', 10);
+    assert.equal(result.length, 2);
+    assert.equal(result[0].name, 'agent-high-overlap');
+    assert.equal(result[0].overlapCount, 2);
+    assert.equal(result[1].name, 'agent-low-overlap');
+    assert.equal(result[1].overlapCount, 1);
+});
+
+test('deleteAgent 软删除 Agent 并清理 AgentFile 与 AgentSkill 关联数据', async () => {
+    const service = createService();
+    service.storageReady = true;
+    service.getAgentMarketConfig = () => ({ storageDir: '/tmp/test-storage' });
+    service.removeDirectory = () => {};
+
+    let agentUpdated = false;
+    let filesDestroyed = false;
+    let skillsDestroyed = false;
+
+    service.app.model = {
+        Agent: {
+            async findOne() {
+                return { id: 10, name: 'test-agent', content_hash: 'hash-1' };
+            },
+            async update(values, { where }) {
+                if (values.is_delete === 1 && where.id === 10) {
+                    agentUpdated = true;
+                }
+            },
+        },
+        AgentFile: {
+            async destroy({ where }) {
+                if (where.agent_id === 10) {
+                    filesDestroyed = true;
+                }
+            },
+        },
+        AgentSkill: {
+            async destroy({ where }) {
+                if (where.agent_id === 10) {
+                    skillsDestroyed = true;
+                }
+            },
+        },
+        async transaction(callback) {
+            return await callback({});
+        },
+    };
+
+    const res = await service.deleteAgent({ name: 'test-agent' });
+    assert.equal(res.deleted, true);
+    assert.equal(agentUpdated, true);
+    assert.equal(filesDestroyed, true);
+    assert.equal(skillsDestroyed, true);
+});
+
+test('parseAgentZip 过滤 .codex-plugin/assets 避免二进制图片存入快照文件列表', async () => {
+    const service = createService();
+    const fixture = createPluginZip({ logoPath: '.codex-plugin/assets/logo.png' });
+
+    try {
+        const parsed = await service.parseAgentZip(fixture.zipPath);
+        assert.match(parsed.agent.logo.path, /\.codex-plugin\/assets\/logo\.png$/);
+        const hasAssetInFiles = parsed.files.some((f) =>
+            f.filePath.startsWith('.codex-plugin/assets/')
+        );
+        assert.equal(hasAssetInFiles, false);
+    } finally {
+        fixture.cleanup();
+    }
+});
+
+test('ensureAgentSkillsTableCompatible 兼容处理历史 relation_type 非空约束', async () => {
+    const service = createService();
+    let changed = false;
+    service.app.Sequelize = { STRING: (len) => `VARCHAR(${len})` };
+    service.app.model = {
+        getQueryInterface() {
+            return {
+                async describeTable() {
+                    return {
+                        relation_type: {
+                            type: 'VARCHAR(20)',
+                            allowNull: false,
+                        },
+                    };
+                },
+                async changeColumn(table, col, def) {
+                    if (
+                        table === 'agent_skills' &&
+                        col === 'relation_type' &&
+                        def.allowNull === true
+                    ) {
+                        changed = true;
+                    }
+                },
+            };
+        },
+    };
+
+    await service.ensureAgentSkillsTableCompatible();
+    assert.equal(changed, true);
+});

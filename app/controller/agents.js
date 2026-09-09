@@ -54,11 +54,14 @@ class AgentsController extends Controller {
             );
             this.ctx.body = this.app.utils.response(true, data);
         } finally {
-            if (file?.filepath && fs.existsSync(file.filepath)) {
-                try {
-                    fs.unlinkSync(file.filepath);
-                } catch (error) {
-                    this.ctx.logger.warn(`[agents] 清理上传文件失败: ${error.message}`);
+            // 清理本次请求上传的所有临时文件，防止多文件或异常时泄漏
+            for (const item of files) {
+                if (item?.filepath && fs.existsSync(item.filepath)) {
+                    try {
+                        fs.unlinkSync(item.filepath);
+                    } catch (error) {
+                        this.ctx.logger.warn(`[agents] 清理上传文件失败: ${error.message}`);
+                    }
                 }
             }
         }

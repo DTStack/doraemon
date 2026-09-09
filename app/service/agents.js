@@ -51,6 +51,7 @@ class AgentsService extends Service {
             await Agent.sync();
             await AgentFile.sync();
             await AgentSkill.sync();
+            await this.ensureAgentSkillsTableCompatible();
             this.storageReady = true;
         })();
 
@@ -58,6 +59,25 @@ class AgentsService extends Service {
             await this.storageReadyPromise;
         } finally {
             this.storageReadyPromise = null;
+        }
+    }
+
+    // 兼容历史 agent_skills 表结构，若存在 relation_type 且非空则修改为允许 NULL
+    async ensureAgentSkillsTableCompatible() {
+        try {
+            const queryInterface = this.app.model?.getQueryInterface?.();
+            if (!queryInterface?.describeTable || !queryInterface?.changeColumn) return;
+            const table = await queryInterface.describeTable('agent_skills');
+            if (table?.relation_type && !table.relation_type.allowNull) {
+                await queryInterface.changeColumn('agent_skills', 'relation_type', {
+                    type: this.app.Sequelize.STRING(20),
+                    allowNull: true,
+                    defaultValue: null,
+                    comment: '历史兼容字段',
+                });
+            }
+        } catch (error) {
+            this.ctx?.logger?.warn?.(`[agents] 兼容检查 agent_skills 表结构失败: ${error.message}`);
         }
     }
 
@@ -435,7 +455,7 @@ class AgentsService extends Service {
             }))
         );
 
-        // logo 从包内 assets/logo.png 读取（支持 png/jpeg/webp），随 resource 落盘并记录元数据。
+        // logo 从包内 assets/logo.png 读取（支持 png/jpeg/webp），随 resource 落盘并记录元数据
         const LOGO_ALLOWED = ['logo.png', 'logo.jpg', 'logo.jpeg', 'logo.webp'];
         let logo = null;
         const assetFiles = [];
@@ -485,7 +505,11 @@ class AgentsService extends Service {
         }
 
         const files = [...relativeFileMap.values()]
-            .filter((item) => !item.relativePath.startsWith('assets/'))
+            .filter(
+                (item) =>
+                    !item.relativePath.startsWith('assets/') &&
+                    !item.relativePath.startsWith('.codex-plugin/assets/')
+            )
             .map((item) => {
                 const isBinary = this.isLikelyBinary(item.buffer);
                 return {
@@ -796,8 +820,8 @@ class AgentsService extends Service {
         };
     }
 
-    // 用 Agent 关联的 skill 标识匹配 skill 市场，返回命中的 skill 或 null。
-    // 优先精确匹配 slug/installKey，再尝试 sanitize 后的小写连字符形式（覆盖 SKILL.md name 与市场 name 不一致的情形）。
+    // 用 Agent 关联的 skill 标识匹配 skill 市场，返回命中的 skill 或 null
+    // 优先精确匹配 slug/installKey，再尝试 sanitize 后的小写连字符形式（覆盖 SKILL.md name 与市场 name 不一致的情形）
     matchMarketSkill(identifier, skillCache) {
         if (!skillCache) return null;
         const value = String(identifier || '').trim();
@@ -806,12 +830,9 @@ class AgentsService extends Service {
         const matched = resolveSkillIdentifier(value, skillCache);
         if (matched) return matched;
 
-        const byInstallKey = skillCache.byInstallKey;
-        if (byInstallKey instanceof Map) {
-            const sanitized = sanitizeInstallKeySegment(value);
-            if (sanitized && byInstallKey.has(sanitized)) {
-                return byInstallKey.get(sanitized);
-            }
+        const sanitized = sanitizeInstallKeySegment(value);
+        if (sanitized && sanitized !== value) {
+            return resolveSkillIdentifier(sanitized, skillCache) || null;
         }
         return null;
     }
@@ -890,7 +911,7 @@ class AgentsService extends Service {
         };
     }
 
-    // 根据 Agent 关联的 Skill 重叠度推荐相关 Agent（共同 skill 越多越相关）。
+    // 根据 Agent 关联的 Skill 重叠度推荐相关 Agent（共同 skill 越多越相关）
     async getRelatedAgents(name, limit = 3) {
         await this.ensureStorageReady();
         const nameValue = String(name || '').trim();
@@ -906,36 +927,51 @@ class AgentsService extends Service {
         }
 
         const safeLimit = Math.max(Number(limit) || 3, 1);
-        const skillRows = await AgentSkill.findAll({
+        // 先查询当前 Agent 关联的技能，若无技能则无需进一步查询其他 Agent
+        const targetSkillRows = await AgentSkill.findAll({
+            where: { agent_id: target.id },
+            attributes: ['skill_slug'],
+        });
+        if (targetSkillRows.length === 0) {
+            return [];
+        }
+
+        const targetSkills = new Set(targetSkillRows.map((item) => item.skill_slug));
+        const { Op } = this.app.Sequelize || {};
+        const neOp = Op?.ne || '$ne';
+
+        // 仅根据共同技能和非当前 Agent 过滤，利用已有索引避免全表扫描
+        const relatedSkillRows = await AgentSkill.findAll({
+            where: {
+                skill_slug: Array.from(targetSkills),
+                agent_id: { [neOp]: target.id },
+            },
             attributes: ['agent_id', 'skill_slug'],
         });
-        const skillMap = new Map();
-        skillRows.forEach((item) => {
-            if (!skillMap.has(item.agent_id)) {
-                skillMap.set(item.agent_id, new Set());
-            }
-            skillMap.get(item.agent_id).add(item.skill_slug);
+        if (relatedSkillRows.length === 0) {
+            return [];
+        }
+
+        // 统计各候选 Agent 的技能重叠数
+        const overlapCountMap = new Map();
+        relatedSkillRows.forEach((item) => {
+            const current = overlapCountMap.get(item.agent_id) || 0;
+            overlapCountMap.set(item.agent_id, current + 1);
         });
 
-        const targetSkills = skillMap.get(target.id) || new Set();
+        const candidateIds = Array.from(overlapCountMap.keys());
         const agentRows = await Agent.findAll({
-            where: { is_delete: 0 },
-            order: [['updated_at', 'DESC']],
+            where: {
+                id: candidateIds,
+                is_delete: 0,
+            },
         });
 
         return agentRows
-            .filter((item) => item.id !== target.id)
-            .map((item) => {
-                const itemSkills = skillMap.get(item.id) || new Set();
-                let overlap = 0;
-                targetSkills.forEach((skill) => {
-                    if (itemSkills.has(skill)) overlap += 1;
-                });
-                return {
-                    ...this.toAgentListItem(item),
-                    overlapCount: overlap,
-                };
-            })
+            .map((item) => ({
+                ...this.toAgentListItem(item),
+                overlapCount: overlapCountMap.get(item.id) || 0,
+            }))
             .filter((item) => item.overlapCount > 0)
             .sort((left, right) => {
                 if (right.overlapCount !== left.overlapCount) {
@@ -1037,7 +1073,7 @@ class AgentsService extends Service {
             this.ctx.throw(400, 'Agent 名称不能为空');
         }
 
-        const { Agent, AgentFile } = this.app.model;
+        const { Agent, AgentFile, AgentSkill } = this.app.model;
         const row = await Agent.findOne({
             where: {
                 name,
@@ -1057,6 +1093,10 @@ class AgentsService extends Service {
                 }
             );
             await AgentFile.destroy({
+                where: { agent_id: row.id },
+                transaction,
+            });
+            await AgentSkill.destroy({
                 where: { agent_id: row.id },
                 transaction,
             });
