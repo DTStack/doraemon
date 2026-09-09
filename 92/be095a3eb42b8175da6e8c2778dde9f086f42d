@@ -1,0 +1,81 @@
+test/agent-market-service.test.js
+  s_7e39eb845a44ce::t_405445061299fc 305-309,317
+sql/doraemon.sql
+  s_7e39eb845a44ce::t_953f77e57736ce 434-448
+app/router.js
+  s_7e39eb845a44ce::t_0a29b67f6fa59f 170
+app/web/api/url.ts
+  s_7e39eb845a44ce::t_53011346929d4a 416-419
+app/web/pages/agents/types.ts
+  s_7e39eb845a44ce::t_a1e20842ac63fd 46
+  s_7e39eb845a44ce::t_71c7fbd7ce9b48 12-21
+test/agent-detail-layout.test.js
+  s_7e39eb845a44ce::t_f951d2aba155a6 28,31-38,41,45
+app/web/pages/agents/index.tsx
+  s_7e39eb845a44ce::t_e1560374f3efcf 355-356
+test/agent-plugin-contract.test.js
+  s_7e39eb845a44ce::t_1b91ac449663de 144-148,157
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  s_7e39eb845a44ce::t_7732d0bb9e7532 271-274,278-279,281,283,288-290,303-304,308,316-324
+  s_7e39eb845a44ce::t_d19d3bf6f4af7c 58,66-69,73,78
+  h_3070dc1062bb3b 264
+  s_7e39eb845a44ce::t_b0ac0497f78ea3 176-185
+  s_7e39eb845a44ce::t_96d5bae3afaa81 275-277
+  s_7e39eb845a44ce::t_a4cf2987082e51 280,282,284-287,305-306,309-315
+  s_7e39eb845a44ce::t_d70502e4e792eb 14
+  s_7e39eb845a44ce::t_2ac8c7570ecc8f 193
+  s_7e39eb845a44ce::t_7dade97198e561 21-49
+  s_7e39eb845a44ce::t_608ff45c6953d1 307
+  s_7e39eb845a44ce::t_7c4724a732e99c 372-390
+  s_7e39eb845a44ce::t_e7d8f27e0601d7 291-302
+  s_7e39eb845a44ce::t_fe61152f9b7173 220
+  s_7e39eb845a44ce::t_1ea7d61af8b5f1 166-174
+app/service/agents.js
+  s_7e39eb845a44ce::t_e1560374f3efcf 9
+  s_7e39eb845a44ce::t_9795439677073c 893-951
+  s_7e39eb845a44ce::t_52095b3593146c 799-818
+  s_7e39eb845a44ce::t_bc64024e5cda07 692-708
+  s_7e39eb845a44ce::t_906a7addb8a833 852
+  s_7e39eb845a44ce::t_97c2e0873d1ceb 46-47,53
+  s_7e39eb845a44ce::t_36e391b1e4fd89 8
+  s_7e39eb845a44ce::t_485935d5ee8220 504-522,535
+  s_7e39eb845a44ce::t_9dc7533e4cb61c 834-851,853-875,889
+app/model/agent_skill.js
+  s_7e39eb845a44ce::t_91bbd3bfee9ba4 1-38,40-43
+  s_7e39eb845a44ce::t_e1560374f3efcf 39,44
+app/controller/agents.js
+  s_7e39eb845a44ce::t_656b7f8424f89e 32-37
+test/agent-detail-plugin-contract.test.js
+  s_7e39eb845a44ce::t_3afbd470d47564 28-31
+app/web/pages/agents/detail/style.scss
+  s_7e39eb845a44ce::t_8287e004c523c8 218-222,229
+  h_3070dc1062bb3b 326
+  s_7e39eb845a44ce::t_d76d51e5782acb 207-208
+  s_7e39eb845a44ce::t_9f0dbc5530dc0d 198,202-205
+  s_7e39eb845a44ce::t_3a855f607a5434 234,238,245,250-251,253,255,263,267,270,272-273
+  s_7e39eb845a44ce::t_c2bc5129c06402 230-233,235-237,239-244,246-249,252,254,256-262,264-266,268-269,271
+  s_7e39eb845a44ce::t_fc3b819469e548 22-23,27-66
+  s_7e39eb845a44ce::t_4e1682cf274313 223-228
+  s_7e39eb845a44ce::t_38a14baea7e882 67,206,322-325,327-330
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "92be095a3eb42b8175da6e8c2778dde9f086f42d",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_7e39eb845a44ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "605da5eb-f12a-4cde-887a-12d624f74ef1",
+        "model": "deepseek-v4-flash-0731"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
