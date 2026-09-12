@@ -1,0 +1,31 @@
+test/agent-list-layout.test.js
+  h_3070dc1062bb3b 57-69
+test/agent-market-service.test.js
+  h_3070dc1062bb3b 494-556
+app/controller/agents.js
+  h_3070dc1062bb3b 74-86
+app/model/agent.js
+  h_3070dc1062bb3b 86-94
+app/service/agents.js
+  h_3070dc1062bb3b 55,85-110,789-794,803-807,809,849-885,984,1198-1270
+app/web/pages/agents/index.tsx
+  h_3070dc1062bb3b 325
+  h_3070dc1062bb3b 63-64,142-144,150-152,159,161-162,165,172-188,207-218,346,354-355,357,361,363-378
+app/web/pages/agents/types.ts
+  h_3070dc1062bb3b 32
+app/router.js
+  h_3070dc1062bb3b 174-175
+app/web/api/url.ts
+  h_3070dc1062bb3b 429-436
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f3f2068144d85ffcfb0faf1101e9272b442dee40",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
