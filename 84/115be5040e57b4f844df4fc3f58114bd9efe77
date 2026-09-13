@@ -1,0 +1,18 @@
+app/public/install.sh
+  h_3070dc1062bb3b 51,58-61,66-68
+app/service/agents.js
+  h_3070dc1062bb3b 20,748-750,807-809,812,938-939,942,944,953-961,1008-1017,1020,1030-1034,1051,1075,1131,1208-1232
+test/agent-market-service.test.js
+  h_3070dc1062bb3b 394-475
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "84115be5040e57b4f844df4fc3f58114bd9efe77",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
