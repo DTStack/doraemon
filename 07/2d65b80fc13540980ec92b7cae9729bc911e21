@@ -1,0 +1,75 @@
+env.json
+  h_3070dc1062bb3b 10
+app/model/agent.js
+  h_3070dc1062bb3b 81-83,85-89
+  h_3070dc1062bb3b 69,90-98
+app/service/agents.js
+  h_3070dc1062bb3b 56,760-969
+  h_3070dc1062bb3b 6-8,20-24,48-49,86-131,307,334-353,383,387-389,531-550,722,970-1411
+app/web/pages/agents/index.tsx
+  h_3070dc1062bb3b 2,23,65-66,183-184,191-193,204,212-219,246-252,317,336-344
+  h_3070dc1062bb3b 15,24,71-102,113-119,182,190,200,211,220-227,253-257,318-324,345-374,413,415-421
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  h_3070dc1062bb3b 7-8,10-11,16,18,37,39,42,62-144,463-466,480-528
+  h_3070dc1062bb3b 38,40-41,43-44,145-159,248-255,321,461-462,529-545,566-579
+app/router.js
+  h_3070dc1062bb3b 173-174
+  h_3070dc1062bb3b 175
+.eslintignore
+  h_3070dc1062bb3b 21
+.gitignore
+  h_3070dc1062bb3b 7
+.prettierignore
+  h_3070dc1062bb3b 13
+app/controller/agents.js
+  h_3070dc1062bb3b 37-45,47-53,55-60,62,64-65,68-80
+app/public/create-plugin.sh
+  h_3070dc1062bb3b 1-260
+app/public/install.sh
+  h_3070dc1062bb3b 1-294
+app/schedule/syncGitAgents.js
+  h_3070dc1062bb3b 1-25
+app/service/skills.js
+  h_3070dc1062bb3b 2444,2446-2458
+"app/web/ typings/global.d.ts"
+  h_3070dc1062bb3b 22-33
+app/web/api/url.ts
+  h_3070dc1062bb3b 428-443
+app/web/pages/agents/components/AgentGitOpsModal.tsx
+  h_3070dc1062bb3b 1-155
+app/web/pages/agents/detail/style.scss
+  h_3070dc1062bb3b 23,28,43-111
+app/web/pages/agents/style.scss
+  h_3070dc1062bb3b 91-103
+app/web/pages/agents/types.ts
+  h_3070dc1062bb3b 33-36
+app/web/scss/reset.scss
+  h_3070dc1062bb3b 130-132,172-185,220-231,243-258
+config/config.default.js
+  h_3070dc1062bb3b 36,55-57
+docs/docsify/zh-cn/configuration/envConfig.md
+  h_3070dc1062bb3b 119-131
+docs/docsify/zh-cn/guide/agent-market.md
+  h_3070dc1062bb3b 3,5,7,9-10,16,23-25,27-33,37-39,41,43-45,47-53,69-79,81-102,106,120,122,125-126,128-130,132,134,137-138,140-142,145-147,150,153-155,159,162-164,166,168,170,172,174-178,180,182-236,238-241,243-249,251-252,254,256,266,286-291,295,331-332,334,336,342,363-385,394
+sql/doraemon.sql
+  h_3070dc1062bb3b 398,401-404
+test/agent-market-service.test.js
+  h_3070dc1062bb3b 196,328-393
+test/agent-plugin-contract.test.js
+  h_3070dc1062bb3b 25,27-28,43-47,50-55
+test/agent-schedule-sync.test.js
+  h_3070dc1062bb3b 1-2,4-10,12-24,26-37,39-52,55,57-59
+test/skills-install-key.test.js
+  h_3070dc1062bb3b 302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "072d65b80fc13540980ec92b7cae9729bc911e21",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
