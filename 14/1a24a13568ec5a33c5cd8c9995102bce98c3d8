@@ -1,0 +1,16 @@
+app/service/agents.js
+  h_3070dc1062bb3b 764-769,843-859,861,863,900-902,987-991,1026-1027
+test/agent-market-service.test.js
+  h_3070dc1062bb3b 407,411
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "141a24a13568ec5a33c5cd8c9995102bce98c3d8",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
