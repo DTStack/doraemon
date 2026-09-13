@@ -391,3 +391,85 @@ test('formatGitCloneError 格式化并简化 Git 报错信息', () => {
     };
     assert.equal(service.formatGitCloneError(unknownErr), '磁盘空间不足');
 });
+
+test('normalizeGitSource 解析并规范化 Git 仓库地址及分支', () => {
+    const service = createService();
+
+    // 1. 标准 Git URL
+    const res1 = service.normalizeGitSource(
+        'http://gitlab.prod.dtstack.cn/frontend/my-agent.git',
+        'master'
+    );
+    assert.equal(res1.cleanGitUrl, 'http://gitlab.prod.dtstack.cn/frontend/my-agent.git');
+    assert.equal(res1.targetBranch, 'master');
+    assert.equal(res1.repoName, 'my-agent');
+
+    // 2. 网页端 URL 带多级斜杠分支
+    const res2 = service.normalizeGitSource(
+        'http://gitlab.prod.dtstack.cn/frontend/my-agent/-/tree/feat/feature-1'
+    );
+    assert.equal(res2.cleanGitUrl, 'http://gitlab.prod.dtstack.cn/frontend/my-agent');
+    assert.equal(res2.targetBranch, 'feat/feature-1');
+    assert.equal(res2.repoName, 'my-agent');
+
+    // 3. 用户显式指定分支优先于 URL 中解析的分支
+    const res3 = service.normalizeGitSource(
+        'http://gitlab.prod.dtstack.cn/frontend/my-agent/-/tree/dev',
+        'release/1.0.0'
+    );
+    assert.equal(res3.targetBranch, 'release/1.0.0');
+
+    // 4. 拦截非法仓库名称（如包含路径遍历符号 ..）
+    assert.throws(
+        () => {
+            service.normalizeGitSource('http://gitlab.prod.dtstack.cn/frontend/..');
+        },
+        (err) => err.status === 400 && err.message.includes('非法的 Git 仓库名称')
+    );
+
+    // 5. 拦截以选项参数 - 或 . 开头的非法分支名
+    assert.throws(
+        () => {
+            service.normalizeGitSource(
+                'http://gitlab.prod.dtstack.cn/frontend/my-agent.git',
+                '-oProxyCommand=calc'
+            );
+        },
+        (err) => err.status === 400 && err.message.includes('非法的分支名称')
+    );
+
+    assert.throws(
+        () => {
+            service.normalizeGitSource(
+                'http://gitlab.prod.dtstack.cn/frontend/my-agent.git',
+                '../release'
+            );
+        },
+        (err) => err.status === 400 && err.message.includes('非法的分支名称')
+    );
+});
+
+test('getGitAuthArgs 域名白名单与空 host 防护', () => {
+    const service = createService();
+    service.resolveGitlabToken = () => 'test-token-123';
+    service.resolveGitlabHostWhitelist = () => ['gitlab.prod.dtstack.cn'];
+
+    // 1. 合法白名单域名
+    const auth1 = service.getGitAuthArgs('http://gitlab.prod.dtstack.cn/frontend/my-agent.git');
+    assert.equal(auth1.length, 2);
+    assert.equal(auth1[0], '-c');
+    assert.match(auth1[1], /^http\.extraHeader=Authorization: Basic [A-Za-z0-9+/=]+$/);
+    const expectedBasic = Buffer.from('oauth2:test-token-123').toString('base64');
+    assert.equal(auth1[1], `http.extraHeader=Authorization: Basic ${expectedBasic}`);
+
+    // 2. 非白名单域名，不透传 Token
+    const auth2 = service.getGitAuthArgs('https://github.com/external/repo.git');
+    assert.deepEqual(auth2, []);
+
+    // 3. 非法 URL 或空 host，不透传 Token
+    const auth3 = service.getGitAuthArgs('not-a-valid-url');
+    assert.deepEqual(auth3, []);
+
+    const auth4 = service.getGitAuthArgs('');
+    assert.deepEqual(auth4, []);
+});

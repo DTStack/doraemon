@@ -48,19 +48,23 @@ resolve_claude() {
 }
 
 command -v curl >/dev/null 2>&1 || die "需要安装 curl"
-command -v tar >/dev/null 2>&1 || die "需要安装 tar"
+command -v unzip >/dev/null 2>&1 || die "需要安装 unzip"
 command -v python3 >/dev/null 2>&1 || die "需要安装 python3"
-
-TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
 
 if [[ -z "$AGENT_NAME" ]]; then
   die "GitOps 模式下必须指定 Agent 名称，例如: curl .../install.sh | bash -s -- bugfix-agent"
 fi
 
+if [[ ! "$AGENT_NAME" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  die "无效的 Agent 名称: $AGENT_NAME"
+fi
+
 case "$AGENT_MARKET_LOCAL_DIR" in
   ""|"/"|"$HOME") die "不安全的 AGENT_MARKET_LOCAL_DIR: $AGENT_MARKET_LOCAL_DIR" ;;
 esac
+
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
 
 log ""
 log "下载 Agent源码归档: $SRC_URL"

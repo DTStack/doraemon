@@ -17,7 +17,7 @@ const {
 const AGENT_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SEMVER_PATTERN =
     /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
-const GIT_BRANCH_PATTERN = /^[a-zA-Z0-9_.\-/]+$/;
+const GIT_BRANCH_PATTERN = /^[a-zA-Z0-9_][a-zA-Z0-9_.\-/]*$/;
 const DEFAULT_GIT_TIMEOUT_MS = 60000;
 
 // 正在执行 Git 同步的仓库集合，防止并发执行导致 index.lock 冲突
@@ -745,9 +745,9 @@ class AgentsService extends Service {
         });
 
         try {
-            this.removeDirectory(
-                path.join(this.getAgentMarketConfig().storageDir, `${row.name}/${row.content_hash}`)
-            );
+            const storageDir = this.getAgentMarketConfig().storageDir;
+            this.removeDirectory(path.join(storageDir, `${row.name}/${row.content_hash}`));
+            this.removeDirectory(path.join(storageDir, 'git_repos', row.name));
         } catch (error) {
             this.ctx.logger.warn(`[agents] 清理资源目录失败: ${error.message}`);
         }
@@ -804,9 +804,12 @@ class AgentsService extends Service {
     // 获取 Git 命令执行认证前缀参数
     getGitAuthArgs(remoteUrl = '') {
         const host = this.extractHostFromRemote(remoteUrl);
+        if (!host) {
+            return [];
+        }
         const whitelist = this.resolveGitlabHostWhitelist();
         // 校验域名白名单
-        if (whitelist.length > 0 && host && !whitelist.includes(host)) {
+        if (whitelist.length > 0 && !whitelist.includes(host)) {
             return [];
         }
         const token = this.resolveGitlabToken();
@@ -932,15 +935,13 @@ class AgentsService extends Service {
         let cleanUrl = trimmed.replace(/#.*$/, '').replace(/\?.*$/, '').replace(/\/+$/, '');
         let targetBranch = String(rawBranch || 'master').trim() || 'master';
 
-        // 兼容 GitLab 网页端复制的 URL，如 http://gitlab.xxx.cn/group/project/-/tree/branch_name 或 /tree/branch_name
-        const treeMatch = cleanUrl.match(
-            /^(https?:\/\/[^/]+\/.+?)(?:\/-)?\/(?:tree|blob)\/([^/]+)(?:\/.*)?$/i
-        );
+        // 兼容 GitLab 网页端复制的 URL，如 http://gitlab.xxx.cn/group/project/-/tree/branch_name，支持带斜杠的多级分支名
+        const treeMatch = cleanUrl.match(/^(https?:\/\/[^/]+\/.+?)(?:\/-)?\/(?:tree|blob)\/(.+)$/i);
         if (treeMatch) {
             cleanUrl = treeMatch[1].replace(/\/+$/, '');
-            // 若用户未显式指定非 master 分支，优先采用 URL 中解析出的分支
+            // 若用户未显式指定非 master 分支，优先采用 URL 中解析出的分支（去除首尾斜杠）
             if (treeMatch[2] && (!rawBranch || rawBranch === 'master')) {
-                targetBranch = treeMatch[2];
+                targetBranch = treeMatch[2].replace(/^\/+|\/+$/g, '');
             }
         }
 
@@ -949,7 +950,15 @@ class AgentsService extends Service {
             cleanUrl
                 .split('/')
                 .pop()
-                .replace(/\.git$/i, '') || 'agent-repo';
+                .replace(/\.git$/i, '') || '';
+
+        // 严格前置校验仓库名格式，防止路径遍历或非法目录访问
+        if (!repoName || !AGENT_NAME_PATTERN.test(repoName)) {
+            this.ctx.throw(
+                400,
+                `非法的 Git 仓库名称「${repoName || cleanUrl}」，必须符合 kebab-case 规范`
+            );
+        }
 
         // 校验分支名格式合法性，防止非法参数注入
         if (!GIT_BRANCH_PATTERN.test(targetBranch)) {
@@ -996,15 +1005,30 @@ class AgentsService extends Service {
                     `[agents] Fetching ${cleanGitUrl}#${targetBranch} in ${targetDir}`
                 );
                 try {
+                    // 确保 remote url 与当前传入的 cleanGitUrl 保持一致，防止用户修改仓库地址后拉取旧地址
+                    try {
+                        await this.runGitCommand(['remote', 'set-url', 'origin', cleanGitUrl], {
+                            cwd: targetDir,
+                            env: gitEnv,
+                        });
+                    } catch (remoteErr) {
+                        this.ctx.logger.warn(`[agents] 更新 remote url 失败: ${remoteErr.message}`);
+                    }
+
                     // 显式拉取指定分支并保持 depth 1，兼容同分支更新与跨分支切换
                     await this.runGitCommand(
-                        [...authArgs, 'fetch', '--depth', '1', 'origin', targetBranch],
+                        [...authArgs, 'fetch', '--depth', '1', 'origin', '--', targetBranch],
                         {
                             cwd: targetDir,
                             env: gitEnv,
                         }
                     );
                     await this.runGitCommand(['reset', '--hard', 'FETCH_HEAD'], {
+                        cwd: targetDir,
+                        env: gitEnv,
+                    });
+                    // 清理工作区未跟踪文件，防止脏文件污染 skills 扫描
+                    await this.runGitCommand(['clean', '-fd'], {
                         cwd: targetDir,
                         env: gitEnv,
                     });
@@ -1024,6 +1048,7 @@ class AgentsService extends Service {
                                 '1',
                                 '--branch',
                                 targetBranch,
+                                '--',
                                 cleanGitUrl,
                                 repoName,
                             ],
@@ -1047,6 +1072,7 @@ class AgentsService extends Service {
                             '1',
                             '--branch',
                             targetBranch,
+                            '--',
                             cleanGitUrl,
                             repoName,
                         ],
@@ -1102,10 +1128,7 @@ class AgentsService extends Service {
                 });
                 contentHash = stdout.trim();
             } catch (e) {
-                contentHash = crypto
-                    .createHash('sha256')
-                    .update(Date.now().toString())
-                    .digest('hex');
+                this.ctx.throw(500, `解析 Git HEAD 提交哈希失败: ${e.message}`);
             }
 
             // 4. 解析 Logo 资源
@@ -1182,6 +1205,31 @@ class AgentsService extends Service {
                     : existing?.last_git_sync_at || existing?.updated_at || now,
             };
 
+            // 5. 静态资源与 ZIP 归档缓存（前置打包，确保归档就绪后再落库，保障原子性）
+            if (logo) {
+                const absolutePath = path.join(storageDir, logo.path);
+                fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+                fs.writeFileSync(absolutePath, logo.buffer);
+            }
+
+            const archiveDir = path.join(storageDir, validated.name, contentHash);
+            fs.mkdirSync(archiveDir, { recursive: true });
+            const archivePath = path.join(archiveDir, `${validated.name}.zip`);
+
+            // 异步执行 git archive 原生打包
+            await this.runGitCommand(
+                [
+                    'archive',
+                    '--format=zip',
+                    `--prefix=${validated.name}/`,
+                    'HEAD',
+                    '-o',
+                    archivePath,
+                ],
+                { cwd: targetDir }
+            );
+
+            // 6. 数据库持久化（归档已就绪，安全提交事务）
             await this.app.model.transaction(async (transaction) => {
                 if (!existing) {
                     const created = await Agent.create(agentPayload, { transaction });
@@ -1225,30 +1273,6 @@ class AgentsService extends Service {
                     );
                 }
             });
-
-            // 6. 静态资源与 ZIP 归档缓存
-            if (logo) {
-                const absolutePath = path.join(storageDir, logo.path);
-                fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
-                fs.writeFileSync(absolutePath, logo.buffer);
-            }
-
-            const archiveDir = path.join(storageDir, validated.name, contentHash);
-            fs.mkdirSync(archiveDir, { recursive: true });
-            const archivePath = path.join(archiveDir, `${validated.name}.zip`);
-
-            // 异步执行 git archive 原生打包
-            await this.runGitCommand(
-                [
-                    'archive',
-                    '--format=zip',
-                    `--prefix=${validated.name}/`,
-                    'HEAD',
-                    '-o',
-                    archivePath,
-                ],
-                { cwd: targetDir }
-            );
 
             // 清理旧版本的归档目录
             if (existing && existing.content_hash && existing.content_hash !== contentHash) {
