@@ -761,7 +761,12 @@ class AgentsService extends Service {
     resolveGitlabToken() {
         let envConfig = {};
         try {
-            envConfig = require('../../env.json');
+            const envPath = path.resolve(__dirname, '../../env.json');
+            if (fs.existsSync(envPath)) {
+                // 清理 require 缓存，确保用户修改 env.json 后无需重启服务即可生效
+                delete require.cache[require.resolve(envPath)];
+                envConfig = require(envPath);
+            }
         } catch (error) {
             envConfig = {};
         }
@@ -835,10 +840,27 @@ class AgentsService extends Service {
     // 异步执行 Git 命令，包含超时保护与敏感凭证脱敏
     async runGitCommand(args = [], options = {}) {
         const { cwd, env, timeout = DEFAULT_GIT_TIMEOUT_MS } = options;
+        // 彻底清空交互提示与凭据弹窗环境变量，防止在 VSCode/Electron 等环境下唤起外部 askpass 脚本导致挂起
+        const safeEnv = {
+            ...process.env,
+            ...env,
+            GIT_TERMINAL_PROMPT: '0',
+            GIT_ASKPASS: '',
+            SSH_ASKPASS: '',
+        };
+        // 强制禁用交互式提示与系统凭证助手，并开启安全重定向跟踪
+        const defaultArgs = [
+            '-c',
+            'core.askPass=',
+            '-c',
+            'credential.helper=',
+            '-c',
+            'http.followRedirects=true',
+        ];
         try {
-            return await execFileAsync('git', args, {
+            return await execFileAsync('git', [...defaultArgs, ...args], {
                 cwd,
-                env,
+                env: safeEnv,
                 timeout,
                 maxBuffer: 10 * 1024 * 1024,
             });
@@ -875,7 +897,9 @@ class AgentsService extends Service {
             rawMsg.includes('could not read Username') ||
             rawMsg.includes('Authentication failed') ||
             rawMsg.includes('Permission denied') ||
-            rawMsg.includes('terminal prompts disabled')
+            rawMsg.includes('terminal prompts disabled') ||
+            rawMsg.includes('Access denied') ||
+            rawMsg.includes('鉴权失败')
         ) {
             return 'Git 认证失败，请检查 env.json 或环境变量中是否配置了有效的 gitlabToken';
         }
@@ -960,6 +984,11 @@ class AgentsService extends Service {
             );
         }
 
+        // 自动规范化 HTTP/HTTPS 协议仓库地址，确保以 .git 结尾，避免 GitLab 301 重定向导致丢弃 Authorization 请求头
+        if (/^https?:\/\//i.test(cleanUrl) && !cleanUrl.endsWith('.git')) {
+            cleanUrl = `${cleanUrl}.git`;
+        }
+
         // 校验分支名格式合法性，防止非法参数注入
         if (!GIT_BRANCH_PATTERN.test(targetBranch)) {
             this.ctx.throw(400, `非法的分支名称: ${targetBranch}`);
@@ -993,8 +1022,9 @@ class AgentsService extends Service {
 
             // 配置 Git 执行环境变量与认证参数，避免服务器因缺少终端或无权限时挂起
             const gitEnv = {
-                ...process.env,
                 GIT_TERMINAL_PROMPT: '0',
+                GIT_ASKPASS: '',
+                SSH_ASKPASS: '',
                 GIT_SSH_COMMAND: 'ssh -o StrictHostKeyChecking=no',
             };
             const authArgs = this.getGitAuthArgs(cleanGitUrl);

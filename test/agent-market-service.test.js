@@ -404,11 +404,11 @@ test('normalizeGitSource 解析并规范化 Git 仓库地址及分支', () => {
     assert.equal(res1.targetBranch, 'master');
     assert.equal(res1.repoName, 'my-agent');
 
-    // 2. 网页端 URL 带多级斜杠分支
+    // 2. 网页端 URL 带多级斜杠分支（自动补齐 .git 规范后缀）
     const res2 = service.normalizeGitSource(
         'http://gitlab.prod.dtstack.cn/frontend/my-agent/-/tree/feat/feature-1'
     );
-    assert.equal(res2.cleanGitUrl, 'http://gitlab.prod.dtstack.cn/frontend/my-agent');
+    assert.equal(res2.cleanGitUrl, 'http://gitlab.prod.dtstack.cn/frontend/my-agent.git');
     assert.equal(res2.targetBranch, 'feat/feature-1');
     assert.equal(res2.repoName, 'my-agent');
 
