@@ -1,0 +1,14 @@
+app/web/utils/socket.ts
+  h_3070dc1062bb3b 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "b196f6690f5aeadd86fe32d7eac8f0d92a616b53",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
