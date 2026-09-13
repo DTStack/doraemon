@@ -1,0 +1,28 @@
+app/web/pages/agents/index.tsx
+  h_3070dc1062bb3b 2,64-71,150-151,158-160,168-208,213-219,221,224-231,259-260,266-267,347,358-368,417-418,425,428-486,489-525
+  h_3070dc1062bb3b 3,16,72,152,161,209,220,222,232,235,237,261-265,268,328,330,333,348-357,369-370,409,419,421,426,487,526
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  h_3070dc1062bb3b 8-9,15-19,22,32,37-47,84-155,468-485,509-577
+  h_3070dc1062bb3b 2,11-14,20-21,23,59,61,64,244,246,249,486
+app/controller/agents.js
+  h_3070dc1062bb3b 74-86
+app/model/agent.js
+  h_3070dc1062bb3b 86-94
+app/router.js
+  h_3070dc1062bb3b 174-175
+app/service/agents.js
+  h_3070dc1062bb3b 55,85-110,462,1198-1414
+app/web/api/url.ts
+  h_3070dc1062bb3b 432-439
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "feb003f1713705dd6ab6e3382b440543c95a25df",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
