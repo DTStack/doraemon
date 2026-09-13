@@ -421,12 +421,24 @@ export default {
         method: 'get',
         url: '/api/agents/download',
     },
-    importAgentFile: {
-        method: 'postForm',
-        url: '/api/agents/import-file',
-    },
     deleteAgent: {
         method: 'post',
         url: '/api/agents/delete',
+    },
+    importAgentFromGit: {
+        url: '/api/agents/import-git',
+        method: 'post',
+    },
+    syncAllGitAgents: {
+        url: '/api/agents/sync-git',
+        method: 'post',
+    },
+    syncSingleGitAgent: {
+        url: '/api/agents/sync-git',
+        method: 'post',
+    },
+    updateAgentGitConfig: {
+        url: '/api/agents/update-git-config',
+        method: 'post',
     },
 };

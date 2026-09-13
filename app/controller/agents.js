@@ -1,5 +1,4 @@
 const Controller = require('egg').Controller;
-const fs = require('fs');
 
 class AgentsController extends Controller {
     async getAgentList() {
@@ -35,40 +34,50 @@ class AgentsController extends Controller {
         this.ctx.body = this.app.utils.response(true, data);
     }
 
-    async importAgentFile() {
-        const files = this.ctx.request.files
-            ? Array.isArray(this.ctx.request.files)
-                ? this.ctx.request.files
-                : [this.ctx.request.files]
-            : [];
-        const file = files[0];
-
-        if (!file) {
-            this.ctx.throw(400, '缺少上传文件');
-        }
-
-        try {
-            const data = await this.ctx.service.agents.importAgentFile(
-                this.ctx.request.body || {},
-                file
-            );
-            this.ctx.body = this.app.utils.response(true, data);
-        } finally {
-            // 清理本次请求上传的所有临时文件，防止多文件或异常时泄漏
-            for (const item of files) {
-                if (item?.filepath && fs.existsSync(item.filepath)) {
-                    try {
-                        fs.unlinkSync(item.filepath);
-                    } catch (error) {
-                        this.ctx.logger.warn(`[agents] 清理上传文件失败: ${error.message}`);
-                    }
-                }
-            }
-        }
-    }
-
     async deleteAgent() {
         const data = await this.ctx.service.agents.deleteAgent(this.ctx.request.body || {});
+        this.ctx.body = this.app.utils.response(true, data);
+    }
+    // 从指定 GitLab 仓库导入 Agent
+    async importAgentFromGit() {
+        const { gitUrl, gitBranch, category } = this.ctx.request.body || {};
+        if (!gitUrl) {
+            this.ctx.throw(400, '缺少 gitUrl 参数');
+        }
+        const data = await this.ctx.service.agents.importAgentFromGit(
+            gitUrl,
+            gitBranch || 'master',
+            category
+        );
+        this.ctx.body = this.app.utils.response(true, data);
+    }
+
+    // 同步 Git 仓库代码，支持按 name 单独同步或全量同步
+    async syncGitAgents() {
+        const { name } = this.ctx.request.body || {};
+        if (name) {
+            // 单独同步单个 Agent
+            const data = await this.ctx.service.agents.syncGitAgentByName(name);
+            this.ctx.body = this.app.utils.response(true, data);
+            return;
+        }
+        const data = await this.ctx.service.agents.syncAllGitAgents();
+        this.ctx.body = this.app.utils.response(true, data);
+    }
+
+    // 更新 Agent 的 Git 仓库配置，支持可选立即同步
+    async updateAgentGitConfig() {
+        const { name, gitUrl, gitBranch, category, syncNow } = this.ctx.request.body || {};
+        if (!name) {
+            this.ctx.throw(400, '缺少 name 参数');
+        }
+        const data = await this.ctx.service.agents.updateAgentGitConfig({
+            name,
+            gitUrl,
+            gitBranch,
+            category,
+            syncNow: Boolean(syncNow),
+        });
         this.ctx.body = this.app.utils.response(true, data);
     }
 }

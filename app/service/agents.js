@@ -1,9 +1,11 @@
 const Service = require('egg').Service;
-const AdmZip = require('adm-zip');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const mime = require('mime-types');
+const { execFile } = require('child_process');
+const util = require('util');
+const execFileAsync = util.promisify(execFile);
 
 const { normalizeRelativePath, extractSkillMdName } = require('../utils/skill-utils');
 const { resolveSkillIdentifier, sanitizeInstallKeySegment } = require('../utils/skill-install-key');
@@ -15,6 +17,11 @@ const {
 const AGENT_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SEMVER_PATTERN =
     /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+const GIT_BRANCH_PATTERN = /^[a-zA-Z0-9_][a-zA-Z0-9_.\-/]*$/;
+const DEFAULT_GIT_TIMEOUT_MS = 60000;
+
+// 正在执行 Git 同步的仓库集合，防止并发执行导致 index.lock 冲突
+const activeSyncRepos = new Set();
 
 class AgentsService extends Service {
     constructor(ctx) {
@@ -26,11 +33,6 @@ class AgentsService extends Service {
     getAgentMarketConfig() {
         return {
             storageDir: '/data/doraemon/agent-market',
-            maxZipSize: 50 * 1024 * 1024,
-            maxExtractedSize: 200 * 1024 * 1024,
-            maxFileCount: 500,
-            maxSingleFileSize: 20 * 1024 * 1024,
-            maxImageSize: 5 * 1024 * 1024,
             ...this.app.config.agentMarket,
         };
     }
@@ -43,15 +45,15 @@ class AgentsService extends Service {
         }
 
         this.storageReadyPromise = (async () => {
-            const { Agent, AgentFile, AgentSkill } = this.app.model;
-            if (!Agent || !AgentFile || !AgentSkill) {
+            const { Agent, AgentSkill } = this.app.model;
+            if (!Agent || !AgentSkill) {
                 this.ctx.throw(500, 'Agent 数据模型未加载');
             }
 
             await Agent.sync();
-            await AgentFile.sync();
             await AgentSkill.sync();
             await this.ensureAgentSkillsTableCompatible();
+            await this.ensureAgentsTableCompatible();
             this.storageReady = true;
         })();
 
@@ -81,6 +83,52 @@ class AgentsService extends Service {
         }
     }
 
+    // 兼容历史 agents 表结构，添加 git_url 和 git_branch
+    async ensureAgentsTableCompatible() {
+        try {
+            const queryInterface = this.app.model?.getQueryInterface?.();
+            if (!queryInterface?.describeTable || !queryInterface?.addColumn) return;
+            const table = await queryInterface.describeTable('agents');
+            if (!table?.git_url) {
+                await queryInterface.addColumn('agents', 'git_url', {
+                    type: this.app.Sequelize.STRING(1000),
+                    allowNull: true,
+                    comment: 'GitLab 仓库地址',
+                });
+            }
+            if (!table?.git_branch) {
+                await queryInterface.addColumn('agents', 'git_branch', {
+                    type: this.app.Sequelize.STRING(100),
+                    allowNull: true,
+                    comment: 'GitLab 仓库分支',
+                });
+            }
+            if (!table?.last_git_refresh_at) {
+                await queryInterface.addColumn('agents', 'last_git_refresh_at', {
+                    type: this.app.Sequelize.DATE,
+                    allowNull: true,
+                    comment: '最近一次刷新/检查 Git 时间',
+                });
+            }
+            if (!table?.last_git_sync_at) {
+                await queryInterface.addColumn('agents', 'last_git_sync_at', {
+                    type: this.app.Sequelize.DATE,
+                    allowNull: true,
+                    comment: '最近一次代码变动同步时间',
+                });
+            }
+            if (table?.logo_size && table.logo_size.allowNull === false) {
+                await queryInterface.changeColumn('agents', 'logo_size', {
+                    type: this.app.Sequelize.INTEGER,
+                    allowNull: true,
+                    comment: 'Logo 大小',
+                });
+            }
+        } catch (error) {
+            this.ctx?.logger?.warn?.(`[agents] 兼容检查 agents 表结构失败: ${error.message}`);
+        }
+    }
+
     normalizeAgentPath(filePath, message = '非法文件路径') {
         const normalized = normalizeRelativePath(String(filePath || '').replace(/^\.\//, ''));
         if (!normalized) {
@@ -102,29 +150,6 @@ class AgentsService extends Service {
         }
     }
 
-    isLikelyBinary(buffer) {
-        if (!buffer || buffer.length === 0) return false;
-        const sample = buffer.subarray(0, Math.min(buffer.length, 4096));
-        if (sample.includes(0)) return true;
-        try {
-            new TextDecoder('utf-8', { fatal: true }).decode(buffer);
-            return false;
-        } catch {
-            return true;
-        }
-    }
-
-    getZipEntryMode(entry) {
-        const attr = Number(entry?.attr || entry?.header?.attr || 0);
-        const mode = (attr >>> 16) & 0xffff;
-        return mode || 0o644;
-    }
-
-    isSymbolicLink(entry) {
-        const mode = this.getZipEntryMode(entry);
-        return (mode & 0o170000) === 0o120000;
-    }
-
     validateAgentName(name) {
         const value = String(name || '').trim();
         if (!AGENT_NAME_PATTERN.test(value) || value.length > 100) {
@@ -139,37 +164,6 @@ class AgentsService extends Service {
             this.ctx.throw(400, 'metadata.version 必须是有效的 SemVer 格式');
         }
         return value;
-    }
-
-    parseSemver(version) {
-        const match = String(version || '')
-            .trim()
-            .match(SEMVER_PATTERN);
-        if (!match) {
-            this.ctx.throw(400, 'metadata.version 必须是有效的 SemVer 格式');
-        }
-
-        return {
-            major: Number(match[1]),
-            minor: Number(match[2]),
-            patch: Number(match[3]),
-            prerelease: match[4] || '',
-        };
-    }
-
-    compareAgentVersion(left, right) {
-        const a = this.parseSemver(left);
-        const b = this.parseSemver(right);
-        const keys = ['major', 'minor', 'patch'];
-        for (const key of keys) {
-            if (a[key] > b[key]) return 1;
-            if (a[key] < b[key]) return -1;
-        }
-
-        if (!a.prerelease && !b.prerelease) return 0;
-        if (!a.prerelease) return 1;
-        if (!b.prerelease) return -1;
-        return a.prerelease.localeCompare(b.prerelease);
     }
 
     buildAssetUrl(agentName, assetPath) {
@@ -310,453 +304,10 @@ class AgentsService extends Service {
         };
     }
 
-    buildContentHash(records) {
-        const hash = crypto.createHash('sha256');
-        records
-            .slice()
-            .sort((left, right) => left.filePath.localeCompare(right.filePath))
-            .forEach((item) => {
-                hash.update(item.filePath);
-                hash.update('\0');
-                hash.update(item.buffer);
-                hash.update('\0');
-            });
-        return hash.digest('hex');
-    }
-
-    async parseAgentZip(zipPath) {
-        const config = this.getAgentMarketConfig();
-        let zip;
-
-        try {
-            zip = new AdmZip(zipPath);
-        } catch (error) {
-            this.ctx.throw(400, `解析 .zip 文件失败: ${error.message}`);
-        }
-
-        const entries = zip.getEntries().filter((entry) => {
-            const normalizedName = String(entry.entryName || '').replace(/\\/g, '/');
-            if (!normalizedName) return false;
-            if (normalizedName.startsWith('__MACOSX/')) return false;
-            if (normalizedName.endsWith('.DS_Store')) return false;
-            return true;
-        });
-
-        const fileEntries = entries.filter((entry) => !entry.isDirectory);
-        if (fileEntries.length === 0) {
-            this.ctx.throw(400, '.zip 包内未发现有效文件');
-        }
-        if (fileEntries.length > config.maxFileCount) {
-            this.ctx.throw(400, `文件数量超过限制: ${config.maxFileCount}`);
-        }
-
-        const caseInsensitivePaths = new Set();
-        const topLevelDirs = new Set();
-        const fileRecords = [];
-        const fileMap = new Map();
-        let extractedSize = 0;
-
-        // 逐个 ZIP 条目校验路径、大小和特殊文件
-        fileEntries.forEach((entry) => {
-            if (this.isSymbolicLink(entry)) {
-                this.ctx.throw(400, `不支持软链接: ${entry.entryName}`);
-            }
-
-            const normalized = this.normalizeAgentPath(entry.entryName);
-            const lowerCasePath = normalized.toLowerCase();
-            if (caseInsensitivePaths.has(lowerCasePath)) {
-                this.ctx.throw(400, `检测到重复路径: ${normalized}`);
-            }
-            caseInsensitivePaths.add(lowerCasePath);
-
-            const buffer = entry.getData();
-            if (buffer.length > config.maxSingleFileSize) {
-                this.ctx.throw(400, `文件超过大小限制: ${normalized}`);
-            }
-
-            extractedSize += buffer.length;
-            if (extractedSize > config.maxExtractedSize) {
-                this.ctx.throw(400, `解压后总大小超过限制: ${config.maxExtractedSize}`);
-            }
-
-            const [topLevel] = normalized.split('/');
-            if (topLevel) {
-                topLevelDirs.add(topLevel);
-            }
-
-            fileRecords.push({
-                entry,
-                filePath: normalized,
-                buffer,
-                size: buffer.length,
-            });
-            fileMap.set(normalized, {
-                entry,
-                buffer,
-                size: buffer.length,
-            });
-        });
-
-        if (topLevelDirs.size !== 1) {
-            this.ctx.throw(400, 'ZIP 顶层必须且只能包含一个 Agent 目录');
-        }
-
-        const [rootDir] = [...topLevelDirs];
-        const pluginJsonPath = `${rootDir}/.codex-plugin/plugin.json`;
-        const pluginJsonEntry = fileMap.get(pluginJsonPath);
-        if (!pluginJsonEntry) {
-            this.ctx.throw(400, 'ZIP 中缺少根目录 .codex-plugin/plugin.json');
-        }
-        const claudePluginJsonPath = `${rootDir}/.claude-plugin/plugin.json`;
-        const claudePluginJsonEntry = fileMap.get(claudePluginJsonPath);
-        if (!claudePluginJsonEntry) {
-            this.ctx.throw(400, 'ZIP 中缺少根目录 .claude-plugin/plugin.json');
-        }
-
-        const relativeFileMap = new Map();
-        fileRecords.forEach((item) => {
-            const relativePath = item.filePath.slice(rootDir.length + 1);
-            if (!relativePath) return;
-            relativeFileMap.set(relativePath, {
-                ...item,
-                relativePath,
-            });
-        });
-
-        const manifest = this.parseCodexPluginJson(pluginJsonEntry.buffer.toString('utf8'));
-        const claudeManifest = this.parseClaudePluginJson(
-            claudePluginJsonEntry.buffer.toString('utf8')
-        );
-        const validated = this.validateCodexManifest(manifest);
-        const validatedClaude = this.validateClaudeManifest(claudeManifest);
-        if (validated.name !== rootDir || validatedClaude.name !== validated.name) {
-            this.ctx.throw(400, '两个 plugin manifest 的 name 必须与 Agent 目录名一致');
-        }
-        if (validatedClaude.version && validatedClaude.version !== validated.version) {
-            this.ctx.throw(400, '两个 plugin manifest 的 version 必须一致');
-        }
-        if (
-            ![...relativeFileMap.keys()].some(
-                (filePath) =>
-                    filePath === validated.skills || filePath.startsWith(`${validated.skills}/`)
-            )
-        ) {
-            this.ctx.throw(400, `Codex skills 路径不存在: ./${validated.skills}`);
-        }
-        validatedClaude.agents.forEach((agentPath) => {
-            if (!relativeFileMap.has(agentPath)) {
-                this.ctx.throw(400, `Claude agent 文件不存在: ./${agentPath}`);
-            }
-        });
-        const contentHash = this.buildContentHash(
-            fileRecords.map((item) => ({
-                filePath: item.filePath,
-                buffer: item.buffer,
-            }))
-        );
-
-        // logo 从包内 assets/logo.png 读取（支持 png/jpeg/webp），随 resource 落盘并记录元数据
-        const LOGO_ALLOWED = ['logo.png', 'logo.jpg', 'logo.jpeg', 'logo.webp'];
-        let logo = null;
-        const assetFiles = [];
-        const logoPaths = validated.logoRef
-            ? [validated.logoRef]
-            : [
-                  ...LOGO_ALLOWED.map((name) => `assets/${name}`),
-                  ...LOGO_ALLOWED.map((name) => `.codex-plugin/assets/${name}`),
-              ];
-        const hasExplicitLogo = Boolean(validated.logoRef);
-        for (const relativeLogoPath of logoPaths) {
-            const logoName = path.basename(relativeLogoPath);
-            // 兼容仓库内 assets 与 Codex 官方示例使用的 .codex-plugin/assets 两种布局
-            const isSupportedLogoPath =
-                relativeLogoPath.startsWith('assets/') ||
-                relativeLogoPath.startsWith('.codex-plugin/assets/');
-            if (!LOGO_ALLOWED.includes(logoName) || !isSupportedLogoPath) {
-                this.ctx.throw(
-                    400,
-                    'interface.logo 仅支持 assets/logo.{png,jpg,jpeg,webp} 或 .codex-plugin/assets/logo.{png,jpg,jpeg,webp}'
-                );
-            }
-            const logoEntry = fileMap.get(`${rootDir}/${relativeLogoPath}`);
-            if (!logoEntry) {
-                if (hasExplicitLogo) {
-                    this.ctx.throw(400, `Logo 文件不存在: ./${relativeLogoPath}`);
-                }
-                continue;
-            }
-            if (logoEntry.size > config.maxImageSize) {
-                this.ctx.throw(400, `Logo 文件超过大小限制: ./${relativeLogoPath}`);
-            }
-            const mimeType = mime.lookup(logoName) || 'application/octet-stream';
-            logo = {
-                path: `${validated.name}/${contentHash}/${relativeLogoPath}`,
-                mimeType,
-                size: logoEntry.size,
-                hash: this.buildContentHash([
-                    { filePath: relativeLogoPath, buffer: logoEntry.buffer },
-                ]),
-            };
-            assetFiles.push({
-                path: logo.path,
-                buffer: logoEntry.buffer,
-            });
-            break;
-        }
-
-        const files = [...relativeFileMap.values()]
-            .filter(
-                (item) =>
-                    !item.relativePath.startsWith('assets/') &&
-                    !item.relativePath.startsWith('.codex-plugin/assets/')
-            )
-            .map((item) => {
-                const isBinary = this.isLikelyBinary(item.buffer);
-                return {
-                    filePath: item.relativePath,
-                    mimeType: mime.lookup(item.relativePath) || 'application/octet-stream',
-                    size: item.size,
-                    isBinary,
-                    encoding: isBinary ? 'base64' : 'utf8',
-                    mode: this.getZipEntryMode(item.entry),
-                    content: isBinary
-                        ? item.buffer.toString('base64')
-                        : item.buffer.toString('utf8'),
-                };
-            });
-
-        // 解析 Agent 包内 skills 目录下的 SKILL.md，得到关联 Skill 的标识列表
-        const agentSkills = [];
-        if (validated.skills) {
-            const skillsPrefix = `${validated.skills}/`;
-            [...relativeFileMap.values()].forEach((item) => {
-                if (!item.relativePath.startsWith(skillsPrefix)) return;
-                if (path.basename(item.relativePath).toLowerCase() !== 'skill.md') return;
-
-                const content = item.buffer.toString('utf8');
-                let name = extractSkillMdName(content).trim();
-                if (!name) {
-                    const dir = path.posix.dirname(item.relativePath);
-                    name = dir.split('/').pop() || '';
-                }
-                if (!name) return;
-                if (!agentSkills.includes(name)) agentSkills.push(name);
-            });
-        }
-
-        return {
-            agent: {
-                name: validated.name,
-                displayName: validated.displayName,
-                version: validated.version,
-                description: validated.description,
-                longDescription: validated.longDescription,
-                authorName: validated.authorName,
-                category: validated.category,
-                keywords: validated.keywords,
-                defaultPrompt: validated.defaultPrompt,
-                capabilities: validated.capabilities,
-                skills: agentSkills,
-                logo,
-                contentHash,
-                fileCount: fileRecords.length,
-            },
-            files,
-            assetFiles,
-        };
-    }
-
-    async writeAssetFiles(assetFiles = []) {
-        const storageDir = this.getAgentMarketConfig().storageDir;
-        const touchedDirs = new Set();
-
-        assetFiles.forEach((item) => {
-            const absolutePath = path.join(storageDir, item.path);
-            const parentDir = path.dirname(absolutePath);
-            fs.mkdirSync(parentDir, { recursive: true });
-            fs.writeFileSync(absolutePath, item.buffer);
-            touchedDirs.add(path.join(storageDir, item.path.split('/').slice(0, 2).join('/')));
-        });
-
-        return touchedDirs;
-    }
-
-    async writeAgentArchive(agent, sourcePath) {
-        const storageDir = this.getAgentMarketConfig().storageDir;
-        const archiveDir = path.join(storageDir, agent.name, agent.contentHash);
-        const archivePath = path.join(archiveDir, `${agent.name}.zip`);
-        fs.mkdirSync(archiveDir, { recursive: true });
-        fs.copyFileSync(sourcePath, archivePath);
-        return archiveDir;
-    }
-
+    // 递归删除指定路径目录
     removeDirectory(targetPath) {
         if (!targetPath || !fs.existsSync(targetPath)) return;
         fs.rmSync(targetPath, { recursive: true, force: true });
-    }
-
-    async importAgentFile(params = {}, file) {
-        if (!file?.filename || !file?.filepath) {
-            this.ctx.throw(400, '上传文件无效');
-        }
-        if (!String(file.filename).toLowerCase().endsWith('.zip')) {
-            this.ctx.throw(400, '仅支持上传 .zip 文件');
-        }
-
-        const config = this.getAgentMarketConfig();
-        if (file.size && file.size > config.maxZipSize) {
-            this.ctx.throw(400, `ZIP 文件超过大小限制 ${config.maxZipSize / 1024 / 1024}MB`);
-        }
-
-        await this.ensureStorageReady();
-
-        const parsed = await this.parseAgentZip(file.filepath);
-        const { Agent, AgentFile } = this.app.model;
-        const existing = await Agent.findOne({
-            where: {
-                name: parsed.agent.name,
-            },
-        });
-
-        if (existing && Number(existing.is_delete) !== 1) {
-            const versionDiff = this.compareAgentVersion(parsed.agent.version, existing.version);
-            if (versionDiff < 0) {
-                this.ctx.throw(
-                    400,
-                    `低版本禁止覆盖，当前版本 ${existing.version}，导入版本 ${parsed.agent.version}`
-                );
-            }
-
-            if (existing.content_hash === parsed.agent.contentHash) {
-                await this.writeAgentArchive(parsed.agent, file.filepath);
-                return {
-                    unchanged: true,
-                    name: parsed.agent.name,
-                    version: parsed.agent.version,
-                    message: '内容未变化',
-                };
-            }
-
-            const confirmed = String(params.confirmOverwrite || '').trim() === 'true';
-            if (!confirmed) {
-                return {
-                    requiresConfirm: true,
-                    name: parsed.agent.name,
-                    currentVersion: existing.version,
-                    incomingVersion: parsed.agent.version,
-                };
-            }
-        }
-
-        let touchedDirs = new Set();
-
-        try {
-            touchedDirs = await this.writeAssetFiles(parsed.assetFiles);
-            touchedDirs.add(await this.writeAgentArchive(parsed.agent, file.filepath));
-            const result = await this.app.model.transaction(async (transaction) => {
-                let agentId = existing ? existing.id : null;
-
-                const agentPayload = {
-                    name: parsed.agent.name,
-                    display_name: parsed.agent.displayName,
-                    version: parsed.agent.version,
-                    description: parsed.agent.description,
-                    profile: parsed.agent.longDescription,
-                    author_name: parsed.agent.authorName,
-                    category: parsed.agent.category,
-                    tags: JSON.stringify(parsed.agent.keywords || []),
-                    prompts: JSON.stringify(
-                        (parsed.agent.defaultPrompt || []).map((prompt, index) => ({
-                            title: `开场问题 ${index + 1}`,
-                            prompt,
-                        }))
-                    ),
-                    capabilities: JSON.stringify(parsed.agent.capabilities || []),
-                    logo_path: parsed.agent.logo ? parsed.agent.logo.path : null,
-                    logo_mime_type: parsed.agent.logo ? parsed.agent.logo.mimeType : null,
-                    logo_size: parsed.agent.logo ? parsed.agent.logo.size : null,
-                    logo_hash: parsed.agent.logo ? parsed.agent.logo.hash : null,
-                    content_hash: parsed.agent.contentHash,
-                    source_file_name: file.filename,
-                    file_count: parsed.agent.fileCount,
-                    is_delete: 0,
-                };
-
-                if (!existing) {
-                    const created = await Agent.create(agentPayload, { transaction });
-                    agentId = created.id;
-                } else {
-                    await Agent.update(agentPayload, {
-                        where: { id: existing.id },
-                        transaction,
-                    });
-                    agentId = existing.id;
-                    await AgentFile.destroy({
-                        where: { agent_id: agentId },
-                        transaction,
-                    });
-                }
-
-                const fileRows = parsed.files.map((item) => ({
-                    agent_id: agentId,
-                    file_path: item.filePath,
-                    mime_type: item.mimeType,
-                    size: item.size,
-                    is_binary: item.isBinary ? 1 : 0,
-                    encoding: item.encoding,
-                    mode: item.mode,
-                    content: item.content,
-                    is_delete: 0,
-                }));
-
-                if (fileRows.length > 0) {
-                    await AgentFile.bulkCreate(fileRows, { transaction });
-                }
-
-                // 持久化 Agent 关联的 Skill（先清后写，保证与本次包内容一致）
-                const { AgentSkill } = this.app.model;
-                const skillSlugs = Array.isArray(parsed.agent.skills) ? parsed.agent.skills : [];
-                await AgentSkill.destroy({
-                    where: { agent_id: agentId },
-                    transaction,
-                });
-                if (skillSlugs.length > 0) {
-                    await AgentSkill.bulkCreate(
-                        skillSlugs.map((skillSlug) => ({
-                            agent_id: agentId,
-                            skill_slug: skillSlug,
-                        })),
-                        { transaction }
-                    );
-                }
-
-                return {
-                    id: agentId,
-                    name: parsed.agent.name,
-                    version: parsed.agent.version,
-                    updated: existing && Number(existing.is_delete) !== 1,
-                    contentHash: parsed.agent.contentHash,
-                };
-            });
-
-            if (
-                existing &&
-                existing.content_hash &&
-                existing.content_hash !== parsed.agent.contentHash
-            ) {
-                this.removeDirectory(
-                    path.join(
-                        this.getAgentMarketConfig().storageDir,
-                        `${parsed.agent.name}/${existing.content_hash}`
-                    )
-                );
-            }
-
-            return result;
-        } catch (error) {
-            touchedDirs.forEach((dir) => this.removeDirectory(dir));
-            throw error;
-        }
     }
 
     toAgentListItem(row, skillCount = 0) {
@@ -780,6 +331,26 @@ class AgentsService extends Service {
                 : '',
             logoUrl: row.logo_path ? this.buildAssetUrl(row.name, row.logo_path) : '',
             skillCount: resolvedSkillCount,
+            gitUrl: row.git_url || '',
+            gitBranch: row.git_branch || '',
+            lastGitRefreshAt: row.last_git_refresh_at
+                ? typeof row.last_git_refresh_at === 'string'
+                    ? row.last_git_refresh_at
+                    : row.last_git_refresh_at.toISOString()
+                : row.updated_at
+                ? typeof row.updated_at === 'string'
+                    ? row.updated_at
+                    : row.updated_at.toISOString()
+                : '',
+            lastGitSyncAt: row.last_git_sync_at
+                ? typeof row.last_git_sync_at === 'string'
+                    ? row.last_git_sync_at
+                    : row.last_git_sync_at.toISOString()
+                : row.updated_at
+                ? typeof row.updated_at === 'string'
+                    ? row.updated_at
+                    : row.updated_at.toISOString()
+                : '',
         };
     }
 
@@ -809,11 +380,13 @@ class AgentsService extends Service {
             ];
         }
 
+        // 按 Agent 名称（display_name / name）首字母升序排序
         const { count, rows } = await Agent.findAndCountAll({
             where,
             order: [
-                ['updated_at', 'DESC'],
-                ['id', 'DESC'],
+                ['display_name', 'ASC'],
+                ['name', 'ASC'],
+                ['id', 'ASC'],
             ],
             offset: (pageNum - 1) * pageSize,
             limit: pageSize,
@@ -955,6 +528,26 @@ class AgentsService extends Service {
             updatedAt: detail.updated_at ? detail.updated_at.toISOString() : '',
             skills,
             skillCount: skills.length,
+            gitUrl: detail.git_url || '',
+            gitBranch: detail.git_branch || '',
+            lastGitRefreshAt: detail.last_git_refresh_at
+                ? typeof detail.last_git_refresh_at === 'string'
+                    ? detail.last_git_refresh_at
+                    : detail.last_git_refresh_at.toISOString()
+                : detail.updated_at
+                ? typeof detail.updated_at === 'string'
+                    ? detail.updated_at
+                    : detail.updated_at.toISOString()
+                : '',
+            lastGitSyncAt: detail.last_git_sync_at
+                ? typeof detail.last_git_sync_at === 'string'
+                    ? detail.last_git_sync_at
+                    : detail.last_git_sync_at.toISOString()
+                : detail.updated_at
+                ? typeof detail.updated_at === 'string'
+                    ? detail.updated_at
+                    : detail.updated_at.toISOString()
+                : '',
         };
     }
 
@@ -1126,7 +719,7 @@ class AgentsService extends Service {
             this.ctx.throw(400, 'Agent 名称不能为空');
         }
 
-        const { Agent, AgentFile, AgentSkill } = this.app.model;
+        const { Agent, AgentSkill } = this.app.model;
         const row = await Agent.findOne({
             where: {
                 name,
@@ -1145,10 +738,6 @@ class AgentsService extends Service {
                     transaction,
                 }
             );
-            await AgentFile.destroy({
-                where: { agent_id: row.id },
-                transaction,
-            });
             await AgentSkill.destroy({
                 where: { agent_id: row.id },
                 transaction,
@@ -1156,9 +745,9 @@ class AgentsService extends Service {
         });
 
         try {
-            this.removeDirectory(
-                path.join(this.getAgentMarketConfig().storageDir, `${row.name}/${row.content_hash}`)
-            );
+            const storageDir = this.getAgentMarketConfig().storageDir;
+            this.removeDirectory(path.join(storageDir, `${row.name}/${row.content_hash}`));
+            this.removeDirectory(path.join(storageDir, 'git_repos', row.name));
         } catch (error) {
             this.ctx.logger.warn(`[agents] 清理资源目录失败: ${error.message}`);
         }
@@ -1166,6 +755,712 @@ class AgentsService extends Service {
         return {
             name: row.name,
             deleted: true,
+        };
+    }
+    // 解析 GitLab 访问 Token，优先从 env.json、配置及环境变量读取
+    resolveGitlabToken() {
+        let envConfig = {};
+        try {
+            const envPath = path.resolve(__dirname, '../../env.json');
+            if (fs.existsSync(envPath)) {
+                // 清理 require 缓存，确保用户修改 env.json 后无需重启服务即可生效
+                delete require.cache[require.resolve(envPath)];
+                envConfig = require(envPath);
+            }
+        } catch (error) {
+            envConfig = {};
+        }
+        const agentConfig = this.getAgentMarketConfig?.() || {};
+        const token =
+            envConfig.gitlabToken ||
+            envConfig.GITLAB_TOKEN ||
+            agentConfig.gitlabToken ||
+            this.app.config.skills?.gitlabToken ||
+            process.env.GITLAB_TOKEN ||
+            '';
+        return String(token).trim();
+    }
+
+    // 解析 GitLab 域名白名单
+    resolveGitlabHostWhitelist() {
+        const agentConfig = this.getAgentMarketConfig?.() || {};
+        const list = agentConfig.gitlabHostWhitelist || this.app.config.skills?.gitlabHostWhitelist;
+        if (!Array.isArray(list)) return ['gitlab.prod.dtstack.cn'];
+        return list
+            .map((item) =>
+                String(item || '')
+                    .trim()
+                    .toLowerCase()
+            )
+            .filter(Boolean);
+    }
+
+    // 从远端 URL 中提取主机名
+    extractHostFromRemote(remoteUrl = '') {
+        const raw = String(remoteUrl || '').trim();
+        if (!raw) return '';
+        const httpMatch = raw.match(/^https?:\/\/([^/@:]+)(?::\d+)?(?:\/|$)/i);
+        if (httpMatch) return httpMatch[1].toLowerCase();
+        const sshMatch = raw.match(/^git@([^:]+):/i);
+        if (sshMatch) return sshMatch[1].toLowerCase();
+        return '';
+    }
+
+    // 获取 Git 命令执行认证前缀参数
+    getGitAuthArgs(remoteUrl = '') {
+        const host = this.extractHostFromRemote(remoteUrl);
+        if (!host) {
+            return [];
+        }
+        const whitelist = this.resolveGitlabHostWhitelist();
+        // 校验域名白名单
+        if (whitelist.length > 0 && !whitelist.includes(host)) {
+            return [];
+        }
+        const token = this.resolveGitlabToken();
+        if (!token) {
+            return [];
+        }
+        const basicToken = Buffer.from(`oauth2:${token}`).toString('base64');
+        return ['-c', `http.extraHeader=Authorization: Basic ${basicToken}`];
+    }
+
+    // 脱敏错误信息中的 Authorization Header 与 Token，防止敏感凭据外泄
+    sanitizeErrorMessage(raw = '') {
+        if (!raw) return '';
+        return String(raw)
+            .replace(
+                /Authorization:\s*Basic\s+[a-zA-Z0-9+/=]+/gi,
+                'Authorization: Basic [REDACTED]'
+            )
+            .replace(/oauth2:[^@\s"']+/gi, 'oauth2:[REDACTED]')
+            .replace(/(https?:\/\/)([^:@\s]+):([^@\s]+)@/gi, '$1$2:[REDACTED]@');
+    }
+
+    // 异步执行 Git 命令，包含超时保护与敏感凭证脱敏
+    async runGitCommand(args = [], options = {}) {
+        const { cwd, env, timeout = DEFAULT_GIT_TIMEOUT_MS } = options;
+        // 彻底清空交互提示与凭据弹窗环境变量，防止在 VSCode/Electron 等环境下唤起外部 askpass 脚本导致挂起
+        const safeEnv = {
+            ...process.env,
+            ...env,
+            GIT_TERMINAL_PROMPT: '0',
+            GIT_ASKPASS: '',
+            SSH_ASKPASS: '',
+        };
+        // 强制禁用交互式提示与系统凭证助手，并开启安全重定向跟踪
+        const defaultArgs = [
+            '-c',
+            'core.askPass=',
+            '-c',
+            'credential.helper=',
+            '-c',
+            'http.followRedirects=true',
+        ];
+        try {
+            return await execFileAsync('git', [...defaultArgs, ...args], {
+                cwd,
+                env: safeEnv,
+                timeout,
+                maxBuffer: 10 * 1024 * 1024,
+            });
+        } catch (error) {
+            // 对错误信息与 stderr 进行敏感信息脱敏
+            const sanitizedMessage = this.sanitizeErrorMessage(error.message);
+            const sanitizedStderr = this.sanitizeErrorMessage(error.stderr?.toString() || '');
+            const sanitizedStdout = this.sanitizeErrorMessage(error.stdout?.toString() || '');
+            const cleanError = new Error(sanitizedMessage);
+            cleanError.stderr = sanitizedStderr;
+            cleanError.stdout = sanitizedStdout;
+            cleanError.code = error.code;
+            throw cleanError;
+        }
+    }
+
+    // 格式化 Git 错误信息，去除冗余的进度和重定向日志，返回简洁明确且已脱敏的错误提示
+    formatGitCloneError(err, targetBranch = 'master') {
+        const rawStderr = err?.stderr ? err.stderr.toString() : '';
+        const rawMsg = this.sanitizeErrorMessage(rawStderr || err?.message || String(err || ''));
+
+        // 远端分支不存在
+        if (
+            rawMsg.includes('远程分支') ||
+            rawMsg.includes('Remote branch') ||
+            rawMsg.includes('not found in upstream origin') ||
+            rawMsg.includes('did not match any file(s) known to git')
+        ) {
+            return `未在远端仓库找到分支「${targetBranch}」，请在设置中检查分支名称（如 master 或 main）`;
+        }
+
+        // Git 认证与权限问题
+        if (
+            rawMsg.includes('could not read Username') ||
+            rawMsg.includes('Authentication failed') ||
+            rawMsg.includes('Permission denied') ||
+            rawMsg.includes('terminal prompts disabled') ||
+            rawMsg.includes('Access denied') ||
+            rawMsg.includes('鉴权失败')
+        ) {
+            return 'Git 认证失败，请检查 env.json 或环境变量中是否配置了有效的 gitlabToken';
+        }
+
+        // 远端仓库不存在或无权限
+        if (
+            rawMsg.includes('The project you were looking for could not be found') ||
+            (rawMsg.includes('repository') && rawMsg.includes('not found')) ||
+            rawMsg.includes('仓库未找到')
+        ) {
+            return '未找到远程仓库，请检查仓库地址是否正确或是否有权限访问';
+        }
+
+        // 网络与连接问题
+        if (
+            rawMsg.includes('Could not resolve host') ||
+            rawMsg.includes('Failed to connect') ||
+            rawMsg.includes('Connection timed out') ||
+            rawMsg.includes('Network is unreachable') ||
+            rawMsg.includes('unable to access')
+        ) {
+            return '连接远程仓库失败，请检查网络连接或仓库地址';
+        }
+
+        // 未知错误时提取核心报错行，过滤掉进度和重定向日志
+        const lines = rawMsg
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => {
+                if (!line) return false;
+                if (/^(正克隆到|Cloning into)/i.test(line)) return false;
+                if (/^(警告：重定向到|warning:\s*redirecting)/i.test(line)) return false;
+                return true;
+            });
+
+        // 优先提取包含 fatal 或 error 的关键错误行
+        const fatalLine = lines.find((line) => /(?:fatal|error|致命错误|错误)[：:]/i.test(line));
+        if (fatalLine) {
+            return fatalLine.replace(/^(?:fatal|error|致命错误|错误)[：:]\s*/i, '').trim();
+        }
+
+        // 无显式 fatal 标识时取最后一行有效输出
+        if (lines.length > 0) {
+            return lines[lines.length - 1];
+        }
+
+        return '未知错误，请检查 Git 配置或查看服务端日志';
+    }
+
+    // 解析与规范化 Git 仓库地址，兼容从 GitLab 网页端复制的 tree/blob 路径，并解析仓库名与分支
+    normalizeGitSource(rawUrl = '', rawBranch = 'master') {
+        const trimmed = String(rawUrl || '').trim();
+        if (!trimmed) {
+            this.ctx.throw(400, '缺少 Git 仓库地址');
+        }
+
+        let cleanUrl = trimmed.replace(/#.*$/, '').replace(/\?.*$/, '').replace(/\/+$/, '');
+        let targetBranch = String(rawBranch || 'master').trim() || 'master';
+
+        // 兼容 GitLab 网页端复制的 URL，如 http://gitlab.xxx.cn/group/project/-/tree/branch_name，支持带斜杠的多级分支名
+        const treeMatch = cleanUrl.match(/^(https?:\/\/[^/]+\/.+?)(?:\/-)?\/(?:tree|blob)\/(.+)$/i);
+        if (treeMatch) {
+            cleanUrl = treeMatch[1].replace(/\/+$/, '');
+            // 若用户未显式指定非 master 分支，优先采用 URL 中解析出的分支（去除首尾斜杠）
+            if (treeMatch[2] && (!rawBranch || rawBranch === 'master')) {
+                targetBranch = treeMatch[2].replace(/^\/+|\/+$/g, '');
+            }
+        }
+
+        // 提取仓库名（移除 .git 后缀）
+        const repoName =
+            cleanUrl
+                .split('/')
+                .pop()
+                .replace(/\.git$/i, '') || '';
+
+        // 严格前置校验仓库名格式，防止路径遍历或非法目录访问
+        if (!repoName || !AGENT_NAME_PATTERN.test(repoName)) {
+            this.ctx.throw(
+                400,
+                `非法的 Git 仓库名称「${repoName || cleanUrl}」，必须符合 kebab-case 规范`
+            );
+        }
+
+        // 自动规范化 HTTP/HTTPS 协议仓库地址，确保以 .git 结尾，避免 GitLab 301 重定向导致丢弃 Authorization 请求头
+        if (/^https?:\/\//i.test(cleanUrl) && !cleanUrl.endsWith('.git')) {
+            cleanUrl = `${cleanUrl}.git`;
+        }
+
+        // 校验分支名格式合法性，防止非法参数注入
+        if (!GIT_BRANCH_PATTERN.test(targetBranch)) {
+            this.ctx.throw(400, `非法的分支名称: ${targetBranch}`);
+        }
+
+        return {
+            cleanGitUrl: cleanUrl,
+            targetBranch,
+            repoName,
+        };
+    }
+
+    // 从 Git 仓库导入或更新 Agent
+    async importAgentFromGit(gitUrl, gitBranch = 'master', category = null) {
+        await this.ensureStorageReady();
+
+        const { cleanGitUrl, targetBranch, repoName } = this.normalizeGitSource(gitUrl, gitBranch);
+
+        // 并发同步锁：若当前仓库正在同步中，阻止并发执行以避免 index.lock 冲突
+        if (activeSyncRepos.has(repoName)) {
+            this.ctx.throw(409, `Agent「${repoName}」正在同步中，请稍后再试`);
+        }
+        activeSyncRepos.add(repoName);
+
+        try {
+            const storageDir = this.getAgentMarketConfig().storageDir;
+            const reposDir = path.join(storageDir, 'git_repos');
+            const targetDir = path.join(reposDir, repoName);
+
+            fs.mkdirSync(reposDir, { recursive: true });
+
+            // 配置 Git 执行环境变量与认证参数，避免服务器因缺少终端或无权限时挂起
+            const gitEnv = {
+                GIT_TERMINAL_PROMPT: '0',
+                GIT_ASKPASS: '',
+                SSH_ASKPASS: '',
+                GIT_SSH_COMMAND: 'ssh -o StrictHostKeyChecking=no',
+            };
+            const authArgs = this.getGitAuthArgs(cleanGitUrl);
+
+            // 1. 同步远端代码
+            if (fs.existsSync(targetDir)) {
+                this.ctx.logger.info(
+                    `[agents] Fetching ${cleanGitUrl}#${targetBranch} in ${targetDir}`
+                );
+                try {
+                    // 确保 remote url 与当前传入的 cleanGitUrl 保持一致，防止用户修改仓库地址后拉取旧地址
+                    try {
+                        await this.runGitCommand(['remote', 'set-url', 'origin', cleanGitUrl], {
+                            cwd: targetDir,
+                            env: gitEnv,
+                        });
+                    } catch (remoteErr) {
+                        this.ctx.logger.warn(`[agents] 更新 remote url 失败: ${remoteErr.message}`);
+                    }
+
+                    // 显式拉取指定分支并保持 depth 1，兼容同分支更新与跨分支切换
+                    await this.runGitCommand(
+                        [...authArgs, 'fetch', '--depth', '1', 'origin', '--', targetBranch],
+                        {
+                            cwd: targetDir,
+                            env: gitEnv,
+                        }
+                    );
+                    await this.runGitCommand(['reset', '--hard', 'FETCH_HEAD'], {
+                        cwd: targetDir,
+                        env: gitEnv,
+                    });
+                    // 清理工作区未跟踪文件，防止脏文件污染 skills 扫描
+                    await this.runGitCommand(['clean', '-fd'], {
+                        cwd: targetDir,
+                        env: gitEnv,
+                    });
+                } catch (err) {
+                    this.ctx.logger.warn(
+                        `[agents] Git fetch 失败，尝试重新克隆: ${this.sanitizeErrorMessage(
+                            err.message
+                        )}`
+                    );
+                    fs.rmSync(targetDir, { recursive: true, force: true });
+                    try {
+                        await this.runGitCommand(
+                            [
+                                ...authArgs,
+                                'clone',
+                                '--depth',
+                                '1',
+                                '--branch',
+                                targetBranch,
+                                '--',
+                                cleanGitUrl,
+                                repoName,
+                            ],
+                            { cwd: reposDir, env: gitEnv }
+                        );
+                    } catch (cloneErr) {
+                        const errMsg = this.formatGitCloneError(cloneErr, targetBranch);
+                        this.ctx.throw(400, `Git Clone 失败: ${errMsg}`);
+                    }
+                }
+            } else {
+                this.ctx.logger.info(
+                    `[agents] Cloning ${cleanGitUrl}#${targetBranch} to ${targetDir}`
+                );
+                try {
+                    await this.runGitCommand(
+                        [
+                            ...authArgs,
+                            'clone',
+                            '--depth',
+                            '1',
+                            '--branch',
+                            targetBranch,
+                            '--',
+                            cleanGitUrl,
+                            repoName,
+                        ],
+                        { cwd: reposDir, env: gitEnv }
+                    );
+                } catch (err) {
+                    const errMsg = this.formatGitCloneError(err, targetBranch);
+                    this.ctx.throw(400, `Git Clone 失败: ${errMsg}`);
+                }
+            }
+
+            // 2. 解析 Manifests
+            const codexManifestPath = path.join(targetDir, '.codex-plugin/plugin.json');
+            const claudeManifestPath = path.join(targetDir, '.claude-plugin/plugin.json');
+
+            if (!fs.existsSync(codexManifestPath)) {
+                this.ctx.throw(400, '仓库根目录缺少 .codex-plugin/plugin.json');
+            }
+            if (!fs.existsSync(claudeManifestPath)) {
+                this.ctx.throw(400, '仓库根目录缺少 .claude-plugin/plugin.json');
+            }
+
+            const manifest = this.parseCodexPluginJson(fs.readFileSync(codexManifestPath, 'utf8'));
+            const claudeManifest = this.parseClaudePluginJson(
+                fs.readFileSync(claudeManifestPath, 'utf8')
+            );
+
+            const validated = this.validateCodexManifest(manifest);
+            const validatedClaude = this.validateClaudeManifest(claudeManifest);
+
+            if (validated.name !== repoName || validatedClaude.name !== repoName) {
+                this.ctx.throw(
+                    400,
+                    `Manifest name (${validated.name}) 必须与 Git 仓库名 (${repoName}) 保持一致`
+                );
+            }
+            // 双向校验版本：两者核心版本必须完全一致
+            const vCodex = String(validated.version || '')
+                .split('+')[0]
+                .trim();
+            const vClaude = String(validatedClaude.version || '')
+                .split('+')[0]
+                .trim();
+            if (vCodex !== vClaude) {
+                this.ctx.throw(400, '两个 plugin manifest 的 version 必须一致');
+            }
+
+            // 3. 计算最新提交 Hash
+            let contentHash;
+            try {
+                const { stdout } = await this.runGitCommand(['rev-parse', 'HEAD'], {
+                    cwd: targetDir,
+                });
+                contentHash = stdout.trim();
+            } catch (e) {
+                this.ctx.throw(500, `解析 Git HEAD 提交哈希失败: ${e.message}`);
+            }
+
+            // 4. 解析 Logo 资源
+            let logo = null;
+            const LOGO_ALLOWED = ['logo.png', 'logo.jpg', 'logo.jpeg', 'logo.webp'];
+            const logoPaths = validated.logoRef
+                ? [validated.logoRef]
+                : [
+                      ...LOGO_ALLOWED.map((name) => `assets/${name}`),
+                      ...LOGO_ALLOWED.map((name) => `.codex-plugin/assets/${name}`),
+                  ];
+
+            for (const relativeLogoPath of logoPaths) {
+                const absoluteLogoPath = path.join(targetDir, relativeLogoPath);
+                if (fs.existsSync(absoluteLogoPath)) {
+                    const logoBuffer = fs.readFileSync(absoluteLogoPath);
+                    const logoName = path.basename(relativeLogoPath);
+                    const mimeType = mime.lookup(logoName) || 'application/octet-stream';
+                    logo = {
+                        path: `${validated.name}/${contentHash}/${relativeLogoPath}`,
+                        mimeType,
+                        size: logoBuffer.length,
+                        hash: crypto.createHash('sha256').update(logoBuffer).digest('hex'),
+                        buffer: logoBuffer,
+                    };
+                    break;
+                } else if (validated.logoRef) {
+                    this.ctx.throw(400, `Logo 文件不存在: ./${relativeLogoPath}`);
+                }
+            }
+
+            // 5. 数据库持久化
+            const { Agent, AgentSkill } = this.app.model;
+            const existing = await Agent.findOne({ where: { name: validated.name } });
+
+            let agentId = existing ? existing.id : null;
+
+            // 计算分类：优先使用导入指定的分类，其次保留已有分类或使用 manifest 解析的分类，兜底为工程效率
+            const targetCategory =
+                category && isValidSkillCategory(category)
+                    ? category
+                    : existing?.category || validated.category || '工程效率';
+
+            const now = new Date();
+            const isContentChanged = !existing || existing.content_hash !== contentHash;
+
+            const agentPayload = {
+                name: validated.name,
+                display_name: validated.displayName,
+                version: validated.version,
+                description: validated.description,
+                profile: validated.longDescription,
+                author_name: validated.authorName,
+                category: targetCategory,
+                tags: JSON.stringify(validated.keywords || []),
+                prompts: JSON.stringify(
+                    (validated.defaultPrompt || []).map((prompt, index) => ({
+                        title: `开场问题 ${index + 1}`,
+                        prompt,
+                    }))
+                ),
+                capabilities: JSON.stringify(validated.capabilities || []),
+                logo_path: logo ? logo.path : '',
+                logo_mime_type: logo ? logo.mimeType : '',
+                logo_size: logo ? logo.size : 0,
+                logo_hash: logo ? logo.hash : '',
+                content_hash: contentHash,
+                is_delete: 0,
+                git_url: cleanGitUrl,
+                git_branch: targetBranch,
+                last_git_refresh_at: now,
+                last_git_sync_at: isContentChanged
+                    ? now
+                    : existing?.last_git_sync_at || existing?.updated_at || now,
+            };
+
+            // 5. 静态资源与 ZIP 归档缓存（前置打包，确保归档就绪后再落库，保障原子性）
+            if (logo) {
+                const absolutePath = path.join(storageDir, logo.path);
+                fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+                fs.writeFileSync(absolutePath, logo.buffer);
+            }
+
+            const archiveDir = path.join(storageDir, validated.name, contentHash);
+            fs.mkdirSync(archiveDir, { recursive: true });
+            const archivePath = path.join(archiveDir, `${validated.name}.zip`);
+
+            // 异步执行 git archive 原生打包
+            await this.runGitCommand(
+                [
+                    'archive',
+                    '--format=zip',
+                    `--prefix=${validated.name}/`,
+                    'HEAD',
+                    '-o',
+                    archivePath,
+                ],
+                { cwd: targetDir }
+            );
+
+            // 6. 数据库持久化（归档已就绪，安全提交事务）
+            await this.app.model.transaction(async (transaction) => {
+                if (!existing) {
+                    const created = await Agent.create(agentPayload, { transaction });
+                    agentId = created.id;
+                } else {
+                    await Agent.update(agentPayload, { where: { id: existing.id }, transaction });
+                }
+
+                // 提取 skills 目录下的 SKILL.md
+                const agentSkills = [];
+                const skillsDir = path.join(targetDir, validated.skills || 'skills');
+                if (fs.existsSync(skillsDir)) {
+                    const items = fs.readdirSync(skillsDir);
+                    for (const item of items) {
+                        const skillItemDir = path.join(skillsDir, item);
+                        if (!fs.statSync(skillItemDir).isDirectory()) continue;
+                        // 兼容大小写 SKILL.md 与 skill.md
+                        const skillFiles = fs.readdirSync(skillItemDir);
+                        const skillMdFile = skillFiles.find((f) => f.toLowerCase() === 'skill.md');
+                        if (skillMdFile) {
+                            const skillMdPath = path.join(skillItemDir, skillMdFile);
+                            let skillName = extractSkillMdName(
+                                fs.readFileSync(skillMdPath, 'utf8')
+                            ).trim();
+                            if (!skillName) skillName = item;
+                            if (skillName && !agentSkills.includes(skillName)) {
+                                agentSkills.push(skillName);
+                            }
+                        }
+                    }
+                }
+
+                await AgentSkill.destroy({ where: { agent_id: agentId }, transaction });
+                if (agentSkills.length > 0) {
+                    await AgentSkill.bulkCreate(
+                        agentSkills.map((skillSlug) => ({
+                            agent_id: agentId,
+                            skill_slug: skillSlug,
+                        })),
+                        { transaction }
+                    );
+                }
+            });
+
+            // 清理旧版本的归档目录
+            if (existing && existing.content_hash && existing.content_hash !== contentHash) {
+                this.removeDirectory(path.join(storageDir, validated.name, existing.content_hash));
+            }
+
+            return {
+                id: agentId,
+                name: validated.name,
+                version: validated.version,
+                updated: !!existing,
+                contentHash,
+                isContentChanged,
+            };
+        } finally {
+            activeSyncRepos.delete(repoName);
+        }
+    }
+
+    // 单独同步指定名称的 Agent
+    async syncGitAgentByName(name) {
+        if (!name) {
+            this.ctx.throw(400, '缺少 Agent 名称');
+        }
+        const agent = await this.app.model.Agent.findOne({
+            where: {
+                name,
+                is_delete: 0,
+            },
+        });
+        if (!agent) {
+            this.ctx.throw(404, `未找到 Agent: ${name}`);
+        }
+        if (!agent.git_url) {
+            this.ctx.throw(400, `Agent ${name} 未配置 Git 仓库地址`);
+        }
+        this.ctx.logger.info(`[agents] 单独同步 Agent ${agent.name} 来自 ${agent.git_url}`);
+        const result = await this.importAgentFromGit(
+            agent.git_url,
+            agent.git_branch || 'master',
+            agent.category
+        );
+        return {
+            name: agent.name,
+            success: true,
+            version: result.version,
+            contentHash: result.contentHash,
+            isContentChanged: result.isContentChanged,
+        };
+    }
+
+    // 全量同步所有配置了 Git 仓库的 Agent
+    async syncAllGitAgents() {
+        const agents = await this.app.model.Agent.findAll({
+            where: {
+                is_delete: 0,
+                git_url: { [this.app.Sequelize.Op.ne]: null },
+            },
+        });
+
+        // 过滤掉空字符串地址
+        const validAgents = agents.filter((agent) => agent.git_url && String(agent.git_url).trim());
+
+        const results = [];
+        for (const agent of validAgents) {
+            try {
+                this.ctx.logger.info(`[agents] 正在同步 Agent ${agent.name} 来自 ${agent.git_url}`);
+                const result = await this.importAgentFromGit(
+                    agent.git_url,
+                    agent.git_branch,
+                    agent.category
+                );
+                results.push({
+                    name: agent.name,
+                    success: true,
+                    version: result.version,
+                    contentHash: result.contentHash,
+                    isContentChanged: result.isContentChanged,
+                });
+            } catch (error) {
+                this.ctx.logger.error(`[agents] 同步 Agent ${agent.name} 失败: ${error.message}`);
+                results.push({ name: agent.name, success: false, error: error.message });
+            }
+        }
+        return results;
+    }
+
+    // 更新 Agent 的 Git 仓库配置，支持可选立即同步
+    async updateAgentGitConfig(params = {}) {
+        const { name, gitUrl, gitBranch, category, syncNow } = params;
+        if (!name) {
+            this.ctx.throw(400, '缺少 Agent 名称');
+        }
+        const agent = await this.app.model.Agent.findOne({
+            where: {
+                name,
+                is_delete: 0,
+            },
+        });
+        if (!agent) {
+            this.ctx.throw(404, `未找到 Agent: ${name}`);
+        }
+        const updates = {};
+        if (gitUrl !== undefined) {
+            const rawUrl = String(gitUrl || '').trim();
+            if (rawUrl) {
+                const { cleanGitUrl: normalizedUrl, targetBranch: normalizedBranch } =
+                    this.normalizeGitSource(rawUrl, gitBranch || agent.git_branch);
+                updates.git_url = normalizedUrl;
+                if (gitBranch === undefined) {
+                    updates.git_branch = normalizedBranch;
+                }
+            } else {
+                updates.git_url = '';
+            }
+        }
+        if (gitBranch !== undefined) {
+            const targetBranch = String(gitBranch || 'master').trim();
+            if (!GIT_BRANCH_PATTERN.test(targetBranch)) {
+                this.ctx.throw(400, `非法的分支名称: ${targetBranch}`);
+            }
+            updates.git_branch = targetBranch;
+        }
+        if (category && isValidSkillCategory(category)) {
+            updates.category = category;
+        }
+        await agent.update(updates);
+
+        if (syncNow) {
+            if (!agent.git_url) {
+                this.ctx.throw(400, '请先填写 GitLab 仓库地址');
+            }
+            this.ctx.logger.info(
+                `[agents] 更新配置并立即同步 Agent ${agent.name} 来自 ${agent.git_url}#${agent.git_branch}`
+            );
+            const syncResult = await this.importAgentFromGit(
+                agent.git_url,
+                agent.git_branch || 'master',
+                agent.category
+            );
+            return {
+                name: agent.name,
+                gitUrl: agent.git_url,
+                gitBranch: agent.git_branch,
+                category: agent.category,
+                synced: true,
+                version: syncResult.version,
+                contentHash: syncResult.contentHash,
+                isContentChanged: syncResult.isContentChanged,
+            };
+        }
+
+        return {
+            name: agent.name,
+            gitUrl: agent.git_url,
+            gitBranch: agent.git_branch,
+            category: agent.category,
+            synced: false,
         };
     }
 }

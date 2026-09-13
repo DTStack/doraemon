@@ -2441,9 +2441,21 @@ class SkillsService extends Service {
         return env;
     }
 
+    // 解析 GitLab 访问 Token，优先支持 env.json 配置
     resolveGitlabToken() {
-        const token = this.getSkillsConfig().gitlabToken;
-        return String(token || '').trim();
+        let envConfig = {};
+        try {
+            envConfig = require('../../env.json');
+        } catch (error) {
+            envConfig = {};
+        }
+        const token =
+            envConfig.gitlabToken ||
+            envConfig.GITLAB_TOKEN ||
+            this.getSkillsConfig().gitlabToken ||
+            process.env.GITLAB_TOKEN ||
+            '';
+        return String(token).trim();
     }
 
     resolveGitlabHostWhitelist() {
