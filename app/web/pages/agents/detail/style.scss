@@ -20,10 +20,12 @@
     .agent-hero,
     .agent-section-card,
     .agent-side-actions,
+    .agent-side-sync,
     .agent-side-related {
         border-radius: 20px;
         border: 1px solid #EDF0F5;
     }
+    .agent-side-sync,
     .agent-side-related {
         margin-top: 20px;
         .ant-card-head {
@@ -36,6 +38,75 @@
         }
         .ant-card-body {
             padding: 16px;
+        }
+    }
+    .agent-side-sync {
+        .ant-card-extra {
+            padding: 12px 0;
+            .ant-btn.agent-side-sync-setting-btn {
+                width: 28px;
+                height: 28px;
+                min-width: 28px;
+                padding: 0 !important;
+                border: none !important;
+                border-radius: 6px !important;
+                box-shadow: none !important;
+                background: transparent;
+                color: #94A3B8;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                .anticon {
+                    font-size: 15px;
+                    line-height: 1;
+                }
+                &:hover,
+                &:focus {
+                    color: #1E293B;
+                    background: #F1F5F9 !important;
+                }
+            }
+        }
+        .agent-sync-meta-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px dashed #E2E8F0;
+        }
+        .agent-sync-meta-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            line-height: 1.5;
+            .meta-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                color: #64748B;
+                .meta-tip-icon {
+                    color: #94A3B8;
+                    cursor: pointer;
+                    font-size: 12px;
+                    transition: color 0.2s ease;
+                    &:hover {
+                        color: #475569;
+                    }
+                }
+            }
+            .meta-value {
+                color: #334155;
+                font-family: SFMono-Regular, Consolas, monospace;
+                font-weight: 500;
+            }
+        }
+        .agent-sync-empty {
+            padding: 8px 0;
+            font-size: 12px;
+            text-align: center;
         }
     }
     .related-agent-list {

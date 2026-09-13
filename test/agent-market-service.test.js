@@ -3,7 +3,6 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const AdmZip = require('adm-zip');
 
 const AgentsService = require('../app/service/agents');
 
@@ -25,185 +24,11 @@ function createService() {
         config: {
             agentMarket: {
                 storageDir: '/data/doraemon/agent-market',
-                maxZipSize: 50 * 1024 * 1024,
-                maxExtractedSize: 200 * 1024 * 1024,
-                maxFileCount: 500,
-                maxSingleFileSize: 20 * 1024 * 1024,
-                maxImageSize: 5 * 1024 * 1024,
             },
         },
     };
     return service;
 }
-
-function createPluginZip({
-    codexManifest: codexOverrides = {},
-    claudeManifest: claudeOverrides = {},
-    includeClaudeManifest = true,
-    logoPath = 'assets/logo.png',
-    extraEntries = [],
-} = {}) {
-    const zip = new AdmZip();
-    const root = 'bugfix-agent';
-    const codexManifest = {
-        name: root,
-        version: '1.0.0',
-        description: 'Agent 简短描述',
-        author: { name: 'DTStack' },
-        keywords: ['Bugfix', 'Review'],
-        skills: './skills/',
-        interface: {
-            displayName: 'Bugfix Agent',
-            longDescription: '负责 Bug 分析、修复和回归验证',
-            developerName: 'DTStack',
-            category: 'Coding',
-            capabilities: ['分析 Bug', '修复代码'],
-            defaultPrompt: ['$bugfix-workflow 156343 dataApi/release_6.0.x'],
-            logo: `./${logoPath}`,
-        },
-        ...codexOverrides,
-    };
-    const claudeManifest = {
-        name: root,
-        version: '1.0.0',
-        description: 'Agent 简短描述',
-        author: { name: 'DTStack' },
-        agents: ['./agents/claude/bugfix-worker.md'],
-        ...claudeOverrides,
-    };
-
-    zip.addFile(
-        `${root}/.codex-plugin/plugin.json`,
-        Buffer.from(JSON.stringify(codexManifest), 'utf8')
-    );
-    if (includeClaudeManifest) {
-        zip.addFile(
-            `${root}/.claude-plugin/plugin.json`,
-            Buffer.from(JSON.stringify(claudeManifest), 'utf8')
-        );
-    }
-    zip.addFile(
-        `${root}/skills/bugfix-workflow/SKILL.md`,
-        Buffer.from('# Bugfix Workflow\n', 'utf8')
-    );
-    zip.addFile(
-        `${root}/agents/claude/bugfix-worker.md`,
-        Buffer.from('---\nname: bugfix-worker\ndescription: worker\n---\n', 'utf8')
-    );
-    zip.addFile(`${root}/${logoPath}`, Buffer.from('logo', 'utf8'));
-    zip.addFile(`${root}/README.md`, Buffer.from('# Bugfix Agent\n', 'utf8'));
-    extraEntries.forEach((entry) => {
-        zip.addFile(entry.name, Buffer.from(entry.content || '', entry.encoding || 'utf8'));
-    });
-
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-market-test-'));
-    const zipPath = path.join(tempDir, 'bugfix-agent.zip');
-    zip.writeZip(zipPath);
-    return {
-        zipPath,
-        cleanup() {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-        },
-    };
-}
-
-test('parseAgentZip 解析双宿主 plugin 并返回规范展示字段', async () => {
-    const fixture = createPluginZip();
-
-    try {
-        const parsed = await createService().parseAgentZip(fixture.zipPath);
-        assert.equal(parsed.agent.name, 'bugfix-agent');
-        assert.equal(parsed.agent.displayName, 'Bugfix Agent');
-        assert.equal(parsed.agent.version, '1.0.0');
-        assert.equal(parsed.agent.category, '工程效率');
-        assert.equal(parsed.agent.authorName, 'DTStack');
-        assert.equal(parsed.agent.longDescription, '负责 Bug 分析、修复和回归验证');
-        assert.deepEqual(parsed.agent.defaultPrompt, [
-            '$bugfix-workflow 156343 dataApi/release_6.0.x',
-        ]);
-        assert.deepEqual(parsed.agent.keywords, ['Bugfix', 'Review']);
-        assert.equal(parsed.agent.logo.path.startsWith('bugfix-agent/'), true);
-        assert.equal('profile' in parsed.agent, false);
-        assert.equal('prompts' in parsed.agent, false);
-        assert.equal('entrypointName' in parsed.agent, false);
-        assert.equal('skillRelations' in parsed, false);
-        assert.equal(
-            parsed.files.some((item) => item.filePath === 'assets/logo.png'),
-            false
-        );
-        assert.equal(
-            parsed.files.some((item) => item.filePath === '.claude-plugin/plugin.json'),
-            true
-        );
-        assert.equal(
-            parsed.files.some((item) => item.filePath === 'skills/bugfix-workflow/SKILL.md'),
-            true
-        );
-    } finally {
-        fixture.cleanup();
-    }
-});
-
-test('parseAgentZip 拒绝缺少 Claude Code manifest 的 plugin', async () => {
-    const fixture = createPluginZip({ includeClaudeManifest: false });
-
-    try {
-        await assert.rejects(
-            () => createService().parseAgentZip(fixture.zipPath),
-            /\.claude-plugin\/plugin\.json/
-        );
-    } finally {
-        fixture.cleanup();
-    }
-});
-
-test('parseAgentZip 拒绝双 manifest 的版本不一致', async () => {
-    const fixture = createPluginZip({ claudeManifest: { version: '2.0.0' } });
-
-    try {
-        await assert.rejects(
-            () => createService().parseAgentZip(fixture.zipPath),
-            /version 必须一致/
-        );
-    } finally {
-        fixture.cleanup();
-    }
-});
-
-test('parseAgentZip 拒绝超过 Codex 限制的默认 prompt', async () => {
-    const fixture = createPluginZip({
-        codexManifest: {
-            interface: {
-                displayName: 'Bugfix Agent',
-                longDescription: '描述',
-                developerName: 'DTStack',
-                category: 'Coding',
-                defaultPrompt: ['1', '2', '3', '4'],
-                logo: './assets/logo.png',
-            },
-        },
-    });
-
-    try {
-        await assert.rejects(
-            () => createService().parseAgentZip(fixture.zipPath),
-            /defaultPrompt 最多支持 3 条/
-        );
-    } finally {
-        fixture.cleanup();
-    }
-});
-
-test('parseAgentZip 支持 Codex 官方 .codex-plugin/assets Logo 路径', async () => {
-    const fixture = createPluginZip({ logoPath: '.codex-plugin/assets/logo.png' });
-
-    try {
-        const parsed = await createService().parseAgentZip(fixture.zipPath);
-        assert.match(parsed.agent.logo.path, /\.codex-plugin\/assets\/logo\.png$/);
-    } finally {
-        fixture.cleanup();
-    }
-});
 
 test('normalizeCapabilities 兼容字符串和对象数组', () => {
     const service = createService();
@@ -212,35 +37,6 @@ test('normalizeCapabilities 兼容字符串和对象数组', () => {
         { id: '', name: '分析 Bug', description: '' },
         { id: 'fix', name: '修复代码', description: '' },
     ]);
-});
-
-test('compareAgentVersion 按 semver 比较版本号', () => {
-    const service = createService();
-
-    assert.equal(service.compareAgentVersion('1.0.0', '1.0.0'), 0);
-    assert.equal(service.compareAgentVersion('1.0.1', '1.0.0'), 1);
-    assert.equal(service.compareAgentVersion('1.2.0', '1.10.0'), -1);
-});
-
-test('writeAgentArchive 将原始 ZIP 保存到当前内容 hash 目录', async () => {
-    const service = createService();
-    const storageDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-archive-storage-'));
-    const sourceDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-archive-source-'));
-    const sourcePath = path.join(sourceDir, 'source.zip');
-    fs.writeFileSync(sourcePath, Buffer.from('original-agent-zip'));
-    service.app.config.agentMarket.storageDir = storageDir;
-
-    try {
-        const archiveDir = await service.writeAgentArchive(
-            { name: 'bugfix-agent', contentHash: 'hash-v2' },
-            sourcePath
-        );
-        const archivePath = path.join(archiveDir, 'bugfix-agent.zip');
-        assert.equal(fs.readFileSync(archivePath, 'utf8'), 'original-agent-zip');
-    } finally {
-        fs.rmSync(storageDir, { recursive: true, force: true });
-        fs.rmSync(sourceDir, { recursive: true, force: true });
-    }
 });
 
 test('getAgentArchiveStream 返回当前 hash 对应的原始 ZIP', async () => {
@@ -397,14 +193,13 @@ test('getRelatedAgents 根据技能重叠数降序推荐相关 Agent 并排除�
     assert.equal(result[1].overlapCount, 1);
 });
 
-test('deleteAgent 软删除 Agent 并清理 AgentFile 与 AgentSkill 关联数据', async () => {
+test('deleteAgent 软删除 Agent 并清理 AgentSkill 关联数据', async () => {
     const service = createService();
     service.storageReady = true;
     service.getAgentMarketConfig = () => ({ storageDir: '/tmp/test-storage' });
     service.removeDirectory = () => {};
 
     let agentUpdated = false;
-    let filesDestroyed = false;
     let skillsDestroyed = false;
 
     service.app.model = {
@@ -415,13 +210,6 @@ test('deleteAgent 软删除 Agent 并清理 AgentFile 与 AgentSkill 关联数�
             async update(values, { where }) {
                 if (values.is_delete === 1 && where.id === 10) {
                     agentUpdated = true;
-                }
-            },
-        },
-        AgentFile: {
-            async destroy({ where }) {
-                if (where.agent_id === 10) {
-                    filesDestroyed = true;
                 }
             },
         },
@@ -440,24 +228,7 @@ test('deleteAgent 软删除 Agent 并清理 AgentFile 与 AgentSkill 关联数�
     const res = await service.deleteAgent({ name: 'test-agent' });
     assert.equal(res.deleted, true);
     assert.equal(agentUpdated, true);
-    assert.equal(filesDestroyed, true);
     assert.equal(skillsDestroyed, true);
-});
-
-test('parseAgentZip 过滤 .codex-plugin/assets 避免二进制图片存入快照文件列表', async () => {
-    const service = createService();
-    const fixture = createPluginZip({ logoPath: '.codex-plugin/assets/logo.png' });
-
-    try {
-        const parsed = await service.parseAgentZip(fixture.zipPath);
-        assert.match(parsed.agent.logo.path, /\.codex-plugin\/assets\/logo\.png$/);
-        const hasAssetInFiles = parsed.files.some((f) =>
-            f.filePath.startsWith('.codex-plugin/assets/')
-        );
-        assert.equal(hasAssetInFiles, false);
-    } finally {
-        fixture.cleanup();
-    }
 });
 
 test('ensureAgentSkillsTableCompatible 兼容处理历史 relation_type 非空约束', async () => {
@@ -553,4 +324,70 @@ test('queryAgentList 返回列表中每个 Agent 的 skillCount 统计', async (
     assert.equal(res.list[0].skillCount, 8);
     assert.equal(res.list[1].name, 'agent-102');
     assert.equal(res.list[1].skillCount, 1);
+});
+
+test('formatGitCloneError 格式化并简化 Git 报错信息', () => {
+    const service = createService();
+
+    // 远程分支不存在时返回简洁明确的提示
+    const branchErrZh = {
+        stderr: Buffer.from(
+            "正克隆到 'operator-register-agent'...\n警告：重定向到 http://gitlab.prod.dtstack.cn/repo.git/\n致命错误：远程分支 master 在上游 origin 未发现\n"
+        ),
+    };
+    assert.equal(
+        service.formatGitCloneError(branchErrZh, 'master'),
+        '未在远端仓库找到分支「master」，请在设置中检查分支名称（如 master 或 main）'
+    );
+
+    const branchErrEn = {
+        stderr: Buffer.from(
+            "Cloning into 'operator-register-agent'...\nfatal: Remote branch feat/x not found in upstream origin\n"
+        ),
+    };
+    assert.equal(
+        service.formatGitCloneError(branchErrEn, 'feat/x'),
+        '未在远端仓库找到分支「feat/x」，请在设置中检查分支名称（如 master 或 main）'
+    );
+
+    // 认证失败提示
+    const authErr = {
+        stderr: Buffer.from(
+            "fatal: Authentication failed for 'http://gitlab.prod.dtstack.cn/repo.git'\n"
+        ),
+    };
+    assert.equal(
+        service.formatGitCloneError(authErr),
+        'Git 认证失败，请检查 env.json 或环境变量中是否配置了有效的 gitlabToken'
+    );
+
+    // 仓库不存在提示
+    const notFoundErr = {
+        stderr: Buffer.from(
+            "remote: The project you were looking for could not be found.\nfatal: repository 'xxx' not found\n"
+        ),
+    };
+    assert.equal(
+        service.formatGitCloneError(notFoundErr),
+        '未找到远程仓库，请检查仓库地址是否正确或是否有权限访问'
+    );
+
+    // 网络连接失败提示
+    const networkErr = {
+        stderr: Buffer.from(
+            "fatal: unable to access 'http://gitlab.prod.dtstack.cn/...': Could not resolve host\n"
+        ),
+    };
+    assert.equal(
+        service.formatGitCloneError(networkErr),
+        '连接远程仓库失败，请检查网络连接或仓库地址'
+    );
+
+    // 未知错误过滤进度与警告日志，提取核心 fatal 信息
+    const unknownErr = {
+        stderr: Buffer.from(
+            "正克隆到 'test'...\n警告：重定向到 http://gitlab.prod.dtstack.cn/test.git/\n致命错误：磁盘空间不足\n"
+        ),
+    };
+    assert.equal(service.formatGitCloneError(unknownErr), '磁盘空间不足');
 });

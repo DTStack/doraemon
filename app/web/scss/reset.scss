@@ -127,7 +127,9 @@ iframe {
 
 // input
 .ant-input,
-.ant-select-selection {
+.ant-input-affix-wrapper,
+.ant-select-selection,
+.ant-select-selector {
     border-radius: 2px;
 }
 // input-search
@@ -167,7 +169,20 @@ iframe {
     }
 }
 
-// select - 选择框
+// select - 选择框高度统一对齐标准 32px
+.ant-select-single:not(.ant-select-customize-input) {
+    .ant-select-selector {
+        height: 32px;
+        .ant-select-selection-search-input {
+            height: 30px;
+        }
+        .ant-select-selection-item,
+        .ant-select-selection-placeholder {
+            line-height: 30px;
+        }
+    }
+}
+
 .ant-select-dropdown {
     .ant-select-item {
         font-size: 12px;
@@ -202,6 +217,18 @@ iframe {
         background: #FF7875;
         border-color: #FF7875;
     }
+    &.ant-btn-text {
+        border: none;
+        border-color: transparent;
+        box-shadow: none;
+        &:hover,
+        &:focus,
+        &:active {
+            border: none;
+            border-color: transparent;
+            box-shadow: none;
+        }
+    }
 }
 
 // ant-menu - 菜单
@@ -211,6 +238,22 @@ iframe {
 
 .ant-menu-dark.ant-menu-horizontal > .ant-menu-item:hover {
     background-color: transparent;
+}
+
+// 规范 affix-wrapper（带 allowClear 或 prefix 的单行 input）的高度与内边距，对齐标准 input
+.ant-input-affix-wrapper:not(.ant-input-affix-wrapper-textarea-with-clear-btn) {
+    padding: 4px 11px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    > input.ant-input {
+        padding: 0;
+        border: none;
+        height: 100%;
+        line-height: normal;
+        border-radius: 0;
+        box-shadow: none;
+    }
 }
 
 .ant-input-affix-wrapper::before {

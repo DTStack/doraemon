@@ -33,7 +33,7 @@ module.exports = (app) => {
             },
             {
                 prefix: '/agent-market/',
-                dir: path.resolve(app.baseDir, '../agent-market/'),
+                dir: path.join(app.baseDir, 'app/public'),
                 maxAge: 0, // maxAge 缓存，默认 1 年
                 buffer: false, // 不读进内存，改文件立即生效
                 dynamic: true, // 实时读取文件，支持热更新
@@ -52,11 +52,9 @@ module.exports = (app) => {
     };
     exports.agentMarket = {
         storageDir: process.env.AGENT_MARKET_STORAGE_DIR || '/data/doraemon/agent-market',
-        maxZipSize: 50 * 1024 * 1024,
-        maxExtractedSize: 200 * 1024 * 1024,
-        maxFileCount: 500,
-        maxSingleFileSize: 20 * 1024 * 1024,
-        maxImageSize: 5 * 1024 * 1024,
+        gitlabToken: process.env.GITLAB_TOKEN || '',
+        gitlabHostWhitelist: ['gitlab.prod.dtstack.cn'],
+        autoSyncInterval: process.env.AGENT_MARKET_AUTO_SYNC_INTERVAL || '5m',
     };
 
     exports.middleware = ['access'];

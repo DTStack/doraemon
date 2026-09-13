@@ -395,11 +395,13 @@ CREATE TABLE `agents` (
   `capabilities` longtext COMMENT 'JSON 字符串数组',
   `logo_path` varchar(1000) DEFAULT NULL COMMENT 'Logo 相对路径',
   `logo_mime_type` varchar(100) DEFAULT NULL COMMENT 'Logo MIME',
-  `logo_size` int NOT NULL DEFAULT '0' COMMENT 'Logo 大小',
+  `logo_size` int DEFAULT NULL COMMENT 'Logo 大小',
   `logo_hash` varchar(128) DEFAULT NULL COMMENT 'Logo 哈希',
   `content_hash` varchar(128) NOT NULL COMMENT '内容哈希',
-  `source_file_name` varchar(255) DEFAULT NULL COMMENT '上传文件名',
-  `file_count` int NOT NULL DEFAULT '0' COMMENT '文件数量',
+  `git_url` varchar(1000) DEFAULT NULL COMMENT 'GitLab 仓库地址',
+  `git_branch` varchar(100) NOT NULL DEFAULT 'master' COMMENT 'GitLab 仓库分支',
+  `last_git_refresh_at` datetime DEFAULT NULL COMMENT '最近一次刷新/检查 Git 时间',
+  `last_git_sync_at` datetime DEFAULT NULL COMMENT '最近一次代码变动同步时间',
   `is_delete` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -408,28 +410,6 @@ CREATE TABLE `agents` (
   KEY `idx_agents_category` (`category`),
   KEY `idx_agents_updated_at` (`updated_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Agent 条目表';
-
--- ----------------------------
--- Table structure for agent_files
--- ----------------------------
-DROP TABLE IF EXISTS `agent_files`;
-CREATE TABLE `agent_files` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `agent_id` int NOT NULL COMMENT 'agents.id',
-  `file_path` varchar(512) NOT NULL COMMENT 'Agent 内相对路径',
-  `mime_type` varchar(100) DEFAULT NULL COMMENT '文件 MIME',
-  `size` int NOT NULL DEFAULT '0' COMMENT '文件大小',
-  `is_binary` tinyint NOT NULL DEFAULT '0' COMMENT '是否二进制',
-  `encoding` varchar(20) NOT NULL DEFAULT 'utf8' COMMENT '内容编码',
-  `mode` int NOT NULL DEFAULT '0' COMMENT 'Unix 权限',
-  `content` longtext COMMENT '文件内容',
-  `is_delete` tinyint NOT NULL DEFAULT '0',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_agent_files_agent_path` (`agent_id`,`file_path`),
-  KEY `idx_agent_files_agent_id` (`agent_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Agent 文件快照表';
 
 -- ----------------------------
 -- Table structure for agent_skills

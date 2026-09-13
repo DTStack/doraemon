@@ -88,6 +88,19 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
+        .ant-btn {
+            border: none;
+            border-color: transparent;
+            box-shadow: none;
+            background: transparent;
+            &:hover,
+            &:focus,
+            &:active {
+                border: none;
+                border-color: transparent;
+                box-shadow: none;
+            }
+        }
     }
     .agent-card-brand {
         display: flex;

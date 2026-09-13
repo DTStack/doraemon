@@ -30,6 +30,10 @@ export interface AgentItem {
     updatedAt: string;
     logoUrl: string;
     skillCount?: number;
+    gitUrl?: string;
+    gitBranch?: string;
+    lastGitRefreshAt?: string;
+    lastGitSyncAt?: string;
 }
 
 export interface AgentListResponse {

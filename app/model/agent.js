@@ -66,8 +66,7 @@ module.exports = (app) => {
             },
             logo_size: {
                 type: INTEGER,
-                allowNull: false,
-                defaultValue: 0,
+                allowNull: true,
                 comment: 'Logo 大小',
             },
             logo_hash: {
@@ -79,15 +78,24 @@ module.exports = (app) => {
                 allowNull: false,
                 comment: '内容哈希',
             },
-            source_file_name: {
-                type: STRING(255),
-                comment: '上传文件名',
+            git_url: {
+                type: STRING(1000),
+                comment: 'GitLab 仓库地址',
             },
-            file_count: {
-                type: INTEGER,
-                allowNull: false,
-                defaultValue: 0,
-                comment: '文件数量',
+            git_branch: {
+                type: STRING(100),
+                defaultValue: 'master',
+                comment: 'GitLab 仓库分支',
+            },
+            last_git_refresh_at: {
+                type: DATE,
+                allowNull: true,
+                comment: '最近一次刷新/检查 Git 时间',
+            },
+            last_git_sync_at: {
+                type: DATE,
+                allowNull: true,
+                comment: '最近一次代码变动同步时间',
             },
             is_delete: {
                 type: TINYINT,

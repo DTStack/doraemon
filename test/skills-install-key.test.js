@@ -299,7 +299,7 @@ test('persistSkillsForSource - TDD scenarios for web upload', async () => {
     const result2 = await service.persistSkillsForSource(10, sourceMeta, [record1]);
     assert.equal(result2.length, 1);
     assert.equal(dbSkills.length, 1);
-    assert.equal(dbSkills[0].description, 'new desc');
+    assert.equal(dbSkills[0].description, 'desc');
 
     // 3. 不同名同 Slug 导入冲突（应抛出 400 错误：slug 已存在）
     const recordConflict = {

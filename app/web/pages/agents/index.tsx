@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DeleteOutlined, ImportOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
+import { DeleteOutlined, ImportOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
 import {
     Button,
     Card,
@@ -12,14 +12,16 @@ import {
     Space,
     Spin,
     Tag,
+    Tooltip,
     Typography,
-    Upload,
 } from 'antd';
 import debounce from 'lodash/debounce';
 
 import { API } from '@/api';
 import helpIcon from '@/asset/images/help-icon.png';
 import config from '../../../../env.json';
+import defaultAgentLogo from '../../asset/images/default_agent.jpg';
+import { AgentGitOpsModal } from './components/AgentGitOpsModal';
 import type { AgentItem, AgentListResponse } from './types';
 import './style.scss';
 
@@ -60,10 +62,43 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
     const [keywordInput, setKeywordInput] = useState('');
     const [importVisible, setImportVisible] = useState(false);
     const [importing, setImporting] = useState(false);
-    const [uploadFiles, setUploadFiles] = useState<any[]>([]);
+    const [syncingAll, setSyncingAll] = useState(false);
+    const [syncingAgentName, setSyncingAgentName] = useState<string | null>(null);
     const [deleteEnabled, setDeleteEnabled] = useState(false);
     const queryRef = useRef(query);
     queryRef.current = query;
+
+    // 单独同步指定 Agent 的 Git 仓库代码
+    const handleSyncSingleAgent = async (
+        agent: AgentItem,
+        event?: React.MouseEvent<HTMLElement>
+    ) => {
+        event?.stopPropagation();
+        if (!agent.gitUrl) {
+            message.warning('该 Agent 尚未配置 Git 仓库地址');
+            return;
+        }
+        setSyncingAgentName(agent.name);
+        try {
+            const response = await API.syncSingleGitAgent({ name: agent.name });
+            if (!response.success) {
+                message.error(response.msg || '同步失败');
+                return;
+            }
+            const displayName = agent.displayName || agent.name;
+            // 根据远端代码是否发生变更给出差异化反馈
+            if (response.data?.isContentChanged) {
+                message.success(`已成功同步【${displayName}】的最新代码`);
+            } else {
+                message.info(`【${displayName}】当前已是最新版本，无代码变动`);
+            }
+            fetchAgents(queryRef.current);
+        } catch (error: any) {
+            message.error(error.message || '同步异常');
+        } finally {
+            setSyncingAgentName(null);
+        }
+    };
 
     const fetchAgents = useCallback(async (nextQuery) => {
         setLoading(true);
@@ -75,7 +110,13 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
             }
 
             const data = response.data as AgentListResponse;
-            setAgents(data.list || []);
+            // 列表按名称首字母升序排序，支持中文拼音与英文不区分大小写
+            const sortedList = (data.list || []).slice().sort((a, b) => {
+                const nameA = a.displayName || a.name || '';
+                const nameB = b.displayName || b.name || '';
+                return nameA.localeCompare(nameB, 'zh-CN', { sensitivity: 'base', numeric: true });
+            });
+            setAgents(sortedList);
             setCategories(data.categories?.length ? data.categories : FALLBACK_CATEGORIES);
             setTotal(data.total || 0);
         } catch (error) {
@@ -138,51 +179,49 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
         });
     };
 
-    const submitImport = async (confirmOverwrite = false) => {
-        const targetFile = uploadFiles[0]?.originFileObj;
-        if (!targetFile) {
-            message.error('请先选择 .zip 文件');
+    const submitImport = async (data: { gitUrl: string; gitBranch: string; category: string }) => {
+        if (!data.gitUrl) {
+            message.error('请填写 GitLab 仓库地址');
             return;
         }
 
         setImporting(true);
         try {
-            const response = await API.importAgentFile({
-                file: targetFile,
-                confirmOverwrite: confirmOverwrite ? 'true' : 'false',
+            const response = await API.importAgentFromGit({
+                gitUrl: data.gitUrl,
+                gitBranch: data.gitBranch || 'master',
+                category: data.category,
             });
             if (!response.success) {
                 message.error(response.msg || '导入失败');
                 return;
             }
 
-            if (response.data?.requiresConfirm) {
-                Modal.confirm({
-                    title: `检测到同名 Agent「${response.data.name}」`,
-                    content: `当前版本 ${response.data.currentVersion}，导入版本 ${response.data.incomingVersion}，是否覆盖`,
-                    okText: '覆盖导入',
-                    cancelText: '取消',
-                    onOk: () => submitImport(true),
-                });
-                return;
-            }
-
-            if (response.data?.unchanged) {
-                message.info('内容未变化');
-            } else if (response.data?.updated) {
-                message.success('更新成功');
-            } else {
-                message.success('导入成功');
-            }
-
+            message.success('导入成功');
             setImportVisible(false);
-            setUploadFiles([]);
             fetchAgents(queryRef.current);
         } catch (error) {
-            message.error('导入失败，请检查 ZIP 文件');
+            message.error('导入失败，请检查 URL、分支或服务端 Git 权限');
             console.error('导入 Agent 失败:', error);
         } finally {
             setImporting(false);
+        }
+    };
+
+    const handleSyncGit = async () => {
+        setSyncingAll(true);
+        try {
+            const response = await API.syncAllGitAgents({});
+            if (!response.success) {
+                message.error(response.msg || '同步失败');
+                return;
+            }
+            message.success('同步触发成功');
+            fetchAgents(queryRef.current);
+        } catch (error: any) {
+            message.error(error?.message || '同步失败');
+        } finally {
+            setSyncingAll(false);
         }
     };
 
@@ -204,13 +243,18 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                     <h1 className="page-title">Agent 市场</h1>
                     <p className="page-subtitle">发现并导入适用于不同研发场景的 Agent</p>
                 </div>
-                <Button
-                    type="primary"
-                    icon={<ImportOutlined />}
-                    onClick={() => setImportVisible(true)}
-                >
-                    导入 Agent
-                </Button>
+                <Space>
+                    <Button onClick={handleSyncGit} loading={syncingAll} disabled={syncingAll}>
+                        全量同步
+                    </Button>
+                    <Button
+                        type="primary"
+                        icon={<ImportOutlined />}
+                        onClick={() => setImportVisible(true)}
+                    >
+                        导入 Agent
+                    </Button>
+                </Space>
             </div>
 
             {config.agentHelpDocUrl ? (
@@ -270,16 +314,14 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                             >
                                 <div className="agent-card-head">
                                     <div className="agent-card-brand">
-                                        {agent.logoUrl ? (
-                                            <img
-                                                className="agent-card-logo"
-                                                src={agent.logoUrl}
-                                                alt={agent.displayName}
-                                                onError={(event) => {
-                                                    event.currentTarget.style.display = 'none';
-                                                }}
-                                            />
-                                        ) : null}
+                                        <img
+                                            className="agent-card-logo"
+                                            src={agent.logoUrl || defaultAgentLogo}
+                                            alt={agent.displayName}
+                                            onError={(event) => {
+                                                event.currentTarget.src = defaultAgentLogo;
+                                            }}
+                                        />
                                         <div className="agent-card-meta">
                                             <Title level={4}>{agent.displayName}</Title>
                                             <div className="agent-card-subline">
@@ -291,15 +333,45 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                                             </div>
                                         </div>
                                     </div>
-                                    {deleteEnabled ? (
-                                        <Button
-                                            type="text"
-                                            danger
-                                            size="small"
-                                            icon={<DeleteOutlined />}
-                                            // 浏览器控制台启用删除入口：localStorage.setItem('doraemon.agentMarket.deleteEnabled', 'true')
-                                            onClick={(event) => handleDelete(agent, event)}
-                                        />
+                                    {deleteEnabled || agent.gitUrl ? (
+                                        <div onClick={(event) => event.stopPropagation()}>
+                                            <Space size={4}>
+                                                {deleteEnabled ? (
+                                                    <Button
+                                                        type="text"
+                                                        danger
+                                                        size="small"
+                                                        icon={<DeleteOutlined />}
+                                                        // 浏览器控制台启用删除入口：localStorage.setItem('doraemon.agentMarket.deleteEnabled', 'true')
+                                                        onClick={(event) =>
+                                                            handleDelete(agent, event)
+                                                        }
+                                                    />
+                                                ) : null}
+                                                {agent.gitUrl ? (
+                                                    <Tooltip title="从 Git 同步最新代码">
+                                                        <Button
+                                                            type="text"
+                                                            size="small"
+                                                            icon={
+                                                                <SyncOutlined
+                                                                    spin={
+                                                                        syncingAgentName ===
+                                                                        agent.name
+                                                                    }
+                                                                />
+                                                            }
+                                                            loading={
+                                                                syncingAgentName === agent.name
+                                                            }
+                                                            onClick={(event) =>
+                                                                handleSyncSingleAgent(agent, event)
+                                                            }
+                                                        />
+                                                    </Tooltip>
+                                                ) : null}
+                                            </Space>
+                                        </div>
                                     ) : null}
                                 </div>
 
@@ -338,34 +410,15 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                 </div>
             ) : null}
 
-            <Modal
-                title="导入 Agent"
+            <AgentGitOpsModal
                 visible={importVisible}
-                confirmLoading={importing}
-                okText="开始导入"
-                cancelText="取消"
-                onCancel={() => {
-                    if (importing) return;
-                    setImportVisible(false);
-                    setUploadFiles([]);
-                }}
-                onOk={() => submitImport(false)}
-            >
-                <Space direction="vertical" style={{ width: '100%' }} size={16}>
-                    <Text type="secondary">
-                        仅支持导入单个 Agent ZIP。Agent 信息会从包内 `.codex-plugin/plugin.json`
-                        自动解析。
-                    </Text>
-                    <Upload
-                        accept=".zip"
-                        fileList={uploadFiles}
-                        beforeUpload={() => false}
-                        onChange={(info) => setUploadFiles(info.fileList.slice(-1))}
-                    >
-                        <Button icon={<UploadOutlined />}>选择 .zip 文件</Button>
-                    </Upload>
-                </Space>
-            </Modal>
+                title="导入 Agent (GitLab)"
+                description="请输入独立 Agent 的 GitLab 仓库地址。系统会自动拉取代码，并在后台完成入库和解析。"
+                mode="import"
+                loading={importing}
+                onCancel={() => setImportVisible(false)}
+                onOk={(data) => submitImport(data)}
+            />
         </div>
     );
 };

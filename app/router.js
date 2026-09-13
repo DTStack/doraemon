@@ -170,7 +170,9 @@ module.exports = (app) => {
     app.get('/api/agents/related', app.controller.agents.getRelatedAgents);
     app.get('/api/agents/asset', app.controller.agents.getAgentAsset);
     app.get('/api/agents/download', app.controller.agents.downloadAgentArchive);
-    app.post('/api/agents/import-file', app.controller.agents.importAgentFile);
+    app.post('/api/agents/import-git', app.controller.agents.importAgentFromGit);
+    app.post('/api/agents/sync-git', app.controller.agents.syncGitAgents);
+    app.post('/api/agents/update-git-config', app.controller.agents.updateAgentGitConfig);
     app.post('/api/agents/delete', app.controller.agents.deleteAgent);
 
     /**

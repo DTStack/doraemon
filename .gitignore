@@ -4,7 +4,7 @@ run
 logs
 cache
 .history
-public
+/public
 resources
 agent-market
 app/view

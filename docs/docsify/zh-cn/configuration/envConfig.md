@@ -116,6 +116,19 @@ Agent 市场首页右下角帮助文档入口跳转链接
 }
 ```
 
+## gitlabToken
+
+- 类型：String
+- 默认值：''
+
+用于 Agent 市场从私有 GitLab 仓库拉取和同步 Agent 插件代码的 Access Token。亦可直接配置环境变量 `GITLAB_TOKEN`。服务端在向白名单域名（默认包含 `gitlab.prod.dtstack.cn`）克隆时会自动注入认证信息。
+
+```json
+{
+    "gitlabToken": "glpat-xxxxxxxxxxxxxxxxxxxx"
+}
+```
+
 ## mysql
 
 - 类型：Object

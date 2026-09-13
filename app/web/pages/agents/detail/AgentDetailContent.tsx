@@ -4,13 +4,18 @@ import {
     CopyOutlined,
     DownloadOutlined,
     QuestionCircleOutlined,
+    SettingOutlined,
+    SyncOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Empty, message, Spin, Tag, Typography } from 'antd';
+import { Button, Card, Empty, message, Spin, Tag, Tooltip, Typography } from 'antd';
+import moment from 'moment';
 
 import { API } from '@/api';
 import { copyToClipboard } from '@/utils/copyUtils';
 import { safeOpenUrl } from '@/utils/safeOpenUrl';
+import defaultAgentLogo from '../../../asset/images/default_agent.jpg';
 import { buildAgentDetailCodexPrompt, buildCodexNewThreadUrl } from '../codex-button-utils';
+import { AgentGitOpsModal } from '../components/AgentGitOpsModal';
 import type { AgentDetail, AgentItem, AgentSkill } from '../types';
 import './style.scss';
 
@@ -29,16 +34,14 @@ const RelatedAgentCard: React.FC<{
         onClick={() => history.push(`/page/agents/${item.name}`)}
     >
         <div className="related-agent-head">
-            {item.logoUrl ? (
-                <img
-                    className="related-agent-logo"
-                    src={item.logoUrl}
-                    alt={item.displayName}
-                    onError={(event) => {
-                        event.currentTarget.style.visibility = 'hidden';
-                    }}
-                />
-            ) : null}
+            <img
+                className="related-agent-logo"
+                src={item.logoUrl || defaultAgentLogo}
+                alt={item.displayName}
+                onError={(event) => {
+                    event.currentTarget.src = defaultAgentLogo;
+                }}
+            />
             <div className="related-agent-meta">
                 <Text strong>{item.displayName}</Text>
                 <Paragraph ellipsis={{ rows: 2 }}>{item.description || '暂无描述'}</Paragraph>
@@ -56,6 +59,104 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
     const [loading, setLoading] = useState(true);
     const [detail, setDetail] = useState<AgentDetail | null>(null);
     const [related, setRelated] = useState<AgentItem[]>([]);
+    const [syncing, setSyncing] = useState(false);
+    const [settingVisible, setSettingVisible] = useState(false);
+    const [settingLoading, setSettingLoading] = useState(false);
+    // 最近一次向 Git 远端检查刷新的时间
+    const lastRefreshTime = useMemo(() => {
+        const timeVal = detail?.lastGitRefreshAt || detail?.updatedAt;
+        if (!timeVal) return '-';
+        const m = moment(timeVal);
+        return m.isValid() ? m.format('YYYY-MM-DD HH:mm:ss') : '-';
+    }, [detail?.lastGitRefreshAt, detail?.updatedAt]);
+
+    // 最近一次 Git 代码发生变动并同步生效的时间
+    const lastSyncTime = useMemo(() => {
+        const timeVal = detail?.lastGitSyncAt || detail?.updatedAt;
+        if (!timeVal) return '-';
+        const m = moment(timeVal);
+        return m.isValid() ? m.format('YYYY-MM-DD HH:mm:ss') : '-';
+    }, [detail?.lastGitSyncAt, detail?.updatedAt]);
+
+    const handleOpenSetting = () => {
+        if (!detail) return;
+        setSettingVisible(true);
+    };
+
+    const handleSaveSetting = async (
+        data: { gitUrl: string; gitBranch: string; category: string },
+        syncNow = false
+    ) => {
+        if (!detail) return;
+        if (!data.gitUrl) {
+            message.error('请填写 GitLab 仓库地址');
+            return;
+        }
+
+        setSettingLoading(true);
+        try {
+            const response = await API.updateAgentGitConfig({
+                name: detail.name,
+                gitUrl: data.gitUrl,
+                gitBranch: data.gitBranch || 'master',
+                category: data.category,
+                syncNow,
+            });
+
+            if (!response.success) {
+                message.error(response.msg || '保存失败');
+                return;
+            }
+
+            // 根据是否立即同步以及远端代码是否变动区分提示文案
+            if (syncNow) {
+                if (response.data?.isContentChanged) {
+                    message.success('配置已保存，并成功同步最新代码');
+                } else {
+                    message.success('配置已保存，当前已是最新版本（无代码变动）');
+                }
+            } else {
+                message.success('配置保存成功');
+            }
+            setSettingVisible(false);
+            const detailRes = await API.getAgentDetail({ name });
+            if (detailRes.success) {
+                setDetail(detailRes.data as AgentDetail);
+            }
+        } catch (error) {
+            message.error(syncNow ? '同步失败，请检查 URL、分支或服务端 Git 权限' : '保存配置失败');
+            console.error('更新 Agent Git 配置失败:', error);
+        } finally {
+            setSettingLoading(false);
+        }
+    };
+
+    const handleSyncSingleAgent = async () => {
+        if (!detail) return;
+        setSyncing(true);
+        try {
+            const res = await API.syncSingleGitAgent({ name: detail.name });
+            if (!res.success) {
+                message.error(res.msg || '同步失败');
+                return;
+            }
+            // 根据远端代码是否发生变更给出差异化反馈
+            if (res.data?.isContentChanged) {
+                message.success('同步成功，已更新至最新代码');
+            } else {
+                message.info('当前已是最新版本，无代码变动');
+            }
+            // 重新拉取最新详情刷新展示
+            const detailRes = await API.getAgentDetail({ name });
+            if (detailRes.success) {
+                setDetail(detailRes.data as AgentDetail);
+            }
+        } catch (error) {
+            message.error('同步失败，请检查服务端 Git 访问权限');
+        } finally {
+            setSyncing(false);
+        }
+    };
 
     useEffect(() => {
         let cancelled = false;
@@ -144,16 +245,14 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                 <main className="agent-detail-main">
                     <div className="agent-hero">
                         <div className="agent-hero-brand">
-                            {detail.logoUrl ? (
-                                <img
-                                    className="agent-hero-logo"
-                                    src={detail.logoUrl}
-                                    alt={detail.displayName}
-                                    onError={(event) => {
-                                        event.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            ) : null}
+                            <img
+                                className="agent-hero-logo"
+                                src={detail.logoUrl || defaultAgentLogo}
+                                alt={detail.displayName}
+                                onError={(event) => {
+                                    event.currentTarget.src = defaultAgentLogo;
+                                }}
+                            />
                             <div className="agent-hero-meta">
                                 <Title level={2}>{detail.displayName}</Title>
                                 <div className="agent-hero-subline">
@@ -219,7 +318,7 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
 
                                     <div className="agent-intro-block">
                                         <div className="agent-intro-block-head">
-                                            <Title level={4}>快速使用</Title>
+                                            <Title level={4}>快速使用（Codex）</Title>
                                             <Tag className="agent-intro-count">
                                                 {introBlocks.openingQuestions.length} 个
                                             </Tag>
@@ -359,6 +458,12 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                         <Button
                             block
                             className="agent-archive-download"
+                            style={{
+                                height: 36,
+                                marginTop: 12,
+                                borderRadius: 8,
+                                fontWeight: 600,
+                            }}
                             icon={<DownloadOutlined />}
                             onClick={() => {
                                 safeOpenUrl(
@@ -370,6 +475,72 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                         >
                             下载 Agent ZIP
                         </Button>
+                    </Card>
+
+                    <Card
+                        className="agent-side-sync"
+                        title="Git 仓库设置"
+                        extra={
+                            <Tooltip title="Git 仓库设置">
+                                <Button
+                                    type="text"
+                                    size="small"
+                                    className="agent-side-sync-setting-btn"
+                                    icon={<SettingOutlined />}
+                                    onClick={handleOpenSetting}
+                                />
+                            </Tooltip>
+                        }
+                    >
+                        {detail.gitUrl ? (
+                            <>
+                                <Button
+                                    block
+                                    style={{
+                                        height: 36,
+                                        borderRadius: 8,
+                                        fontWeight: 500,
+                                    }}
+                                    icon={<SyncOutlined spin={syncing} />}
+                                    loading={syncing}
+                                    onClick={handleSyncSingleAgent}
+                                >
+                                    从 Git 同步最新代码
+                                </Button>
+                                <div className="agent-sync-meta-list">
+                                    <div className="agent-sync-meta-item">
+                                        <span className="meta-label">
+                                            最近刷新时间
+                                            <Tooltip title="最近一次向 GitLab 发起检查（确认远端是否有新提交）的时间">
+                                                <QuestionCircleOutlined className="meta-tip-icon" />
+                                            </Tooltip>
+                                        </span>
+                                        <span className="meta-value">{lastRefreshTime || '-'}</span>
+                                    </div>
+                                    <div className="agent-sync-meta-item">
+                                        <span className="meta-label">
+                                            最近同步代码时间
+                                            <Tooltip title="最近一次成功拉取新代码变动并完成同步入库的时间">
+                                                <QuestionCircleOutlined className="meta-tip-icon" />
+                                            </Tooltip>
+                                        </span>
+                                        <span className="meta-value">{lastSyncTime}</span>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="agent-sync-empty">
+                                <Text type="secondary">尚未配置 Git 仓库地址</Text>
+                                <Button
+                                    type="link"
+                                    size="small"
+                                    style={{ padding: 0, marginTop: 4, display: 'block' }}
+                                    onClick={handleOpenSetting}
+                                >
+                                    去配置
+                                </Button>
+                            </div>
+                        )}
                     </Card>
 
                     <Card className="agent-side-related" title="相关 Agent">
@@ -392,8 +563,21 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                     </Card>
                 </aside>
             </div>
+
+            <AgentGitOpsModal
+                visible={settingVisible}
+                title={`设置 Agent Git 仓库 - ${detail.displayName || detail.name}`}
+                description="配置当前 Agent 的远程 GitLab 仓库地址与默认拉取分支。"
+                mode="setting"
+                loading={settingLoading}
+                showSyncBtn={false}
+                initialUrl={detail?.gitUrl || ''}
+                initialBranch={detail?.gitBranch || 'master'}
+                initialCategory={detail?.category || '工程效率'}
+                onCancel={() => setSettingVisible(false)}
+                onOk={(data, sync) => handleSaveSetting(data, sync || false)}
+            />
         </div>
     );
 };
-
 export default AgentDetailContent;

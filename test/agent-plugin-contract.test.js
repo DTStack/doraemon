@@ -1,9 +1,5 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const AdmZip = require('adm-zip');
 
 const AgentsService = require('../app/service/agents');
 
@@ -20,21 +16,16 @@ function createService() {
         config: {
             agentMarket: {
                 storageDir: '/data/doraemon/agent-market',
-                maxExtractedSize: 200 * 1024 * 1024,
-                maxFileCount: 500,
-                maxSingleFileSize: 20 * 1024 * 1024,
             },
         },
     };
     return service;
 }
 
-function createPluginZip({ includeClaudeManifest = true, version = '1.0.0' } = {}) {
-    const zip = new AdmZip();
-    const root = 'bugfix-agent';
+test('validateCodexManifest 返回规范化的展示与配置字段', () => {
     const codexManifest = {
-        name: root,
-        version,
+        name: 'bugfix-agent',
+        version: '1.0.0',
         description: 'Bugfix plugin',
         author: { name: 'DTStack' },
         keywords: ['bugfix'],
@@ -49,69 +40,19 @@ function createPluginZip({ includeClaudeManifest = true, version = '1.0.0' } = {
             logo: './assets/logo.png',
         },
     };
-    const claudeManifest = {
-        name: root,
-        version,
-        description: 'Bugfix plugin',
-        author: { name: 'DTStack' },
-        agents: ['./agents/claude/bugfix-worker.md'],
-    };
-
-    zip.addFile(
-        `${root}/.codex-plugin/plugin.json`,
-        Buffer.from(JSON.stringify(codexManifest), 'utf8')
-    );
-    if (includeClaudeManifest) {
-        zip.addFile(
-            `${root}/.claude-plugin/plugin.json`,
-            Buffer.from(JSON.stringify(claudeManifest), 'utf8')
-        );
-    }
-    zip.addFile(`${root}/skills/bugfix-workflow/SKILL.md`, Buffer.from('# Bugfix Workflow\n'));
-    zip.addFile(
-        `${root}/agents/claude/bugfix-worker.md`,
-        Buffer.from('---\nname: bugfix-worker\ndescription: worker\n---\n')
-    );
-    zip.addFile(`${root}/assets/logo.png`, Buffer.from('logo'));
-
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-plugin-contract-'));
-    const zipPath = path.join(tempDir, 'bugfix-agent.zip');
-    zip.writeZip(zipPath);
-    return {
-        zipPath,
-        cleanup() {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-        },
-    };
-}
-
-test('parseAgentZip 只返回双 manifest 的规范展示字段', async () => {
-    const fixture = createPluginZip();
-
-    try {
-        const parsed = await createService().parseAgentZip(fixture.zipPath);
-        assert.equal(parsed.agent.longDescription, '负责 Bug 分析、修复和交付');
-        assert.deepEqual(parsed.agent.defaultPrompt, ['$bugfix-workflow 156343']);
-        assert.equal('profile' in parsed.agent, false);
-        assert.equal('prompts' in parsed.agent, false);
-        assert.equal('entrypointName' in parsed.agent, false);
-        assert.equal('skillRelations' in parsed, false);
-    } finally {
-        fixture.cleanup();
-    }
+    const validated = createService().validateCodexManifest(codexManifest);
+    assert.equal(validated.longDescription, '负责 Bug 分析、修复和交付');
+    assert.deepEqual(validated.defaultPrompt, ['$bugfix-workflow 156343']);
+    assert.equal(validated.displayName, 'Bugfix Agent');
+    assert.equal(validated.category, '工程效率');
 });
 
-test('parseAgentZip 拒绝缺少 Claude Code manifest 的 plugin', async () => {
-    const fixture = createPluginZip({ includeClaudeManifest: false });
-
-    try {
-        await assert.rejects(
-            () => createService().parseAgentZip(fixture.zipPath),
-            /\.claude-plugin\/plugin\.json/
-        );
-    } finally {
-        fixture.cleanup();
-    }
+test('validateClaudeManifest 校验 agents 配置有效性', () => {
+    const service = createService();
+    assert.throws(
+        () => service.validateClaudeManifest({ name: 'bugfix-agent', agents: [] }),
+        /\.claude-plugin\/plugin\.json 必须声明 agents/
+    );
 });
 
 test('getAgentDetail 只返回 plugin 展示契约字段', async () => {
