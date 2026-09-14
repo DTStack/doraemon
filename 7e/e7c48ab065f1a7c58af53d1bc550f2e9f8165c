@@ -1,0 +1,30 @@
+app/web/pages/agents/index.tsx
+  h_3070dc1062bb3b 3-8,75,237-265,269-275,387-389,391,399-410,414-421,423,426-429,476-489
+  h_3070dc1062bb3b 2,73-74,266-268,276-278,390,392-398,490
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  h_3070dc1062bb3b 89-90,104,112,119,562,569
+  h_3070dc1062bb3b 86-88
+app/schedule/syncGitAgents.js
+  h_3070dc1062bb3b 3,6
+app/service/agents.js
+  h_3070dc1062bb3b 987-988,990,1000,1010-1013,1035,1043,1045,1087,1111
+app/web/pages/agents/components/AgentGitOpsModal.tsx
+  h_3070dc1062bb3b 28,56-57,61,64,76,94
+config/config.default.js
+  h_3070dc1062bb3b 50
+test/agent-market-service.test.js
+  h_3070dc1062bb3b 404,408,412-413
+test/agent-schedule-sync.test.js
+  h_3070dc1062bb3b 6,10,15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "7ee7c48ab065f1a7c58af53d1bc550f2e9f8165c",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
