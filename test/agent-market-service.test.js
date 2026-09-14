@@ -473,3 +473,39 @@ test('getGitAuthArgs 域名白名单与空 host 防护', () => {
     const auth4 = service.getGitAuthArgs('');
     assert.deepEqual(auth4, []);
 });
+
+test('getInstallScript 动态替换 __AGENT_MARKET_BASE_URL__ 为当前请求来源', async () => {
+    const service = createService();
+    service.app.baseDir = path.resolve(__dirname, '..');
+    service.ctx.host = 'localhost:7001';
+    service.ctx.protocol = 'http';
+    service.ctx.get = (header) => {
+        if (header === 'x-forwarded-host') return 'doraemon.internal:8080';
+        if (header === 'x-forwarded-proto') return 'https';
+        return '';
+    };
+
+    const script = await service.getInstallScript();
+    assert.ok(script.includes('https://doraemon.internal:8080/agent-market'));
+    assert.ok(!script.includes('__AGENT_MARKET_BASE_URL__'));
+});
+
+test('getInstallScript 无代理头时使用 ctx.host 和 ctx.protocol', async () => {
+    const service = createService();
+    service.app.baseDir = path.resolve(__dirname, '..');
+    service.ctx.host = '127.0.0.1:7001';
+    service.ctx.protocol = 'http';
+    service.ctx.get = () => '';
+
+    const script = await service.getInstallScript();
+    assert.ok(script.includes('http://127.0.0.1:7001/agent-market'));
+    assert.ok(!script.includes('__AGENT_MARKET_BASE_URL__'));
+});
+
+test('getCreatePluginScript 读取并返回 create-plugin.sh 内容', async () => {
+    const service = createService();
+    service.app.baseDir = path.resolve(__dirname, '..');
+
+    const script = await service.getCreatePluginScript();
+    assert.ok(script.includes('create-plugin.sh'));
+});

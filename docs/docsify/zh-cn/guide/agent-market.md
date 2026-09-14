@@ -338,7 +338,7 @@ bugfix-agent
 | `interface.longDescription` | string | 否 | 详情页“Agent 简介”展示的完整长描述，支持多段落 |
 | `interface.category` | string | 否 | 分类标识（如 `Coding` 映射为 `工程效率`） |
 | `interface.capabilities` | string[] / object[] | 否 | 能力项列表，在 Hero 区域作为功能项逗号分隔展示 |
-| `interface.defaultPrompt` | string[] | 否 | 开场问题列表，最多 3 条，每条 ≤ 128 字符，提供“快捷使用”入口 |
+| `interface.defaultPrompt` | string[] | 否 | 开场问题列表，最多 5 条，每条 ≤ 1024 字符（支持多行参数与代码块），提供“快捷使用”入口 |
 | `interface.logo` | string | 否 | Logo 相对路径，如 `./assets/logo.png`；缺省时自动探测 `assets/` 下图片 |
 
 ### 2. `.claude-plugin/plugin.json`

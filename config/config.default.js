@@ -31,13 +31,6 @@ module.exports = (app) => {
                 prefix: '/resources/',
                 dir: path.join(app.baseDir, 'resources'),
             },
-            {
-                prefix: '/agent-market/',
-                dir: path.join(app.baseDir, 'app/public'),
-                maxAge: 0, // maxAge 缓存，默认 1 年
-                buffer: false, // 不读进内存，改文件立即生效
-                dynamic: true, // 实时读取文件，支持热更新
-            },
         ],
     };
     exports.keys = '123456';

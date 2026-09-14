@@ -80,6 +80,18 @@ class AgentsController extends Controller {
         });
         this.ctx.body = this.app.utils.response(true, data);
     }
+
+    async getInstallScript() {
+        const script = await this.ctx.service.agents.getInstallScript();
+        this.ctx.set('Content-Type', 'text/plain; charset=utf-8');
+        this.ctx.body = script;
+    }
+
+    async getCreatePluginScript() {
+        const script = await this.ctx.service.agents.getCreatePluginScript();
+        this.ctx.set('Content-Type', 'text/plain; charset=utf-8');
+        this.ctx.body = script;
+    }
 }
 
 module.exports = AgentsController;

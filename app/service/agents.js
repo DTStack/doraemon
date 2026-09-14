@@ -257,11 +257,11 @@ class AgentsService extends Service {
         const category = this.mapCodexCategory(iface.category);
         const longDescription = String(iface.longDescription || description || '').trim();
         const defaultPrompt = Array.isArray(iface.defaultPrompt) ? iface.defaultPrompt : [];
-        if (defaultPrompt.length > 3) {
-            this.ctx.throw(400, 'interface.defaultPrompt 最多支持 3 条');
+        if (defaultPrompt.length > 5) {
+            this.ctx.throw(400, 'interface.defaultPrompt 最多支持 5 条');
         }
-        if (defaultPrompt.some((item) => typeof item !== 'string' || item.length > 128)) {
-            this.ctx.throw(400, 'interface.defaultPrompt 每条必须是 128 字符以内的字符串');
+        if (defaultPrompt.some((item) => typeof item !== 'string' || item.length > 1024)) {
+            this.ctx.throw(400, 'interface.defaultPrompt 每条必须是 1024 字符以内的字符串');
         }
 
         const skills = this.normalizeManifestPath(manifest.skills, 'skills');
@@ -1462,6 +1462,23 @@ class AgentsService extends Service {
             category: agent.category,
             synced: false,
         };
+    }
+
+    async getInstallScript() {
+        const filePath = path.join(this.app.baseDir, 'app/public/install.sh');
+        let content = await fs.promises.readFile(filePath, 'utf-8');
+        const host =
+            (this.ctx.get && this.ctx.get('x-forwarded-host')) || this.ctx.host || 'localhost:7001';
+        const protocol =
+            (this.ctx.get && this.ctx.get('x-forwarded-proto')) || this.ctx.protocol || 'http';
+        const currentBaseUrl = `${protocol}://${host}/agent-market`;
+        content = content.replace(/__AGENT_MARKET_BASE_URL__/g, currentBaseUrl);
+        return content;
+    }
+
+    async getCreatePluginScript() {
+        const filePath = path.join(this.app.baseDir, 'app/public/create-plugin.sh');
+        return await fs.promises.readFile(filePath, 'utf-8');
     }
 }
 

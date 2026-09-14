@@ -17,7 +17,12 @@ set -euo pipefail
 #   AGENT_MARKET_NAME        marketplace 名，默认: agent-market
 
 AGENT_NAME="${1:-}"
-AGENT_MARKET_BASE_URL="${AGENT_MARKET_BASE_URL:-http://172.16.100.225:7001/agent-market}"
+CUSTOM_BASE_URL="${2:-}"
+DEFAULT_MARKET_URL="__AGENT_MARKET_BASE_URL__"
+if [[ "$DEFAULT_MARKET_URL" == *"__"* ]]; then
+  DEFAULT_MARKET_URL="http://172.16.100.225:7001/agent-market"
+fi
+AGENT_MARKET_BASE_URL="${CUSTOM_BASE_URL:-${AGENT_MARKET_BASE_URL:-$DEFAULT_MARKET_URL}}"
 AGENT_MARKET_BASE_URL="${AGENT_MARKET_BASE_URL%/}"
 AGENT_MARKET_LOCAL_DIR="${AGENT_MARKET_LOCAL_DIR:-$HOME/.agents/agent-market}"
 AGENT_MARKET_NAME="${AGENT_MARKET_NAME:-agent-market}"
@@ -106,13 +111,16 @@ except:
 
 for folder in [".claude-plugin", ".codex-plugin"]:
     mf_path = f"{market_dir}/{folder}/marketplace.json"
-    market = {"name": "agent-market", "plugins": []}
+    market = {"name": "agent-market", "owner": {"name": "Doraemon"}, "plugins": []}
     if os.path.exists(mf_path):
         try:
             with open(mf_path, "r") as f:
                 market = json.load(f)
         except:
             pass
+            
+    if "owner" not in market:
+        market["owner"] = {"name": "Doraemon"}
             
     # Remove existing entry if any
     market["plugins"] = [p for p in market.get("plugins", []) if p.get("name") != agent_name]
@@ -144,38 +152,37 @@ try:
     data = json.load(open(sys.argv[1], encoding="utf-8"))
 except Exception:
     sys.exit(0)
-for prompt in data.get("interface", {}).get("defaultPrompt", []):
-    match = re.search(r'\$([a-z0-9][a-z0-9-]*)', str(prompt))
-    if match:
-        print(match.group(1))
-        break
+
+prompts = data.get("interface", {}).get("defaultPrompt", [])
+if isinstance(prompts, list):
+    for p in prompts:
+        m = re.search(r'\$([A-Za-z0-9_-]+)', p)
+        if m:
+            print(m.group(1))
+            sys.exit(0)
 PY
 }
 
 CODEX="$(resolve_codex || true)"
 CLAUDE="$(resolve_claude || true)"
 
-if [[ -z "$CODEX" && -z "$CLAUDE" ]]; then
-  log ""
-  warn "未检测到 codex / claude CLI，无法自动安装；marketplace 源码已就绪于 $AGENT_MARKET_LOCAL_DIR"
-  exit 1
-fi
-
 # 注册 marketplace + 安装 plugin（读命令输出判断是否已注册/已安装，幂等可重复执行）。
 install_codex() {
   local cli="$1"
   log ""
   log "Codex 安装 $AGENT_NAME@$AGENT_MARKET_NAME ..."
-  # 不用 grep -Fq：命中即关闭读端，CLI 输出超管道缓冲时被 SIGPIPE 杀死，pipefail 下会误判未注册。
-  if "$cli" plugin marketplace list --json 2>/dev/null | grep -F "\"name\": \"$AGENT_MARKET_NAME\"" >/dev/null; then
+
+  # 注册 local marketplace（只在未注册时 add，避免重复报错）
+  if "$cli" plugin marketplace list 2>/dev/null | grep -Fq "$AGENT_MARKET_NAME"; then
     ok "marketplace $AGENT_MARKET_NAME 已注册，跳过"
   else
     "$cli" plugin marketplace add "$AGENT_MARKET_LOCAL_DIR" \
-      || die "codex marketplace add 失败"
+      || die "codex plugin marketplace add 失败"
     ok "marketplace $AGENT_MARKET_NAME 已注册"
   fi
-  # 不用 grep -Fq：命中即关闭读端，CLI 输出超管道缓冲时被 SIGPIPE 杀死，pipefail 下会误判未安装。
-  if "$cli" plugin list --json 2>/dev/null | grep -F "\"pluginId\": \"$AGENT_NAME@$AGENT_MARKET_NAME\"" >/dev/null; then
+
+  local installed="$HOME/.codex/plugins/cache/$AGENT_MARKET_NAME/$AGENT_NAME"
+  if [[ -d "$installed" ]]; then
     ok "plugin $AGENT_NAME 已安装，跳过"
   else
     "$cli" plugin add "$AGENT_NAME@$AGENT_MARKET_NAME" \
@@ -186,15 +193,16 @@ install_codex() {
 
 install_claude() {
   local cli="$1"
-  local known="$HOME/.claude/plugins/known_marketplaces.json"
-  local installed="$HOME/.claude/plugins/installed_plugins.json"
   log ""
   log "Claude Code 安装 $AGENT_NAME@$AGENT_MARKET_NAME ..."
-  if [[ -f "$known" ]] && grep -Fq "\"$AGENT_MARKET_NAME\"" "$known"; then
-    ok "marketplace $AGENT_MARKET_NAME 已注册，跳过"
+
+  local installed="$HOME/.claude/plugins/installed_plugins.json"
+  if "$cli" plugin marketplace list 2>/dev/null | grep -Fq "$AGENT_MARKET_NAME"; then
+    ok "marketplace $AGENT_MARKET_NAME 已注册，更新索引"
+    "$cli" plugin marketplace update "$AGENT_MARKET_NAME" >/dev/null 2>&1 || true
   else
     "$cli" plugin marketplace add "$AGENT_MARKET_LOCAL_DIR" \
-      || die "claude marketplace add 失败"
+      || die "claude plugin marketplace add 失败"
     ok "marketplace $AGENT_MARKET_NAME 已注册"
   fi
   if [[ -f "$installed" ]] && grep -Fq "\"$AGENT_NAME\"" "$installed"; then

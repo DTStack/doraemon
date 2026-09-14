@@ -80,3 +80,33 @@ test('downloadAgentArchive 返回 ZIP 文件流和下载响应头', async () => 
     assert.equal(headers['Content-Disposition'], 'attachment; filename="bugfix-agent.zip"');
     assert.equal(controller.ctx.body, stream);
 });
+
+test('getInstallScript 设置 text/plain 响应头并返回脚本内容', async () => {
+    const headers = {};
+    const controller = buildController({
+        getInstallScript: async () => '#!/usr/bin/env bash\necho install',
+    });
+    controller.ctx.set = (key, value) => {
+        headers[key] = value;
+    };
+
+    await controller.getInstallScript();
+
+    assert.equal(headers['Content-Type'], 'text/plain; charset=utf-8');
+    assert.equal(controller.ctx.body, '#!/usr/bin/env bash\necho install');
+});
+
+test('getCreatePluginScript 设置 text/plain 响应头并返回脚本内容', async () => {
+    const headers = {};
+    const controller = buildController({
+        getCreatePluginScript: async () => '#!/usr/bin/env bash\necho create-plugin',
+    });
+    controller.ctx.set = (key, value) => {
+        headers[key] = value;
+    };
+
+    await controller.getCreatePluginScript();
+
+    assert.equal(headers['Content-Type'], 'text/plain; charset=utf-8');
+    assert.equal(controller.ctx.body, '#!/usr/bin/env bash\necho create-plugin');
+});
