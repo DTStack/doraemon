@@ -1,0 +1,28 @@
+app/controller/agents.js
+  h_3070dc1062bb3b 83-94
+app/public/install.sh
+  h_3070dc1062bb3b 20-25,114,122-124,155-162,174-176,180,183-185,198-202,205
+app/router.js
+  h_3070dc1062bb3b 177-178
+app/service/agents.js
+  h_3070dc1062bb3b 260-261,263-264,1466-1482
+docs/docsify/zh-cn/guide/agent-market.md
+  h_3070dc1062bb3b 341
+test/agent-market-controller.test.js
+  h_3070dc1062bb3b 83-112
+test/agent-market-service.test.js
+  h_3070dc1062bb3b 476-511
+test/agent-plugin-contract.test.js
+  h_3070dc1062bb3b 50-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "44e34351c8d4bb8a144042ae4353e3918fe61186",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
