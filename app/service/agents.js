@@ -984,9 +984,10 @@ class AgentsService extends Service {
             );
         }
 
-        // 自动规范化 HTTP/HTTPS 协议仓库地址，确保以 .git 结尾，避免 GitLab 301 重定向导致丢弃 Authorization 请求头
+        // 自动规范化克隆地址（确保以 .git 结尾，用于 Git clone/fetch 避免 GitLab 301 重定向导致丢弃 Authorization 请求头）
+        let cloneGitUrl = cleanUrl;
         if (/^https?:\/\//i.test(cleanUrl) && !cleanUrl.endsWith('.git')) {
-            cleanUrl = `${cleanUrl}.git`;
+            cloneGitUrl = `${cleanUrl}.git`;
         }
 
         // 校验分支名格式合法性，防止非法参数注入
@@ -996,6 +997,7 @@ class AgentsService extends Service {
 
         return {
             cleanGitUrl: cleanUrl,
+            cloneGitUrl,
             targetBranch,
             repoName,
         };
@@ -1005,7 +1007,10 @@ class AgentsService extends Service {
     async importAgentFromGit(gitUrl, gitBranch = 'master', category = null) {
         await this.ensureStorageReady();
 
-        const { cleanGitUrl, targetBranch, repoName } = this.normalizeGitSource(gitUrl, gitBranch);
+        const { cleanGitUrl, cloneGitUrl, targetBranch, repoName } = this.normalizeGitSource(
+            gitUrl,
+            gitBranch
+        );
 
         // 并发同步锁：若当前仓库正在同步中，阻止并发执行以避免 index.lock 冲突
         if (activeSyncRepos.has(repoName)) {
@@ -1027,7 +1032,7 @@ class AgentsService extends Service {
                 SSH_ASKPASS: '',
                 GIT_SSH_COMMAND: 'ssh -o StrictHostKeyChecking=no',
             };
-            const authArgs = this.getGitAuthArgs(cleanGitUrl);
+            const authArgs = this.getGitAuthArgs(cloneGitUrl);
 
             // 1. 同步远端代码
             if (fs.existsSync(targetDir)) {
@@ -1035,9 +1040,9 @@ class AgentsService extends Service {
                     `[agents] Fetching ${cleanGitUrl}#${targetBranch} in ${targetDir}`
                 );
                 try {
-                    // 确保 remote url 与当前传入的 cleanGitUrl 保持一致，防止用户修改仓库地址后拉取旧地址
+                    // 确保 remote url 与当前传入的 cloneGitUrl 保持一致，防止用户修改仓库地址后拉取旧地址
                     try {
-                        await this.runGitCommand(['remote', 'set-url', 'origin', cleanGitUrl], {
+                        await this.runGitCommand(['remote', 'set-url', 'origin', cloneGitUrl], {
                             cwd: targetDir,
                             env: gitEnv,
                         });
@@ -1079,7 +1084,7 @@ class AgentsService extends Service {
                                 '--branch',
                                 targetBranch,
                                 '--',
-                                cleanGitUrl,
+                                cloneGitUrl,
                                 repoName,
                             ],
                             { cwd: reposDir, env: gitEnv }
@@ -1103,7 +1108,7 @@ class AgentsService extends Service {
                             '--branch',
                             targetBranch,
                             '--',
-                            cleanGitUrl,
+                            cloneGitUrl,
                             repoName,
                         ],
                         { cwd: reposDir, env: gitEnv }

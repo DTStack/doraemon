@@ -83,10 +83,11 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
         setSettingVisible(true);
     };
 
-    const handleSaveSetting = async (
-        data: { gitUrl: string; gitBranch: string; category: string },
-        syncNow = false
-    ) => {
+    const handleSaveSetting = async (data: {
+        gitUrl: string;
+        gitBranch: string;
+        category: string;
+    }) => {
         if (!detail) return;
         if (!data.gitUrl) {
             message.error('请填写 GitLab 仓库地址');
@@ -100,7 +101,7 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                 gitUrl: data.gitUrl,
                 gitBranch: data.gitBranch || 'master',
                 category: data.category,
-                syncNow,
+                syncNow: false,
             });
 
             if (!response.success) {
@@ -108,23 +109,14 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                 return;
             }
 
-            // 根据是否立即同步以及远端代码是否变动区分提示文案
-            if (syncNow) {
-                if (response.data?.isContentChanged) {
-                    message.success('配置已保存，并成功同步最新代码');
-                } else {
-                    message.success('配置已保存，当前已是最新版本（无代码变动）');
-                }
-            } else {
-                message.success('配置保存成功');
-            }
+            message.success('配置保存成功');
             setSettingVisible(false);
             const detailRes = await API.getAgentDetail({ name });
             if (detailRes.success) {
                 setDetail(detailRes.data as AgentDetail);
             }
         } catch (error) {
-            message.error(syncNow ? '同步失败，请检查 URL、分支或服务端 Git 权限' : '保存配置失败');
+            message.error('保存配置失败');
             console.error('更新 Agent Git 配置失败:', error);
         } finally {
             setSettingLoading(false);
@@ -567,15 +559,14 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
             <AgentGitOpsModal
                 visible={settingVisible}
                 title={`设置 Agent Git 仓库 - ${detail.displayName || detail.name}`}
-                description="配置当前 Agent 的远程 GitLab 仓库地址与默认拉取分支。"
+                description="配置当前 Agent 的远程 GitLab 仓库地址与默认拉取分支"
                 mode="setting"
                 loading={settingLoading}
-                showSyncBtn={false}
                 initialUrl={detail?.gitUrl || ''}
                 initialBranch={detail?.gitBranch || 'master'}
                 initialCategory={detail?.category || '工程效率'}
                 onCancel={() => setSettingVisible(false)}
-                onOk={(data, sync) => handleSaveSetting(data, sync || false)}
+                onOk={handleSaveSetting}
             />
         </div>
     );

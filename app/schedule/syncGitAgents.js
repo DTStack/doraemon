@@ -1,8 +1,9 @@
 module.exports = (app) => {
     const autoSyncInterval = app.config.agentMarket?.autoSyncInterval;
+
     return {
         schedule: {
-            interval: autoSyncInterval || '5m',
+            interval: autoSyncInterval || '1h',
             type: 'worker', // 仅由单个 worker 执行，避免多 worker 并发冲突
             immediate: false, // 应用启动后等待到达周期再执行
             disable: !autoSyncInterval || autoSyncInterval === '0',

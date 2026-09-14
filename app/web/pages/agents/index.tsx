@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DeleteOutlined, ImportOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
+import {
+    DeleteOutlined,
+    ImportOutlined,
+    SearchOutlined,
+    SettingOutlined,
+    SyncOutlined,
+} from '@ant-design/icons';
 import {
     Button,
     Card,
@@ -64,6 +70,9 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
     const [importing, setImporting] = useState(false);
     const [syncingAll, setSyncingAll] = useState(false);
     const [syncingAgentName, setSyncingAgentName] = useState<string | null>(null);
+    const [settingVisible, setSettingVisible] = useState(false);
+    const [settingAgent, setSettingAgent] = useState<AgentItem | null>(null);
+    const [settingLoading, setSettingLoading] = useState(false);
     const [deleteEnabled, setDeleteEnabled] = useState(false);
     const queryRef = useRef(query);
     queryRef.current = query;
@@ -225,6 +234,48 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
         }
     };
 
+    const handleOpenSetting = (agent: AgentItem, event?: React.MouseEvent<HTMLElement>) => {
+        event?.stopPropagation();
+        setSettingAgent(agent);
+        setSettingVisible(true);
+    };
+
+    const handleSaveSetting = async (data: {
+        gitUrl: string;
+        gitBranch: string;
+        category: string;
+    }) => {
+        if (!settingAgent) return;
+        if (!data.gitUrl) {
+            message.error('请填写 GitLab 仓库地址');
+            return;
+        }
+
+        setSettingLoading(true);
+        try {
+            const response = await API.updateAgentGitConfig({
+                name: settingAgent.name,
+                gitUrl: data.gitUrl,
+                gitBranch: data.gitBranch || 'master',
+                category: data.category,
+                syncNow: false,
+            });
+
+            if (!response.success) {
+                message.error(response.msg || '保存失败');
+                return;
+            }
+
+            message.success('配置保存成功');
+            setSettingVisible(false);
+            fetchAgents(queryRef.current);
+        } catch (error: any) {
+            message.error(error?.message || '保存失败');
+        } finally {
+            setSettingLoading(false);
+        }
+    };
+
     const categoryOptions = useMemo(
         () => (categories.length ? categories : FALLBACK_CATEGORIES),
         [categories]
@@ -333,46 +384,49 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                                             </div>
                                         </div>
                                     </div>
-                                    {deleteEnabled || agent.gitUrl ? (
-                                        <div onClick={(event) => event.stopPropagation()}>
-                                            <Space size={4}>
-                                                {deleteEnabled ? (
+                                    <div onClick={(event) => event.stopPropagation()}>
+                                        <Space size={4}>
+                                            {deleteEnabled ? (
+                                                <Button
+                                                    type="text"
+                                                    danger
+                                                    size="small"
+                                                    icon={<DeleteOutlined />}
+                                                    // 浏览器控制台启用删除入口：localStorage.setItem('doraemon.agentMarket.deleteEnabled', 'true')
+                                                    onClick={(event) => handleDelete(agent, event)}
+                                                />
+                                            ) : null}
+                                            <Tooltip title="Git 仓库设置">
+                                                <Button
+                                                    type="text"
+                                                    size="small"
+                                                    icon={<SettingOutlined />}
+                                                    onClick={(event) =>
+                                                        handleOpenSetting(agent, event)
+                                                    }
+                                                />
+                                            </Tooltip>
+                                            {agent.gitUrl ? (
+                                                <Tooltip title="从 Git 同步最新代码">
                                                     <Button
                                                         type="text"
-                                                        danger
                                                         size="small"
-                                                        icon={<DeleteOutlined />}
-                                                        // 浏览器控制台启用删除入口：localStorage.setItem('doraemon.agentMarket.deleteEnabled', 'true')
+                                                        icon={
+                                                            <SyncOutlined
+                                                                spin={
+                                                                    syncingAgentName === agent.name
+                                                                }
+                                                            />
+                                                        }
+                                                        loading={syncingAgentName === agent.name}
                                                         onClick={(event) =>
-                                                            handleDelete(agent, event)
+                                                            handleSyncSingleAgent(agent, event)
                                                         }
                                                     />
-                                                ) : null}
-                                                {agent.gitUrl ? (
-                                                    <Tooltip title="从 Git 同步最新代码">
-                                                        <Button
-                                                            type="text"
-                                                            size="small"
-                                                            icon={
-                                                                <SyncOutlined
-                                                                    spin={
-                                                                        syncingAgentName ===
-                                                                        agent.name
-                                                                    }
-                                                                />
-                                                            }
-                                                            loading={
-                                                                syncingAgentName === agent.name
-                                                            }
-                                                            onClick={(event) =>
-                                                                handleSyncSingleAgent(agent, event)
-                                                            }
-                                                        />
-                                                    </Tooltip>
-                                                ) : null}
-                                            </Space>
-                                        </div>
-                                    ) : null}
+                                                </Tooltip>
+                                            ) : null}
+                                        </Space>
+                                    </div>
                                 </div>
 
                                 <Paragraph
@@ -418,6 +472,21 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                 loading={importing}
                 onCancel={() => setImportVisible(false)}
                 onOk={(data) => submitImport(data)}
+            />
+
+            <AgentGitOpsModal
+                visible={settingVisible}
+                title={`设置 Agent Git 仓库 - ${
+                    settingAgent?.displayName || settingAgent?.name || ''
+                }`}
+                description="配置当前 Agent 的远程 GitLab 仓库地址与默认拉取分支"
+                mode="setting"
+                loading={settingLoading}
+                initialUrl={settingAgent?.gitUrl || ''}
+                initialBranch={settingAgent?.gitBranch || 'master'}
+                initialCategory={settingAgent?.category || '工程效率'}
+                onCancel={() => setSettingVisible(false)}
+                onOk={handleSaveSetting}
             />
         </div>
     );

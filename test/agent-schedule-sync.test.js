@@ -3,16 +3,16 @@ const assert = require('node:assert/strict');
 
 const syncScheduleFactory = require('../app/schedule/syncGitAgents');
 
-test('syncGitAgents 定时任务默认配置 5m 且工作在 worker 模式', () => {
+test('syncGitAgents 定时任务默认配置 1h 且工作在 worker 模式', () => {
     const mockApp = {
         config: {
             agentMarket: {
-                autoSyncInterval: '5m',
+                autoSyncInterval: '1h',
             },
         },
     };
     const scheduleDef = syncScheduleFactory(mockApp);
-    assert.equal(scheduleDef.schedule.interval, '5m');
+    assert.equal(scheduleDef.schedule.interval, '1h');
     assert.equal(scheduleDef.schedule.type, 'worker');
     assert.equal(scheduleDef.schedule.disable, false);
 });

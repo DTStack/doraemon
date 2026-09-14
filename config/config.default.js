@@ -47,7 +47,7 @@ module.exports = (app) => {
         storageDir: process.env.AGENT_MARKET_STORAGE_DIR || '/data/doraemon/agent-market',
         gitlabToken: process.env.GITLAB_TOKEN || '',
         gitlabHostWhitelist: ['gitlab.prod.dtstack.cn'],
-        autoSyncInterval: process.env.AGENT_MARKET_AUTO_SYNC_INTERVAL || '5m',
+        autoSyncInterval: process.env.AGENT_MARKET_AUTO_SYNC_INTERVAL || '1h',
     };
 
     exports.middleware = ['access'];
