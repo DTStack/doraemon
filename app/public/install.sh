@@ -16,8 +16,37 @@ set -euo pipefail
 #   AGENT_MARKET_LOCAL_DIR   本地 marketplace 目录，默认: ~/.agents/agent-market
 #   AGENT_MARKET_NAME        marketplace 名，默认: agent-market
 
-AGENT_NAME="${1:-}"
-CUSTOM_BASE_URL="${2:-}"
+AGENT_NAME=""
+CUSTOM_BASE_URL=""
+FORCE=0
+
+# 解析命令行参数，支持 --force 强制重装和 -h 帮助
+for arg in "$@"; do
+  case "$arg" in
+    --force|-f)
+      FORCE=1
+      ;;
+    -h|--help)
+      cat <<EOF
+用法:
+  curl .../install.sh | bash -s -- <agent> [base_url] [--force]
+
+选项:
+  --force, -f    强制重新安装，清除本地插件缓存
+  -h, --help     显示帮助信息
+EOF
+      exit 0
+      ;;
+    *)
+      if [[ -z "$AGENT_NAME" ]]; then
+        AGENT_NAME="$arg"
+      elif [[ -z "$CUSTOM_BASE_URL" ]]; then
+        CUSTOM_BASE_URL="$arg"
+      fi
+      ;;
+  esac
+done
+
 DEFAULT_MARKET_URL="__AGENT_MARKET_BASE_URL__"
 if [[ "$DEFAULT_MARKET_URL" == *"__"* ]]; then
   DEFAULT_MARKET_URL="http://172.16.100.225:7001/agent-market"
@@ -93,80 +122,86 @@ mv "$SOURCE_DIR" "$AGENT_TARGET_DIR"
 mkdir -p "$AGENT_MARKET_LOCAL_DIR/.claude-plugin"
 mkdir -p "$AGENT_MARKET_LOCAL_DIR/.codex-plugin"
 
-python3 - <<PY
-import json
-import os
-
-market_dir = "$AGENT_MARKET_LOCAL_DIR"
-agent_name = "$AGENT_NAME"
-plugin_desc = "Dynamically installed via Doraemon"
-
-# Try to read actual description from agent manifest
-try:
-    with open(f"{market_dir}/agents/{agent_name}/.codex-plugin/plugin.json", "r") as f:
-        manifest = json.load(f)
-        plugin_desc = manifest.get("description", plugin_desc)
-except:
-    pass
-
-for folder in [".claude-plugin", ".codex-plugin"]:
-    mf_path = f"{market_dir}/{folder}/marketplace.json"
-    market = {"name": "agent-market", "owner": {"name": "Doraemon"}, "plugins": []}
-    if os.path.exists(mf_path):
-        try:
-            with open(mf_path, "r") as f:
-                market = json.load(f)
-        except:
-            pass
-            
-    if "owner" not in market:
-        market["owner"] = {"name": "Doraemon"}
-            
-    # Remove existing entry if any
-    market["plugins"] = [p for p in market.get("plugins", []) if p.get("name") != agent_name]
-    
-    # Add the new agent
-    market["plugins"].append({
-        "name": agent_name,
-        "source": f"./agents/{agent_name}",
-        "description": plugin_desc
-    })
-    
-    with open(mf_path, "w") as f:
-        json.dump(market, f, indent=2)
-PY
-
-ok "Agent 已就绪: $AGENT_TARGET_DIR"
-
-[[ "$AGENT_NAME" =~ ^[A-Za-z0-9._-]+$ ]] || die "无效的 Agent 名称: $AGENT_NAME"
-
-# 校验 AGENT_NAME 是 marketplace 里的 plugin 化 Agent（下载解压后按目录判断）。
+# 校验 AGENT_NAME 是 marketplace 里的 plugin 化 Agent（下载解压后按目录判断）
 [[ -f "$AGENT_MARKET_LOCAL_DIR/agents/$AGENT_NAME/.codex-plugin/plugin.json" ]] \
   || die "$AGENT_NAME 不是 plugin 化 Agent（缺 agents/$AGENT_NAME/.codex-plugin/plugin.json）"
 
-# 从 .codex-plugin/plugin.json 的 interface.defaultPrompt 提取入口 skill 名（$xxx 形式），用于打印调用方式。
-read_entrypoint() {
-  python3 - "$AGENT_MARKET_LOCAL_DIR/agents/$AGENT_NAME/.codex-plugin/plugin.json" <<'PY'
-import json, re, sys
-try:
-    data = json.load(open(sys.argv[1], encoding="utf-8"))
-except Exception:
-    sys.exit(0)
+# 统一执行单个 Python 进程提取元数据并更新 marketplace
+python3 - "$AGENT_MARKET_LOCAL_DIR" "$AGENT_NAME" "$TMP_DIR/meta.sh" <<'PY'
+import json, os, re, shlex, sys
 
-prompts = data.get("interface", {}).get("defaultPrompt", [])
-if isinstance(prompts, list):
-    for p in prompts:
-        m = re.search(r'\$([A-Za-z0-9_-]+)', p)
-        if m:
-            print(m.group(1))
-            sys.exit(0)
+market_dir = sys.argv[1]
+agent_name = sys.argv[2]
+meta_file = sys.argv[3]
+
+agent_dir = os.path.join(market_dir, "agents", agent_name)
+plugin_desc = "Dynamically installed via Doraemon"
+plugin_version = ""
+entrypoint = ""
+
+# 读取 manifest 解析元数据（优先 codex-plugin，备选 claude-plugin）
+for manifest_rel in [".codex-plugin/plugin.json", ".claude-plugin/plugin.json"]:
+    manifest_path = os.path.join(agent_dir, manifest_rel)
+    if os.path.exists(manifest_path):
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if not plugin_desc or plugin_desc == "Dynamically installed via Doraemon":
+                plugin_desc = data.get("description", plugin_desc)
+            if not plugin_version:
+                plugin_version = str(data.get("version", "")).strip()
+            if not entrypoint:
+                prompts = data.get("interface", {}).get("defaultPrompt", [])
+                if isinstance(prompts, list):
+                    for p in prompts:
+                        m = re.search(r'\$([A-Za-z0-9_-]+)', p)
+                        if m:
+                            entrypoint = m.group(1)
+                            break
+        except Exception:
+            pass
+
+# 更新双端 marketplace.json
+for folder in [".claude-plugin", ".codex-plugin"]:
+    mf_path = os.path.join(market_dir, folder, "marketplace.json")
+    market = {"name": "agent-market", "owner": {"name": "Doraemon"}, "plugins": []}
+    if os.path.exists(mf_path):
+        try:
+            with open(mf_path, "r", encoding="utf-8") as f:
+                market = json.load(f)
+        except Exception:
+            pass
+
+    if "owner" not in market:
+        market["owner"] = {"name": "Doraemon"}
+
+    # 过滤旧条目并追加新条目
+    market["plugins"] = [p for p in market.get("plugins", []) if p.get("name") != agent_name]
+    plugin_entry = {
+        "name": agent_name,
+        "source": f"./agents/{agent_name}",
+        "description": plugin_desc
+    }
+    if plugin_version:
+        plugin_entry["version"] = plugin_version
+    market["plugins"].append(plugin_entry)
+
+    with open(mf_path, "w", encoding="utf-8") as f:
+        json.dump(market, f, indent=2, ensure_ascii=False)
+
+# 写出环境变量供当前 Shell 直接 source
+with open(meta_file, "w", encoding="utf-8") as f:
+    f.write(f"VERSION={shlex.quote(plugin_version)}\n")
+    f.write(f"ENTRYPOINT={shlex.quote(entrypoint)}\n")
 PY
-}
+
+source "$TMP_DIR/meta.sh"
+ok "Agent 已就绪: $AGENT_TARGET_DIR${VERSION:+ (v$VERSION)}"
 
 CODEX="$(resolve_codex || true)"
 CLAUDE="$(resolve_claude || true)"
 
-# 注册 marketplace + 安装 plugin（读命令输出判断是否已注册/已安装，幂等可重复执行）。
+# 注册 marketplace + 安装 plugin（读命令输出判断是否已注册/已安装，幂等可重复执行）
 install_codex() {
   local cli="$1"
   log ""
@@ -182,7 +217,12 @@ install_codex() {
   fi
 
   local installed="$HOME/.codex/plugins/cache/$AGENT_MARKET_NAME/$AGENT_NAME"
-  if [[ -d "$installed" ]]; then
+  if [[ "$FORCE" -eq 1 ]]; then
+    rm -rf "$installed"
+    "$cli" plugin add "$AGENT_NAME@$AGENT_MARKET_NAME" \
+      || die "codex plugin add 失败"
+    ok "plugin $AGENT_NAME 强制重新安装完成"
+  elif [[ -d "$installed" ]]; then
     ok "plugin $AGENT_NAME 已安装，跳过"
   else
     "$cli" plugin add "$AGENT_NAME@$AGENT_MARKET_NAME" \
@@ -205,19 +245,22 @@ install_claude() {
       || die "claude plugin marketplace add 失败"
     ok "marketplace $AGENT_MARKET_NAME 已注册"
   fi
-  if [[ -f "$installed" ]] && grep -Fq "\"$AGENT_NAME\"" "$installed"; then
+
+  # `--yes` 用于跳过 declare-command 插件安装的确认（非 TTY 下必需），但仅较新 CLI 支持
+  local yes_flag="" help_out
+  help_out="$("$cli" plugin install --help 2>&1 || true)"
+  if grep -q -- '--yes' <<<"$help_out"; then
+    yes_flag="--yes"
+  fi
+
+  if [[ "$FORCE" -eq 1 ]]; then
+    "$cli" plugin uninstall "$AGENT_NAME@$AGENT_MARKET_NAME" >/dev/null 2>&1 || true
+    "$cli" plugin install "$AGENT_NAME@$AGENT_MARKET_NAME" ${yes_flag:+"--yes"} \
+      || die "claude plugin install 失败"
+    ok "plugin $AGENT_NAME 强制重新安装完成"
+  elif [[ -f "$installed" ]] && grep -Fq "\"$AGENT_NAME\"" "$installed"; then
     ok "plugin $AGENT_NAME 已安装，跳过"
   else
-    # `--yes` 用于跳过 declare-command 插件安装的确认（非 TTY 下必需），但仅较新 CLI 支持；
-    # 旧版本（如 v2.1.119）不认该选项会直接报错。先捕获 `plugin install --help` 输出再 grep
-    # （含 stderr，兼容 help 打到 stderr 的 CLI）——管道 + grep -q 在输出超管道缓冲时会被
-    # SIGPIPE 误判为未匹配，捕获方式无此问题。追加与探测同一字符串 --yes，避免仅支持长选项
-    # 的 CLI 拒绝 -y 别名。
-    local yes_flag="" help_out
-    help_out="$("$cli" plugin install --help 2>&1 || true)"
-    if grep -q -- '--yes' <<<"$help_out"; then
-      yes_flag="--yes"
-    fi
     "$cli" plugin install "$AGENT_NAME@$AGENT_MARKET_NAME" ${yes_flag:+"--yes"} \
       || die "claude plugin install 失败"
     ok "plugin $AGENT_NAME 已安装"
@@ -283,24 +326,31 @@ render_preflight_report() {
 
 run_preflight
 
-if [[ -n "$CODEX" ]]; then
-  install_codex "$CODEX"
-fi
-if [[ -n "$CLAUDE" ]]; then
-  install_claude "$CLAUDE"
+if [[ -z "$CODEX" && -z "$CLAUDE" ]]; then
+  log ""
+  warn "未检测到 Codex 或 Claude Code CLI，仅下载解压 Agent 源码至本地，未注册插件到宿主"
+else
+  if [[ -n "$CODEX" ]]; then
+    install_codex "$CODEX"
+  fi
+  if [[ -n "$CLAUDE" ]]; then
+    install_claude "$CLAUDE"
+  fi
 fi
 
 render_preflight_report
 
 log ""
 if [[ "$PREFLIGHT_MISSING" -eq 1 ]]; then
-  log "【⚠️ 安装结束】存在未就绪项（缺失工具 / 未配置环境变量），请按上方提示处理后使用"
+  log "【⚠️ 安装结束】${AGENT_NAME}${VERSION:+ (v$VERSION)} 存在未就绪项（缺失工具 / 未配置环境变量），请按上方提示处理后使用"
 else
-  log "【✅ 安装完成】$AGENT_NAME"
+  log "【✅ 安装完成】${AGENT_NAME}${VERSION:+ (v$VERSION)}"
 fi
-ENTRYPOINT="$(read_entrypoint)"
 if [[ -n "$ENTRYPOINT" ]]; then
   [[ -n "$CODEX" ]]  && log "Codex 调用:      \$$ENTRYPOINT"
   [[ -n "$CLAUDE" ]] && log "Claude Code 调用: /$AGENT_NAME:$ENTRYPOINT"
+fi
+if [[ -z "$CODEX" && -z "$CLAUDE" ]]; then
+  log "提示: 可在安装 Codex 或 Claude Code 后重新执行本脚本注册插件"
 fi
 log ""
