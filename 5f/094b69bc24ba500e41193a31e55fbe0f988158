@@ -1,0 +1,14 @@
+app/public/install.sh
+  h_3070dc1062bb3b 19-49,125-135,137,139-140,142-162,164,166,170,172,174,177-178,180,184-195,198-199,204,220-225,248-261,329-338,345,347,353-355
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "5f094b69bc24ba500e41193a31e55fbe0f988158",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
