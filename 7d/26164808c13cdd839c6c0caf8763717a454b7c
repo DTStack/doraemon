@@ -1,0 +1,20 @@
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  h_3070dc1062bb3b 423-446
+app/web/pages/agents/detail/style.scss
+  h_3070dc1062bb3b 148-174
+docs/docsify/zh-cn/guide/agent-market.md
+  h_3070dc1062bb3b 150
+test/agent-detail-layout.test.js
+  h_3070dc1062bb3b 79-80,84,86-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "7d26164808c13cdd839c6c0caf8763717a454b7c",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
