@@ -145,6 +145,33 @@
             padding: 14px 0;
             font-size: 15px;
         }
+        .ant-card-extra {
+            padding: 12px 0;
+            .ant-btn.agent-side-download-btn {
+                width: 28px;
+                height: 28px;
+                min-width: 28px;
+                padding: 0 !important;
+                border: none !important;
+                border-radius: 6px !important;
+                box-shadow: none !important;
+                background: transparent;
+                color: #94A3B8;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                .anticon {
+                    font-size: 15px;
+                    line-height: 1;
+                }
+                &:hover,
+                &:focus {
+                    color: #1E293B;
+                    background: #F1F5F9 !important;
+                }
+            }
+        }
         .ant-card-body {
             padding: 16px;
         }
@@ -216,12 +243,6 @@
             background: #E2E8F0;
             box-shadow: none;
         }
-    }
-    .agent-archive-download {
-        height: 36px;
-        margin-top: 12px;
-        border-radius: 8px;
-        font-weight: 600;
     }
     .agent-section-card {
         .ant-card-body {

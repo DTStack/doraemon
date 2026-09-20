@@ -76,12 +76,15 @@ test('Agent 开场问题卡片提供调起 Codex 的快捷使用入口', () => {
     assert.match(style, /\.agent-question-quick-use/);
 });
 
-test('Agent 详情页提供当前原始 ZIP 下载入口', () => {
-    const { component } = readDetailFiles();
+test('Agent 详情页提供当前原始 ZIP 下载入口（图标与 hover 提示）', () => {
+    const { component, style } = readDetailFiles();
 
     assert.match(
         component,
-        /\/api\/agents\/download\?name=\$\{encodeURIComponent\(detail\.name\)\}/
+        /\/api\/agents\/download\?name=\$\{encodeURIComponent\(\s*detail\.name\s*\)\}/
     );
-    assert.match(component, /下载 Agent ZIP/);
+    assert.match(component, /Tooltip title="下载 Agent ZIP"/);
+    assert.match(component, /agent-side-download-btn/);
+    assert.match(style, /\.agent-side-download-btn/);
+    assert.doesNotMatch(component, /agent-archive-download/);
 });

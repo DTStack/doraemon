@@ -147,7 +147,7 @@ rm -rf ~/.claude/plugins/cache/agent-market/<agent-name>
 
 ### 下载 Agent ZIP
 
-详情页右侧提供“下载 Agent ZIP”按钮，支持直接下载当前 Agent 由服务端通过 `git archive` 原生生成的完整插件 ZIP 归档。
+详情页右侧“安装命令”卡片右上角提供下载图标（hover 提示“下载 Agent ZIP”），支持直接下载当前 Agent 由服务端通过 `git archive` 原生生成的完整插件 ZIP 归档。
 
 适合以下场景：
 - 本地离线检查 Agent 插件包内部结构与实现代码。

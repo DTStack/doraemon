@@ -420,7 +420,30 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                 </main>
 
                 <aside className="agent-detail-side">
-                    <Card className="agent-side-actions" title="安装命令">
+                    <Card
+                        className="agent-side-actions"
+                        title="安装命令"
+                        extra={
+                            <Tooltip title="下载 Agent ZIP">
+                                <Button
+                                    type="text"
+                                    size="small"
+                                    className="agent-side-download-btn"
+                                    icon={<DownloadOutlined />}
+                                    aria-label="下载 Agent ZIP"
+                                    onClick={() => {
+                                        safeOpenUrl(
+                                            `/api/agents/download?name=${encodeURIComponent(
+                                                detail.name
+                                            )}`,
+                                            '_self'
+                                        );
+                                        message.info('Agent ZIP 下载已开始');
+                                    }}
+                                />
+                            </Tooltip>
+                        }
+                    >
                         <div className="agent-install-terminal">
                             <div className="agent-install-terminal-head">
                                 <span className="agent-install-terminal-dots">
@@ -447,26 +470,6 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                 />
                             </div>
                         </div>
-                        <Button
-                            block
-                            className="agent-archive-download"
-                            style={{
-                                height: 36,
-                                marginTop: 12,
-                                borderRadius: 8,
-                                fontWeight: 600,
-                            }}
-                            icon={<DownloadOutlined />}
-                            onClick={() => {
-                                safeOpenUrl(
-                                    `/api/agents/download?name=${encodeURIComponent(detail.name)}`,
-                                    '_self'
-                                );
-                                message.info('Agent ZIP 下载已开始');
-                            }}
-                        >
-                            下载 Agent ZIP
-                        </Button>
                     </Card>
 
                     <Card
