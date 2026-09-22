@@ -207,7 +207,7 @@ Doraemon 采用 GitOps 模式管理 Agent 插件，实现代码集中在 GitLab 
    - 检查根目录下 `.codex-plugin/plugin.json` 与 `.claude-plugin/plugin.json` 是否齐全。
    - 校验 Manifest 中的 `name` 必须与 GitLab 仓库名（去除 `.git` 后缀）完全一致。
    - 校验两个 Manifest 中的 `version` 核心版本号必须完全一致。
-   - 校验 `skills` 声明的目录及 Claude `agents` 引用的角色文件真实存在。
+   - 校验 `skills` 声明的目录是否存在（若声明了 Claude `agents` 路径则校验其路径格式合法性）。
 4. **精确版本追踪（Content Hash）**：
    - 执行 `git rev-parse HEAD` 获取当前分支最新提交的 Commit SHA 作为 `content_hash`。
    - 数据库分别维护：
@@ -361,7 +361,7 @@ bugfix-agent
 ```
 
 - `name`：必须与 `.codex-plugin/plugin.json` 的 `name` 严格保持一致。
-- `agents`：必须声明角色定义文件相对路径列表，引用的文件在仓库内必须真实存在。
+- `agents`：可选。若包含 Claude Code 角色定义，可声明角色文件或目录的相对路径（支持字符串如 `"./agents/claude"` 或文件列表数组如 `["./agents/claude/bugfix-worker.md"]`；若无需自定义 subagents 可省略或留空）。
 
 ## 服务端配置说明
 

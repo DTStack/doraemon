@@ -292,15 +292,22 @@ class AgentsService extends Service {
 
         const name = this.validateAgentName(manifest.name);
         const version = manifest.version ? this.validateAgentVersion(manifest.version) : '';
-        const agents = Array.isArray(manifest.agents) ? manifest.agents : [];
-        if (agents.length === 0) {
-            this.ctx.throw(400, '.claude-plugin/plugin.json 必须声明 agents');
+
+        // agents 在 Claude Code 规范中为可选配置，支持单个路径字符串或路径数组
+        let agents = [];
+        if (typeof manifest.agents === 'string' && manifest.agents.trim()) {
+            agents = [this.normalizeManifestPath(manifest.agents, 'agents')];
+        } else if (Array.isArray(manifest.agents)) {
+            agents = manifest.agents
+                .map((item) => String(item || '').trim())
+                .filter(Boolean)
+                .map((item) => this.normalizeManifestPath(item, 'agents'));
         }
 
         return {
             name,
             version,
-            agents: agents.map((item) => this.normalizeManifestPath(item, 'agents')),
+            agents,
         };
     }
 

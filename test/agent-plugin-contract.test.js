@@ -104,11 +104,50 @@ test('validateCodexManifest 支持最多 1024 字符的多行代码块 defaultPr
     );
 });
 
-test('validateClaudeManifest 校验 agents 配置有效性', () => {
+test('validateClaudeManifest 支持 agents 为可选配置，并兼容字符串或数组格式', () => {
     const service = createService();
+
+    // 1. 省略 agents 或传空数组正常通过
+    assert.deepEqual(service.validateClaudeManifest({ name: 'bugfix-agent' }).agents, []);
+    assert.deepEqual(
+        service.validateClaudeManifest({ name: 'bugfix-agent', agents: [] }).agents,
+        []
+    );
+    assert.deepEqual(
+        service.validateClaudeManifest({ name: 'bugfix-agent', agents: '' }).agents,
+        []
+    );
+
+    // 2. 支持单个字符串路径
+    assert.deepEqual(
+        service.validateClaudeManifest({
+            name: 'bugfix-agent',
+            agents: './agents/claude',
+        }).agents,
+        ['agents/claude']
+    );
+
+    // 3. 支持数组格式路径列表
+    assert.deepEqual(
+        service.validateClaudeManifest({
+            name: 'bugfix-agent',
+            agents: ['./agents/claude/worker.md', './agents/claude/reviewer.md'],
+        }).agents,
+        ['agents/claude/worker.md', 'agents/claude/reviewer.md']
+    );
+
+    // 4. 非法相对路径（非 ./ 开头）仍应拦截
     assert.throws(
-        () => service.validateClaudeManifest({ name: 'bugfix-agent', agents: [] }),
-        /\.claude-plugin\/plugin\.json 必须声明 agents/
+        () => service.validateClaudeManifest({ name: 'bugfix-agent', agents: 'invalid/path' }),
+        /agents 必须是 \.\/ 开头的相对路径/
+    );
+    assert.throws(
+        () =>
+            service.validateClaudeManifest({
+                name: 'bugfix-agent',
+                agents: ['invalid/path'],
+            }),
+        /agents 必须是 \.\/ 开头的相对路径/
     );
 });
 
