@@ -1,0 +1,26 @@
+app/controller/agents.js
+  h_3070dc1062bb3b 90-96
+app/public/uninstall.sh
+  h_3070dc1062bb3b 1-146
+app/router.js
+  h_3070dc1062bb3b 178
+app/service/agents.js
+  h_3070dc1062bb3b 1495-1500
+docs/docsify/zh-cn/guide/agent-market.md
+  h_3070dc1062bb3b 104-116
+test/agent-market-controller.test.js
+  h_3070dc1062bb3b 113-127
+test/agent-market-service.test.js
+  h_3070dc1062bb3b 514-521
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "cc88b9d3b905ccf1e4329e6f06c2818a88e579ca",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
