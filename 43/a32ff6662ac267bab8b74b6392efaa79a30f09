@@ -1,0 +1,18 @@
+app/service/agents.js
+  h_3070dc1062bb3b 295-304,310
+docs/docsify/zh-cn/guide/agent-market.md
+  h_3070dc1062bb3b 210,364
+test/agent-plugin-contract.test.js
+  h_3070dc1062bb3b 107,109-143,145-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "43a32ff6662ac267bab8b74b6392efaa79a30f09",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
