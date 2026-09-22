@@ -511,3 +511,11 @@ test('getCreatePluginScript 读取并返回 create-plugin.sh 内容', async () =
     const script = await service.getCreatePluginScript();
     assert.ok(script.includes('create-plugin.sh'));
 });
+
+test('getUninstallScript 读取并返回 uninstall.sh 内容', async () => {
+    const service = createService();
+    service.app.baseDir = path.resolve(__dirname, '..');
+
+    const script = await service.getUninstallScript();
+    assert.ok(script.includes('uninstall.sh'));
+});

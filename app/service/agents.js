@@ -1492,6 +1492,12 @@ class AgentsService extends Service {
         const filePath = path.join(this.app.baseDir, 'app/public/create-plugin.sh');
         return await fs.promises.readFile(filePath, 'utf-8');
     }
+
+    // 读取客户端 Agent 插件卸载脚本
+    async getUninstallScript() {
+        const filePath = path.join(this.app.baseDir, 'app/public/uninstall.sh');
+        return await fs.promises.readFile(filePath, 'utf-8');
+    }
 }
 
 module.exports = AgentsService;

@@ -175,6 +175,7 @@ module.exports = (app) => {
     app.post('/api/agents/update-git-config', app.controller.agents.updateAgentGitConfig);
     app.post('/api/agents/delete', app.controller.agents.deleteAgent);
     app.get('/agent-market/install.sh', app.controller.agents.getInstallScript);
+    app.get('/agent-market/uninstall.sh', app.controller.agents.getUninstallScript);
     app.get('/agent-market/create-plugin.sh', app.controller.agents.getCreatePluginScript);
 
     /**

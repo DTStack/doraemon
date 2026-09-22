@@ -101,6 +101,19 @@ export AGENT_MARKET_LOCAL_DIR="$HOME/.agents/agent-market"
 export AGENT_MARKET_NAME="agent-market"
 ```
 
+#### 插件一键卸载
+
+当需要卸载已安装的 Agent 插件并清理本地配置与缓存时，可直接在终端运行对应的卸载命令：
+
+```bash
+curl -fsSL http://127.0.0.1:7001/agent-market/uninstall.sh | bash -s -- bugfix-agent
+```
+
+卸载脚本会自动完成以下操作：
+1. **宿主卸载**：在 Codex 中执行 `codex plugin remove`，并在 Claude Code 中执行 `claude plugin uninstall`。
+2. **清理本地缓存**：移除本地集中目录 `~/.agents/agent-market/agents/<agent-name>` 及 Codex/Claude 插件缓存。
+3. **更新 Marketplace 清单**：从本地 `.claude-plugin/marketplace.json` 与 `.codex-plugin/marketplace.json` 剔除该插件并刷新索引。
+
 #### 手动 Plugin 安装方式
 
 由于分发产物遵循官方 Plugin 规范，使用者也可以直接通过宿主原生命令手动管理：

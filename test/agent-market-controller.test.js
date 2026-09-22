@@ -110,3 +110,18 @@ test('getCreatePluginScript 设置 text/plain 响应头并返回脚本内容', a
     assert.equal(headers['Content-Type'], 'text/plain; charset=utf-8');
     assert.equal(controller.ctx.body, '#!/usr/bin/env bash\necho create-plugin');
 });
+
+test('getUninstallScript 设置 text/plain 响应头并返回脚本内容', async () => {
+    const headers = {};
+    const controller = buildController({
+        getUninstallScript: async () => '#!/usr/bin/env bash\necho uninstall',
+    });
+    controller.ctx.set = (key, value) => {
+        headers[key] = value;
+    };
+
+    await controller.getUninstallScript();
+
+    assert.equal(headers['Content-Type'], 'text/plain; charset=utf-8');
+    assert.equal(controller.ctx.body, '#!/usr/bin/env bash\necho uninstall');
+});

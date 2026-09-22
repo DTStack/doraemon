@@ -87,6 +87,13 @@ class AgentsController extends Controller {
         this.ctx.body = script;
     }
 
+    // 获取客户端 Agent 插件卸载脚本
+    async getUninstallScript() {
+        const script = await this.ctx.service.agents.getUninstallScript();
+        this.ctx.set('Content-Type', 'text/plain; charset=utf-8');
+        this.ctx.body = script;
+    }
+
     async getCreatePluginScript() {
         const script = await this.ctx.service.agents.getCreatePluginScript();
         this.ctx.set('Content-Type', 'text/plain; charset=utf-8');
