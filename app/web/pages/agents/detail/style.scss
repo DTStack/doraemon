@@ -43,7 +43,8 @@
     .agent-side-sync {
         .ant-card-extra {
             padding: 12px 0;
-            .ant-btn.agent-side-sync-setting-btn {
+            .ant-btn.agent-side-sync-setting-btn,
+            .ant-btn.agent-side-sync-gitlab-btn {
                 width: 28px;
                 height: 28px;
                 min-width: 28px;
@@ -65,6 +66,11 @@
                 &:focus {
                     color: #1E293B;
                     background: #F1F5F9 !important;
+                }
+                &[disabled] {
+                    color: #CBD5E1 !important;
+                    background: transparent !important;
+                    cursor: not-allowed;
                 }
             }
         }

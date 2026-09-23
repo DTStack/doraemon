@@ -74,6 +74,25 @@
         border-radius: 16px;
         border: 1px solid #EDF0F5;
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+        cursor: pointer;
+        user-select: none;
+        .ant-card-body,
+        .ant-typography,
+        .ant-tag,
+        .agent-card-head,
+        .agent-card-brand,
+        .agent-card-meta,
+        .agent-card-description,
+        .agent-card-tags,
+        .agent-card-footer {
+            cursor: pointer;
+        }
+        .agent-card-head > div:last-child {
+            cursor: default;
+            .ant-btn {
+                cursor: pointer;
+            }
+        }
         .ant-card-body {
             display: flex;
             flex-direction: column;

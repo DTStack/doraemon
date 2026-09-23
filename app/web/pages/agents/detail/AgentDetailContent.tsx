@@ -3,11 +3,12 @@ import {
     CodeOutlined,
     CopyOutlined,
     DownloadOutlined,
+    GitlabOutlined,
     QuestionCircleOutlined,
     SettingOutlined,
     SyncOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Empty, message, Spin, Tag, Tooltip, Typography } from 'antd';
+import { Button, Card, Empty, message, Space, Spin, Tag, Tooltip, Typography } from 'antd';
 import moment from 'moment';
 
 import { API } from '@/api';
@@ -22,6 +23,23 @@ import './style.scss';
 const { Paragraph, Text, Title } = Typography;
 const { normalizeAgentCapabilities } = require('./capability-utils');
 const { buildAgentIntroBlocks } = require('./intro-utils');
+
+// 将 gitUrl 转换为可在浏览器中直接打开的 HTTP(S) 仓库页面地址
+const getRepoWebUrl = (gitUrl?: string): string => {
+    if (!gitUrl) return '';
+    const trimmed = gitUrl.trim();
+    if (!trimmed) return '';
+    // 兼容 SSH 格式：git@gitlab.xxx:group/project.git
+    const sshMatch = trimmed.match(/^git@([^:]+):(.+?)(\.git)?$/i);
+    if (sshMatch) {
+        return `http://${sshMatch[1]}/${sshMatch[2]}`;
+    }
+    // 兼容 HTTP(S) 格式，去除末尾 .git 后缀方便直接访问网页
+    if (/^https?:\/\//i.test(trimmed)) {
+        return trimmed.replace(/\.git$/i, '');
+    }
+    return trimmed;
+};
 
 const RelatedAgentCard: React.FC<{
     item: AgentItem;
@@ -76,6 +94,20 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
         const m = moment(timeVal);
         return m.isValid() ? m.format('YYYY-MM-DD HH:mm:ss') : '-';
     }, [detail?.lastGitSyncAt, detail?.updatedAt]);
+
+    // 打开 GitLab 远端仓库网页地址
+    const handleOpenGitLab = () => {
+        if (!detail?.gitUrl) {
+            message.info('尚未配置 Git 仓库地址');
+            return;
+        }
+        const webUrl = getRepoWebUrl(detail.gitUrl);
+        if (webUrl) {
+            safeOpenUrl(webUrl);
+        } else {
+            message.warning('无效的 Git 仓库地址');
+        }
+    };
 
     const handleOpenSetting = () => {
         if (!detail) return;
@@ -474,15 +506,29 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                         className="agent-side-sync"
                         title="Git 仓库设置"
                         extra={
-                            <Tooltip title="Git 仓库设置">
-                                <Button
-                                    type="text"
-                                    size="small"
-                                    className="agent-side-sync-setting-btn"
-                                    icon={<SettingOutlined />}
-                                    onClick={handleOpenSetting}
-                                />
-                            </Tooltip>
+                            <Space size={4}>
+                                <Tooltip title={detail?.gitUrl ? '打开仓库地址' : '未配置仓库地址'}>
+                                    <span>
+                                        <Button
+                                            type="text"
+                                            size="small"
+                                            disabled={!detail?.gitUrl}
+                                            className="agent-side-sync-gitlab-btn"
+                                            icon={<GitlabOutlined />}
+                                            onClick={handleOpenGitLab}
+                                        />
+                                    </span>
+                                </Tooltip>
+                                <Tooltip title="Git 仓库设置">
+                                    <Button
+                                        type="text"
+                                        size="small"
+                                        className="agent-side-sync-setting-btn"
+                                        icon={<SettingOutlined />}
+                                        onClick={handleOpenSetting}
+                                    />
+                                </Tooltip>
+                            </Space>
                         }
                     >
                         {detail.gitUrl ? (

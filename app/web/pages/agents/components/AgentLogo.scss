@@ -1,6 +1,5 @@
 .agent-logo-interactive {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-
     &:hover {
         transform: scale(1.05);
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
@@ -11,7 +10,7 @@
     .ant-popover-inner {
         border-radius: 16px;
         box-shadow: 0 12px 36px rgba(15, 23, 42, 0.2);
-        background: #ffffff;
+        background: #FFF;
     }
     .ant-popover-inner-content {
         padding: 14px;
@@ -29,7 +28,7 @@
 .agent-logo-preview-img {
     border-radius: 14px;
     object-fit: cover;
-    background: linear-gradient(135deg, #eff4ff, #eef2ff);
+    background: linear-gradient(135deg, #EFF4FF, #EEF2FF);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
     display: block;
 }
@@ -37,7 +36,7 @@
 .agent-logo-preview-title {
     font-size: 14px;
     font-weight: 600;
-    color: #1e293b;
+    color: #1E293B;
     max-width: 100%;
     text-align: center;
     overflow: hidden;
