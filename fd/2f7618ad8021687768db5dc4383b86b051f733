@@ -1,0 +1,20 @@
+app/web/pages/agents/components/AgentLogo.scss
+  h_3070dc1062bb3b 13,31,39
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  h_3070dc1062bb3b 6,11,27-43,98-111,509-531
+app/web/pages/agents/detail/style.scss
+  h_3070dc1062bb3b 46-47,70-74
+app/web/pages/agents/style.scss
+  h_3070dc1062bb3b 77-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "fd2f7618ad8021687768db5dc4383b86b051f733",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
