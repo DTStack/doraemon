@@ -1,7 +1,7 @@
 app/web/layouts/basicLayout/style.scss
   h_3070dc1062bb3b 13,16
 app/web/layouts/header/style.scss
-  h_3070dc1062bb3b 1,3-5
+  h_3070dc1062bb3b 1,3-5,15-55,60,64-66,69,72-113
   h_3070dc1062bb3b 15-55,60,64-66,69,72-113
 app/web/layouts/header/header.tsx
   h_3070dc1062bb3b 70,82
