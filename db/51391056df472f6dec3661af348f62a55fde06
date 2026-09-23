@@ -1,0 +1,17 @@
+app/web/pages/agents/detail/style.scss
+  h_3070dc1062bb3b 458-464,477-478
+  h_3070dc1062bb3b 479
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  h_3070dc1062bb3b 351-400,402-404
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "db51391056df472f6dec3661af348f62a55fde06",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
