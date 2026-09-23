@@ -1,0 +1,19 @@
+app/web/layouts/basicLayout/style.scss
+  h_3070dc1062bb3b 13,16
+app/web/layouts/header/style.scss
+  h_3070dc1062bb3b 1,3-5
+  h_3070dc1062bb3b 15-55,60,64-66,69,72-113
+app/web/layouts/header/header.tsx
+  h_3070dc1062bb3b 70,82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "28ad3e3622ba4b28b819748f89b927144944983e",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
