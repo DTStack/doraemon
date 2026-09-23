@@ -13,9 +13,9 @@ import moment from 'moment';
 import { API } from '@/api';
 import { copyToClipboard } from '@/utils/copyUtils';
 import { safeOpenUrl } from '@/utils/safeOpenUrl';
-import defaultAgentLogo from '../../../asset/images/default_agent.jpg';
 import { buildAgentDetailCodexPrompt, buildCodexNewThreadUrl } from '../codex-button-utils';
 import { AgentGitOpsModal } from '../components/AgentGitOpsModal';
+import { AgentLogo } from '../components/AgentLogo';
 import type { AgentDetail, AgentItem, AgentSkill } from '../types';
 import './style.scss';
 
@@ -34,13 +34,12 @@ const RelatedAgentCard: React.FC<{
         onClick={() => history.push(`/page/agents/${item.name}`)}
     >
         <div className="related-agent-head">
-            <img
+            <AgentLogo
                 className="related-agent-logo"
-                src={item.logoUrl || defaultAgentLogo}
+                src={item.logoUrl}
                 alt={item.displayName}
-                onError={(event) => {
-                    event.currentTarget.src = defaultAgentLogo;
-                }}
+                previewPlacement="leftTop"
+                previewSize={360}
             />
             <div className="related-agent-meta">
                 <Text strong>{item.displayName}</Text>
@@ -237,13 +236,12 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                 <main className="agent-detail-main">
                     <div className="agent-hero">
                         <div className="agent-hero-brand">
-                            <img
+                            <AgentLogo
                                 className="agent-hero-logo"
-                                src={detail.logoUrl || defaultAgentLogo}
+                                src={detail.logoUrl}
                                 alt={detail.displayName}
-                                onError={(event) => {
-                                    event.currentTarget.src = defaultAgentLogo;
-                                }}
+                                previewPlacement="bottomLeft"
+                                previewSize={360}
                             />
                             <div className="agent-hero-meta">
                                 <Title level={2}>{detail.displayName}</Title>

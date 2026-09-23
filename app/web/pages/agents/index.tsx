@@ -26,8 +26,8 @@ import debounce from 'lodash/debounce';
 import { API } from '@/api';
 import helpIcon from '@/asset/images/help-icon.png';
 import config from '../../../../env.json';
-import defaultAgentLogo from '../../asset/images/default_agent.jpg';
 import { AgentGitOpsModal } from './components/AgentGitOpsModal';
+import { AgentLogo } from './components/AgentLogo';
 import type { AgentItem, AgentListResponse } from './types';
 import './style.scss';
 
@@ -365,13 +365,12 @@ const AgentMarket: React.FC<AgentMarketProps> = ({ history }) => {
                             >
                                 <div className="agent-card-head">
                                     <div className="agent-card-brand">
-                                        <img
+                                        <AgentLogo
                                             className="agent-card-logo"
-                                            src={agent.logoUrl || defaultAgentLogo}
+                                            src={agent.logoUrl}
                                             alt={agent.displayName}
-                                            onError={(event) => {
-                                                event.currentTarget.src = defaultAgentLogo;
-                                            }}
+                                            previewPlacement="rightTop"
+                                            previewSize={360}
                                         />
                                         <div className="agent-card-meta">
                                             <Title level={4}>{agent.displayName}</Title>
