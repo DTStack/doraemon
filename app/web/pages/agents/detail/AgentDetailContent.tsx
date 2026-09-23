@@ -348,38 +348,60 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                         <div className="agent-prompts agent-prompts-compact">
                                             {introBlocks.openingQuestions.length > 0 ? (
                                                 introBlocks.openingQuestions.map(
-                                                    (item: any, index: number) => (
-                                                        <Card
-                                                            key={`${item.title}-${index}`}
-                                                            size="small"
-                                                            className="agent-intro-panel agent-question-card"
-                                                        >
-                                                            <div className="agent-question-card-body">
-                                                                <div className="agent-intro-icon-wrap is-question">
-                                                                    <QuestionCircleOutlined />
+                                                    (item: any, index: number) => {
+                                                        const promptText =
+                                                            typeof item === 'string'
+                                                                ? item
+                                                                : item?.prompt || item?.title || '';
+                                                        return (
+                                                            <Card
+                                                                key={`${
+                                                                    item.title || index
+                                                                }-${index}`}
+                                                                size="small"
+                                                                className="agent-intro-panel agent-question-card"
+                                                            >
+                                                                <div className="agent-question-card-body">
+                                                                    <div className="agent-intro-icon-wrap is-question">
+                                                                        <QuestionCircleOutlined />
+                                                                    </div>
+                                                                    <Tooltip title="点击复制">
+                                                                        <div
+                                                                            className="agent-question-copy"
+                                                                            onClick={(event) => {
+                                                                                event.stopPropagation();
+                                                                                // 点击提示词文本区域直接复制到剪贴板
+                                                                                if (promptText) {
+                                                                                    copyToClipboard(
+                                                                                        promptText,
+                                                                                        '复制成功'
+                                                                                    );
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <Paragraph>
+                                                                                {promptText}
+                                                                            </Paragraph>
+                                                                        </div>
+                                                                    </Tooltip>
+                                                                    <Button
+                                                                        size="small"
+                                                                        className="agent-question-quick-use"
+                                                                        icon={
+                                                                            <span className="agent-question-quick-use-icon">
+                                                                                <CodeOutlined />
+                                                                            </span>
+                                                                        }
+                                                                        onClick={() =>
+                                                                            openCodexInstall(item)
+                                                                        }
+                                                                    >
+                                                                        快捷使用
+                                                                    </Button>
                                                                 </div>
-                                                                <div className="agent-question-copy">
-                                                                    <Paragraph>
-                                                                        {item.prompt}
-                                                                    </Paragraph>
-                                                                </div>
-                                                                <Button
-                                                                    size="small"
-                                                                    className="agent-question-quick-use"
-                                                                    icon={
-                                                                        <span className="agent-question-quick-use-icon">
-                                                                            <CodeOutlined />
-                                                                        </span>
-                                                                    }
-                                                                    onClick={() =>
-                                                                        openCodexInstall(item)
-                                                                    }
-                                                                >
-                                                                    快捷使用
-                                                                </Button>
-                                                            </div>
-                                                        </Card>
-                                                    )
+                                                            </Card>
+                                                        );
+                                                    }
                                                 )
                                             ) : (
                                                 <Empty
