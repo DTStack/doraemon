@@ -67,7 +67,7 @@ const HeaderComponent = (props: any) => {
             <div className="menu_content">
                 <Menu
                     mode="horizontal"
-                    theme="dark"
+                    theme="light"
                     selectedKeys={selectedKeys}
                     openKeys={openKeys}
                     onOpenChange={(keys) => setOpenKeys(keys as string[])}
@@ -79,6 +79,7 @@ const HeaderComponent = (props: any) => {
                             return (
                                 <SubMenu
                                     key={path}
+                                    popupClassName="header-submenu-popup"
                                     title={
                                         <span>
                                             {icon}
