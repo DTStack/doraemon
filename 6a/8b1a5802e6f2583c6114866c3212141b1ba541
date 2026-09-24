@@ -1,0 +1,16 @@
+app/public/install.sh
+  h_3070dc1062bb3b 22,118-120,203-207,212,215-221,223-227,238-239,243,253-259,261-265,283-284,288,370-373,375,377
+app/web/pages/agents/detail/style.scss
+  h_3070dc1062bb3b 461
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "6a8b1a5802e6f2583c6114866c3212141b1ba541",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
