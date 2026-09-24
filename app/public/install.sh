@@ -19,6 +19,8 @@ set -euo pipefail
 AGENT_NAME=""
 CUSTOM_BASE_URL=""
 FORCE=0
+IS_UPDATE=0
+HAS_DIFF=0
 
 # 解析命令行参数，支持 --force 强制重装和 -h 帮助
 for arg in "$@"; do
@@ -114,9 +116,21 @@ SOURCE_DIR="$TMP_DIR/extracted/$AGENT_NAME"
 
 # Move the single agent to the centralized agent-market folder
 AGENT_TARGET_DIR="$AGENT_MARKET_LOCAL_DIR/agents/$AGENT_NAME"
-mkdir -p "$(dirname "$AGENT_TARGET_DIR")"
-rm -rf "$AGENT_TARGET_DIR"
-mv "$SOURCE_DIR" "$AGENT_TARGET_DIR"
+if [[ -d "$AGENT_TARGET_DIR" ]]; then
+  IS_UPDATE=1
+  # 对比新下载解压内容与本地目录是否存在文件差异（忽略 macOS .DS_Store 及 Python 缓存）
+  if ! diff -rq -x '.DS_Store' -x '__pycache__' -x '*.pyc' "$SOURCE_DIR" "$AGENT_TARGET_DIR" >/dev/null 2>&1; then
+    HAS_DIFF=1
+  fi
+else
+  HAS_DIFF=1
+fi
+
+if [[ "$HAS_DIFF" -eq 1 || "$FORCE" -eq 1 ]]; then
+  mkdir -p "$(dirname "$AGENT_TARGET_DIR")"
+  rm -rf "$AGENT_TARGET_DIR"
+  mv "$SOURCE_DIR" "$AGENT_TARGET_DIR"
+fi
 
 # Auto-generate or update the central marketplace.json
 mkdir -p "$AGENT_MARKET_LOCAL_DIR/.claude-plugin"
@@ -196,16 +210,34 @@ with open(meta_file, "w", encoding="utf-8") as f:
 PY
 
 source "$TMP_DIR/meta.sh"
-ok "Agent 已就绪: $AGENT_TARGET_DIR${VERSION:+ (v$VERSION)}"
+if [[ "$IS_UPDATE" -eq 1 && "$HAS_DIFF" -eq 0 && "$FORCE" -eq 0 ]]; then
+  ok "Agent 源码无变动（已是最新）: $AGENT_TARGET_DIR${VERSION:+ (v$VERSION)}"
+elif [[ "$IS_UPDATE" -eq 1 ]]; then
+  ok "Agent 源码已更新: $AGENT_TARGET_DIR${VERSION:+ (v$VERSION)}"
+else
+  ok "Agent 已就绪: $AGENT_TARGET_DIR${VERSION:+ (v$VERSION)}"
+fi
 
 CODEX="$(resolve_codex || true)"
 CLAUDE="$(resolve_claude || true)"
 
-# 注册 marketplace + 安装 plugin（读命令输出判断是否已注册/已安装，幂等可重复执行）
+# 注册 marketplace + 安装/更新 plugin（自动探测已安装状态，支持重复执行时覆盖更新）
 install_codex() {
   local cli="$1"
+  local installed="$HOME/.codex/plugins/cache/$AGENT_MARKET_NAME/$AGENT_NAME"
+  local is_installed=0
+  if [[ -d "$installed" ]]; then
+    is_installed=1
+  fi
+
   log ""
-  log "Codex 安装 $AGENT_NAME@$AGENT_MARKET_NAME ..."
+  if [[ "$is_installed" -eq 1 && "$HAS_DIFF" -eq 0 && "$FORCE" -eq 0 ]]; then
+    log "Codex 检查 $AGENT_NAME@$AGENT_MARKET_NAME ..."
+  elif [[ "$is_installed" -eq 1 ]]; then
+    log "Codex 更新 $AGENT_NAME@$AGENT_MARKET_NAME ..."
+  else
+    log "Codex 安装 $AGENT_NAME@$AGENT_MARKET_NAME ..."
+  fi
 
   # 注册 local marketplace（只在未注册时 add，避免重复报错）
   if "$cli" plugin marketplace list 2>/dev/null | grep -Fq "$AGENT_MARKET_NAME"; then
@@ -216,14 +248,14 @@ install_codex() {
     ok "marketplace $AGENT_MARKET_NAME 已注册"
   fi
 
-  local installed="$HOME/.codex/plugins/cache/$AGENT_MARKET_NAME/$AGENT_NAME"
-  if [[ "$FORCE" -eq 1 ]]; then
+  # 若无变动且已安装缓存存在，跳过重新安装
+  if [[ "$is_installed" -eq 1 && "$HAS_DIFF" -eq 0 && "$FORCE" -eq 0 ]]; then
+    ok "plugin $AGENT_NAME 已是最新"
+  elif [[ "$is_installed" -eq 1 || "$FORCE" -eq 1 ]]; then
     rm -rf "$installed"
     "$cli" plugin add "$AGENT_NAME@$AGENT_MARKET_NAME" \
       || die "codex plugin add 失败"
-    ok "plugin $AGENT_NAME 强制重新安装完成"
-  elif [[ -d "$installed" ]]; then
-    ok "plugin $AGENT_NAME 已安装，跳过"
+    ok "plugin $AGENT_NAME 已更新"
   else
     "$cli" plugin add "$AGENT_NAME@$AGENT_MARKET_NAME" \
       || die "codex plugin add 失败"
@@ -233,10 +265,21 @@ install_codex() {
 
 install_claude() {
   local cli="$1"
-  log ""
-  log "Claude Code 安装 $AGENT_NAME@$AGENT_MARKET_NAME ..."
-
   local installed="$HOME/.claude/plugins/installed_plugins.json"
+  local is_installed=0
+  if [[ -f "$installed" ]] && grep -Fq "\"$AGENT_NAME@$AGENT_MARKET_NAME\"" "$installed"; then
+    is_installed=1
+  fi
+
+  log ""
+  if [[ "$is_installed" -eq 1 && "$HAS_DIFF" -eq 0 && "$FORCE" -eq 0 ]]; then
+    log "Claude Code 检查 $AGENT_NAME@$AGENT_MARKET_NAME ..."
+  elif [[ "$is_installed" -eq 1 ]]; then
+    log "Claude Code 更新 $AGENT_NAME@$AGENT_MARKET_NAME ..."
+  else
+    log "Claude Code 安装 $AGENT_NAME@$AGENT_MARKET_NAME ..."
+  fi
+
   if "$cli" plugin marketplace list 2>/dev/null | grep -Fq "$AGENT_MARKET_NAME"; then
     ok "marketplace $AGENT_MARKET_NAME 已注册，更新索引"
     "$cli" plugin marketplace update "$AGENT_MARKET_NAME" >/dev/null 2>&1 || true
@@ -253,13 +296,14 @@ install_claude() {
     yes_flag="--yes"
   fi
 
-  if [[ "$FORCE" -eq 1 ]]; then
+  # 若无变动且已安装，无需重新安装
+  if [[ "$is_installed" -eq 1 && "$HAS_DIFF" -eq 0 && "$FORCE" -eq 0 ]]; then
+    ok "plugin $AGENT_NAME 已是最新"
+  elif [[ "$is_installed" -eq 1 || "$FORCE" -eq 1 ]]; then
     "$cli" plugin uninstall "$AGENT_NAME@$AGENT_MARKET_NAME" >/dev/null 2>&1 || true
     "$cli" plugin install "$AGENT_NAME@$AGENT_MARKET_NAME" ${yes_flag:+"--yes"} \
       || die "claude plugin install 失败"
-    ok "plugin $AGENT_NAME 强制重新安装完成"
-  elif [[ -f "$installed" ]] && grep -Fq "\"$AGENT_NAME\"" "$installed"; then
-    ok "plugin $AGENT_NAME 已安装，跳过"
+    ok "plugin $AGENT_NAME 已更新"
   else
     "$cli" plugin install "$AGENT_NAME@$AGENT_MARKET_NAME" ${yes_flag:+"--yes"} \
       || die "claude plugin install 失败"
@@ -341,8 +385,16 @@ fi
 render_preflight_report
 
 log ""
+action_text="安装"
+if [[ "$IS_UPDATE" -eq 1 ]]; then
+  action_text="更新"
+fi
 if [[ "$PREFLIGHT_MISSING" -eq 1 ]]; then
-  log "【⚠️ 安装结束】${AGENT_NAME}${VERSION:+ (v$VERSION)} 存在未就绪项（缺失工具 / 未配置环境变量），请按上方提示处理后使用"
+  log "【⚠️ ${action_text}结束】${AGENT_NAME}${VERSION:+ (v$VERSION)} 存在未就绪项（缺失工具 / 未配置环境变量），请按上方提示处理后使用"
+elif [[ "$IS_UPDATE" -eq 1 && "$HAS_DIFF" -eq 0 && "$FORCE" -eq 0 ]]; then
+  log "【✅ 已是最新】${AGENT_NAME}${VERSION:+ (v$VERSION)}"
+elif [[ "$IS_UPDATE" -eq 1 ]]; then
+  log "【✅ 更新完成】${AGENT_NAME}${VERSION:+ (v$VERSION)}"
 else
   log "【✅ 安装完成】${AGENT_NAME}${VERSION:+ (v$VERSION)}"
 fi
