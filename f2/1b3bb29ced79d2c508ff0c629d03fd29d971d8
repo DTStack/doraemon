@@ -1,0 +1,25 @@
+app/public/install.sh
+  h_3070dc1062bb3b 22,119-120,213-217,219,234,238,251,253-254,277
+  s_27734d65d21141::t_7e602698f89d96 23,121-133,218,224,227-232,235-237,239-240,252,258,268-273,275-276,278-281,299-302,306,388-391,393-397
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f21b3bb29ced79d2c508ff0c629d03fd29d971d8",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_27734d65d21141": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0d22b-99ed-7032-b0cc-0a541a54603b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
