@@ -1,5 +1,5 @@
 app/web/pages/agents/detail/style.scss
-  h_3070dc1062bb3b 458-464,477-478
+  h_3070dc1062bb3b 458-464,458-460,461-464,477-478
   h_3070dc1062bb3b 479
 app/web/pages/agents/detail/AgentDetailContent.tsx
   h_3070dc1062bb3b 351-400,402-404
