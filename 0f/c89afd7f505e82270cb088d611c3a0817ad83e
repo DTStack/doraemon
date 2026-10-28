@@ -1,0 +1,22 @@
+app/service/skills.js
+  h_3070dc1062bb3b 224-225,227-229
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  h_3070dc1062bb3b 584
+docs/docsify/zh-cn/guide/agent-market.md
+  h_3070dc1062bb3b 197,201,393,397
+test/agent-detail-layout.test.js
+  h_3070dc1062bb3b 91-96
+test/skills-registry-contract.test.js
+  h_3070dc1062bb3b 1631-1659
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0fc89afd7f505e82270cb088d611c3a0817ad83e",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
