@@ -221,9 +221,19 @@ class SkillsService extends Service {
             await SkillsItem.increment('downloads', {
                 by: 1,
                 where: { slug: value, is_delete: 0 },
-                // Do not bump updated_at — downloads must not reorder "recent" sort.
+                // 不触发 updated_at 变更，下载量增加不应影响最近更新时间与排序
                 silent: true,
+                attributes: {
+                    updated_at: this.app.Sequelize.col('updated_at'),
+                },
             });
+            if (this.skillCache) {
+                const target =
+                    this.skillCache.bySlug?.[value] || this.skillCache.byInstallKey?.[value];
+                if (target) {
+                    target.downloads = (target.downloads || 0) + 1;
+                }
+            }
         } catch (error) {
             this.ctx.logger.warn(
                 `[skills] increment downloads failed for ${value}: ${error.message}`

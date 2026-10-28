@@ -38,6 +38,7 @@ interface SkillInstallPanelProps {
     agentTerminalCommand: string;
     manualDownloadUrl: string;
     contributor?: string;
+    onDownload?: () => void;
 }
 
 const renderTerminalCommand = (command: string, copyMessage: string) => (
@@ -77,6 +78,7 @@ export const SkillInstallPanel: React.FC<SkillInstallPanelProps> = ({
     agentTerminalCommand,
     manualDownloadUrl,
     contributor = '',
+    onDownload,
 }) => (
     <aside className="detail-right-sidebar">
         <section className="install-panel">
@@ -179,7 +181,10 @@ export const SkillInstallPanel: React.FC<SkillInstallPanelProps> = ({
                 <Button
                     type="default"
                     className="download-btn"
-                    onClick={() => safeOpenUrl(manualDownloadUrl)}
+                    onClick={() => {
+                        onDownload?.();
+                        safeOpenUrl(manualDownloadUrl);
+                    }}
                 >
                     <DetailIcon src={downloadIcon} className="is-download" />
                     下载 .zip
