@@ -1,0 +1,20 @@
+app/service/skills.js
+  h_3070dc1062bb3b 224,226-228,230-236
+app/web/pages/skills/detail/SkillDetailContent.tsx
+  h_3070dc1062bb3b 132-136,320
+app/web/pages/skills/detail/components/SkillInstallPanel.tsx
+  h_3070dc1062bb3b 41,81,184-187
+test/skills-increment-downloads.test.js
+  h_3070dc1062bb3b 1-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0b607727f48574070cd2e32ef23c438aa7d97666",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
