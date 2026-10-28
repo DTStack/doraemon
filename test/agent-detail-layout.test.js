@@ -88,3 +88,9 @@ test('Agent 详情页提供当前原始 ZIP 下载入口（图标与 hover 提�
     assert.match(style, /\.agent-side-download-btn/);
     assert.doesNotMatch(component, /agent-archive-download/);
 });
+
+test('Agent 详情页最近同步代码时间 hover 提示包含定时间隔 1 小时', () => {
+    const { component } = readDetailFiles();
+
+    assert.match(component, /最近一次成功拉取新代码变动并完成同步入库的时间，定时间隔：1小时/);
+});

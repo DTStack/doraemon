@@ -1628,3 +1628,32 @@ test('SkillsRegistryController returns flat JSON (no wrapper)', async () => {
     await controller.registryMetadata();
     assert.deepEqual(controller.ctx.body, { apiBase: '/api/v1' });
 });
+
+test('incrementDownloads increments downloads while preserving updated_at (silent: true and attributes.updated_at)', async () => {
+    const SkillsService = require('../app/service/skills');
+    const service = Object.create(SkillsService.prototype);
+    let incrementField = null;
+    let incrementOptions = null;
+    service.ensureStorageReady = async () => {};
+    service.app = {
+        model: {
+            SkillsItem: {
+                increment: async (field, options) => {
+                    incrementField = field;
+                    incrementOptions = options;
+                },
+            },
+        },
+        Sequelize: {
+            col: (colName) => ({ col: colName }),
+        },
+    };
+    service.ctx = createMockCtx();
+
+    await service.incrementDownloads('demo-skill');
+    assert.equal(incrementField, 'downloads');
+    assert.equal(incrementOptions.silent, true);
+    assert.deepEqual(incrementOptions.attributes, {
+        updated_at: { col: 'updated_at' },
+    });
+});

@@ -194,11 +194,11 @@ Doraemon 采用 GitOps 模式管理 Agent 插件，实现代码集中在 GitLab 
 
 > [!NOTE]
 > **自动更新周期说明**：
-> 系统默认配置了**后台定时自动同步任务（默认每 5 分钟轮询一次）**。远端 GitLab 仓库合入新代码后，后台会在周期触发时自动拉取更新并使新版本生效。若希望代码变动即时生效，可使用页面按钮或 CI/CD API 手动触发即时同步。
+> 系统默认配置了**后台定时自动同步任务（默认每 1 小时轮询一次）**。远端 GitLab 仓库合入新代码后，后台会在周期触发时自动拉取更新并使新版本生效。若希望代码变动即时生效，可使用页面按钮或 CI/CD API 手动触发即时同步。
 
 代码同步支持以下触发方式：
 
-- **后台定时自动同步**：服务端默认每 5 分钟自动执行一次全量检查与增量同步（可通过服务端配置 `autoSyncInterval` 调整周期或关闭）。
+- **后台定时自动同步**：服务端默认每 1 小时自动执行一次全量检查与增量同步（可通过服务端配置 `autoSyncInterval` 调整周期或关闭）。
 - **单个 Agent 手动同步**：在列表页卡片右上角点击【从 Git 同步最新代码】，或在详情页侧边栏点击【从 Git 同步最新代码】按钮。
 - **全量批量手动同步**：在列表页顶部点击【全量同步】按钮，后台将按序批量同步所有配置了 Git 仓库的 Agent。
 - **配置修改并即时同步**：在详情页【Git 仓库设置】弹窗中修改分支或仓库地址后，可选择保存并立即同步。
@@ -390,11 +390,11 @@ exports.agentMarket = {
     // 允许注入 Token 的 GitLab 域名白名单
     gitlabHostWhitelist: ['gitlab.prod.dtstack.cn'],
     // 仓库自动轮询定时同步间隔，可通过环境变量 AGENT_MARKET_AUTO_SYNC_INTERVAL 自定义，传空或 '0' 表示关闭
-    autoSyncInterval: process.env.AGENT_MARKET_AUTO_SYNC_INTERVAL || '5m',
+    autoSyncInterval: process.env.AGENT_MARKET_AUTO_SYNC_INTERVAL || '1h',
 };
 ```
 
-- **自动轮询同步**：`autoSyncInterval` 默认值为 `'5m'`（每 5 分钟执行一次全量轮询拉取）。当设置为 `''` 或 `'0'` 时可关闭定时轮询。
+- **自动轮询同步**：`autoSyncInterval` 默认值为 `'1h'`（每 1 小时执行一次全量轮询拉取）。当设置为 `''` 或 `'0'` 时可关闭定时轮询。
 - **凭证安全**：当配置了 `gitlabToken` 时，服务端仅在克隆/拉取属于 `gitlabHostWhitelist` 白名单内的仓库时才会注入 Basic Auth 认证。在执行 Git 操作发生错误时，系统会自动将命令输出和报错中的 Token 及 Authorization 字段进行脱敏，避免凭证泄漏到前端或日志中。
 
 ## 与 Skills Hub 的关系

@@ -221,8 +221,12 @@ class SkillsService extends Service {
             await SkillsItem.increment('downloads', {
                 by: 1,
                 where: { slug: value, is_delete: 0 },
-                // Do not bump updated_at — downloads must not reorder "recent" sort.
+                // 不更新 updated_at，避免下载操作影响“最近更新”排序与展示时间
+                // MySQL 表包含 ON UPDATE CURRENT_TIMESTAMP，显式赋原值防止触发自动更新
                 silent: true,
+                attributes: {
+                    updated_at: this.app.Sequelize.col('updated_at'),
+                },
             });
         } catch (error) {
             this.ctx.logger.warn(
