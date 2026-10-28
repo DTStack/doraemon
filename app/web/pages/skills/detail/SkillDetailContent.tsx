@@ -129,6 +129,11 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
         }
     };
 
+    // 点击下载仅递增下载量，不更新最近更新时间
+    const handleDownload = () => {
+        setDetail((prev) => (prev ? { ...prev, downloads: (prev.downloads || 0) + 1 } : prev));
+    };
+
     useEffect(() => {
         setUiSelectedFilePath('');
         setSelectedFilePath('');
@@ -312,6 +317,7 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
                         agentTerminalCommand={agentTerminalCommand}
                         manualDownloadUrl={manualDownloadUrl}
                         contributor={detail?.contributor || ''}
+                        onDownload={handleDownload}
                     />
                 ) : null}
             </div>
