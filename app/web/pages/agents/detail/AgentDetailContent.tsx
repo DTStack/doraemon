@@ -572,7 +572,7 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                     <div className="agent-sync-meta-item">
                                         <span className="meta-label">
                                             最近刷新时间
-                                            <Tooltip title="最近一次向 GitLab 发起检查（确认远端是否有新提交）的时间">
+                                            <Tooltip title="最近一次向 GitLab 发起检查（确认远端是否有新提交）的时间，定时间隔：1小时">
                                                 <QuestionCircleOutlined className="meta-tip-icon" />
                                             </Tooltip>
                                         </span>
@@ -581,7 +581,7 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
                                     <div className="agent-sync-meta-item">
                                         <span className="meta-label">
                                             最近同步代码时间
-                                            <Tooltip title="最近一次成功拉取新代码变动并完成同步入库的时间">
+                                            <Tooltip title="最近一次成功拉取新代码变动并完成同步入库的时间，定时间隔：1小时">
                                                 <QuestionCircleOutlined className="meta-tip-icon" />
                                             </Tooltip>
                                         </span>
