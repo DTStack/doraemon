@@ -1,0 +1,20 @@
+app/schedule/syncGitAgents.js
+  h_3070dc1062bb3b 1,4
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  h_3070dc1062bb3b 575,584
+test/agent-detail-layout.test.js
+  h_3070dc1062bb3b 91-104
+test/agent-schedule-sync.test.js
+  h_3070dc1062bb3b 6-8,10,15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a475c09a1b6100b856ddf44733cc2060e20f9540",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
