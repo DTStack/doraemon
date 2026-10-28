@@ -1,12 +1,9 @@
-module.exports = (app) => {
-    const autoSyncInterval = app.config.agentMarket?.autoSyncInterval;
-
+module.exports = () => {
     return {
         schedule: {
-            interval: autoSyncInterval || '1h',
+            cron: '0 0 * * * *', // 每小时整点执行
             type: 'worker', // 仅由单个 worker 执行，避免多 worker 并发冲突
             immediate: false, // 应用启动后等待到达周期再执行
-            disable: !autoSyncInterval || autoSyncInterval === '0',
         },
         // 定时轮询同步所有已配置 GitLab 仓库的 Agent 插件
         async task(ctx) {
