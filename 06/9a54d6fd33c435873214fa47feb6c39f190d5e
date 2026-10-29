@@ -1,0 +1,18 @@
+app/service/agents.js
+  h_3070dc1062bb3b 1013-1014,1016,1023-1026,1028-1033,1214-1242,1253-1254,1317,1356-1366,1373-1374,1381,1406-1407,1410-1412,1439-1440,1443-1445,1478-1501,1532-1533,1536-1538
+app/web/pages/agents/detail/AgentDetailContent.tsx
+  h_3070dc1062bb3b 145-150,172-178
+test/agent-git-rename.test.js
+  h_3070dc1062bb3b 1-185
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "069a54d6fd33c435873214fa47feb6c39f190d5e",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
