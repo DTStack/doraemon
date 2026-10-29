@@ -142,6 +142,12 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
 
             message.success('配置保存成功');
             setSettingVisible(false);
+            // 若配置保存并发生重命名，重定向至新路由
+            const newConfigName = response.data?.name;
+            if (newConfigName && newConfigName !== detail.name) {
+                history.push(`/page/agents/${encodeURIComponent(newConfigName)}`);
+                return;
+            }
             const detailRes = await API.getAgentDetail({ name });
             if (detailRes.success) {
                 setDetail(detailRes.data as AgentDetail);
@@ -161,6 +167,13 @@ const AgentDetailContent: React.FC<AgentDetailContentProps> = ({ name, history }
             const res = await API.syncSingleGitAgent({ name: detail.name });
             if (!res.success) {
                 message.error(res.msg || '同步失败');
+                return;
+            }
+            // 若远端仓库改名发生 Agent 重命名迁移，提示并自动平滑重定向至新详情页
+            const newAgentName = res.data?.name;
+            if (newAgentName && newAgentName !== detail.name) {
+                message.success(`Agent 名称已更新为「${newAgentName}」，正在跳转...`);
+                history.push(`/page/agents/${encodeURIComponent(newAgentName)}`);
                 return;
             }
             // 根据远端代码是否发生变更给出差异化反馈

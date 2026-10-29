@@ -1010,20 +1010,27 @@ class AgentsService extends Service {
         };
     }
 
-    // 从 Git 仓库导入或更新 Agent
-    async importAgentFromGit(gitUrl, gitBranch = 'master', category = null) {
+    // 从 Git 仓库导入或更新 Agent，支持重命名迁移
+    async importAgentFromGit(gitUrl, gitBranch = 'master', category = null, options = {}) {
         await this.ensureStorageReady();
+        const { currentAgent } = options;
 
         const { cleanGitUrl, cloneGitUrl, targetBranch, repoName } = this.normalizeGitSource(
             gitUrl,
             gitBranch
         );
 
-        // 并发同步锁：若当前仓库正在同步中，阻止并发执行以避免 index.lock 冲突
-        if (activeSyncRepos.has(repoName)) {
-            this.ctx.throw(409, `Agent「${repoName}」正在同步中，请稍后再试`);
+        // 并发同步锁：锁定当前仓库及原 Agent 名称，防止并发冲突
+        const lockNames = [repoName];
+        if (currentAgent?.name && currentAgent.name !== repoName) {
+            lockNames.push(currentAgent.name);
         }
-        activeSyncRepos.add(repoName);
+        for (const lockName of lockNames) {
+            if (activeSyncRepos.has(lockName)) {
+                this.ctx.throw(409, `Agent「${lockName}」正在同步中，请稍后再试`);
+            }
+        }
+        lockNames.forEach((lockName) => activeSyncRepos.add(lockName));
 
         try {
             const storageDir = this.getAgentMarketConfig().storageDir;
@@ -1204,7 +1211,35 @@ class AgentsService extends Service {
 
             // 5. 数据库持久化
             const { Agent, AgentSkill } = this.app.model;
-            const existing = await Agent.findOne({ where: { name: validated.name } });
+            const { Op } = this.app.Sequelize;
+
+            let existing = null;
+            const isRenaming = Boolean(currentAgent && currentAgent.name !== validated.name);
+
+            if (isRenaming) {
+                // 检查新名称是否已被其他记录占用（包含已删除记录，规避 uk_agents_name 唯一索引冲突）
+                const conflictAgent = await Agent.findOne({
+                    where: {
+                        name: validated.name,
+                        id: { [Op.ne]: currentAgent.id },
+                    },
+                });
+                if (conflictAgent) {
+                    this.ctx.throw(
+                        400,
+                        `Agent 重命名失败：新名称「${validated.name}」已被${
+                            conflictAgent.is_delete === 0 ? '已有 Agent' : '已删除记录'
+                        }占用`
+                    );
+                }
+                existing = currentAgent;
+            } else {
+                existing = await Agent.findOne({ where: { name: validated.name } });
+                // 若传入当前 Agent 且名称一致，优先复用当前 Agent 记录
+                if (!existing && currentAgent && currentAgent.name === validated.name) {
+                    existing = currentAgent;
+                }
+            }
 
             let agentId = existing ? existing.id : null;
 
@@ -1215,7 +1250,8 @@ class AgentsService extends Service {
                     : existing?.category || validated.category || '工程效率';
 
             const now = new Date();
-            const isContentChanged = !existing || existing.content_hash !== contentHash;
+            const isContentChanged =
+                !existing || existing.content_hash !== contentHash || isRenaming;
 
             const agentPayload = {
                 name: validated.name,
@@ -1278,6 +1314,7 @@ class AgentsService extends Service {
                     agentId = created.id;
                 } else {
                     await Agent.update(agentPayload, { where: { id: existing.id }, transaction });
+                    agentId = existing.id;
                 }
 
                 // 提取 skills 目录下的 SKILL.md
@@ -1316,21 +1353,32 @@ class AgentsService extends Service {
                 }
             });
 
-            // 清理旧版本的归档目录
-            if (existing && existing.content_hash && existing.content_hash !== contentHash) {
+            // 清理旧资源目录：重命名时清理原 Agent 存储与临时仓库目录，非重命名清理旧 hash 归档
+            if (isRenaming) {
+                const oldStorageDir = path.join(storageDir, currentAgent.name);
+                const oldRepoDir = path.join(reposDir, currentAgent.name);
+                try {
+                    this.removeDirectory(oldStorageDir);
+                    this.removeDirectory(oldRepoDir);
+                } catch (cleanErr) {
+                    this.ctx.logger.warn(`[agents] 重命名清理原目录失败: ${cleanErr.message}`);
+                }
+            } else if (existing && existing.content_hash && existing.content_hash !== contentHash) {
                 this.removeDirectory(path.join(storageDir, validated.name, existing.content_hash));
             }
 
             return {
                 id: agentId,
                 name: validated.name,
+                oldName: isRenaming ? currentAgent.name : validated.name,
+                renamed: isRenaming,
                 version: validated.version,
                 updated: !!existing,
                 contentHash,
                 isContentChanged,
             };
         } finally {
-            activeSyncRepos.delete(repoName);
+            lockNames.forEach((lockName) => activeSyncRepos.delete(lockName));
         }
     }
 
@@ -1355,10 +1403,13 @@ class AgentsService extends Service {
         const result = await this.importAgentFromGit(
             agent.git_url,
             agent.git_branch || 'master',
-            agent.category
+            agent.category,
+            { currentAgent: agent }
         );
         return {
-            name: agent.name,
+            name: result.name,
+            oldName: agent.name,
+            renamed: result.renamed,
             success: true,
             version: result.version,
             contentHash: result.contentHash,
@@ -1385,10 +1436,13 @@ class AgentsService extends Service {
                 const result = await this.importAgentFromGit(
                     agent.git_url,
                     agent.git_branch,
-                    agent.category
+                    agent.category,
+                    { currentAgent: agent }
                 );
                 results.push({
-                    name: agent.name,
+                    name: result.name,
+                    oldName: agent.name,
+                    renamed: result.renamed,
                     success: true,
                     version: result.version,
                     contentHash: result.contentHash,
@@ -1421,8 +1475,30 @@ class AgentsService extends Service {
         if (gitUrl !== undefined) {
             const rawUrl = String(gitUrl || '').trim();
             if (rawUrl) {
-                const { cleanGitUrl: normalizedUrl, targetBranch: normalizedBranch } =
-                    this.normalizeGitSource(rawUrl, gitBranch || agent.git_branch);
+                const {
+                    cleanGitUrl: normalizedUrl,
+                    targetBranch: normalizedBranch,
+                    repoName,
+                } = this.normalizeGitSource(rawUrl, gitBranch || agent.git_branch);
+
+                // 若修改后的仓库名称与当前 Agent 不一致，前置检查是否已被其他记录占用
+                if (repoName !== agent.name) {
+                    const conflictAgent = await this.app.model.Agent.findOne({
+                        where: {
+                            name: repoName,
+                            id: { [this.app.Sequelize.Op.ne]: agent.id },
+                        },
+                    });
+                    if (conflictAgent) {
+                        this.ctx.throw(
+                            400,
+                            `Git 仓库对应名称「${repoName}」已被${
+                                conflictAgent.is_delete === 0 ? '已有 Agent' : '已删除记录'
+                            }占用`
+                        );
+                    }
+                }
+
                 updates.git_url = normalizedUrl;
                 if (gitBranch === undefined) {
                     updates.git_branch = normalizedBranch;
@@ -1453,10 +1529,13 @@ class AgentsService extends Service {
             const syncResult = await this.importAgentFromGit(
                 agent.git_url,
                 agent.git_branch || 'master',
-                agent.category
+                agent.category,
+                { currentAgent: agent }
             );
             return {
-                name: agent.name,
+                name: syncResult.name,
+                oldName: agent.name,
+                renamed: syncResult.renamed,
                 gitUrl: agent.git_url,
                 gitBranch: agent.git_branch,
                 category: agent.category,
