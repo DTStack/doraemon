@@ -1,0 +1,18 @@
+app/service/agents.js
+  h_3070dc1062bb3b 18,20,1186-1191,1193-1194,1213-1218
+app/web/utils/interceptor.ts
+  h_3070dc1062bb3b 14-16
+test/agent-plugin-contract.test.js
+  h_3070dc1062bb3b 201-231
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "64784ddc243aac37d7dc73662cf4cf562c17e27f",
+  "prompts": {},
+  "humans": {
+    "h_3070dc1062bb3b": {
+      "author": "liuxy0551 <liuxy0551@qq.com>"
+    }
+  }
+}
