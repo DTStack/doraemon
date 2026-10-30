@@ -1,5 +1,5 @@
 /* @vitest-environment node */
-import { mkdir, mkdtemp, readlink, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, readlink, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
@@ -68,6 +68,36 @@ describe('linkOrCopyToAgent (global codex symlink)', () => {
             // The symlink resolves back to the canonical skill dir.
             const linkTarget = await readlink(agentDir);
             expect(resolve(dirname(agentDir), linkTarget)).toBe(resolve(canonicalDir));
+        } finally {
+            await rm(workdir, { recursive: true, force: true }).catch(() => {});
+        }
+    });
+});
+
+describe('linkOrCopyToAgent (copy mode)', () => {
+    it('keeps metadata.json and skips .git in the copied skill', async () => {
+        const workdir = await mkdtemp(join(tmpdir(), 'dt-skill-copy-wd-'));
+        try {
+            const canonicalDir = join(workdir, '.agents', 'skills', 'demo');
+            await mkdir(join(canonicalDir, '.git'), { recursive: true });
+            await writeFile(join(canonicalDir, 'SKILL.md'), '# demo\n', 'utf8');
+            await writeFile(join(canonicalDir, 'metadata.json'), '{"version":"2.0.1"}', 'utf8');
+            await writeFile(join(canonicalDir, '.git', 'HEAD'), 'ref: refs/heads/main\n', 'utf8');
+
+            const result = await linkOrCopyToAgent('demo', canonicalDir, 'claude-code', {
+                global: false,
+                cwd: workdir,
+                mode: 'copy',
+            });
+
+            const agentDir = join(workdir, '.claude', 'skills', 'demo');
+            expect(result.success).toBe(true);
+            expect(result.mode).toBe('copy');
+            expect(result.path).toBe(agentDir);
+            expect((await readdir(agentDir)).sort()).toEqual(['SKILL.md', 'metadata.json']);
+            expect(await readFile(join(agentDir, 'metadata.json'), 'utf8')).toBe(
+                '{"version":"2.0.1"}'
+            );
         } finally {
             await rm(workdir, { recursive: true, force: true }).catch(() => {});
         }

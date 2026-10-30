@@ -121,21 +121,14 @@ export async function createSymlink(target: string, linkPath: string): Promise<b
     }
 }
 
-const EXCLUDE_FILES = new Set(['metadata.json']);
 const EXCLUDE_DIRS = new Set(['.git', '__pycache__', '__pypackages__']);
-
-const isExcluded = (name: string, isDirectory = false) => {
-    if (EXCLUDE_FILES.has(name)) return true;
-    if (isDirectory && EXCLUDE_DIRS.has(name)) return true;
-    return false;
-};
 
 export async function copyDirectory(src: string, dest: string): Promise<void> {
     await mkdir(dest, { recursive: true });
     const entries = await readdir(src, { withFileTypes: true });
     await Promise.all(
         entries
-            .filter((entry) => !isExcluded(entry.name, entry.isDirectory()))
+            .filter((entry) => !(entry.isDirectory() && EXCLUDE_DIRS.has(entry.name)))
             .map(async (entry) => {
                 const srcPath = join(src, entry.name);
                 const destPath = join(dest, entry.name);
