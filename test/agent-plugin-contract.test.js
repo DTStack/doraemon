@@ -198,3 +198,34 @@ test('getAgentDetail 只返回 plugin 展示契约字段', async () => {
     assert.equal('dependencies' in detail, false);
     assert.equal('privateSkills' in detail, false);
 });
+
+test('validateCodexManifest 兼容带下划线、v 前缀及两段式的版本号', () => {
+    const service = createService();
+    const baseManifest = {
+        name: 'specflow-agent',
+        description: 'Specflow workflow agent',
+        author: { name: 'UED' },
+        skills: './skills/',
+        interface: { displayName: 'SpecFlow Agent' },
+    };
+
+    // 兼容带下划线预发布标识的版本
+    const res1 = service.validateCodexManifest({
+        ...baseManifest,
+        version: '2.1.0-SpecFlow-Agent_alpha.1',
+    });
+    assert.equal(res1.version, '2.1.0-SpecFlow-Agent_alpha.1');
+
+    // 兼容 v 前缀与两段式版本
+    const res2 = service.validateCodexManifest({
+        ...baseManifest,
+        version: 'v1.0.0',
+    });
+    assert.equal(res2.version, 'v1.0.0');
+
+    const res3 = service.validateCodexManifest({
+        ...baseManifest,
+        version: '1.0',
+    });
+    assert.equal(res3.version, '1.0');
+});

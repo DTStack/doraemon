@@ -15,8 +15,9 @@ const {
 } = require('../../contracts/skill-categories');
 
 const AGENT_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+// 宽松的 SemVer 格式校验：支持标准 SemVer，同时兼容带 v 前缀、下划线 _（如 2.1.0-SpecFlow-Agent_alpha.1）或两段式版本号
 const SEMVER_PATTERN =
-    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+    /^v?(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:\.(0|[1-9]\d*))?(?:-[\w.-]+)?(?:\+[\w.-]+)?$/i;
 const GIT_BRANCH_PATTERN = /^[a-zA-Z0-9_][a-zA-Z0-9_.\-/]*$/;
 const DEFAULT_GIT_TIMEOUT_MS = 60000;
 
@@ -1182,13 +1183,15 @@ class AgentsService extends Service {
 
             // 4. 解析 Logo 资源
             let logo = null;
-            const LOGO_ALLOWED = ['logo.png', 'logo.jpg', 'logo.jpeg', 'logo.webp'];
+            const LOGO_ALLOWED = ['logo.png', 'logo.jpg', 'logo.jpeg', 'logo.webp', 'logo.svg'];
+            const fallbackLogoPaths = [
+                ...LOGO_ALLOWED.map((name) => `assets/${name}`),
+                ...LOGO_ALLOWED.map((name) => `.codex-plugin/assets/${name}`),
+            ];
+            // 若显式配置了 logoRef，优先使用其路径，若不存在则回退至默认候选路径
             const logoPaths = validated.logoRef
-                ? [validated.logoRef]
-                : [
-                      ...LOGO_ALLOWED.map((name) => `assets/${name}`),
-                      ...LOGO_ALLOWED.map((name) => `.codex-plugin/assets/${name}`),
-                  ];
+                ? [validated.logoRef, ...fallbackLogoPaths]
+                : fallbackLogoPaths;
 
             for (const relativeLogoPath of logoPaths) {
                 const absoluteLogoPath = path.join(targetDir, relativeLogoPath);
@@ -1204,9 +1207,13 @@ class AgentsService extends Service {
                         buffer: logoBuffer,
                     };
                     break;
-                } else if (validated.logoRef) {
-                    this.ctx.throw(400, `Logo 文件不存在: ./${relativeLogoPath}`);
                 }
+            }
+
+            if (!logo && validated.logoRef) {
+                this.ctx.logger.warn(
+                    `[agents] Logo 文件未找到: ./${validated.logoRef}，跳过 Logo 解析`
+                );
             }
 
             // 5. 数据库持久化

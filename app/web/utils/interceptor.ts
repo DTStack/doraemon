@@ -11,7 +11,9 @@ const singletonNotification = (title: any, message: any, type: string) => {
         const notifyMsgs = document.querySelectorAll('.ant-notification-notice-description');
         if (notifyMsgs.length) {
             const closeBtn: any = document.querySelector('.dt-notification__close-btn');
-            closeBtn.style.display = 'block';
+            if (closeBtn) {
+                closeBtn.style.display = 'block';
+            }
         }
         notification[type]({
             message: title,
