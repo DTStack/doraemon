@@ -268,7 +268,8 @@ const SkillDetailContent: React.FC<SkillDetailContentProps> = ({
             <div className={`skill-detail-shell ${isPackage ? 'is-package' : ''}`}>
                 {!isPackage ? (
                     <SkillFileExplorer
-                        version={detail.version}
+                        version={detail.displayVersion}
+                        versionSource={detail.versionSource}
                         parentSlug={detail.parentSlug}
                         routeParentSlug={routeParentSlug}
                         history={history}

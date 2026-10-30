@@ -333,6 +333,7 @@ CREATE TABLE `skills_items` (
   `description` text,
   `category` varchar(64) NOT NULL DEFAULT '通用',
   `version` varchar(128) NOT NULL DEFAULT '' COMMENT '技能版本号',
+  `publish_revision` int NOT NULL DEFAULT '1' COMMENT '发布自增版本号',
   `tags` longtext COMMENT 'JSON字符串数组',
   `allowed_tools` longtext COMMENT 'JSON字符串数组',
   `contributor` varchar(50) DEFAULT NULL COMMENT '贡献者',

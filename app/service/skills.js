@@ -12,6 +12,7 @@ const {
 const {
     normalizeRelativePath: normalizeRelativeFilePath,
     extractSkillMdDescription,
+    resolveSkillDisplayVersion,
     resolveMarketCardDescription,
 } = require('../utils/skill-utils');
 const {
@@ -126,6 +127,7 @@ class SkillsService extends Service {
             await SkillsItem.sync();
             await SkillsFile.sync();
             await this.ensureSkillsItemVersionColumn();
+            await this.ensureSkillsItemPublishRevisionColumn();
             await this.ensureSkillsItemPackageColumns();
             await this.ensureSkillsItemContributorColumn();
             await this.ensureSkillsItemDownloadsColumn();
@@ -149,6 +151,19 @@ class SkillsService extends Service {
             allowNull: false,
             defaultValue: '',
             comment: '技能版本号',
+        });
+    }
+
+    async ensureSkillsItemPublishRevisionColumn() {
+        const queryInterface = this.app.model.getQueryInterface();
+        const table = await queryInterface.describeTable('skills_items');
+        if (table.publish_revision) return;
+
+        await queryInterface.addColumn('skills_items', 'publish_revision', {
+            type: this.app.Sequelize.INTEGER,
+            allowNull: false,
+            defaultValue: 1,
+            comment: '发布自增版本号',
         });
     }
 
@@ -241,6 +256,10 @@ class SkillsService extends Service {
         }
     }
 
+    nextPublishRevision() {
+        return this.app.Sequelize.literal('publish_revision + 1');
+    }
+
     parseJsonArray(value) {
         if (!value) return [];
         if (Array.isArray(value)) return value;
@@ -286,6 +305,7 @@ class SkillsService extends Service {
             description: row.description || '',
             category: row.category || '通用',
             version: row.version || '',
+            publishRevision: Number(row.publish_revision),
             tags: this.parseJsonArray(row.tags),
             allowedTools: this.parseJsonArray(row.allowed_tools),
             stars: coerceCount(row.stars),
@@ -449,10 +469,27 @@ class SkillsService extends Service {
             limit: MAX_FILE_LIST_COUNT,
         });
 
+        const metadataRow = await SkillsFile.findOne({
+            where: {
+                skill_id: skill.id,
+                file_path: 'metadata.json',
+                is_delete: 0,
+                is_binary: 0,
+            },
+            attributes: ['content'],
+        });
+        const displayVersion = resolveSkillDisplayVersion({
+            metadataJson: metadataRow ? metadataRow.content : '',
+            skillMd: skill.skillMd,
+            publishRevision: skill.publishRevision,
+        });
+
         const detail = {
             ...this.toPublicSkill(skill),
             skillMd: skill.skillMd,
             fileList: rows.map((row) => row.file_path),
+            displayVersion: displayVersion.version,
+            versionSource: displayVersion.source,
         };
 
         if (skill.isPackage === 1) {
@@ -2057,6 +2094,7 @@ class SkillsService extends Service {
                     skill_md: nextRecord.skillMd,
                     install_command: nextRecord.installCommand,
                     file_count: nextRecord.files.length,
+                    publish_revision: this.nextPublishRevision(),
                 },
                 { transaction }
             );
@@ -2225,7 +2263,10 @@ class SkillsService extends Service {
                 });
 
                 if (globalExistingParent) {
-                    await globalExistingParent.update(parentPayload, { transaction });
+                    await globalExistingParent.update(
+                        { ...parentPayload, publish_revision: this.nextPublishRevision() },
+                        { transaction }
+                    );
                     oldRowMap.delete(parentSlug);
                 } else {
                     await SkillsItem.create(parentPayload, { transaction });
@@ -2291,7 +2332,10 @@ class SkillsService extends Service {
                 let itemRow;
                 if (targetRow) {
                     itemRow = targetRow;
-                    await targetRow.update(payload, { transaction });
+                    await targetRow.update(
+                        { ...payload, publish_revision: this.nextPublishRevision() },
+                        { transaction }
+                    );
                     oldRowMap.delete(slug);
                 } else {
                     itemRow = await SkillsItem.create(payload, { transaction });

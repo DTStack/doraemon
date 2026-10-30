@@ -132,8 +132,59 @@ function resolveMarketCardDescription(opts = {}) {
     return String(opts.fromSkillMd || '').trim();
 }
 
+function extractFrontmatterLines(content) {
+    const normalized = String(content || '').replace(/\r\n/g, '\n');
+    if (!normalized.startsWith('---\n')) return [];
+    const endMarkerIndex = normalized.indexOf('\n---\n', 4);
+    if (endMarkerIndex === -1) return [];
+    return normalized.slice(4, endMarkerIndex).split('\n');
+}
+
+function extractSkillMdVersion(skillMdContent) {
+    const lines = extractFrontmatterLines(skillMdContent);
+    let topLevelVersion = '';
+    for (let i = 0; i < lines.length; i += 1) {
+        const versionMatch = lines[i].match(/^version:\s*(.*)$/);
+        if (versionMatch) {
+            topLevelVersion = unquoteYamlScalar(versionMatch[1]);
+            continue;
+        }
+        if (!/^metadata:\s*$/.test(lines[i])) continue;
+        for (let j = i + 1; j < lines.length && /^\s+\S/.test(lines[j]); j += 1) {
+            const nestedMatch = lines[j].match(/^\s+version:\s*(.*)$/);
+            if (nestedMatch && unquoteYamlScalar(nestedMatch[1])) {
+                return unquoteYamlScalar(nestedMatch[1]);
+            }
+        }
+    }
+    return topLevelVersion;
+}
+
+function extractMetadataJsonVersion(metadataJsonContent) {
+    try {
+        const parsed = JSON.parse(String(metadataJsonContent || ''));
+        const version = parsed && parsed.version;
+        return typeof version === 'string' || typeof version === 'number'
+            ? String(version).trim()
+            : '';
+    } catch (error) {
+        return '';
+    }
+}
+
+function resolveSkillDisplayVersion(opts) {
+    const fromMetadataJson = extractMetadataJsonVersion(opts.metadataJson);
+    if (fromMetadataJson) return { version: fromMetadataJson, source: 'metadata.json' };
+    const fromSkillMd = extractSkillMdVersion(opts.skillMd);
+    if (fromSkillMd) return { version: fromSkillMd, source: 'frontmatter' };
+    return { version: String(opts.publishRevision), source: 'revision' };
+}
+
 module.exports = {
     normalizeRelativePath,
+    extractSkillMdVersion,
+    extractMetadataJsonVersion,
+    resolveSkillDisplayVersion,
     extractSkillMdDescription,
     extractSkillMdName,
     extractBodySummary,

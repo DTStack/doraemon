@@ -249,6 +249,7 @@ test('persistSkillsForSource - TDD scenarios for web upload', async () => {
             },
         },
         Sequelize: {
+            literal: (sql) => ({ sql }),
             Op: {
                 in: 'in',
                 ne: 'ne',
@@ -921,6 +922,7 @@ test('getSkillDetail returns children for package, none for regular skill (T018)
             },
             SkillsFile: {
                 findAll: async () => [],
+                findOne: async () => null,
             },
         },
     };
@@ -1014,6 +1016,7 @@ test('getSkillArchive - nested ZIP structure for package with multiple children 
             },
             SkillsFile: {
                 findAll: async (opts) => childFilesBySkillId[opts.where.skill_id] || [],
+                findOne: async () => null,
             },
         },
     };

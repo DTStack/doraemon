@@ -626,6 +626,7 @@ class SkillsRegistryService extends Service {
                 const updatePayload = {
                     name: displayName,
                     version,
+                    publish_revision: this.app.Sequelize.literal('publish_revision + 1'),
                     tags: JSON.stringify(parsedTags),
                     skill_md: skillMdFile.content || '',
                     is_delete: 0,

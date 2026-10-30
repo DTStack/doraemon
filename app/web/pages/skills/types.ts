@@ -25,9 +25,13 @@ export interface SkillListResponse {
     categories: string[];
 }
 
+export type SkillVersionSource = 'metadata.json' | 'frontmatter' | 'revision';
+
 export interface SkillDetail extends SkillItem {
     fileList: string[];
     skillMd: string;
+    displayVersion: string;
+    versionSource: SkillVersionSource;
     children?: SkillItem[];
 }
 
