@@ -215,6 +215,7 @@ test('getSkillDetail aggregates package stars from children (T039 variant)', asy
         model: {
             SkillsFile: {
                 findAll: async () => [],
+                findOne: async () => null,
             },
             SkillsItem: {
                 findAll: async (opts) => {

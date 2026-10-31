@@ -1,15 +1,25 @@
 import React from 'react';
 import { ArrowLeftOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { Button, Empty, Tree } from 'antd';
+import { Button, Empty, Tooltip, Tree } from 'antd';
 
 import fileDocIcon from '@/asset/images/skills-detail-figma/file-doc.svg';
 import folderOpenBlueIcon from '@/asset/images/skills-detail-figma/folder-open-blue.svg';
 import { copyToClipboard } from '@/utils/copyUtils';
+import type { SkillVersionSource } from '../../types';
 import type { SkillDetailHistory, SkillTreeNode } from '../utils/skillDetailUtils';
 import { DetailIcon } from './DetailIcon';
 
+const VERSION_SOURCE_LABELS: Record<SkillVersionSource, string> = {
+    'metadata.json': '版本来自 metadata.json',
+    frontmatter: '版本来自 SKILL.md frontmatter',
+    revision: '未声明版本，按发布次数自增',
+};
+
+const formatVersion = (version: string) => (/^v/i.test(version) ? version : `v${version}`);
+
 interface SkillFileExplorerProps {
-    version?: string;
+    version: string;
+    versionSource: SkillVersionSource;
     parentSlug?: string | null;
     routeParentSlug?: string;
     history: SkillDetailHistory;
@@ -25,6 +35,7 @@ interface SkillFileExplorerProps {
 
 export const SkillFileExplorer: React.FC<SkillFileExplorerProps> = ({
     version,
+    versionSource,
     parentSlug,
     routeParentSlug,
     history,
@@ -56,7 +67,9 @@ export const SkillFileExplorer: React.FC<SkillFileExplorerProps> = ({
                 />
                 <div className="sidebar-title-group">
                     <span>技能目录</span>
-                    <strong>{version || '-'}</strong>
+                    <Tooltip title={VERSION_SOURCE_LABELS[versionSource]}>
+                        <strong>{formatVersion(version)}</strong>
+                    </Tooltip>
                 </div>
             </div>
 

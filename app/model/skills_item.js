@@ -38,6 +38,12 @@ module.exports = (app) => {
                 defaultValue: '',
                 comment: '技能版本号',
             },
+            publish_revision: {
+                type: INTEGER,
+                allowNull: false,
+                defaultValue: 1,
+                comment: '发布自增版本号',
+            },
             tags: {
                 type: TEXT('long'),
                 comment: 'JSON字符串数组',
