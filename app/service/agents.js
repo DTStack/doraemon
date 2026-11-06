@@ -1153,11 +1153,21 @@ class AgentsService extends Service {
             const validated = this.validateCodexManifest(manifest);
             const validatedClaude = this.validateClaudeManifest(claudeManifest);
 
-            if (validated.name !== repoName || validatedClaude.name !== repoName) {
+            // 校验两个 plugin manifest 的 name 保持一致，不再强制要求与 Git 仓库名一致
+            if (validated.name !== validatedClaude.name) {
                 this.ctx.throw(
                     400,
-                    `Manifest name (${validated.name}) 必须与 Git 仓库名 (${repoName}) 保持一致`
+                    `两个 plugin manifest 的 name 必须一致 (${validated.name} vs ${validatedClaude.name})`
                 );
+            }
+
+            // 将解析出的 manifest name 加入同步锁保护，防止并发导入相同 Agent
+            if (!lockNames.includes(validated.name)) {
+                if (activeSyncRepos.has(validated.name)) {
+                    this.ctx.throw(409, `Agent「${validated.name}」正在同步中，请稍后再试`);
+                }
+                lockNames.push(validated.name);
+                activeSyncRepos.add(validated.name);
             }
             // 双向校验版本：两者核心版本必须完全一致
             const vCodex = String(validated.version || '')

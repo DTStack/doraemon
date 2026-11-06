@@ -218,7 +218,7 @@ Doraemon 采用 GitOps 模式管理 Agent 插件，实现代码集中在 GitLab 
    - 后续同步时，执行 `git fetch --all` 与 `git reset --hard origin/<branch>`。若遇到损坏或远端历史改写，会自动安全回退并重新浅克隆。
 3. **双 Manifest 契约校验**：
    - 检查根目录下 `.codex-plugin/plugin.json` 与 `.claude-plugin/plugin.json` 是否齐全。
-   - 校验 Manifest 中的 `name` 必须与 GitLab 仓库名（去除 `.git` 后缀）完全一致。
+   - 校验两个 Manifest 中的 `name` 必须保持一致（不再强制要求与 GitLab 仓库名完全一致）。
    - 校验两个 Manifest 中的 `version` 核心版本号必须完全一致。
    - 校验 `skills` 声明的目录是否存在（若声明了 Claude `agents` 路径则校验其路径格式合法性）。
 4. **精确版本追踪（Content Hash）**：

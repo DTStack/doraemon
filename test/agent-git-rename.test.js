@@ -183,3 +183,126 @@ test('importAgentFromGit 遇到名称冲突时阻止重命名', async () => {
         fs.rmSync(tmpStorage, { recursive: true, force: true });
     }
 });
+
+test('importAgentFromGit 允许 Manifest name 与 Git 仓库名不一致（如 component-migration 与 component-migration-agent）', async () => {
+    const service = createService();
+
+    service.ensureStorageReady = async () => {};
+    service.normalizeGitSource = () => ({
+        cleanGitUrl: 'http://gitlab.prod.dtstack.cn/test/component-migration-agent.git',
+        cloneGitUrl: 'http://gitlab.prod.dtstack.cn/test/component-migration-agent.git',
+        targetBranch: 'main',
+        repoName: 'component-migration-agent',
+    });
+    service.getGitAuthArgs = () => [];
+    service.runGitCommand = async (args) => {
+        if (args.includes('rev-parse')) return { stdout: 'hash-migration-123\n' };
+        return { stdout: '' };
+    };
+    service.validateCodexManifest = () => ({
+        name: 'component-migration',
+        displayName: 'Component Migration',
+        version: '1.0.0',
+        description: 'desc',
+        authorName: 'author',
+    });
+    service.validateClaudeManifest = () => ({
+        name: 'component-migration',
+        version: '1.0.0',
+    });
+
+    const tmpStorage = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-diff-name-test-'));
+    service.getAgentMarketConfig = () => ({ storageDir: tmpStorage });
+
+    const targetDir = path.join(tmpStorage, 'git_repos', 'component-migration-agent');
+    fs.mkdirSync(path.join(targetDir, '.codex-plugin'), { recursive: true });
+    fs.mkdirSync(path.join(targetDir, '.claude-plugin'), { recursive: true });
+    fs.writeFileSync(path.join(targetDir, '.codex-plugin', 'plugin.json'), '{}');
+    fs.writeFileSync(path.join(targetDir, '.claude-plugin', 'plugin.json'), '{}');
+
+    service.parseCodexPluginJson = () => ({});
+    service.parseClaudePluginJson = () => ({});
+
+    service.app.model = {
+        Agent: {
+            async findOne() {
+                return null;
+            },
+            async create(payload) {
+                return { id: 99, ...payload };
+            },
+        },
+        AgentSkill: {
+            async destroy() {},
+            async bulkCreate() {},
+        },
+        transaction: async (fn) => fn({}),
+    };
+
+    try {
+        const result = await service.importAgentFromGit(
+            'http://gitlab.prod.dtstack.cn/test/component-migration-agent.git',
+            'main',
+            '工程效率'
+        );
+        assert.equal(result.name, 'component-migration');
+        assert.equal(result.id, 99);
+        assert.equal(result.version, '1.0.0');
+    } finally {
+        fs.rmSync(tmpStorage, { recursive: true, force: true });
+    }
+});
+
+test('importAgentFromGit 当两个 plugin manifest 的 name 不一致时拦截报错', async () => {
+    const service = createService();
+
+    service.ensureStorageReady = async () => {};
+    service.normalizeGitSource = () => ({
+        cleanGitUrl: 'http://gitlab.prod.dtstack.cn/test/component-migration-agent.git',
+        cloneGitUrl: 'http://gitlab.prod.dtstack.cn/test/component-migration-agent.git',
+        targetBranch: 'main',
+        repoName: 'component-migration-agent',
+    });
+    service.getGitAuthArgs = () => [];
+    service.runGitCommand = async (args) => {
+        if (args.includes('rev-parse')) return { stdout: 'hash-123\n' };
+        return { stdout: '' };
+    };
+    service.validateCodexManifest = () => ({
+        name: 'component-migration',
+        displayName: 'Component Migration',
+        version: '1.0.0',
+        description: 'desc',
+        authorName: 'author',
+    });
+    service.validateClaudeManifest = () => ({
+        name: 'component-migration-claude',
+        version: '1.0.0',
+    });
+
+    const tmpStorage = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-mismatch-manifest-test-'));
+    service.getAgentMarketConfig = () => ({ storageDir: tmpStorage });
+
+    const targetDir = path.join(tmpStorage, 'git_repos', 'component-migration-agent');
+    fs.mkdirSync(path.join(targetDir, '.codex-plugin'), { recursive: true });
+    fs.mkdirSync(path.join(targetDir, '.claude-plugin'), { recursive: true });
+    fs.writeFileSync(path.join(targetDir, '.codex-plugin', 'plugin.json'), '{}');
+    fs.writeFileSync(path.join(targetDir, '.claude-plugin', 'plugin.json'), '{}');
+
+    service.parseCodexPluginJson = () => ({});
+    service.parseClaudePluginJson = () => ({});
+
+    try {
+        await assert.rejects(
+            () =>
+                service.importAgentFromGit(
+                    'http://gitlab.prod.dtstack.cn/test/component-migration-agent.git',
+                    'main',
+                    '工程效率'
+                ),
+            /两个 plugin manifest 的 name 必须一致/
+        );
+    } finally {
+        fs.rmSync(tmpStorage, { recursive: true, force: true });
+    }
+});
